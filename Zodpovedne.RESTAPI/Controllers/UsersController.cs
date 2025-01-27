@@ -56,6 +56,7 @@ public class UsersController : ControllerBase
         //Získání emailu z přihlášeného uživatele, User je vlastnost z ControllerBase
         //obsahuje informace o přihlášeném uživateli extrahované z tokenu. ASP.NET Core ji automaticky naplní z Authorization hlavičky (místo tokenu by to mohlo být třeba autorizační cookie...)
         var email = User.FindFirstValue(ClaimTypes.Email);
+        if (email == null) return NotFound();
         var user = await this.userManager.FindByEmailAsync(email);
 
         if (user == null) return NotFound();

@@ -7,6 +7,7 @@ using System.Text;
 using System.Security.Claims;
 using Zodpovedne.Data.Extensions;
 using Zodpovedne.Data.Interfaces;
+using Microsoft.OpenApi.Models;
 
 namespace Zodpovedne.RESTAPI
 {
@@ -50,7 +51,37 @@ namespace Zodpovedne.RESTAPI
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+
+            // Registrace Swaggeru, v produkci zakomentovat, v závorce je nepovinná èást, která konfiguruje pouze to, abych mohl vložit token v Swaggeru do hlavièky Authorization
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Zodpovedne API", Version = "v1" });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header. Just enter the token",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,  // Zmìna zde
+                    Scheme = "bearer",  // a zde
+                    BearerFormat = "JWT"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
 
             var app = builder.Build();
 
