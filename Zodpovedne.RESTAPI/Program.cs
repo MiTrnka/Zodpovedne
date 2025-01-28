@@ -17,6 +17,36 @@ namespace Zodpovedne.RESTAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Kontrola existence konfiguraèního souboru a jeho položek
+            if (builder.Configuration == null)
+            {
+                Console.WriteLine("Program skonèil, protože nebyl nalezen konfiguraèní soubor.");
+                return;
+            }
+            IConfiguration configuration = builder.Configuration;
+
+            if (configuration["Jwt:Issuer"] == null)
+            {
+                Console.WriteLine("JWT Issuer není vyplnìn v konfiguraèním souboru");
+                return;
+            }
+            if (configuration["Jwt:Audience"] == null)
+            {
+                Console.WriteLine("JWT Audience není vyplnìn v konfiguraèním souboru");
+                return;
+            }
+            if (configuration["Jwt:Key"] == null)
+            {
+                Console.WriteLine("JWT Key není vyplnìn v konfiguraèním souboru");
+                return;
+            }
+            if (configuration["Jwt:ExpirationInHours"] == null)
+            {
+                Console.WriteLine("JWT ExpirationInHours není vyplnìn v konfiguraèním souboru");
+                return;
+            }
+
+
             // Registrace služeb z projektu Data
             builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
@@ -35,7 +65,7 @@ namespace Zodpovedne.RESTAPI
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? throw new ArgumentNullException("JWT Key není vyplnìn v konfiguraèním souboru"))),
                     NameClaimType = ClaimTypes.Email,
                     RoleClaimType = ClaimTypes.Role
                 };
@@ -90,8 +120,7 @@ namespace Zodpovedne.RESTAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
-            if (!app.Environment.IsDevelopment())
+            else
             {
                 app.UseHttpsRedirection();
             }
@@ -100,11 +129,12 @@ namespace Zodpovedne.RESTAPI
             app.UseAuthorization();
             app.MapControllers();
 
+
             // Inicializace výchozích rolí a admin úètu pøi startu aplikace
             using (var scope = app.Services.CreateScope())
             {
-                var identityService = scope.ServiceProvider.GetRequiredService<IIdentityService>();
-                await identityService.InitializeRolesAndAdminAsync();
+                var identityDataSeeder = scope.ServiceProvider.GetRequiredService<IIdentityDataSeeder>();
+                await identityDataSeeder.InitializeRolesAndAdminAsync();
             }
 
             app.Run();

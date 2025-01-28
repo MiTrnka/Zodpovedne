@@ -28,12 +28,12 @@ public static class ServiceCollectionExtensions
             options.Password.RequireNonAlphanumeric = false;
             options.Password.RequiredLength = 1;
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.MaxFailedAccessAttempts = 5; //Počet pokusů o přihlášení, pak je uživatel zablokován na čas definovaný v DefaultLockoutTimeSpan
         })
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
 
-        services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<IIdentityDataSeeder, IdentityDataSeeder>();
 
         return services;
     }

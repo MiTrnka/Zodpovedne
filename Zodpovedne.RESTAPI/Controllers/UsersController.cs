@@ -58,7 +58,6 @@ public class UsersController : ControllerBase
         var email = User.FindFirstValue(ClaimTypes.Email);
         if (email == null) return NotFound();
         var user = await this.userManager.FindByEmailAsync(email);
-
         if (user == null) return NotFound();
 
         var roles = await this.userManager.GetRolesAsync(user);
@@ -102,7 +101,7 @@ public class UsersController : ControllerBase
             // - Logování události
             // - Notifikace admina
 
-            return Ok(new { message = "Registration successful" });
+            return Ok();
         }
 
         return BadRequest(new { errors = result.Errors });
@@ -137,7 +136,7 @@ public class UsersController : ControllerBase
             // - Logování události
             // - Notifikace admina
 
-            return Ok(new { message = "Registration successful" });
+            return Ok();
         }
 
         return BadRequest(new { errors = result.Errors });
@@ -154,9 +153,10 @@ public class UsersController : ControllerBase
         //Získání emailu z přihlášeného uživatele, User je vlastnost z ControllerBase
         //obsahuje informace o přihlášeném uživateli extrahované z tokenu. ASP.NET Core ji automaticky naplní z Authorization hlavičky (místo tokenu by to mohlo být třeba autorizační cookie...)
         var email = User.FindFirstValue(ClaimTypes.Email);
+        if (email == null) return NotFound();
         var user = await this.userManager.FindByEmailAsync(email);
-
         if (user == null) return NotFound();
+
 
         user.FirstName = model.FirstName;
         user.LastName = model.LastName;
@@ -164,7 +164,7 @@ public class UsersController : ControllerBase
         var result = await this.userManager.UpdateAsync(user);
         if (result.Succeeded)
         {
-            return Ok(new { message = "Profile updated successfully" });
+            return Ok();
         }
 
         return BadRequest(new { errors = result.Errors });
@@ -181,11 +181,11 @@ public class UsersController : ControllerBase
     {
         var user = await this.userManager.FindByEmailAsync(email);
         if (user == null)
-            return NotFound($"Uživatel s emailem {email} nebyl nalezen.");
+            return NotFound();
 
         var result = await this.userManager.DeleteAsync(user);
         if (result.Succeeded)
-            return Ok($"Uživatel s emailem {email} byl úspěšně smazán.");
+            return Ok();
 
         return BadRequest(new { errors = result.Errors });
     }
@@ -198,9 +198,11 @@ public class UsersController : ControllerBase
     [HttpPut("password")]
     public async Task<IActionResult> UpdatePassword(ChangePasswordModel model)
     {
+        //Získání emailu z přihlášeného uživatele, User je vlastnost z ControllerBase
+        //obsahuje informace o přihlášeném uživateli extrahované z tokenu. ASP.NET Core ji automaticky naplní z Authorization hlavičky (místo tokenu by to mohlo být třeba autorizační cookie...)
         var email = User.FindFirstValue(ClaimTypes.Email);
+        if (email == null) return NotFound();
         var user = await this.userManager.FindByEmailAsync(email);
-
         if (user == null) return NotFound();
 
         var result = await this.userManager.ChangePasswordAsync(
@@ -211,7 +213,7 @@ public class UsersController : ControllerBase
 
         if (result.Succeeded)
         {
-            return Ok(new { message = "Password changed successfully" });
+            return Ok();
         }
 
         return BadRequest(new { errors = result.Errors });
@@ -231,18 +233,25 @@ public class UsersController : ControllerBase
             return Unauthorized();
         }
 
-        //Metoda ověří heslo a provede přihlášení (false zde znamená, že se nezamkne účet při špatném hesle)
-        var result = await this.signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+        //Metoda ověří heslo(false zde znamená, že se nezamkne účet při špatném hesle)
+        var result = await this.signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: true);
+        if (result.IsLockedOut)
+        {
+            return Unauthorized(new { message = "Účet je uzamčen" });
+        }
         if (result.Succeeded)
         {
+            // Aktualizace posledního přihlášení a rovnou uložení do databáze (SaveChanges)
+            user.LastLogin = DateTime.UtcNow;
+            await this.userManager.UpdateAsync(user);
+
             var token = await GenerateJwtToken(user);
 
-            // V produkci přidat:
-            // - Aktualizace LastLoginDate
-            // - Logování přihlášení
-            // - Kontrola suspicious aktivit
-
-            return Ok(new { token });
+            return Ok(new TokenResponse
+            {
+                Token = token,
+                ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru")))
+            });
         }
 
         return Unauthorized();
@@ -255,6 +264,11 @@ public class UsersController : ControllerBase
     /// <returns></returns>
     private async Task<string> GenerateJwtToken(ApplicationUser user)
     {
+        if ((user == null) || (String.IsNullOrEmpty(user.Email)))
+        {
+            throw new ArgumentNullException("Při generování tokenu nebyl vyplněn uživatel nebo jeho email.");
+        }
+
         var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Email, user.Email),
@@ -270,14 +284,14 @@ public class UsersController : ControllerBase
         var roles = await this.userManager.GetRolesAsync(user);
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.configuration["Jwt:Key"]));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.configuration["Jwt:Key"] ?? throw new ArgumentNullException("JWT Key není vyplněn v konfiguračním souboru")));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: this.configuration["Jwt:Issuer"],
-            audience: this.configuration["Jwt:Audience"],
+            issuer: this.configuration["Jwt:Issuer"] ?? throw new ArgumentNullException("JWT Issuer není vyplněn v konfiguračním souboru"),
+            audience: this.configuration["Jwt:Audience"] ?? throw new ArgumentNullException("JWT Audience není vyplněn v konfiguračním souboru"),
             claims: claims,
-            expires: DateTime.Now.AddDays(1),
+            expires: DateTime.Now.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru"))),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

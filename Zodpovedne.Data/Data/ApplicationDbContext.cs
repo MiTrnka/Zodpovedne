@@ -24,8 +24,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(builder);
 
-        // Zde můžete přidat vlastní konfigurace pro entity
-        // Například přejmenování tabulek Identity:
+        // Vytvářím tabulky s vlastními názvy
         builder.Entity<ApplicationUser>().ToTable("Users");
         builder.Entity<IdentityRole>().ToTable("Roles");
         builder.Entity<IdentityUserRole<string>>().ToTable("UserRoles");
