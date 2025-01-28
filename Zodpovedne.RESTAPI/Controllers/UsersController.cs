@@ -53,11 +53,8 @@ public class UsersController : ControllerBase
     [HttpGet("user")]
     public async Task<IActionResult> GetUser()
     {
-        //Získání emailu z přihlášeného uživatele, User je vlastnost z ControllerBase
-        //obsahuje informace o přihlášeném uživateli extrahované z tokenu. ASP.NET Core ji automaticky naplní z Authorization hlavičky (místo tokenu by to mohlo být třeba autorizační cookie...)
-        var email = User.FindFirstValue(ClaimTypes.Email);
-        if (email == null) return NotFound();
-        var user = await this.userManager.FindByEmailAsync(email);
+        // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
+        var user = await GetCurrentUserAsync();
         if (user == null) return NotFound();
 
         var roles = await this.userManager.GetRolesAsync(user);
@@ -150,11 +147,8 @@ public class UsersController : ControllerBase
     [HttpPut("user")]
     public async Task<IActionResult> UpdateUser(UpdateProfileModel model)
     {
-        //Získání emailu z přihlášeného uživatele, User je vlastnost z ControllerBase
-        //obsahuje informace o přihlášeném uživateli extrahované z tokenu. ASP.NET Core ji automaticky naplní z Authorization hlavičky (místo tokenu by to mohlo být třeba autorizační cookie...)
-        var email = User.FindFirstValue(ClaimTypes.Email);
-        if (email == null) return NotFound();
-        var user = await this.userManager.FindByEmailAsync(email);
+        // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
+        var user = await GetCurrentUserAsync();
         if (user == null) return NotFound();
 
 
@@ -198,11 +192,8 @@ public class UsersController : ControllerBase
     [HttpPut("password")]
     public async Task<IActionResult> UpdatePassword(ChangePasswordModel model)
     {
-        //Získání emailu z přihlášeného uživatele, User je vlastnost z ControllerBase
-        //obsahuje informace o přihlášeném uživateli extrahované z tokenu. ASP.NET Core ji automaticky naplní z Authorization hlavičky (místo tokenu by to mohlo být třeba autorizační cookie...)
-        var email = User.FindFirstValue(ClaimTypes.Email);
-        if (email == null) return NotFound();
-        var user = await this.userManager.FindByEmailAsync(email);
+        // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
+        var user = await GetCurrentUserAsync();
         if (user == null) return NotFound();
 
         var result = await this.userManager.ChangePasswordAsync(
@@ -291,9 +282,22 @@ public class UsersController : ControllerBase
             issuer: this.configuration["Jwt:Issuer"] ?? throw new ArgumentNullException("JWT Issuer není vyplněn v konfiguračním souboru"),
             audience: this.configuration["Jwt:Audience"] ?? throw new ArgumentNullException("JWT Audience není vyplněn v konfiguračním souboru"),
             claims: claims,
-            expires: DateTime.Now.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru"))),
+            expires: DateTime.UtcNow.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru"))),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+    /// <summary>
+    /// Získá aktuálně přihlášeného uživatele z tokenu (z hlavičky Authorization z http požadavku na endpoint)
+    /// User je property z ControllerBase, která obsahuje informace o přihlášeném uživateli extrahované z tokenu. ASP.NET Core ji automaticky naplní z Authorization hlavičky (místo tokenu by to mohlo být třeba autorizační cookie...)
+    /// </summary>
+    /// <returns>Instance uživatele nebo null</returns>
+    private async Task<ApplicationUser?> GetCurrentUserAsync()
+    {
+        var email = User.FindFirstValue(ClaimTypes.Email);
+        if (email == null) return null;
+
+        var user = await this.userManager.FindByEmailAsync(email);
+        return user;
     }
 }
