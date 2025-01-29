@@ -37,8 +37,7 @@ public class UsersController : ControllerBase
             .Select(u => new {
                 u.Id,
                 u.Email,
-                u.FirstName,
-                u.LastName,
+                u.Nickname,
                 u.Created
             })
             .ToListAsync();
@@ -63,8 +62,7 @@ public class UsersController : ControllerBase
         {
             user.Id,
             user.Email,
-            user.FirstName,
-            user.LastName,
+            user.Nickname,
             user.Created,
             Roles = roles
         });
@@ -78,13 +76,17 @@ public class UsersController : ControllerBase
     [HttpPost("user/member")]
     public async Task<IActionResult> CreateMemberUser(RegisterModel model)
     {
-        // V produkci přidat validaci složitosti hesla a dalších údajů
+        // Kontrola existence stejného emailu a stejného nickname
+        if (await userManager.FindByEmailAsync(model.Email) != null)
+            return BadRequest(new { error = $"Email {model.Email} je již používán." });
+        if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
+            return BadRequest(new { error = $"Přezdívka {model.Nickname} je již používána." });
+
         var user = new ApplicationUser
         {
             UserName = model.Email,
             Email = model.Email,
-            FirstName = model.FirstName,
-            LastName = model.LastName
+            Nickname = model.Nickname
         };
 
         var result = await this.userManager.CreateAsync(user, model.Password);
@@ -113,13 +115,17 @@ public class UsersController : ControllerBase
     [Authorize(Policy = "RequireAdminRole")] // Pouze pro adminy
     public async Task<IActionResult> CreateAdminUser(RegisterModel model)
     {
-        // V produkci přidat validaci složitosti hesla a dalších údajů
+        // Kontrola existence stejného emailu a stejného nickname
+        if (await userManager.FindByEmailAsync(model.Email) != null)
+            return BadRequest(new { error = $"Email {model.Email} je již používán." });
+        if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
+            return BadRequest(new { error = $"Přezdívka {model.Nickname} je již používána." });
+
         var user = new ApplicationUser
         {
             UserName = model.Email,
             Email = model.Email,
-            FirstName = model.FirstName,
-            LastName = model.LastName
+            Nickname = model.Nickname
         };
 
         var result = await this.userManager.CreateAsync(user, model.Password);
@@ -151,9 +157,12 @@ public class UsersController : ControllerBase
         var user = await GetCurrentUserAsync();
         if (user == null) return NotFound();
 
+        // Kontrola existence stejného nickname
+        if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
+            return BadRequest(new { error = $"Přezdívka {model.Nickname} je již používána." });
 
-        user.FirstName = model.FirstName;
-        user.LastName = model.LastName;
+
+        user.Nickname = model.Nickname;
 
         var result = await this.userManager.UpdateAsync(user);
         if (result.Succeeded)
@@ -241,7 +250,8 @@ public class UsersController : ControllerBase
             return Ok(new TokenResponse
             {
                 Token = token,
-                ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru")))
+                ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru"))),
+                Email = user.Email!
             });
         }
 

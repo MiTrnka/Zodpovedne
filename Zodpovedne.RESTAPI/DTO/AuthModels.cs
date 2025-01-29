@@ -14,10 +14,7 @@ public class RegisterModel
     public string Password { get; set; } = "";
 
     [Required]
-    public string FirstName { get; set; } = "";
-
-    [Required]
-    public string LastName { get; set; } = "";
+    public string Nickname { get; set; } = "";
 }
 
 public class LoginModel
@@ -33,10 +30,7 @@ public class LoginModel
 public class UpdateProfileModel
 {
     [Required]
-    public string FirstName { get; set; } = "";
-
-    [Required]
-    public string LastName { get; set; } = "";
+    public string Nickname { get; set; } = "";
 }
 
 public class ChangePasswordModel
@@ -53,4 +47,5 @@ public class TokenResponse
 {
     public string Token { get; set; } = "";
     public DateTime ExpiresAt { get; set; }
+    public string Email { get; set; } = "";
 }

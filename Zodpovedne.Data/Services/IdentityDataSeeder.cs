@@ -50,8 +50,7 @@ public class IdentityDataSeeder : IIdentityDataSeeder
             {
                 UserName = adminEmail,
                 Email = adminEmail,
-                FirstName = "Admin",
-                LastName = "Admin",
+                Nickname = "Admin",
                 EmailConfirmed = true
             };
 
