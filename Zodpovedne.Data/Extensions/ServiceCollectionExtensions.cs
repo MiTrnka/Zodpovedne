@@ -1,14 +1,8 @@
-﻿using Zodpovedne.Data;
-using Zodpovedne.Models;
+﻿using Zodpovedne.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Zodpovedne.Data.Interfaces;
 using Zodpovedne.Data.Services;
 using Zodpovedne.Data.Data;

@@ -1,7 +1,7 @@
 ﻿// DTO - objekty slouží pro transfer dat mezi klientem (PostMan, aplikace...) a API
 using System.ComponentModel.DataAnnotations;
 
-namespace Zodpovedne.Models;
+namespace Zodpovedne.RESTAPI.Models;
 
 public class RegisterModel
 {

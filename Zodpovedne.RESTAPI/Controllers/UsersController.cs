@@ -1,4 +1,5 @@
-﻿using Zodpovedne.Models;
+﻿using Zodpovedne.Data.Models;
+using Zodpovedne.RESTAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

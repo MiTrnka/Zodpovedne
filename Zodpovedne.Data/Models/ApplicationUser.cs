@@ -2,12 +2,12 @@
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
-namespace Zodpovedne.Models;
+namespace Zodpovedne.Data.Models;
 
 // Rozšíření standardního IdentityUser o vlastní pole
 public class ApplicationUser : IdentityUser
 {
-    // Rozšíření standardního IdentityUser o vlastní pole    
+    // Rozšíření standardního IdentityUser o vlastní pole
     [Required(ErrorMessage = "Přezdívka je povinná")]
     public string Nickname { get; set; } = "";
     public DateTime Created { get; set; } = DateTime.UtcNow;

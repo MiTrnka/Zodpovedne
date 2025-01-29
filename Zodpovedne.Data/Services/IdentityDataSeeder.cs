@@ -1,4 +1,4 @@
-﻿using Zodpovedne.Models;
+﻿using Zodpovedne.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Zodpovedne.Data.Interfaces;
 using Microsoft.Extensions.Logging;
