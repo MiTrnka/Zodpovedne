@@ -50,8 +50,8 @@ public class UsersController : ControllerBase
     /// Vrátí informace o přihlášeném uživateli
     /// </summary>
     /// <returns></returns>
-    [HttpGet("user")]
-    public async Task<IActionResult> GetUser()
+    [HttpGet("authenticated-user")]
+    public async Task<IActionResult> GetAuthenticatedUser()
     {
         // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
         var user = await GetCurrentUserAsync();
@@ -71,12 +71,12 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Vytvoří nového uživatele s rolí User
+    /// Vytvoří nového uživatele s rolí Member
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>
-    [HttpPost("user")]
-    public async Task<IActionResult> CreateUser(RegisterModel model)
+    [HttpPost("user/member")]
+    public async Task<IActionResult> CreateMemberUser(RegisterModel model)
     {
         // V produkci přidat validaci složitosti hesla a dalších údajů
         var user = new ApplicationUser
@@ -91,7 +91,7 @@ public class UsersController : ControllerBase
         if (result.Succeeded)
         {
             // Přidání výchozí role "User"
-            await this.userManager.AddToRoleAsync(user, "User");
+            await this.userManager.AddToRoleAsync(user, "Member");
 
             // V produkci přidat:
             // - Odeslání potvrzovacího emailu
@@ -109,7 +109,7 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>
-    [HttpPost("admin-user")]
+    [HttpPost("user/admin")]
     [Authorize(Policy = "RequireAdminRole")] // Pouze pro adminy
     public async Task<IActionResult> CreateAdminUser(RegisterModel model)
     {
@@ -125,7 +125,7 @@ public class UsersController : ControllerBase
         var result = await this.userManager.CreateAsync(user, model.Password);
         if (result.Succeeded)
         {
-            // Přidání výchozí role "User"
+            // Přidání výchozí role "Admin"
             await this.userManager.AddToRoleAsync(user, "Admin");
 
             // V produkci přidat:
@@ -140,12 +140,12 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Aktualizuje profil přihlášeného uživatele
+    /// Aktualizuje profil přihlášeného uživatele (FirstName, LastName)
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>
-    [HttpPut("user")]
-    public async Task<IActionResult> UpdateUser(UpdateProfileModel model)
+    [HttpPut("authenticated-user")]
+    public async Task<IActionResult> UpdateAuthenticatedUser(UpdateProfileModel model)
     {
         // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
         var user = await GetCurrentUserAsync();
@@ -169,9 +169,9 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="email"></param>
     /// <returns></returns>
-    [HttpDelete("user")]
+    [HttpDelete("user/{email}")]
     [Authorize(Policy = "RequireAdminRole")]  // Pouze admin může mazat uživatele
-    public async Task<IActionResult> DeleteUser([FromQuery] string email)
+    public async Task<IActionResult> DeleteUser([FromRoute] string email)
     {
         var user = await this.userManager.FindByEmailAsync(email);
         if (user == null)
@@ -189,8 +189,8 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>
-    [HttpPut("password")]
-    public async Task<IActionResult> UpdatePassword(ChangePasswordModel model)
+    [HttpPut("authenticated-user/password")]
+    public async Task<IActionResult> UpdateAuthenticatedUserPassword(ChangePasswordModel model)
     {
         // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
         var user = await GetCurrentUserAsync();
@@ -211,7 +211,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Vytvoří JWT token pro přihlášení uživatele (zkontroluje zadaný email a heslo a vytvoří JWT token)
+    /// Vytvoří JWT token pro přihlášení uživatele ze zadaného emailu a hesla (LoginModel) (zkontroluje zadaný email a heslo a vytvoří JWT token)
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>

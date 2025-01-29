@@ -33,7 +33,7 @@ public class IdentityDataSeeder : IIdentityDataSeeder
         }
 
         // Vytvoření základních rolí, pokud ještě neexistují
-        string[] roles = { "Admin", "User" };
+        string[] roles = { "Admin", "Member" };
         foreach (var role in roles)
         {
             if (!await roleManager.RoleExistsAsync(role))

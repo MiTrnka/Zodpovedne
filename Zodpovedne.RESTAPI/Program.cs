@@ -75,8 +75,8 @@ namespace Zodpovedne.RESTAPI
                 // Definice politik - v produkci rozšíøit podle potøeb
                 options.AddPolicy("RequireAdminRole", policy =>
                     policy.RequireRole("Admin"));
-                options.AddPolicy("RequireUserRole", policy =>
-                    policy.RequireRole("User"));
+                options.AddPolicy("RequireMemberRole", policy =>
+                    policy.RequireRole("Member"));
             });
 
             builder.Services.AddControllers();

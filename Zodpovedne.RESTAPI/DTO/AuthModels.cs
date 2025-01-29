@@ -10,7 +10,7 @@ public class RegisterModel
     public string Email { get; set; } = "";
 
     [Required]
-    [StringLength(100, MinimumLength = 6)]
+    [StringLength(100)]
     public string Password { get; set; } = "";
 
     [Required]
@@ -45,7 +45,7 @@ public class ChangePasswordModel
     public string CurrentPassword { get; set; } = "";
 
     [Required]
-    [StringLength(100, MinimumLength = 6)]
+    [StringLength(100)]
     public string NewPassword { get; set; } = "";
 }
 
