@@ -30,7 +30,7 @@ public class UsersController : ControllerBase
     /// Vrátí seznam všech uživatelů
     /// </summary>
     /// <returns></returns>
-    [HttpGet("users")]
+    [HttpGet]
     [Authorize(Policy = "RequireAdminRole")] // Pouze pro adminy
     public async Task<IActionResult> GetUsers()
     {
