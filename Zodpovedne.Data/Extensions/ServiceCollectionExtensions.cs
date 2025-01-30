@@ -28,6 +28,7 @@ public static class ServiceCollectionExtensions
         .AddDefaultTokenProviders();
 
         services.AddScoped<IIdentityDataSeeder, IdentityDataSeeder>();
+        services.AddScoped<ITestDataSeeder, TestDataSeeder>();
 
         return services;
     }

@@ -75,7 +75,7 @@ public class UsersController : ControllerBase
     /// <param name="model"></param>
     /// <returns></returns>
     [HttpPost("user/member")]
-    public async Task<IActionResult> CreateMemberUser(RegisterModel model)
+    public async Task<IActionResult> CreateMemberUser(RegisterModelDto model)
     {
         // Kontrola existence stejného emailu a stejného nickname
         if (await userManager.FindByEmailAsync(model.Email) != null)
@@ -114,7 +114,7 @@ public class UsersController : ControllerBase
     /// <returns></returns>
     [HttpPost("user/admin")]
     [Authorize(Policy = "RequireAdminRole")] // Pouze pro adminy
-    public async Task<IActionResult> CreateAdminUser(RegisterModel model)
+    public async Task<IActionResult> CreateAdminUser(RegisterModelDto model)
     {
         // Kontrola existence stejného emailu a stejného nickname
         if (await userManager.FindByEmailAsync(model.Email) != null)
@@ -152,7 +152,7 @@ public class UsersController : ControllerBase
     /// <param name="model"></param>
     /// <returns></returns>
     [HttpPut("authenticated-user")]
-    public async Task<IActionResult> UpdateAuthenticatedUser(UpdateProfileModel model)
+    public async Task<IActionResult> UpdateAuthenticatedUser(UpdateProfileModelDto model)
     {
         // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
         var user = await GetCurrentUserAsync();
@@ -200,7 +200,7 @@ public class UsersController : ControllerBase
     /// <param name="model"></param>
     /// <returns></returns>
     [HttpPut("authenticated-user/password")]
-    public async Task<IActionResult> UpdateAuthenticatedUserPassword(ChangePasswordModel model)
+    public async Task<IActionResult> UpdateAuthenticatedUserPassword(ChangePasswordModelDto model)
     {
         // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
         var user = await GetCurrentUserAsync();
@@ -226,7 +226,7 @@ public class UsersController : ControllerBase
     /// <param name="model"></param>
     /// <returns></returns>
     [HttpPost("token")]
-    public async Task<IActionResult> CreateToken(LoginModel model)
+    public async Task<IActionResult> CreateToken(LoginModelDto model)
     {
         var user = await this.userManager.FindByEmailAsync(model.Email);
         if (user == null)
@@ -248,7 +248,7 @@ public class UsersController : ControllerBase
 
             var token = await GenerateJwtToken(user);
 
-            return Ok(new TokenResponse
+            return Ok(new TokenResponseDto
             {
                 Token = token,
                 ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru"))),

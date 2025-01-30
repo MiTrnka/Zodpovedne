@@ -50,6 +50,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Name musí být unikátní
             entity.HasIndex(e => e.Name)
                 .IsUnique();
+
+            // Code musí být unikátní
+            entity.HasIndex(e => e.Code)
+                .IsUnique();
         });
 
         // Konfigurace Discussion

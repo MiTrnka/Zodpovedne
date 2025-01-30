@@ -137,6 +137,13 @@ namespace Zodpovedne.RESTAPI
                 await identityDataSeeder.InitializeRolesAndAdminAsync();
             }
 
+            // Po inicializaci rolí a admin úètu
+            using (var scope = app.Services.CreateScope())
+            {
+                var testDataSeeder = scope.ServiceProvider.GetRequiredService<ITestDataSeeder>();
+                await testDataSeeder.SeedTestDataAsync();
+            }
+
             app.Run();
         }
     }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Zodpovedne.RESTAPI.Models;
 
-public class RegisterModel
+public class RegisterModelDto
 {
     [Required]
     [EmailAddress]
@@ -17,7 +17,7 @@ public class RegisterModel
     public string Nickname { get; set; } = "";
 }
 
-public class LoginModel
+public class LoginModelDto
 {
     [Required]
     [EmailAddress]
@@ -27,13 +27,13 @@ public class LoginModel
     public string Password { get; set; } = "";
 }
 
-public class UpdateProfileModel
+public class UpdateProfileModelDto
 {
     [Required]
     public string Nickname { get; set; } = "";
 }
 
-public class ChangePasswordModel
+public class ChangePasswordModelDto
 {
     [Required]
     public string CurrentPassword { get; set; } = "";
@@ -43,7 +43,7 @@ public class ChangePasswordModel
     public string NewPassword { get; set; } = "";
 }
 
-public class TokenResponse
+public class TokenResponseDto
 {
     public string Token { get; set; } = "";
     public DateTime ExpiresAt { get; set; }

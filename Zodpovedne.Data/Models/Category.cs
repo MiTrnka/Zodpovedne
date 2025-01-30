@@ -10,14 +10,16 @@ public class Category
     [MaxLength(100)]
     public string Name { get; set; } = "";
 
+    [Required(ErrorMessage = "Kód kategorie je povinný")]
+    [MaxLength(50)]
+    public string Code { get; set; } = "";
+
     [MaxLength(500)]
     public string Description { get; set; } = "";
 
-    // Určuje pořadí zobrazení na hlavní stránce
     public int DisplayOrder { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigační vlastnost pro diskuze v této kategorii
     public virtual ICollection<Discussion> Discussions { get; set; } = new List<Discussion>();
 }
