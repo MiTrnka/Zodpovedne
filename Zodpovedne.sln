@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zodpovedne.RESTAPI", "Zodpo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zodpovedne.Web", "Zodpovedne.Web\Zodpovedne.Web.csproj", "{0932CAAD-F38E-4134-A585-111C2B7216C2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zodpovedne.Contracts", "Zodpovedne.Contracts\Zodpovedne.Contracts.csproj", "{CF8A4223-DB5E-4F31-9EC9-06853929FC7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{0932CAAD-F38E-4134-A585-111C2B7216C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0932CAAD-F38E-4134-A585-111C2B7216C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0932CAAD-F38E-4134-A585-111C2B7216C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF8A4223-DB5E-4F31-9EC9-06853929FC7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF8A4223-DB5E-4F31-9EC9-06853929FC7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF8A4223-DB5E-4F31-9EC9-06853929FC7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF8A4223-DB5E-4F31-9EC9-06853929FC7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zodpovedne.Data.Data;
-using Zodpovedne.RESTAPI.DTOs;
+using Zodpovedne.Contracts.DTO;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 

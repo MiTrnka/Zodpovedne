@@ -1,6 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// NuGet Microsoft.AspNetCore.Http.Features pro IFormFile
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
+using Zodpovedne.Contracts.Enums;
 
-namespace Zodpovedne.RESTAPI.DTO;
+namespace Zodpovedne.Contracts.DTO;
 
 // Pro vytvoření nové diskuze
 public class CreateDiscussionDto
@@ -17,6 +20,9 @@ public class CreateDiscussionDto
 
     // Pro budoucí implementaci
     public IFormFile? Image { get; set; }
+
+    // Typ diskuze nastavujeme jen při vytvoření, výchozí hodnota Normal
+    public DiscussionType Type { get; set; } = DiscussionType.Normal;
 }
 
 // Pro editaci diskuze
@@ -28,6 +34,9 @@ public class UpdateDiscussionDto
 
     [Required(ErrorMessage = "Obsah diskuze je povinný")]
     public string Content { get; set; } = "";
+    
+    // Typ diskuze může měnit jen admin
+    public DiscussionType Type { get; set; }
 }
 
 // Pro výpis v seznamu diskuzí
@@ -40,6 +49,7 @@ public class DiscussionListDto
     public DateTime CreatedAt { get; set; }
     public int CommentsCount { get; set; }
     public int ViewCount { get; set; }
+    public DiscussionType Type { get; set; }
 }
 
 // Pro detail diskuze včetně komentářů
@@ -54,6 +64,7 @@ public class DiscussionDetailDto
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public int ViewCount { get; set; }
+    public DiscussionType Type { get; set; }
     public ICollection<CommentDto> Comments { get; set; } = new List<CommentDto>();
 }
 

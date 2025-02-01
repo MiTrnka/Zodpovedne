@@ -2,11 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Headers;
 using Zodpovedne.Web.Filters;
-using Zodpovedne.Web.Models;
+using Zodpovedne.Contracts.DTO;
 
-namespace Zodpovedne.Web.Pages.Admin;
+namespace Zodpovedne.Web.Pages;
 
-[AuthenticationFilter]
+//[AuthenticationFilter]
+[AdminAuthorizationFilter]
 public class CategoriesModel : PageModel
 {
     private readonly IHttpClientFactory _clientFactory;

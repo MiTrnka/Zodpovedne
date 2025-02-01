@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Zodpovedne.Web.Models;
+using Zodpovedne.Contracts.DTO;
 
 
 namespace Zodpovedne.Web.Pages.Account;
@@ -39,6 +39,7 @@ public class LoginModel : PageModel
             {
                 // Uložíme token do session
                 HttpContext.Session.SetString("JWTToken", result.Token);
+                HttpContext.Session.SetString("UserNickname", result.Nickname);
                 return RedirectToPage("/Index");
             }
         }

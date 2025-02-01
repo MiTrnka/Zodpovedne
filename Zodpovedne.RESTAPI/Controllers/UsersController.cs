@@ -1,5 +1,5 @@
 ﻿using Zodpovedne.Data.Models;
-using Zodpovedne.RESTAPI.Models;
+using Zodpovedne.Contracts.DTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -252,7 +252,8 @@ public class UsersController : ControllerBase
             {
                 Token = token,
                 ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru"))),
-                Email = user.Email!
+                Email = user.Email!,
+                Nickname = user.Nickname
             });
         }
 

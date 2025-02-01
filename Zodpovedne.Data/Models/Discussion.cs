@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Data.Models;
 
@@ -28,6 +29,8 @@ public class Discussion
     public DateTime? UpdatedAt { get; set; }
 
     public int ViewCount { get; set; }
+
+    public DiscussionType Type { get; set; } = DiscussionType.Normal;
 
     // Navigační vlastnosti
     public virtual Category Category { get; set; } = null!;

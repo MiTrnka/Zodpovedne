@@ -24,8 +24,25 @@
                             <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Categories">Kategorie</a>
                         </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        @if (Context.Session.GetString("JWTToken") != null)
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link text-dark">@Context.Session.GetString("UserNickname")</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Account/Logout">Odhlásit se</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Account/Login">Přihlásit se</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>

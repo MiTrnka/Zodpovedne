@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Data.Models;
-using Zodpovedne.RESTAPI.DTO;
+using Zodpovedne.Contracts.DTO;
+using Zodpovedne.Contracts.Enums;
 
 
 namespace Zodpovedne.RESTAPI.Controllers;
@@ -41,7 +42,8 @@ public class DiscussionsController : ControllerBase
         }
 
         var discussions = await query
-            .OrderByDescending(d => d.CreatedAt)
+            .OrderByDescending(d => d.Type == DiscussionType.Top) // Nejdřív Top diskuze
+            .ThenByDescending(d => d.CreatedAt)                   // Pak podle data
             .Select(d => new DiscussionListDto
             {
                 Id = d.Id,
@@ -50,7 +52,8 @@ public class DiscussionsController : ControllerBase
                 AuthorNickname = d.User.Nickname,
                 CreatedAt = d.CreatedAt,
                 CommentsCount = d.Comments.Count(c => c.IsVisible),
-                ViewCount = d.ViewCount
+                ViewCount = d.ViewCount,
+                Type = d.Type
             })
             .ToListAsync();
 
@@ -162,6 +165,11 @@ public class DiscussionsController : ControllerBase
         discussion.Title = model.Title;
         discussion.Content = model.Content;
         discussion.UpdatedAt = DateTime.UtcNow;
+        // Typ diskuze může měnit pouze admin
+        if (isAdmin)
+        {
+            discussion.Type = model.Type;
+        }
 
         await dbContext.SaveChangesAsync();
         return NoContent();

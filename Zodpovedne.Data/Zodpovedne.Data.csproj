@@ -35,4 +35,8 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Zodpovedne.Contracts\Zodpovedne.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

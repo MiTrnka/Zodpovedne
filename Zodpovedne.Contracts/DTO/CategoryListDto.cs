@@ -1,4 +1,4 @@
-﻿namespace Zodpovedne.RESTAPI.DTOs;
+﻿namespace Zodpovedne.Contracts.DTO;
 
 public class CategoryListDto
 {

@@ -1,7 +1,7 @@
 ﻿// DTO - objekty slouží pro transfer dat mezi klientem (PostMan, aplikace...) a API
 using System.ComponentModel.DataAnnotations;
 
-namespace Zodpovedne.RESTAPI.Models;
+namespace Zodpovedne.Contracts.DTO;
 
 public class RegisterModelDto
 {
@@ -48,4 +48,5 @@ public class TokenResponseDto
     public string Token { get; set; } = "";
     public DateTime ExpiresAt { get; set; }
     public string Email { get; set; } = "";
+    public string Nickname { get; set; } = "";
 }
