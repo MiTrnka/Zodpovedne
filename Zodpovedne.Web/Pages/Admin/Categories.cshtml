@@ -1,0 +1,38 @@
+﻿@page
+@model Zodpovedne.Web.Pages.Admin.CategoriesModel
+@{
+    ViewData["Title"] = "Seznam kategorií";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="container">
+    @if (Model.Categories.Any())
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Název</th>
+                    <th>Kód</th>
+                    <th>Popis</th>
+                    <th>Pořadí</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in Model.Categories.OrderBy(c => c.DisplayOrder))
+                {
+                    <tr>
+                        <td>@category.Name</td>
+                        <td>@category.Code</td>
+                        <td>@category.Description</td>
+                        <td>@category.DisplayOrder</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>Žádné kategorie nebyly nalezeny.</p>
+    }
+</div>

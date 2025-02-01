@@ -1,0 +1,26 @@
+﻿@* Pages/Account/Login.cshtml *@
+@page
+@model LoginModel
+
+<div class="row">
+    <div class="col-md-4">
+        <h2>Přihlášení</h2>
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="Input.Email">Email</label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Input.Password">Heslo</label>
+                <input asp-for="Input.Password" type="password" class="form-control" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Přihlásit</button>
+        </form>
+    </div>
+</div>
