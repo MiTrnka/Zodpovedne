@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Net.Http.Headers;
-using Zodpovedne.Web.Filters;
 using Zodpovedne.Contracts.DTO;
+using Zodpovedne.Web.Filters;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -23,19 +22,12 @@ public class CategoriesModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        /*var token = HttpContext.Session.GetString("JWTToken");
-        if (string.IsNullOrEmpty(token))
-        {
-            return RedirectToPage("/Account/Login");
-        }*/
-
         var client = _clientFactory.CreateClient();
-        //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
         var response = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/categories");
+
         if (response.IsSuccessStatusCode)
         {
-            Categories = await response.Content.ReadFromJsonAsync<List<CategoryListDto>>() ?? new List<CategoryListDto>();
+            Categories = await response.Content.ReadFromJsonAsync<List<CategoryListDto>>() ?? new();
         }
 
         return Page();

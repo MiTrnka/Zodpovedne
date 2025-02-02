@@ -37,4 +37,28 @@ public class CategoriesController : ControllerBase
 
         return Ok(categories);
     }
+
+    /// <summary>
+    /// Vrátí detail konkrétní kategorie podle jejího kódu
+    /// </summary>
+    [HttpGet("{code}")]
+    public async Task<ActionResult<CategoryListDto>> GetCategoryByCode(string code)
+    {
+        var category = await dbContext.Categories
+            .FirstOrDefaultAsync(c => c.Code == code);
+
+        if (category == null)
+            return NotFound();
+
+        var categoryDto = new CategoryListDto
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Code = category.Code,
+            Description = category.Description,
+            DisplayOrder = category.DisplayOrder
+        };
+
+        return Ok(categoryDto);
+    }
 }

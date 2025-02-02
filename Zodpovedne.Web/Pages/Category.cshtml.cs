@@ -26,27 +26,26 @@ public class CategoryModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        // Získáme kategorii podle Code
         var client = _clientFactory.CreateClient();
 
-        // Získání seznamu diskuzí pro danou kategorii
-        var response = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/discussions?categoryCode={CategoryCode}");
-        if (!response.IsSuccessStatusCode)
+        // Získání detailu kategorie
+        var categoryResponse = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/categories/{CategoryCode}");
+        if (!categoryResponse.IsSuccessStatusCode)
             return NotFound();
 
-        Discussions = await response.Content.ReadFromJsonAsync<List<DiscussionListDto>>() ?? new();
+        var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryListDto>();
+        if (category == null)
+            return NotFound();
 
-        // TODO: Získat název a popis kategorie z API až bude endpoint hotový
-        // Prozatím mockujeme podle code
-        CategoryName = CategoryCode switch
+        CategoryName = category.Name;
+        CategoryDescription = category.Description;
+
+        // Získání seznamu diskuzí pro danou kategorii
+        var discussionsResponse = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/discussions?categoryId={category.Id}");
+        if (discussionsResponse.IsSuccessStatusCode)
         {
-            "tehotenstvi" => "Tìhotenství",
-            "porod" => "Porod",
-            "kojeni" => "Kojení",
-            "vychova" => "Výchova",
-            "skolky-a-skoly" => "Školky a školy",
-            _ => CategoryCode
-        };
+            Discussions = await discussionsResponse.Content.ReadFromJsonAsync<List<DiscussionListDto>>() ?? new();
+        }
 
         return Page();
     }

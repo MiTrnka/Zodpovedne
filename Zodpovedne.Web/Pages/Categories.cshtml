@@ -1,38 +1,45 @@
-﻿@page "/Categories"
+﻿@page "/categories"
 @model CategoriesModel
 @{
-    ViewData["Title"] = "Seznam kategorií";
+    ViewData["Title"] = "Kategorie";
 }
 
-<h1>@ViewData["Title"]</h1>
-
 <div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Kategorie</h1>
+        </div>
+    </div>
+
     @if (Model.Categories.Any())
     {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Název</th>
-                    <th>Kód</th>
-                    <th>Popis</th>
-                    <th>Pořadí</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var category in Model.Categories.OrderBy(c => c.DisplayOrder))
-                {
-                    <tr>
-                        <td>@category.Name</td>
-                        <td>@category.Code</td>
-                        <td>@category.Description</td>
-                        <td>@category.DisplayOrder</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="row">
+            @foreach (var category in Model.Categories.OrderBy(c => c.DisplayOrder))
+            {
+                <div class="col-12 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a href="/categories/@category.Code" class="text-decoration-none">@category.Name</a>
+                            </h5>
+                            @if (!string.IsNullOrEmpty(category.Description))
+                            {
+                                <p class="card-text">@category.Description</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
     }
     else
     {
-        <p>Žádné kategorie nebyly nalezeny.</p>
+        <div class="row">
+            <div class="col">
+                <div class="alert alert-info">
+                    Žádné kategorie nebyly nalezeny.
+                </div>
+            </div>
+        </div>
     }
 </div>
