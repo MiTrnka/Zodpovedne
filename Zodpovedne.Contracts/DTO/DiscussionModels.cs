@@ -34,7 +34,7 @@ public class UpdateDiscussionDto
 
     [Required(ErrorMessage = "Obsah diskuze je povinný")]
     public string Content { get; set; } = "";
-    
+
     // Typ diskuze může měnit jen admin
     public DiscussionType Type { get; set; }
 }
