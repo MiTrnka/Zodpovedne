@@ -62,6 +62,7 @@ public class DiscussionDetailDto
     public string? ImagePath { get; set; }
     public string CategoryName { get; set; } = "";
     public string AuthorNickname { get; set; } = "";
+    public string AuthorId { get; set; } = "";
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public int ViewCount { get; set; }

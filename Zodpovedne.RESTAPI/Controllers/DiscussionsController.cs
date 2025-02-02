@@ -97,10 +97,56 @@ public class DiscussionsController : ControllerBase
             ImagePath = discussion.ImagePath,
             CategoryName = discussion.Category.Name,
             AuthorNickname = discussion.User.Nickname,
+            AuthorId = discussion.UserId,
             CreatedAt = discussion.CreatedAt,
             UpdatedAt = discussion.UpdatedAt,
             ViewCount = discussion.ViewCount,
             // Mapujeme pouze root komentáře (komentáře přímo k diskuzi)
+            Comments = discussion.Comments
+                .Where(c => c.ParentCommentId == null)
+                .Select(c => MapCommentToDto(c))
+                .ToList()
+        };
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Vrátí detail diskuze podle jejího kódu
+    /// </summary>
+    [HttpGet("byCode/{code}")]
+    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussionByCode(string code)
+    {
+        var discussion = await dbContext.Discussions
+            .Include(d => d.Category)
+            .Include(d => d.User)
+            .Include(d => d.Comments.Where(c => c.IsVisible))
+                .ThenInclude(c => c.User)
+            .Include(d => d.Comments.Where(c => c.IsVisible))
+                .ThenInclude(c => c.Replies.Where(r => r.IsVisible))
+                    .ThenInclude(r => r.User)
+            .FirstOrDefaultAsync(d => d.Code == code && d.IsVisible);
+
+        if (discussion == null)
+            return NotFound();
+
+        // Zvýšíme počet zobrazení
+        discussion.ViewCount++;
+        await dbContext.SaveChangesAsync();
+
+        var result = new DiscussionDetailDto
+        {
+            Id = discussion.Id,
+            Title = discussion.Title,
+            Content = discussion.Content,
+            ImagePath = discussion.ImagePath,
+            CategoryName = discussion.Category.Name,
+            AuthorNickname = discussion.User.Nickname,
+            AuthorId = discussion.UserId,
+            CreatedAt = discussion.CreatedAt,
+            UpdatedAt = discussion.UpdatedAt,
+            ViewCount = discussion.ViewCount,
+            Type = discussion.Type,
             Comments = discussion.Comments
                 .Where(c => c.ParentCommentId == null)
                 .Select(c => MapCommentToDto(c))

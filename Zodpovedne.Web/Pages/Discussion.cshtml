@@ -1,4 +1,147 @@
-﻿@page
-@model Zodpovedne.Web.Pages.DiscussionModel
+﻿@page "/categories/{categoryCode}/{discussionCode}"
+@model DiscussionModel
 @{
+    ViewData["Title"] = Model.Discussion?.Title ?? "Diskuze";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <a href="/categories/@Model.CategoryCode" class="btn btn-outline-secondary mb-3">
+                <i class="bi bi-arrow-left"></i> Zpět na kategorii
+            </a>
+
+            @if (Model.Discussion != null)
+            {
+                <h1>@Model.Discussion.Title</h1>
+                <div class="text-muted mb-3">
+                    <span title="Autor">
+                        <i class="bi bi-person"></i> @Model.Discussion.AuthorNickname
+                    </span>
+                    <span class="mx-2">•</span>
+                    <span title="Datum vytvoření">
+                        <i class="bi bi-calendar"></i> @Model.Discussion.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                    </span>
+                    <span class="mx-2">•</span>
+                    <span title="Počet zobrazení">
+                        <i class="bi bi-eye"></i> @Model.Discussion.ViewCount
+                    </span>
+                </div>
+
+                @if (Model.CanEditDiscussion)
+                {
+                    <div class="btn-group mb-3">
+                        <a href="/categories/@Model.CategoryCode/discussions/@Model.DiscussionCode/edit" class="btn btn-primary">
+                            <i class="bi bi-pencil"></i> Upravit
+                        </a>
+                        <form method="post" asp-page-handler="DeleteDiscussion" asp-route-id="@Model.Discussion.Id" class="d-inline"
+                              onsubmit="return confirm('Opravdu chcete smazat tuto diskuzi?');">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Smazat
+                            </button>
+                        </form>
+                    </div>
+                }
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        @Html.Raw(Model.Discussion.Content)
+                    </div>
+                </div>
+
+                <h3>Komentáře</h3>
+                @if (Model.Discussion.Comments.Any())
+                {
+                    @foreach (var comment in Model.Discussion.Comments.Where(c => c.ParentCommentId == null).OrderByDescending(c => c.CreatedAt))
+                    {
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div class="text-muted small">
+                                        <i class="bi bi-person"></i> @comment.AuthorNickname
+                                        <span class="mx-2">•</span>
+                                        @comment.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                    </div>
+                                    @if (Model.IsAdmin)
+                                    {
+                                        <div class="btn-group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <form method="post" asp-page-handler="DeleteComment" asp-route-commentId="@comment.Id" class="d-inline"
+                                                  onsubmit="return confirm('Opravdu chcete smazat tento komentář?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    }
+                                </div>
+                                <p class="mt-2 mb-0">@comment.Content</p>
+                            </div>
+
+                            @* Reakce na komentář *@
+                            @foreach (var reply in comment.Replies.OrderBy(r => r.CreatedAt))
+                            {
+                                <div class="card-body border-top ms-4">
+                                    <div class="d-flex justify-content-between">
+                                        <div class="text-muted small">
+                                            <i class="bi bi-person"></i> @reply.AuthorNickname
+                                            <span class="mx-2">•</span>
+                                            @reply.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                        </div>
+                                        @if (Model.IsAdmin)
+                                        {
+                                            <div class="btn-group">
+                                                <a href="#" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <form method="post" asp-page-handler="DeleteComment" asp-route-commentId="@reply.Id" class="d-inline"
+                                                      onsubmit="return confirm('Opravdu chcete smazat tento komentář?');">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                    </div>
+                                    <p class="mt-2 mb-0">@reply.Content</p>
+                                </div>
+                            }
+
+                            @if (HttpContext.Session.GetString("JWTToken") != null)
+                            {
+                                <div class="card-footer">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="showReplyForm(@comment.Id)">
+                                        <i class="bi bi-reply"></i> Odpovědět
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p>Zatím žádné komentáře.</p>
+                }
+
+                @if (HttpContext.Session.GetString("JWTToken") != null)
+                {
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <h5>Přidat komentář</h5>
+                            <form method="post" asp-page-handler="AddComment">
+                                <textarea name="content" class="form-control" rows="3" required></textarea>
+                                <button type="submit" class="btn btn-primary mt-2">Odeslat</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 }
