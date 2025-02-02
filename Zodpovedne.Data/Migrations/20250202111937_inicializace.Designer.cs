@@ -12,8 +12,8 @@ using Zodpovedne.Data.Data;
 namespace Zodpovedne.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250130114107_Inicializace")]
-    partial class Inicializace
+    [Migration("20250202111937_inicializace")]
+    partial class inicializace
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -327,6 +327,11 @@ namespace Zodpovedne.Data.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
@@ -344,6 +349,9 @@ namespace Zodpovedne.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

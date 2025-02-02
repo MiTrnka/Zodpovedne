@@ -7,7 +7,7 @@ using Zodpovedne.Contracts.DTO;
 namespace Zodpovedne.Web.Pages;
 
 //[AuthenticationFilter]
-[AdminAuthorizationFilter]
+//[AdminAuthorizationFilter]
 public class CategoriesModel : PageModel
 {
     private readonly IHttpClientFactory _clientFactory;
@@ -23,14 +23,14 @@ public class CategoriesModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        var token = HttpContext.Session.GetString("JWTToken");
+        /*var token = HttpContext.Session.GetString("JWTToken");
         if (string.IsNullOrEmpty(token))
         {
             return RedirectToPage("/Account/Login");
-        }
+        }*/
 
         var client = _clientFactory.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        //client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/categories");
         if (response.IsSuccessStatusCode)

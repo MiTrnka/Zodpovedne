@@ -6,6 +6,7 @@ using Zodpovedne.Data.Data;
 using Zodpovedne.Data.Models;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Contracts.Enums;
+using Zodpovedne.Data.Helpers;
 
 
 namespace Zodpovedne.RESTAPI.Controllers;
@@ -36,7 +37,7 @@ public class DiscussionsController : ControllerBase
             .Where(d => d.IsVisible);
 
         // Pokud je zadaná kategorie, filtrujeme podle ní
-        if (categoryId.HasValue)
+        if (categoryId is not null)
         {
             query = query.Where(d => d.CategoryId == categoryId.Value);
         }
@@ -53,7 +54,8 @@ public class DiscussionsController : ControllerBase
                 CreatedAt = d.CreatedAt,
                 CommentsCount = d.Comments.Count(c => c.IsVisible),
                 ViewCount = d.ViewCount,
-                Type = d.Type
+                Type = d.Type,
+                Code = d.Code
             })
             .ToListAsync();
 
@@ -126,6 +128,11 @@ public class DiscussionsController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
 
+        // Vygenerujeme URL-friendly kód
+        var baseCode = UrlHelper.GenerateUrlFriendlyCode(model.Title);
+        var suffix = UrlHelper.GenerateUniqueSuffix();
+        var code = $"{baseCode}-{suffix}";
+
         var discussion = new Discussion
         {
             CategoryId = model.CategoryId,
@@ -133,9 +140,10 @@ public class DiscussionsController : ControllerBase
             Title = model.Title,
             Content = model.Content,
             CreatedAt = DateTime.UtcNow,
-            IsVisible = true
+            IsVisible = true,
+            Type = model.Type,
+            Code = code
         };
-
         dbContext.Discussions.Add(discussion);
         await dbContext.SaveChangesAsync();
 

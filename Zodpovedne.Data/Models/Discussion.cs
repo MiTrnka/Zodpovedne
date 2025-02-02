@@ -32,6 +32,10 @@ public class Discussion
 
     public DiscussionType Type { get; set; } = DiscussionType.Normal;
 
+    [Required]
+    [MaxLength(200)]  // Dostatečně dlouhé pro title + suffix
+    public string Code { get; set; } = "";
+
     // Navigační vlastnosti
     public virtual Category Category { get; set; } = null!;
     public virtual ApplicationUser User { get; set; } = null!;

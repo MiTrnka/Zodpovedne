@@ -324,6 +324,11 @@ namespace Zodpovedne.Data.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");

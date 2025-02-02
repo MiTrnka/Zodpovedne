@@ -50,6 +50,7 @@ public class DiscussionListDto
     public int CommentsCount { get; set; }
     public int ViewCount { get; set; }
     public DiscussionType Type { get; set; }
+    public string Code { get; set; } = "";
 }
 
 // Pro detail diskuze včetně komentářů

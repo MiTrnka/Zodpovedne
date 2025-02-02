@@ -100,6 +100,7 @@ public class TestDataSeeder : ITestDataSeeder
                     CategoryId = category.Id,
                     UserId = author.Id,
                     Title = discussionData.Title,
+                    Code = discussionData.Code,
                     Content = discussionData.Content,
                     IsVisible = true,
                     CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30))
@@ -157,7 +158,7 @@ public class TestDataSeeder : ITestDataSeeder
         }
     }
 
-    private (string Title, string Content)[] GetDiscussionsForCategory(string categoryName)
+    private (string Title, string Content, string Code)[] GetDiscussionsForCategory(string categoryName)
     {
         switch (categoryName)
         {
@@ -166,19 +167,23 @@ public class TestDataSeeder : ITestDataSeeder
                 {
                     (
                         "První příznaky těhotenství",
-                        "Chtěla bych se podělit o své první příznaky těhotenství. Nejvíc mě překvapilo..."
+                        "Chtěla bych se podělit o své první příznaky těhotenství. Nejvíc mě překvapilo...",
+                        "prvni-priznaky-tehotenstvi"
                     ),
                     (
                         "Cvičení v těhotenství",
-                        "Jaké cviky jsou vhodné během těhotenství? Já osobně mám dobrou zkušenost s..."
+                        "Jaké cviky jsou vhodné během těhotenství? Já osobně mám dobrou zkušenost s...",
+                        "cviceni-v-tehotenstvi"
                     ),
                     (
                         "Strava v těhotenství",
-                        "Zajímalo by mě, jak jste upravily jídelníček v těhotenství. Já například..."
+                        "Zajímalo by mě, jak jste upravily jídelníček v těhotenství. Já například...",
+                        "strava-v-tehotenstvi"
                     ),
                     (
                         "Příprava na miminko",
-                        "Co všechno jste pořizovaly před narozením miminka? Já mám seznam..."
+                        "Co všechno jste pořizovaly před narozením miminka? Já mám seznam...",
+                        "priprava-na-miminko"
                     )
                 };
 
@@ -187,19 +192,23 @@ public class TestDataSeeder : ITestDataSeeder
                 {
                     (
                         "Porodnice v Praze",
-                        "Máte někdo zkušenost s porodnicí v Podolí? Zajímají mě především..."
+                        "Máte někdo zkušenost s porodnicí v Podolí? Zajímají mě především...",
+                        "porodnice-v-praze"
                     ),
                     (
                         "Porodní plán",
-                        "Jak vypadal váš porodní plán? Já do něj zahrnula následující body..."
+                        "Jak vypadal váš porodní plán? Já do něj zahrnula následující body...",
+                        "porodni-plan"
                     ),
                     (
                         "První doba porodní",
-                        "Jak dlouho vám trvala první doba porodní? U mě to bylo..."
+                        "Jak dlouho vám trvala první doba porodní? U mě to bylo...",
+                        "prvni-doba-porodni"
                     ),
                     (
                         "Epidurální analgezie",
-                        "Rodila jsem s epidurálem a chtěla bych se podělit o zkušenost..."
+                        "Rodila jsem s epidurálem a chtěla bych se podělit o zkušenost...",
+                        "epiduralni-analgezie"
                     )
                 };
 
@@ -208,19 +217,23 @@ public class TestDataSeeder : ITestDataSeeder
                 {
                     (
                         "Problémy s kojením",
-                        "Řešila jsem problém se špatným přisáváním. Pomohlo mi..."
+                        "Řešila jsem problém se špatným přisáváním. Pomohlo mi...",
+                        "problemy-s-kojenim"
                     ),
                     (
                         "Kojení a práce",
-                        "Jak zvládáte kojení při návratu do práce? Já to řeším takto..."
+                        "Jak zvládáte kojení při návratu do práce? Já to řeším takto...",
+                        "kojeni-a-prace"
                     ),
                     (
                         "Odstříkávání",
-                        "Jakou odsávačku používáte? Já mám zkušenost s..."
+                        "Jakou odsávačku používáte? Já mám zkušenost s...",
+                        "odstrikavani"
                     ),
                     (
                         "Dokrmy při kojení",
-                        "Kdy jste začaly s dokrmy? My jsme začali..."
+                        "Kdy jste začaly s dokrmy? My jsme začali...",
+                        "dokrmy-pri-kojeni"
                     )
                 };
 
@@ -229,19 +242,23 @@ public class TestDataSeeder : ITestDataSeeder
                 {
                     (
                         "Vzdorovité období",
-                        "Jak zvládáte období vzdoru u dvouletého dítěte? Nám pomáhá..."
+                        "Jak zvládáte období vzdoru u dvouletého dítěte? Nám pomáhá...",
+                        "vzdorovite-obdobi"
                     ),
                     (
                         "Sourozenecké vztahy",
-                        "Jak jste řešili žárlení staršího sourozence? My používáme metodu..."
+                        "Jak jste řešili žárlení staršího sourozence? My používáme metodu...",
+                        "sourozenecke-vztahy"
                     ),
                     (
                         "Spánkový režim",
-                        "Jaký máte spánkový režim u ročního dítěte? My jsme zavedli..."
+                        "Jaký máte spánkový režim u ročního dítěte? My jsme zavedli...",
+                        "spankovy-rezim"
                     ),
                     (
                         "Hranice ve výchově",
-                        "Jak stanovujete hranice ve výchově? Osvědčilo se nám..."
+                        "Jak stanovujete hranice ve výchově? Osvědčilo se nám...",
+                        "hranice-ve-vychove"
                     )
                 };
 
@@ -250,24 +267,28 @@ public class TestDataSeeder : ITestDataSeeder
                 {
                     (
                         "Adaptace ve školce",
-                        "Jak probíhala adaptace vašeho dítěte ve školce? U nás to bylo..."
+                        "Jak probíhala adaptace vašeho dítěte ve školce? U nás to bylo...",
+                        "adaptace-ve-skolce"
                     ),
                     (
                         "Výběr základní školy",
-                        "Podle čeho vybíráte základní školu? My se zaměřujeme na..."
+                        "Podle čeho vybíráte základní školu? My se zaměřujeme na...",
+                        "vyber-zakladni-skoly"
                     ),
                     (
                         "Domácí příprava do školy",
-                        "Kolik času věnujete domácí přípravě? My máme systém..."
+                        "Kolik času věnujete domácí přípravě? My máme systém...",
+                        "domaci-priprava-do-skoly"
                     ),
                     (
                         "Alternativní vzdělávání",
-                        "Máte zkušenost s Montessori školkou? Naše zkušenosti jsou..."
+                        "Máte zkušenost s Montessori školkou? Naše zkušenosti jsou...",
+                        "alternativni-vzdelavani"
                     )
                 };
 
             default:
-                return Array.Empty<(string, string)>();
+                return Array.Empty<(string, string, string)>();
         }
     }
 
