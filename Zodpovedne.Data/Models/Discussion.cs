@@ -37,4 +37,5 @@ public class Discussion
     public virtual Category Category { get; set; } = null!;
     public virtual ApplicationUser User { get; set; } = null!;
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+    public virtual ICollection<DiscussionLike> Likes { get; set; } = new List<DiscussionLike>();
 }

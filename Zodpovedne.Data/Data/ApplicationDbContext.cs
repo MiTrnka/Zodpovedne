@@ -23,6 +23,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Category> Categories { get; set; }
     public DbSet<Discussion> Discussions { get; set; }
     public DbSet<Comment> Comments { get; set; }
+    public DbSet<DiscussionLike> DiscussionLikes { get; set; }
+    public DbSet<CommentLike> CommentLikes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -97,6 +99,48 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(c => c.ParentCommentId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);
+        });
+
+        // Konfigurace DiscussionLike
+        builder.Entity<DiscussionLike>(entity =>
+        {
+            entity.ToTable("DiscussionLikes");
+
+            // Vztah k Discussion (N:1)
+            entity.HasOne(dl => dl.Discussion)
+                .WithMany(d => d.Likes)
+                .HasForeignKey(dl => dl.DiscussionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Vztah k User (N:1)
+            entity.HasOne(dl => dl.User)
+                .WithMany()
+                .HasForeignKey(dl => dl.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Unikátní kombinace DiscussionId a UserId (uživatel může dát jen jeden like)
+            entity.HasIndex(dl => new { dl.DiscussionId, dl.UserId }).IsUnique();
+        });
+
+        // Konfigurace CommentLike
+        builder.Entity<CommentLike>(entity =>
+        {
+            entity.ToTable("CommentLikes");
+
+            // Vztah k Comment (N:1)
+            entity.HasOne(cl => cl.Comment)
+                .WithMany(c => c.Likes)
+                .HasForeignKey(cl => cl.CommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Vztah k User (N:1)
+            entity.HasOne(cl => cl.User)
+                .WithMany()
+                .HasForeignKey(cl => cl.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Unikátní kombinace CommentId a UserId (uživatel může dát jen jeden like)
+            entity.HasIndex(cl => new { cl.CommentId, cl.UserId }).IsUnique();
         });
     }
 }

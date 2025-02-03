@@ -68,6 +68,7 @@ public class DiscussionDetailDto
     public int ViewCount { get; set; }
     public DiscussionType Type { get; set; }
     public ICollection<CommentDto> Comments { get; set; } = new List<CommentDto>();
+    public LikeInfoDto Likes { get; set; } = new();
 }
 
 // Pro komentáře
@@ -81,6 +82,7 @@ public class CommentDto
     public int? ParentCommentId { get; set; }
     public CommentType Type { get; set; }
     public ICollection<CommentDto> Replies { get; set; } = new List<CommentDto>();
+    public LikeInfoDto Likes { get; set; } = new();
 }
 
 // Pro vytvoření nového komentáře

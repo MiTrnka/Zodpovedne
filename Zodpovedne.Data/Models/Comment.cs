@@ -36,4 +36,5 @@ public class Comment
 
     // Kolekce reakcí na tento komentář (bude obsahovat položky pouze pokud jde o root komentář)
     public virtual ICollection<Comment> Replies { get; set; } = new List<Comment>();
+    public virtual ICollection<CommentLike> Likes { get; set; } = new List<CommentLike>();
 }
