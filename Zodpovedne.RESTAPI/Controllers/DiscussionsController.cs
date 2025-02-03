@@ -28,30 +28,34 @@ public class DiscussionsController : ControllerBase
     /// <summary>
     /// Vrátí seznam všech diskuzí s možností filtrování podle kategorie
     /// </summary>
-    /// <param name="categoryId">Nepovinný parametr pro filtrování podle kategorie</param>
-    /// <returns>Seznam diskuzí s základními informacemi</returns>
     [HttpGet]
     public async Task<ActionResult<IEnumerable<DiscussionListDto>>> GetDiscussions(int? categoryId = null)
     {
+        // Získání ID a role přihlášeného uživatele pro filtrování skrytého obsahu
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole("Admin");
 
+        // Základní LINQ dotaz s načtením souvisejících entit
         var query = dbContext.Discussions
             .Include(d => d.Category)
             .Include(d => d.User)
             .Include(d => d.Comments)
-            .Where(d => d.Type != DiscussionType.Deleted)  // Nikdy nezobrazujeme smazané
-            .Where(d => d.Type != DiscussionType.Hidden || // Hidden zobrazíme jen adminům a autorům
-                isAdmin || d.UserId == userId);
+            .Include(d => d.Likes)  // Přidáno načítání lajků pro diskuze
+            .Where(d => d.Type != DiscussionType.Deleted)  // Filtrujeme smazané diskuze
+            .Where(d => d.Type != DiscussionType.Hidden || // Filtrujeme skryté diskuze, kromě:
+                isAdmin ||                                  // - pro adminy
+                d.UserId == userId);                       // - pro autory diskuze
 
+        // Volitelné filtrování podle kategorie
         if (categoryId.HasValue)
         {
             query = query.Where(d => d.CategoryId == categoryId.Value);
         }
 
+        // Načtení dat s řazením a mapováním na DTO
         var discussions = await query
-            .OrderByDescending(d => d.Type == DiscussionType.Top)
-            .ThenByDescending(d => d.CreatedAt)
+            .OrderByDescending(d => d.Type == DiscussionType.Top)  // TOP diskuze první
+            .ThenByDescending(d => d.CreatedAt)                    // Pak podle data vytvoření
             .Select(d => new DiscussionListDto
             {
                 Id = d.Id,
@@ -60,12 +64,22 @@ public class DiscussionsController : ControllerBase
                 AuthorNickname = d.User.Nickname,
                 CreatedAt = d.CreatedAt,
                 CommentsCount = d.Comments.Count(c =>
-                    c.Type != CommentType.Deleted && // Nezapočítáváme smazané
-                    (c.Type != CommentType.Hidden || // Hidden jen pro adminy a autory
-                        isAdmin || c.UserId == userId)),
+                    c.Type != CommentType.Deleted &&               // Nepočítáme smazané komentáře
+                    (c.Type != CommentType.Hidden ||              // Skryté komentáře počítáme jen:
+                        isAdmin ||                                // - pro adminy
+                        c.UserId == userId)),                     // - pro autory komentáře
                 ViewCount = d.ViewCount,
                 Type = d.Type,
-                Code = d.Code
+                Code = d.Code,
+                Likes = new LikeInfoDto                          // Přidáno mapování lajků
+                {
+                    LikeCount = d.Likes.Count,
+                    HasUserLiked = d.Likes.Any(l => l.UserId == userId),
+                    CanUserLike = isAdmin ||
+                        (!string.IsNullOrEmpty(userId) &&
+                         d.UserId != userId &&
+                         !d.Likes.Any(l => l.UserId == userId))
+                }
             })
             .ToListAsync();
 
@@ -75,47 +89,55 @@ public class DiscussionsController : ControllerBase
     /// <summary>
     /// Vrátí detail konkrétní diskuze včetně všech komentářů
     /// </summary>
-    /// <param name="id">ID diskuze</param>
-    /// <returns>Detail diskuze s komentáři</returns>
     [HttpGet("{id}")]
     public async Task<ActionResult<DiscussionDetailDto>> GetDiscussion(int id)
     {
+        // Získání ID a role přihlášeného uživatele
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole("Admin");
 
+        // Načtení diskuze včetně souvisejících dat
         var discussion = await dbContext.Discussions
             .Include(d => d.Category)
             .Include(d => d.User)
+            .Include(d => d.Likes)  // Přidáno načítání lajků pro diskuzi
             .Include(d => d.Comments)
                 .ThenInclude(c => c.User)
             .Include(d => d.Comments)
+                .ThenInclude(c => c.Likes)  // Přidáno načítání lajků pro komentáře
+            .Include(d => d.Comments)
                 .ThenInclude(c => c.Replies)
                     .ThenInclude(r => r.User)
+            .Include(d => d.Comments)
+                .ThenInclude(c => c.Replies)
+                    .ThenInclude(r => r.Likes)  // Přidáno načítání lajků pro odpovědi
             .FirstOrDefaultAsync(d => d.Id == id &&
-                d.Type != DiscussionType.Deleted &&  // Smazané nikdy nezobrazíme
-                (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId));  // Hidden jen pro adminy a autory
+                d.Type != DiscussionType.Deleted &&
+                (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId));
 
         if (discussion == null)
             return NotFound();
 
-        // Filtrujeme komentáře
+        // Filtrujeme komentáře dle viditelnosti
         var filteredComments = discussion.Comments
-            .Where(c => c.Type != CommentType.Deleted &&  // Smazané nezobrazíme
-                (c.Type != CommentType.Hidden || isAdmin || c.UserId == userId))  // Hidden jen pro adminy a autory
+            .Where(c => c.Type != CommentType.Deleted &&
+                (c.Type != CommentType.Hidden || isAdmin || c.UserId == userId))
             .ToList();
 
-        // Pro každý hlavní komentář filtrujeme jeho reakce
+        // Filtrujeme odpovědi na komentáře
         foreach (var comment in filteredComments)
         {
             comment.Replies = comment.Replies
-                .Where(r => r.Type != CommentType.Deleted &&  // Smazané nezobrazíme
-                    (r.Type != CommentType.Hidden || isAdmin || r.UserId == userId))  // Hidden jen pro adminy a autory
+                .Where(r => r.Type != CommentType.Deleted &&
+                    (r.Type != CommentType.Hidden || isAdmin || r.UserId == userId))
                 .ToList();
         }
 
+        // Zvýšení počtu zobrazení
         discussion.ViewCount++;
         await dbContext.SaveChangesAsync();
 
+        // Mapování na DTO včetně informací o lajcích
         var result = new DiscussionDetailDto
         {
             Id = discussion.Id,
@@ -129,6 +151,15 @@ public class DiscussionsController : ControllerBase
             UpdatedAt = discussion.UpdatedAt,
             ViewCount = discussion.ViewCount,
             Type = discussion.Type,
+            Likes = new LikeInfoDto  // Přidáno mapování lajků diskuze
+            {
+                LikeCount = discussion.Likes.Count,
+                HasUserLiked = discussion.Likes.Any(l => l.UserId == userId),
+                CanUserLike = isAdmin ||
+                    (!string.IsNullOrEmpty(userId) &&
+                     discussion.UserId != userId &&
+                     !discussion.Likes.Any(l => l.UserId == userId))
+            },
             Comments = filteredComments
                 .Where(c => c.ParentCommentId == null)
                 .Select(c => MapCommentToDto(c, userId, isAdmin))
@@ -138,47 +169,46 @@ public class DiscussionsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Vrátí detail diskuze podle jejího kódu
-    /// </summary>
     [HttpGet("byCode/{code}")]
     public async Task<ActionResult<DiscussionDetailDto>> GetDiscussionByCode(string code)
     {
-        // Získáme ID přihlášeného uživatele
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole("Admin");
 
         var discussion = await dbContext.Discussions
             .Include(d => d.Category)
             .Include(d => d.User)
+            .Include(d => d.Likes)  // Přidáno pro diskuzi
             .Include(d => d.Comments)
                 .ThenInclude(c => c.User)
             .Include(d => d.Comments)
+                .ThenInclude(c => c.Likes)  // Přidáno pro komentáře
+            .Include(d => d.Comments)
                 .ThenInclude(c => c.Replies)
                     .ThenInclude(r => r.User)
+            .Include(d => d.Comments)
+                .ThenInclude(c => c.Replies)
+                    .ThenInclude(r => r.Likes)  // Přidáno pro odpovědi
             .FirstOrDefaultAsync(d => d.Code == code &&
-                d.Type != DiscussionType.Deleted &&  // Smazané nikdy nezobrazíme
-                (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId));  // Hidden jen pro adminy a autory
+                d.Type != DiscussionType.Deleted &&
+                (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId));
 
         if (discussion == null)
             return NotFound();
 
-        // Filtrujeme komentáře
         var filteredComments = discussion.Comments
-            .Where(c => c.Type != CommentType.Deleted &&  // Smazané nezobrazíme
-                (c.Type != CommentType.Hidden || isAdmin || c.UserId == userId))  // Hidden jen pro adminy a autory
+            .Where(c => c.Type != CommentType.Deleted &&
+                (c.Type != CommentType.Hidden || isAdmin || c.UserId == userId))
             .ToList();
 
-        // Pro každý hlavní komentář filtrujeme jeho reakce
         foreach (var comment in filteredComments)
         {
             comment.Replies = comment.Replies
-                .Where(r => r.Type != CommentType.Deleted &&  // Smazané nezobrazíme
-                    (r.Type != CommentType.Hidden || isAdmin || r.UserId == userId))  // Hidden jen pro adminy a autory
+                .Where(r => r.Type != CommentType.Deleted &&
+                    (r.Type != CommentType.Hidden || isAdmin || r.UserId == userId))
                 .ToList();
         }
 
-        // Zvýšíme počet zobrazení
         discussion.ViewCount++;
         await dbContext.SaveChangesAsync();
 
@@ -195,6 +225,15 @@ public class DiscussionsController : ControllerBase
             UpdatedAt = discussion.UpdatedAt,
             ViewCount = discussion.ViewCount,
             Type = discussion.Type,
+            Likes = new LikeInfoDto  // Přidáno mapování lajků
+            {
+                LikeCount = discussion.Likes.Count,
+                HasUserLiked = discussion.Likes.Any(l => l.UserId == userId),
+                CanUserLike = isAdmin ||
+                    (!string.IsNullOrEmpty(userId) &&
+                     discussion.UserId != userId &&
+                     !discussion.Likes.Any(l => l.UserId == userId))
+            },
             Comments = filteredComments
                 .Where(c => c.ParentCommentId == null)
                 .Select(c => MapCommentToDto(c, userId, isAdmin))

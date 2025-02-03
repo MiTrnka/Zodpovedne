@@ -51,6 +51,7 @@ public class DiscussionListDto
     public int ViewCount { get; set; }
     public DiscussionType Type { get; set; }
     public string Code { get; set; } = "";
+    public LikeInfoDto Likes { get; set; } = new();
 }
 
 // Pro detail diskuze včetně komentářů
