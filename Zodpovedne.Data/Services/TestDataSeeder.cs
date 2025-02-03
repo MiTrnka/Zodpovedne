@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Data.Interfaces;
+using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Data.Models;
 
 namespace Zodpovedne.Data.Services;
@@ -102,7 +103,7 @@ public class TestDataSeeder : ITestDataSeeder
                     Title = discussionData.Title,
                     Code = discussionData.Code,
                     Content = discussionData.Content,
-                    IsVisible = true,
+                    Type = DiscussionType.Normal,
                     CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30))
                 };
                 dbContext.Discussions.Add(discussion);
@@ -128,7 +129,7 @@ public class TestDataSeeder : ITestDataSeeder
                 DiscussionId = discussion.Id,
                 UserId = author.Id,
                 Content = GetRandomComment(discussion.Title),
-                IsVisible = true,
+                Type = CommentType.Normal,
                 CreatedAt = discussion.CreatedAt.AddHours(random.Next(1, 72))
             };
             dbContext.Comments.Add(rootComment);
@@ -148,7 +149,7 @@ public class TestDataSeeder : ITestDataSeeder
                         UserId = replyAuthor.Id,
                         ParentCommentId = rootComment.Id,
                         Content = GetRandomReply(rootComment.Content),
-                        IsVisible = true,
+                        Type = CommentType.Normal,
                         CreatedAt = rootComment.CreatedAt.AddHours(random.Next(1, 24))
                     };
                     dbContext.Comments.Add(reply);

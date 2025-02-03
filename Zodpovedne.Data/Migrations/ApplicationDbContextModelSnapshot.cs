@@ -289,10 +289,10 @@ namespace Zodpovedne.Data.Migrations
                     b.Property<int>("DiscussionId")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsVisible")
-                        .HasColumnType("boolean");
-
                     b.Property<int?>("ParentCommentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -338,9 +338,6 @@ namespace Zodpovedne.Data.Migrations
 
                     b.Property<string>("ImagePath")
                         .HasColumnType("text");
-
-                    b.Property<bool>("IsVisible")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Title")
                         .IsRequired()

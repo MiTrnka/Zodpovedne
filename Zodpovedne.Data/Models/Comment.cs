@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Data.Models;
 
@@ -18,15 +19,13 @@ public class Comment
     [Required(ErrorMessage = "Obsah komentáře je povinný")]
     public string Content { get; set; } = "";
 
-    // Pro možnost moderování obsahu
-    public bool IsVisible { get; set; } = true;
-
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }
 
     // Pomocná vlastnost pro zjištění, zda jde o root komentář
     public bool IsRootComment => ParentCommentId == null;
+    public CommentType Type { get; set; } = CommentType.Normal;
 
     // Navigační vlastnosti
     public virtual Discussion Discussion { get; set; } = null!;

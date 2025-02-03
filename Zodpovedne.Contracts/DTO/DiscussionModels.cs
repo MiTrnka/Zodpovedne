@@ -79,6 +79,7 @@ public class CommentDto
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public int? ParentCommentId { get; set; }
+    public CommentType Type { get; set; }
     public ICollection<CommentDto> Replies { get; set; } = new List<CommentDto>();
 }
 
@@ -87,6 +88,7 @@ public class CreateCommentDto
 {
     [Required(ErrorMessage = "Obsah komentáře je povinný")]
     public string Content { get; set; } = "";
+    public CommentType Type { get; set; } = CommentType.Normal;
 }
 
 // Pro editaci komentáře (pouze admin)
@@ -94,4 +96,5 @@ public class UpdateCommentDto
 {
     [Required(ErrorMessage = "Obsah komentáře je povinný")]
     public string Content { get; set; } = "";
+    public CommentType Type { get; set; } = CommentType.Normal;
 }

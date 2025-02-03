@@ -21,9 +21,6 @@ public class Discussion
     // Pro budoucí implementaci nahrávání obrázků
     public string? ImagePath { get; set; }
 
-    // Pro možnost moderování obsahu
-    public bool IsVisible { get; set; } = true;
-
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }

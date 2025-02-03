@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Zodpovedne.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class inicializace : Migration
+    public partial class Inicializace : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -103,7 +103,6 @@ namespace Zodpovedne.Data.Migrations
                     Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Content = table.Column<string>(type: "text", nullable: false),
                     ImagePath = table.Column<string>(type: "text", nullable: true),
-                    IsVisible = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ViewCount = table.Column<int>(type: "integer", nullable: false),
@@ -222,9 +221,9 @@ namespace Zodpovedne.Data.Migrations
                     UserId = table.Column<string>(type: "text", nullable: false),
                     ParentCommentId = table.Column<int>(type: "integer", nullable: true),
                     Content = table.Column<string>(type: "text", nullable: false),
-                    IsVisible = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Type = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
