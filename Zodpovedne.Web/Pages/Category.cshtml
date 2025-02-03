@@ -1,5 +1,5 @@
 ﻿@* Category.cshtml *@
-@page "/Categories/{categoryCode}"
+@page "/categories/{categoryCode}"
 @model CategoryModel
 @{
     ViewData["Title"] = Model.CategoryName;
@@ -29,7 +29,7 @@
                                 {
                                     <span class="badge bg-primary me-2">TOP</span>
                                 }
-                                <a href="/Categories/@Model.CategoryCode/@discussion.Code" class="text-decoration-none">@discussion.Title</a>
+                                <a href="/categories/@Model.CategoryCode/@discussion.Code" class="text-decoration-none">@discussion.Title</a>
                             </h5>
                             <div class="card-text small text-muted">
                                 <span title="Autor">
@@ -69,7 +69,7 @@
     {
         <div class="row mt-4">
             <div class="col">
-                <a href="/Discussion/Create/@Model.CategoryCode" class="btn btn-primary">
+                <a href="/discussion/create/@Model.CategoryCode" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Nová diskuze
                 </a>
             </div>

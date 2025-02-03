@@ -131,7 +131,7 @@ public class DiscussionsController : ControllerBase
             Type = discussion.Type,
             Comments = filteredComments
                 .Where(c => c.ParentCommentId == null)
-                .Select(c => MapCommentToDto(c))
+                .Select(c => MapCommentToDto(c, userId, isAdmin))
                 .ToList()
         };
 
@@ -184,10 +184,20 @@ public class DiscussionsController : ControllerBase
 
         var result = new DiscussionDetailDto
         {
-            // ... existující mapování ...
+            Id = discussion.Id,
+            Title = discussion.Title,
+            Content = discussion.Content,
+            ImagePath = discussion.ImagePath,
+            CategoryName = discussion.Category.Name,
+            AuthorNickname = discussion.User.Nickname,
+            AuthorId = discussion.UserId,
+            CreatedAt = discussion.CreatedAt,
+            UpdatedAt = discussion.UpdatedAt,
+            ViewCount = discussion.ViewCount,
+            Type = discussion.Type,
             Comments = filteredComments
                 .Where(c => c.ParentCommentId == null)
-                .Select(c => MapCommentToDto(c))
+                .Select(c => MapCommentToDto(c, userId, isAdmin))
                 .ToList()
         };
 
@@ -312,6 +322,7 @@ public class DiscussionsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
+        var isAdmin = User.IsInRole("Admin");
 
         var comment = new Comment
         {
@@ -330,7 +341,7 @@ public class DiscussionsController : ControllerBase
             .Include(c => c.User)
             .FirstAsync(c => c.Id == comment.Id);
 
-        return Ok(MapCommentToDto(comment));
+        return Ok(MapCommentToDto(comment, userId, isAdmin));
     }
 
     /// <summary>
@@ -391,7 +402,7 @@ public class DiscussionsController : ControllerBase
             .Include(c => c.User)
             .FirstAsync(c => c.Id == reply.Id);
 
-        return Ok(MapCommentToDto(reply));
+        return Ok(MapCommentToDto(reply, userId, isAdmin));
     }
 
     /// <summary>
@@ -446,10 +457,169 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Pomocná metoda pro mapování komentáře na DTO
+    /// Přidá like k diskuzi. Pro adminy není omezení počtu liků.
+    /// Pro ostatní uživatele je možný jen jeden like na diskuzi.
     /// </summary>
-    private static CommentDto MapCommentToDto(Comment comment)
+    [Authorize]
+    [HttpPost("{id}/like")]
+    public async Task<ActionResult<LikeInfoDto>> AddDiscussionLike(int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = User.IsInRole("Admin");
+
+        // Najdeme diskuzi
+        var discussion = await dbContext.Discussions
+            .Include(d => d.Likes)
+            .FirstOrDefaultAsync(d => d.Id == id &&
+                d.Type != DiscussionType.Deleted &&
+                (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId));
+
+        if (discussion == null)
+            return NotFound();
+
+        // Kontrola, zda už uživatel nedal like (přeskočíme pro adminy)
+        if (!isAdmin && discussion.Likes.Any(l => l.UserId == userId))
+            return BadRequest("Uživatel už dal této diskuzi like.");
+
+        // Kontrola, zda uživatel nedává like své vlastní diskuzi
+        if (discussion.UserId == userId)
+            return BadRequest("Nelze dát like vlastní diskuzi.");
+
+        // Přidáme like
+        var like = new DiscussionLike
+        {
+            DiscussionId = id,
+            UserId = userId
+        };
+
+        dbContext.DiscussionLikes.Add(like);
+        await dbContext.SaveChangesAsync();
+
+        // Vrátíme aktuální stav liků
+        return Ok(new LikeInfoDto
+        {
+            LikeCount = discussion.Likes.Count + 1,
+            HasUserLiked = true,
+            CanUserLike = isAdmin  // Admin může dávat další liky
+        });
+    }
+
+    /// <summary>
+    /// Přidá like ke komentáři. Pro adminy není omezení počtu liků.
+    /// Pro ostatní uživatele je možný jen jeden like na komentář.
+    /// </summary>
+    [Authorize]
+    [HttpPost("{discussionId}/comments/{commentId}/like")]
+    public async Task<ActionResult<LikeInfoDto>> AddCommentLike(int discussionId, int commentId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = User.IsInRole("Admin");
+
+        // Najdeme komentář
+        var comment = await dbContext.Comments
+            .Include(c => c.Likes)
+            .FirstOrDefaultAsync(c => c.Id == commentId &&
+                c.DiscussionId == discussionId &&
+                c.Type != CommentType.Deleted &&
+                (c.Type != CommentType.Hidden || isAdmin || c.UserId == userId));
+
+        if (comment == null)
+            return NotFound();
+
+        // Kontrola, zda už uživatel nedal like (přeskočíme pro adminy)
+        if (!isAdmin && comment.Likes.Any(l => l.UserId == userId))
+            return BadRequest("Uživatel už dal tomuto komentáři like.");
+
+        // Kontrola, zda uživatel nedává like svému vlastnímu komentáři
+        if (comment.UserId == userId)
+            return BadRequest("Nelze dát like vlastnímu komentáři.");
+
+        // Přidáme like
+        var like = new CommentLike
+        {
+            CommentId = commentId,
+            UserId = userId
+        };
+
+        dbContext.CommentLikes.Add(like);
+        await dbContext.SaveChangesAsync();
+
+        // Vrátíme aktuální stav liků
+        return Ok(new LikeInfoDto
+        {
+            LikeCount = comment.Likes.Count + 1,
+            HasUserLiked = true,
+            CanUserLike = isAdmin  // Admin může dávat další liky
+        });
+    }
+
+    /// <summary>
+    /// Tato pomocná metoda převádí entitu Discussion na DTO objekt, který bude odeslán klientovi.
+    /// Zpracovává všechna související data včetně komentářů a informací o like.
+    /// </summary>
+    /// <param name="discussion">Entita diskuze s načtenými souvisejícími daty (Category, User, Comments, Likes)</param>
+    /// <param name="userId">ID aktuálně přihlášeného uživatele, nebo null pokud není nikdo přihlášen</param>
+    /// <param name="isAdmin">True pokud je přihlášený uživatel v roli Admin</param>
+    /// <returns>DTO objekt obsahující všechny potřebné informace pro zobrazení detailu diskuze</returns>
+    private DiscussionDetailDto MapDiscussionToDetailDto(Discussion discussion, string? userId, bool isAdmin)
+    {
+        // Zjistíme, zda aktuální uživatel už dal like této diskuzi
+        var userLikes = discussion.Likes.Any(l => l.UserId == userId);
+
+        // Uživatel může dát like pokud:
+        // - je admin (může dát neomezený počet liků)
+        // - nebo je přihlášen, není autorem diskuze a ještě nedal like
+        var canLike = isAdmin || (!string.IsNullOrEmpty(userId) &&
+            discussion.UserId != userId && !userLikes);
+
+        return new DiscussionDetailDto
+        {
+            Id = discussion.Id,
+            Title = discussion.Title,
+            Content = discussion.Content,
+            ImagePath = discussion.ImagePath,
+            CategoryName = discussion.Category.Name,
+            AuthorNickname = discussion.User.Nickname,
+            AuthorId = discussion.UserId,
+            CreatedAt = discussion.CreatedAt,
+            UpdatedAt = discussion.UpdatedAt,
+            ViewCount = discussion.ViewCount,
+            Type = discussion.Type,
+            // Informace o like pro tuto diskuzi
+            Likes = new LikeInfoDto
+            {
+                LikeCount = discussion.Likes.Count,    // Celkový počet liků
+                HasUserLiked = userLikes,              // Zda přihlášený uživatel dal like
+                CanUserLike = canLike                  // Zda může přihlášený uživatel dát like
+            },
+            // Mapujeme jen root komentáře (bez reakcí)
+            // Reakce budou mapovány v rámci každého komentáře
+            Comments = discussion.Comments
+                .Where(c => c.ParentCommentId == null)
+                .Select(c => MapCommentToDto(c, userId, isAdmin))
+                .ToList()
+        };
+    }
+
+    /// <summary>
+    /// Tato pomocná metoda převádí entitu Comment na DTO objekt, který bude odeslán klientovi.
+    /// Rekurzivně zpracovává i všechny reakce na tento komentář.
+    /// </summary>
+    /// <param name="comment">Entita komentáře s načtenými souvisejícími daty (User, Replies, Likes)</param>
+    /// <param name="userId">ID aktuálně přihlášeného uživatele, nebo null pokud není nikdo přihlášen</param>
+    /// <param name="isAdmin">True pokud je přihlášený uživatel v roli Admin</param>
+    /// <returns>DTO objekt obsahující všechny potřebné informace pro zobrazení komentáře</returns>
+    private CommentDto MapCommentToDto(Comment comment, string? userId, bool isAdmin)
+    {
+        // Zjistíme, zda aktuální uživatel už dal like tomuto komentáři
+        var userLikes = comment.Likes.Any(l => l.UserId == userId);
+
+        // Uživatel může dát like pokud:
+        // - je admin (může dát neomezený počet liků)
+        // - nebo je přihlášen, není autorem komentáře a ještě nedal like
+        var canLike = isAdmin || (!string.IsNullOrEmpty(userId) &&
+            comment.UserId != userId && !userLikes);
+
         return new CommentDto
         {
             Id = comment.Id,
@@ -459,19 +629,20 @@ public class DiscussionsController : ControllerBase
             UpdatedAt = comment.UpdatedAt,
             ParentCommentId = comment.ParentCommentId,
             Type = comment.Type,
+            // Informace o like pro tento komentář
+            Likes = new LikeInfoDto
+            {
+                LikeCount = comment.Likes.Count,     // Celkový počet liků
+                HasUserLiked = userLikes,            // Zda přihlášený uživatel dal like
+                CanUserLike = canLike                // Zda může přihlášený uživatel dát like
+            },
+            // Rekurzivně mapujeme odpovědi na tento komentář
+            // Filtrujeme jen viditelné odpovědi pro aktuálního uživatele
             Replies = comment.Replies
-                    .Where(r => r.Type != CommentType.Deleted)  // Filtrujeme smazané
-                    .Select(r => new CommentDto
-                    {
-                        Id = r.Id,
-                        Content = r.Content,
-                        AuthorNickname = r.User.Nickname,
-                        CreatedAt = r.CreatedAt,
-                        UpdatedAt = r.UpdatedAt,
-                        ParentCommentId = r.ParentCommentId,
-                        Type = r.Type
-                    })
-                    .ToList()
+                .Where(r => r.Type != CommentType.Deleted &&
+                    (r.Type != CommentType.Hidden || isAdmin || r.UserId == userId))
+                .Select(r => MapCommentToDto(r, userId, isAdmin))
+                .ToList()
         };
     }
 }

@@ -1,11 +1,25 @@
+/*
+Zobrazení detailu diskuze s informacemi o autorovi a poètu zobrazení
+Tlaèítka like pro diskuzi a komentáøe
+Správné zobrazení poètu likù
+Deaktivaci tlaèítek like podle oprávnìní
+Hierarchické zobrazení komentáøù a odpovìdí
+Formuláø pro pøidání nového komentáøe
+Tlaèítka pro odpovìdi na komentáøe
+JavaScript pro asynchronní zpracování like operací
+*/
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using Zodpovedne.Contracts.DTO;
+using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Web.Pages;
 
+/// <summary>
+/// Model pro stránku zobrazující detail diskuze vèetnì komentáøù
+/// </summary>
 public class DiscussionModel : PageModel
 {
     private readonly IHttpClientFactory _clientFactory;
@@ -17,29 +31,61 @@ public class DiscussionModel : PageModel
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Code kategorie z URL
+    /// </summary>
     [BindProperty(SupportsGet = true)]
     public string CategoryCode { get; set; } = "";
 
+    /// <summary>
+    /// Code diskuze z URL
+    /// </summary>
     [BindProperty(SupportsGet = true)]
     public string DiscussionCode { get; set; } = "";
 
+    /// <summary>
+    /// Detail diskuze vèetnì komentáøù a informací o like
+    /// </summary>
     public DiscussionDetailDto? Discussion { get; set; }
-    public bool CanEditDiscussion { get; set; }
-    public bool IsAdmin { get; set; }
 
+    /// <summary>
+    /// Base URL pro API endpointy
+    /// </summary>
+    public string ApiBaseUrl => _configuration["ApiBaseUrl"] ?? "";
+
+    /// <summary>
+    /// JWT token aktuálnì pøihlášeného uživatele
+    /// </summary>
+    public string? JwtToken => HttpContext.Session.GetString("JWTToken");
+
+    /// <summary>
+    /// ID aktuálnì pøihlášeného uživatele
+    /// </summary>
+    public string? CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    /// <summary>
+    /// Indikuje, zda je pøihlášený uživatel admin
+    /// </summary>
+    public bool IsAdmin => User.IsInRole("Admin");
+
+    /// <summary>
+    /// Indikuje, zda je uživatel pøihlášen
+    /// </summary>
+    public bool IsUserLoggedIn => !string.IsNullOrEmpty(JwtToken);
+
+    /// <summary>
+    /// Získá detail diskuze z API
+    /// </summary>
     public async Task<IActionResult> OnGetAsync()
     {
         var client = _clientFactory.CreateClient();
-        var token = HttpContext.Session.GetString("JWTToken");
 
-        if (!string.IsNullOrEmpty(token))
+        if (IsUserLoggedIn)
         {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            IsAdmin = User.IsInRole("Admin");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", JwtToken);
         }
 
-        // Získání detailu diskuze
-        var response = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/discussions/byCode/{DiscussionCode}");
+        var response = await client.GetAsync($"{ApiBaseUrl}/api/discussions/byCode/{DiscussionCode}");
         if (!response.IsSuccessStatusCode)
             return NotFound();
 
@@ -47,42 +93,40 @@ public class DiscussionModel : PageModel
         if (Discussion == null)
             return NotFound();
 
-        // Kontrola oprávnìní k editaci
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        CanEditDiscussion = IsAdmin || (!string.IsNullOrEmpty(userId) && Discussion.AuthorId == userId);
-
         return Page();
     }
 
-    public async Task<IActionResult> OnPostDeleteDiscussionAsync(int id)
-    {
-        if (!IsAdmin && !CanEditDiscussion)
-            return Forbid();
+    /// <summary>
+    /// Urèuje, zda aktuální uživatel mùže editovat diskuzi
+    /// </summary>
+    public bool CanEditDiscussion =>
+        Discussion != null && IsUserLoggedIn &&
+        (IsAdmin || Discussion.AuthorId == CurrentUserId);
 
-        var client = _clientFactory.CreateClient();
-        var token = HttpContext.Session.GetString("JWTToken");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    /// <summary>
+    /// Urèuje, zda je komentáø root (není reakcí na jiný komentáø)
+    /// </summary>
+    public bool IsRootComment(CommentDto comment) =>
+        comment.ParentCommentId == null;
 
-        var response = await client.DeleteAsync($"{_configuration["ApiBaseUrl"]}/api/discussions/{id}");
-        if (!response.IsSuccessStatusCode)
-            return NotFound();
+    /// <summary>
+    /// Urèuje, zda mùže aktuální uživatel dát like diskuzi
+    /// </summary>
+    public bool CanLikeDiscussion =>
+        Discussion != null && IsUserLoggedIn &&
+        Discussion.AuthorId != CurrentUserId &&
+        Discussion.Likes.CanUserLike;
 
-        return RedirectToPage("/Category", new { categoryCode = CategoryCode });
-    }
+    /// <summary>
+    /// Urèuje, zda mùže aktuální uživatel dát like komentáøi
+    /// </summary>
+    public bool CanLikeComment(CommentDto comment) =>
+        IsUserLoggedIn && comment.AuthorNickname != User.Identity?.Name &&
+        comment.Likes.CanUserLike;
 
-    public async Task<IActionResult> OnPostDeleteCommentAsync(int commentId)
-    {
-        if (!IsAdmin)
-            return Forbid();
-
-        var client = _clientFactory.CreateClient();
-        var token = HttpContext.Session.GetString("JWTToken");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        var response = await client.DeleteAsync($"{_configuration["ApiBaseUrl"]}/api/discussions/{Discussion!.Id}/comments/{commentId}");
-        if (!response.IsSuccessStatusCode)
-            return NotFound();
-
-        return RedirectToPage();
-    }
+    /// <summary>
+    /// Vrací tøídu pro tlaèítko like podle stavu
+    /// </summary>
+    public string GetLikeButtonClass(bool canLike) =>
+        canLike ? "btn-outline-primary" : "btn-outline-secondary";
 }

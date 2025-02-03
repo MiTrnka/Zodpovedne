@@ -79,6 +79,19 @@ namespace Zodpovedne.RESTAPI
                     policy.RequireRole("Member"));
             });
 
+
+            // Pøidání CORS do kontejneru služeb
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowSpecificOrigins",
+                    policy =>
+                    {
+                        policy.WithOrigins("http://localhost:5214") // Povolené domény
+                              .AllowAnyMethod()
+                              .AllowAnyHeader();
+                    });
+            });
+
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
 
@@ -124,7 +137,7 @@ namespace Zodpovedne.RESTAPI
             {
                 app.UseHttpsRedirection();
             }
-
+            app.UseCors("AllowSpecificOrigins");
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
