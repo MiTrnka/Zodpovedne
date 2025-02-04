@@ -117,9 +117,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(dl => dl.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            // Unikátní kombinace DiscussionId a UserId (uživatel může dát jen jeden like)
-            entity.HasIndex(dl => new { dl.DiscussionId, dl.UserId }).IsUnique();
         });
 
         // Konfigurace CommentLike
@@ -139,8 +136,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(cl => cl.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Unikátní kombinace CommentId a UserId (uživatel může dát jen jeden like)
-            entity.HasIndex(cl => new { cl.CommentId, cl.UserId }).IsUnique();
         });
     }
 }
