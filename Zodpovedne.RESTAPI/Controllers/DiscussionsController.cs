@@ -569,8 +569,8 @@ public class DiscussionsController : ControllerBase
         if (!isAdmin && comment.Likes.Any(l => l.UserId == userId))
             return BadRequest("Uživatel už dal tomuto komentáři like.");
 
-        // Kontrola, zda uživatel nedává like svému vlastnímu komentáři
-        if (comment.UserId == userId)
+        // Kontrola, zda uživatel nedává like svému vlastnímu komentáři (přeskočit pro adminy)
+        if (!isAdmin && comment.UserId == userId)
             return BadRequest("Nelze dát like vlastnímu komentáři.");
 
         // Přidáme like
