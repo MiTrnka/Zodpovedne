@@ -1,0 +1,39 @@
+﻿@page "/discussion/create/{categoryCode}"
+@model CreateDiscussionModel
+@{
+    ViewData["Title"] = "Nová diskuze";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Nová diskuze v kategorii @Model.CategoryName</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="Input.CategoryId" />
+
+                <div class="mb-3">
+                    <label asp-for="Input.Title" class="form-label">Nadpis</label>
+                    <input asp-for="Input.Title" class="form-control" />
+                    <span asp-validation-for="Input.Title" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Content" class="form-label">Obsah</label>
+                    <textarea asp-for="Input.Content" class="form-control" rows="10"></textarea>
+                    <span asp-validation-for="Input.Content" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <a href="/categories/@Model.CategoryCode" class="btn btn-secondary">Zpět</a>
+                    <button type="submit" class="btn btn-primary">Vytvořit diskuzi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

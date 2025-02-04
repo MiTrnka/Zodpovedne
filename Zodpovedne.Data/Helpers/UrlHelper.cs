@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,22 +12,36 @@ public static class UrlHelper
 {
     public static string GenerateUrlFriendlyCode(string text)
     {
-        if (string.IsNullOrEmpty(text)) return "";
+        if (string.IsNullOrEmpty(text)) return "discussion";
 
-        // Převedeme na malá písmena a odstraníme diakritiku
+        var replacements = new Dictionary<string, string>
+           {
+               {"á", "a"}, {"č", "c"}, {"ď", "d"}, {"é", "e"}, {"ě", "e"},
+               {"í", "i"}, {"ň", "n"}, {"ó", "o"}, {"ř", "r"}, {"š", "s"},
+               {"ť", "t"}, {"ú", "u"}, {"ů", "u"}, {"ý", "y"}, {"ž", "z"},
+               {" ", "_"}, {"-", "_"}
+           };
+
         text = text.ToLower();
-        var bytes = System.Text.Encoding.GetEncoding("Cyrillic").GetBytes(text);
-        text = System.Text.Encoding.ASCII.GetString(bytes);
+        foreach (var replacement in replacements)
+        {
+            text = text.Replace(replacement.Key, replacement.Value);
+        }
 
-        // Nahradíme mezery podtržítkem a odstraníme nepovolené znaky
-        text = Regex.Replace(text, @"[^a-z0-9\s-]", "");
-        text = Regex.Replace(text, @"\s+", "_");
+        // Ponechání pouze povolených znaků (a-z, 0-9 a _)
+        text = Regex.Replace(text, @"[^a-z0-9_]", "");
 
-        // Omezíme délku na 150 znaků (necháme prostor pro suffix)
+        // Nahrazení více podtržítek jedním
+        text = Regex.Replace(text, @"_+", "_");
+
+        // Odstranění podtržítek na začátku a konci
+        text = text.Trim('_');
+
+        // Omezení délky
         if (text.Length > 150)
-            text = text.Substring(0, 150);
+            text = text.Substring(0, 150).TrimEnd('_');
 
-        return text;
+        return string.IsNullOrEmpty(text) ? "discussion" : text;
     }
 
     public static string GenerateUniqueSuffix()

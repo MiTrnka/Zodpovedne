@@ -19,7 +19,7 @@ public class CreateDiscussionDto
     public string Content { get; set; } = "";
 
     // Pro budoucí implementaci
-    public IFormFile? Image { get; set; }
+    //public IFormFile? Image { get; set; }
 
     // Typ diskuze nastavujeme jen při vytvoření, výchozí hodnota Normal
     public DiscussionType Type { get; set; } = DiscussionType.Normal;
