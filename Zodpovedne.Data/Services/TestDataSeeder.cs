@@ -29,11 +29,11 @@ public class TestDataSeeder : ITestDataSeeder
         // Vytvoření testovacích uživatelů
         var users = new[]
         {
-            new { Email = "jana@test.cz", Password = "abc", Nickname = "JanaM" },
-            new { Email = "petra@test.cz", Password = "abc", Nickname = "Peta" },
-            new { Email = "michal@test.cz", Password = "abc", Nickname = "TataMichal" },
-            new { Email = "lucie@test.cz", Password = "abc", Nickname = "LucieS" },
-            new { Email = "tomas@test.cz", Password = "abc", Nickname = "TomasK" }
+            new { Email = "jana@mz.cz", Password = "abc", Nickname = "JanaM" },
+            new { Email = "petra@mz.cz", Password = "abc", Nickname = "Peta" },
+            new { Email = "michal@mz.cz", Password = "abc", Nickname = "TataMichal" },
+            new { Email = "lucie@mz.cz", Password = "abc", Nickname = "LucieS" },
+            new { Email = "tomas@mz.cz", Password = "abc", Nickname = "TomasK" }
         };
 
         var createdUsers = new List<ApplicationUser>();

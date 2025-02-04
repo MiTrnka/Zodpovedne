@@ -43,7 +43,7 @@ public class IdentityDataSeeder : IIdentityDataSeeder
         }
 
         // Vytvoření admin účtu pokud neexistuje
-        var adminEmail = "admin@mamouzodpovedne.cz";
+        var adminEmail = "admin@mz.cz";
         if (await userManager.FindByEmailAsync(adminEmail) == null)
         {
             var admin = new ApplicationUser
@@ -54,7 +54,7 @@ public class IdentityDataSeeder : IIdentityDataSeeder
                 EmailConfirmed = true
             };
 
-            var result = await userManager.CreateAsync(admin, "admin.");
+            var result = await userManager.CreateAsync(admin, "abc");
             if (result.Succeeded)
             {
                 //Přidání role Admin k admin účtu
