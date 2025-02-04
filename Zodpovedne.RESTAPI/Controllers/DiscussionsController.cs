@@ -537,7 +537,7 @@ public class DiscussionsController : ControllerBase
         // Vrátíme aktuální stav liků
         return Ok(new LikeInfoDto
         {
-            LikeCount = discussion.Likes.Count + 1,
+            LikeCount = discussion.Likes.Count,
             HasUserLiked = true,
             CanUserLike = isAdmin  // Admin může dávat další liky
         });
