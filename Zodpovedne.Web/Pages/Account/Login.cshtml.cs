@@ -16,6 +16,9 @@ public class LoginModel : PageModel
         _configuration = configuration;
     }
 
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     [BindProperty]
     public Models.LoginModel Input { get; set; } = new();
 
@@ -37,9 +40,12 @@ public class LoginModel : PageModel
             var result = await response.Content.ReadFromJsonAsync<TokenResponseDto>();
             if (result != null)
             {
-                // Uložíme token do session
                 HttpContext.Session.SetString("JWTToken", result.Token);
                 HttpContext.Session.SetString("UserNickname", result.Nickname);
+
+                if (!string.IsNullOrEmpty(ReturnUrl))
+                    return LocalRedirect(ReturnUrl);
+
                 return RedirectToPage("/Index");
             }
         }

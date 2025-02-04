@@ -40,7 +40,7 @@
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Login">Přihlásit se</a>
+                                <a class="nav-link text-dark" asp-page="/Account/Login" asp-route-returnUrl="@Context.Request.Path">Přihlásit se</a>
                             </li>
                         }
                     </ul>
