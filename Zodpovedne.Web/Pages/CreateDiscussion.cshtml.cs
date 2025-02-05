@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
+using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Filters;
 
 namespace Zodpovedne.Web.Pages;
@@ -28,7 +29,7 @@ public class CreateDiscussionModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        var client = _clientFactory.CreateClient();
+        var client = _clientFactory.CreateBearerClient(HttpContext);
         var response = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/categories/{CategoryCode}");
 
         if (!response.IsSuccessStatusCode)
@@ -48,7 +49,7 @@ public class CreateDiscussionModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
-        var client = _clientFactory.CreateClient();
+        var client = _clientFactory.CreateBearerClient(HttpContext);
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", HttpContext.Session.GetString("JWTToken"));
 
         var response = await client.PostAsJsonAsync($"{_configuration["ApiBaseUrl"]}/api/discussions", Input);

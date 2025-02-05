@@ -14,6 +14,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Contracts.Enums;
+using Zodpovedne.Web.Extensions;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -94,7 +95,7 @@ public class DiscussionModel : PageModel
     /// </summary>
     public async Task<IActionResult> OnGetAsync()
     {
-        var client = _clientFactory.CreateClient();
+        var client = _clientFactory.CreateBearerClient(HttpContext);
 
         if (IsUserLoggedIn)
         {
@@ -125,7 +126,7 @@ public class DiscussionModel : PageModel
         if (!IsUserLoggedIn)
             return RedirectToPage("/Account/Login");
 
-        var client = _clientFactory.CreateClient();
+        var client = _clientFactory.CreateBearerClient(HttpContext);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", JwtToken);
 
         // Naèteme znovu detail diskuze pro pøípad, že se mezitím zmìnil

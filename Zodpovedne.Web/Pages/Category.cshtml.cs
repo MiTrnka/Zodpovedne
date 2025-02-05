@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Headers;
 using Zodpovedne.Contracts.DTO;
+using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Filters;
 
 namespace Zodpovedne.Web.Pages;
@@ -26,7 +27,7 @@ public class CategoryModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        var client = _clientFactory.CreateClient();
+        var client = _clientFactory.CreateBearerClient(HttpContext);
 
         // Získání detailu kategorie
         var categoryResponse = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/categories/{CategoryCode}");
