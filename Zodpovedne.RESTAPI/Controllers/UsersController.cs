@@ -74,7 +74,7 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>
-    [HttpPost("user/member")]
+    [HttpPost("member")]
     public async Task<IActionResult> CreateMemberUser(RegisterModelDto model)
     {
         // Kontrola existence stejného emailu a stejného nickname
@@ -112,7 +112,7 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>
-    [HttpPost("user/admin")]
+    [HttpPost("admin")]
     [Authorize(Policy = "RequireAdminRole")] // Pouze pro adminy
     public async Task<IActionResult> CreateAdminUser(RegisterModelDto model)
     {
