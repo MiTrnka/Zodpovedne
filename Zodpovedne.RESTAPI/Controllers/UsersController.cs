@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Controllers;
 
@@ -27,7 +28,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Vrátí seznam všech uživatelů
+    /// Vrátí seznam všech nesmazaných uživatelů
     /// </summary>
     /// <returns></returns>
     [HttpGet]
@@ -35,6 +36,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetUsers()
     {
         var users = await this.userManager.Users
+            .Where(u => u.Type != UserType.Deleted)
             .Select(u => new {
                 u.Id,
                 u.Email,

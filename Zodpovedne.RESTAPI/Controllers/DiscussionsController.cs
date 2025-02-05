@@ -7,6 +7,7 @@ using Zodpovedne.Data.Models;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Data.Helpers;
+using Microsoft.AspNetCore.Identity;
 
 
 namespace Zodpovedne.RESTAPI.Controllers;
@@ -19,10 +20,13 @@ namespace Zodpovedne.RESTAPI.Controllers;
 public class DiscussionsController : ControllerBase
 {
     private readonly ApplicationDbContext dbContext;
+    private readonly UserManager<ApplicationUser> userManager;
 
-    public DiscussionsController(ApplicationDbContext dbContext)
+
+    public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager)
     {
         this.dbContext = dbContext;
+        this.userManager = userManager;
     }
 
     /// <summary>
@@ -261,6 +265,11 @@ public class DiscussionsController : ControllerBase
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
 
+        // Získáme detaily uživatele z databáze dle userId aktualně přihlášeného uživatele
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            return Unauthorized();
+
         // Vygenerujeme URL-friendly kód
         var baseCode = UrlHelper.GenerateUrlFriendlyCode(model.Title);
         var suffix = UrlHelper.GenerateUniqueSuffix();
@@ -273,14 +282,14 @@ public class DiscussionsController : ControllerBase
             Title = model.Title,
             Content = model.Content,
             CreatedAt = DateTime.UtcNow,
-            Type = model.Type,
+            Type = user.Type == UserType.Hidden ? DiscussionType.Hidden : model.Type,
             Code = code
         };
         dbContext.Discussions.Add(discussion);
         await dbContext.SaveChangesAsync();
 
         // Vrátíme detail vytvořené diskuze
-        return CreatedAtAction(nameof(GetDiscussion), new { id = discussion.Id }, null);
+        return CreatedAtAction(nameof(GetDiscussion), new { discussionId = discussion.Id }, null);
     }
 
     /// <summary>
@@ -363,12 +372,17 @@ public class DiscussionsController : ControllerBase
             return Unauthorized();
         var isAdmin = User.IsInRole("Admin");
 
+        // Získáme detaily uživatele z databáze dle userId aktualně přihlášeného uživatele
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            return Unauthorized();
+
         var comment = new Comment
         {
             DiscussionId = discussionId,
             UserId = userId,
             Content = model.Content,
-            Type = model.Type,
+            Type = user.Type == UserType.Hidden ? CommentType.Hidden : model.Type,
             CreatedAt = DateTime.UtcNow
         };
 

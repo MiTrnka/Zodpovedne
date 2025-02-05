@@ -1,6 +1,7 @@
 ﻿// Rozšiřuje standardní identitu o FirstName, LastName, Created
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Data.Models;
 
@@ -12,4 +13,5 @@ public class ApplicationUser : IdentityUser
     public string Nickname { get; set; } = "";
     public DateTime Created { get; set; } = DateTime.UtcNow;
     public DateTime? LastLogin { get; set; }
+    public UserType Type { get; set; } = UserType.Normal;
 }
