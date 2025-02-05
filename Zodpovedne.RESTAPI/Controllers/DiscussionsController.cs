@@ -89,8 +89,8 @@ public class DiscussionsController : ControllerBase
     /// <summary>
     /// Vrátí detail konkrétní diskuze včetně všech komentářů
     /// </summary>
-    [HttpGet("{id}")]
-    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussion(int id)
+    [HttpGet("{discussionId}")]
+    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussion(int discussionId)
     {
         // Získání ID a role přihlášeného uživatele
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -111,7 +111,7 @@ public class DiscussionsController : ControllerBase
             .Include(d => d.Comments)
                 .ThenInclude(c => c.Replies)
                     .ThenInclude(r => r.Likes)  // Přidáno načítání lajků pro odpovědi
-            .FirstOrDefaultAsync(d => d.Id == id &&
+            .FirstOrDefaultAsync(d => d.Id == discussionId &&
                 d.Type != DiscussionType.Deleted &&
                 (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId));
 
@@ -288,10 +288,10 @@ public class DiscussionsController : ControllerBase
     /// Přístupné pouze pro autora diskuze nebo admina
     /// </summary>
     [Authorize]
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateDiscussion(int id, UpdateDiscussionDto model)
+    [HttpPut("{discussionId}")]
+    public async Task<IActionResult> UpdateDiscussion(int discussionId, UpdateDiscussionDto model)
     {
-        var discussion = await dbContext.Discussions.FindAsync(id);
+        var discussion = await dbContext.Discussions.FindAsync(discussionId);
         if (discussion == null)
             return NotFound();
 
@@ -351,10 +351,10 @@ public class DiscussionsController : ControllerBase
     /// Přístupné pouze pro přihlášené uživatele
     /// </summary>
     [Authorize]
-    [HttpPost("{id}/comments")]
-    public async Task<ActionResult<CommentDto>> CreateComment(int id, CreateCommentDto model)
+    [HttpPost("{discussionId}/comments")]
+    public async Task<ActionResult<CommentDto>> CreateComment(int discussionId, CreateCommentDto model)
     {
-        var discussion = await dbContext.Discussions.FindAsync(id);
+        var discussion = await dbContext.Discussions.FindAsync(discussionId);
         if (discussion == null)
             return NotFound();
 
@@ -365,7 +365,7 @@ public class DiscussionsController : ControllerBase
 
         var comment = new Comment
         {
-            DiscussionId = id,
+            DiscussionId = discussionId,
             UserId = userId,
             Content = model.Content,
             Type = model.Type,
