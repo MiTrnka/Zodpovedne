@@ -80,7 +80,7 @@ public class DiscussionModel : PageModel
     public string? CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier);
 
     /// <summary>
-    /// Indikuje, zda je pøihlášený uživatel v roli admin
+    /// Urèuje, zda je pøihlášený uživatel admin
     /// </summary>
     public bool IsAdmin => User.IsInRole("Admin");
 
@@ -158,8 +158,8 @@ public class DiscussionModel : PageModel
     }
 
     /// <summary>
-    /// Urèuje, zda aktuální uživatel mùže editovat diskuzi
-    /// (mùže admin nebo autor diskuze)
+    /// Urèuje, zda pøihlášený uživatel mùže editovat diskuzi
+    /// (musí být buï admin nebo autor diskuze)
     /// </summary>
     public bool CanEditDiscussion =>
         Discussion != null && IsUserLoggedIn &&

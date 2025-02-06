@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 namespace Zodpovedne.Web;
 
 public class Program
@@ -5,6 +7,15 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        // Cookie autentizace pro razor pages
+        builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.LoginPath = "/Account/Login";
+                options.LogoutPath = "/Account/Logout";
+                options.ExpireTimeSpan = TimeSpan.FromHours(12); // Stejná doba jako JWT
+            });
 
         // Add services to the container.
         builder.Services.AddRazorPages();
@@ -36,10 +47,9 @@ public class Program
         app.UseRouting();
 
         // Pøidáme middleware pro session
-        app.UseSession();
-
+        app.UseAuthentication();
         app.UseAuthorization();
-
+        app.UseSession();
         app.MapRazorPages();
 
         app.Run();

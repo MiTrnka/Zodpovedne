@@ -746,4 +746,52 @@ public class DiscussionsController : ControllerBase
                 .ToList()
         };
     }
+
+    /// <summary>
+    /// Přepne typ diskuze mezi Normal a Hidden
+    /// Přístupné pouze pro adminy
+    /// </summary>
+    [Authorize(Policy = "RequireAdminRole")]
+    [HttpPut("{discussionId}/toggle-visibility")]
+    public async Task<IActionResult> ToggleDiscussionVisibility(int discussionId)
+    {
+        var discussion = await dbContext.Discussions.FindAsync(discussionId);
+        if (discussion == null)
+            return NotFound();
+
+        // Přepnutí typu mezi Normal a Hidden
+        discussion.Type = discussion.Type == DiscussionType.Normal
+            ? DiscussionType.Hidden
+            : DiscussionType.Normal;
+
+        discussion.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+
+        return Ok(new { type = discussion.Type });
+    }
+
+    /// <summary>
+    /// Přepne typ komentáře mezi Normal a Hidden
+    /// Přístupné pouze pro adminy
+    /// </summary>
+    [Authorize(Policy = "RequireAdminRole")]
+    [HttpPut("{discussionId}/comments/{commentId}/toggle-visibility")]
+    public async Task<IActionResult> ToggleCommentVisibility(int discussionId, int commentId)
+    {
+        var comment = await dbContext.Comments
+            .FirstOrDefaultAsync(c => c.Id == commentId && c.DiscussionId == discussionId);
+
+        if (comment == null)
+            return NotFound();
+
+        // Přepnutí typu mezi Normal a Hidden
+        comment.Type = comment.Type == CommentType.Normal
+            ? CommentType.Hidden
+            : CommentType.Normal;
+
+        comment.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+
+        return Ok(new { type = comment.Type });
+    }
 }

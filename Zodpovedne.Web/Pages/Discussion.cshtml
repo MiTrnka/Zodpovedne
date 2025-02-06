@@ -9,7 +9,7 @@
 <div class="container">
     <div class="row mb-4">
         <div class="col">
-            @* Tlačítko zpět na kategorii *@
+            @* Navigační tlačítko zpět na kategorii *@
             <a href="/categories/@Model.CategoryCode" class="btn btn-outline-secondary mb-3">
                 <i class="bi bi-arrow-left"></i> Zpět na kategorii
             </a>
@@ -18,7 +18,20 @@
             {
                 <div class="card">
                     <div class="card-header">
-                        <h1 class="h3 mb-0">@Model.Discussion.Title</h1>
+                        @* Nadpis diskuze - editovatelný pro oprávněné uživatele *@
+                        @if (Model.CanEditDiscussion)
+                        {
+                            <div class="editable-title">
+                                <h1 class="h3 mb-0" id="discussion-title-display">@Model.Discussion.Title</h1>
+                                <input type="text" class="form-control d-none" id="discussion-title-edit" value="@Model.Discussion.Title" />
+                            </div>
+                        }
+                        else
+                        {
+                            <h1 class="h3 mb-0">@Model.Discussion.Title</h1>
+                        }
+
+                        @* Metadata diskuze *@
                         <div class="text-muted small">
                             <span title="Autor">
                                 <i class="bi bi-person"></i> @Model.Discussion.AuthorNickname
@@ -35,14 +48,32 @@
                             {
                                 <span class="badge bg-primary ms-2">TOP</span>
                             }
+                            @if (Model.Discussion.Type == DiscussionType.Hidden)
+                            {
+                                <span class="badge bg-warning ms-2">Skrytá</span>
+                            }
                         </div>
                     </div>
+
+                    @* Obsah diskuze - editovatelný pro oprávněné uživatele *@
                     <div class="card-body">
-                        @Html.Raw(Model.Discussion.Content)
+                        @if (Model.CanEditDiscussion)
+                        {
+                            <div class="editable-content">
+                                <div id="discussion-content-display">@Html.Raw(Model.Discussion.Content)</div>
+                                <textarea class="form-control d-none" id="discussion-content-edit" rows="10">@Model.Discussion.Content</textarea>
+                            </div>
+                        }
+                        else
+                        {
+                            @Html.Raw(Model.Discussion.Content)
+                        }
                     </div>
+
+                    @* Panel s tlačítky pro like, editaci a změnu viditelnosti *@
                     <div class="card-footer d-flex justify-content-between align-items-center">
-                        @* Sekce pro like diskuze *@
-                        <div>
+                        <div class="d-flex align-items-center gap-2">
+                            @* Tlačítko Like *@
                             @if (Model.CanLikeDiscussion)
                             {
                                 <button class="btn @Model.GetLikeButtonClass(Model.Discussion.Likes.CanUserLike)"
@@ -59,21 +90,31 @@
                                     @Model.Discussion.Likes.LikeCount
                                 </span>
                             }
+
+                            @* Tlačítko pro změnu viditelnosti (pouze pro adminy) *@
+                            @if (Model.IsAdmin)
+                            {
+                                <button class="btn @(Model.Discussion.Type == DiscussionType.Hidden ? "btn-warning" : "btn-outline-warning")"
+                                        onclick="toggleDiscussionVisibility(@Model.Discussion.Id)">
+                                    <i class="bi bi-eye@(Model.Discussion.Type == DiscussionType.Hidden ? "" : "-slash")"></i>
+                                    @(Model.Discussion.Type == DiscussionType.Hidden ? "Odkryj" : "Skryj")
+                                </button>
+                            }
                         </div>
 
-                        @* Tlačítka pro editaci/smazání *@
+                        @* Tlačítka pro editaci *@
                         @if (Model.CanEditDiscussion)
                         {
                             <div class="btn-group">
-                                <a href="/categories/@Model.CategoryCode/discussions/@Model.DiscussionCode/edit" class="btn btn-primary">
+                                <button id="edit-discussion-btn" class="btn btn-primary" onclick="toggleDiscussionEdit(true)">
                                     <i class="bi bi-pencil"></i> Upravit
-                                </a>
-                                <form method="post" asp-page-handler="DeleteDiscussion" asp-route-id="@Model.Discussion.Id"
-                                      class="d-inline" onsubmit="return confirm('Opravdu chcete smazat tuto diskuzi?');">
-                                    <button type="submit" class="btn btn-danger">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+                                </button>
+                                <button id="save-discussion-btn" class="btn btn-success d-none" onclick="saveDiscussionChanges()">
+                                    <i class="bi bi-check"></i> Uložit
+                                </button>
+                                <button id="cancel-discussion-btn" class="btn btn-outline-secondary d-none" onclick="toggleDiscussionEdit(false)">
+                                    <i class="bi bi-x"></i> Zrušit
+                                </button>
                             </div>
                         }
                     </div>
@@ -82,7 +123,7 @@
                 <div class="mt-5">
                     <h3>Komentáře</h3>
 
-                    @* Formulář pro nový root komentář *@
+                    @* Formulář pro přidání nového komentáře *@
                     @if (Model.IsUserLoggedIn)
                     {
                         <div class="card mb-4">
@@ -98,7 +139,7 @@
                         </div>
                     }
 
-                    @* Seznam existujících komentářů *@
+                    @* Seznam komentářů *@
                     @if (Model.Discussion.Comments.Any())
                     {
                         @* Zobrazení root komentářů *@
@@ -111,12 +152,18 @@
                                             <i class="bi bi-person"></i> @comment.AuthorNickname
                                             <span class="mx-2">•</span>
                                             @comment.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                            @if (comment.Type == CommentType.Hidden)
+                                            {
+                                                <span class="badge bg-warning ms-2">Skrytý</span>
+                                            }
                                         </div>
-                                        @* Like pro komentář *@
-                                        <div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @* Like tlačítko pro komentář *@
                                             @if (Model.CanLikeComment(comment))
                                             {
-                                                <button class="btn btn-sm @Model.GetLikeButtonClass(comment.Likes.CanUserLike)" onclick="likeComment(@Model.Discussion.Id, @comment.Id)" @(!comment.Likes.CanUserLike ? "disabled" : "")>
+                                                <button class="btn btn-sm @Model.GetLikeButtonClass(comment.Likes.CanUserLike)"
+                                                        onclick="likeComment(@Model.Discussion.Id, @comment.Id)"
+                                                        @(!comment.Likes.CanUserLike ? "disabled" : "")>
                                                     <i class="bi bi-heart-fill"></i>
                                                     <span id="comment-@comment.Id-likes-count">@comment.Likes.LikeCount</span>
                                                 </button>
@@ -127,6 +174,16 @@
                                                     <i class="bi bi-heart-fill"></i>
                                                     @comment.Likes.LikeCount
                                                 </span>
+                                            }
+
+                                            @* Tlačítko pro změnu viditelnosti komentáře (pouze pro adminy) *@
+                                            @if (Model.IsAdmin)
+                                            {
+                                                <button class="btn btn-sm @(comment.Type == CommentType.Hidden ? "btn-warning" : "btn-outline-warning")"
+                                                        onclick="toggleCommentVisibility(@Model.Discussion.Id, @comment.Id)">
+                                                    <i class="bi bi-eye@(comment.Type == CommentType.Hidden ? "" : "-slash")"></i>
+                                                    @(comment.Type == CommentType.Hidden ? "Odkryj" : "Skryj")
+                                                </button>
                                             }
                                         </div>
                                     </div>
@@ -161,12 +218,17 @@
                                                     <i class="bi bi-person"></i> @reply.AuthorNickname
                                                     <span class="mx-2">•</span>
                                                     @reply.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                                    @if (reply.Type == CommentType.Hidden)
+                                                    {
+                                                        <span class="badge bg-warning ms-2">Skrytý</span>
+                                                    }
                                                 </div>
-                                                @* Like pro odpověď *@
-                                                <div>
+                                                <div class="d-flex align-items-center gap-2">
                                                     @if (Model.CanLikeComment(reply))
                                                     {
-                                                        <button class="btn btn-sm @Model.GetLikeButtonClass(reply.Likes.CanUserLike)" onclick="likeComment(@Model.Discussion.Id, @reply.Id)" @(!reply.Likes.CanUserLike ? "disabled" : "")>
+                                                        <button class="btn btn-sm @Model.GetLikeButtonClass(reply.Likes.CanUserLike)"
+                                                                onclick="likeComment(@Model.Discussion.Id, @reply.Id)"
+                                                                @(!reply.Likes.CanUserLike ? "disabled" : "")>
                                                             <i class="bi bi-heart-fill"></i>
                                                             <span id="comment-@reply.Id-likes-count">@reply.Likes.LikeCount</span>
                                                         </button>
@@ -177,6 +239,16 @@
                                                             <i class="bi bi-heart-fill"></i>
                                                             @reply.Likes.LikeCount
                                                         </span>
+                                                    }
+
+                                                    @* Tlačítko pro změnu viditelnosti odpovědi (pouze pro adminy) *@
+                                                    @if (Model.IsAdmin)
+                                                    {
+                                                        <button class="btn btn-sm @(reply.Type == CommentType.Hidden ? "btn-warning" : "btn-outline-warning")"
+                                                                onclick="toggleCommentVisibility(@Model.Discussion.Id, @reply.Id)">
+                                                            <i class="bi bi-eye@(reply.Type == CommentType.Hidden ? "" : "-slash")"></i>
+                                                            @(reply.Type == CommentType.Hidden ? "Odkryj" : "Skryj")
+                                                        </button>
                                                     }
                                                 </div>
                                             </div>
@@ -206,7 +278,6 @@
         </div>
     </div>
 </div>
-
 
 @* Skrytý input pro API URL *@
 <input type="hidden" id="apiBaseUrl" value="@Model.ApiBaseUrl" />
@@ -278,29 +349,130 @@
             }
         }
 
-        // Funkce pro zobrazení formuláře pro odpověď na komentář
+        // Funkce pro správu formuláře odpovědí
         function showReplyForm(commentId) {
-            // Nejprve skryjeme všechny ostatní formuláře odpovědí
             document.querySelectorAll('[id^="reply-form-"]').forEach(form => {
                 form.style.display = 'none';
             });
 
-            // Zobrazíme formulář pro vybraný komentář
             const form = document.getElementById(`reply-form-${commentId}`);
             if (form) {
                 form.style.display = 'block';
-                // Zaměříme se na textové pole
                 form.querySelector('textarea').focus();
             }
         }
 
-        // Funkce pro skrytí formuláře pro odpověď
         function hideReplyForm(commentId) {
             const form = document.getElementById(`reply-form-${commentId}`);
             if (form) {
                 form.style.display = 'none';
-                // Vyčistíme obsah textového pole
                 form.querySelector('textarea').value = '';
+            }
+        }
+
+        // Funkce pro editaci diskuze
+        function toggleDiscussionEdit(show) {
+            const titleDisplay = document.getElementById('discussion-title-display');
+            const titleEdit = document.getElementById('discussion-title-edit');
+            const contentDisplay = document.getElementById('discussion-content-display');
+            const contentEdit = document.getElementById('discussion-content-edit');
+            const editBtn = document.getElementById('edit-discussion-btn');
+            const saveBtn = document.getElementById('save-discussion-btn');
+            const cancelBtn = document.getElementById('cancel-discussion-btn');
+
+            if (show) {
+                titleDisplay.classList.add('d-none');
+                titleEdit.classList.remove('d-none');
+                contentDisplay.classList.add('d-none');
+                contentEdit.classList.remove('d-none');
+                editBtn.classList.add('d-none');
+                saveBtn.classList.remove('d-none');
+                cancelBtn.classList.remove('d-none');
+            } else {
+                titleDisplay.classList.remove('d-none');
+                titleEdit.classList.add('d-none');
+                contentDisplay.classList.remove('d-none');
+                contentEdit.classList.add('d-none');
+                editBtn.classList.remove('d-none');
+                saveBtn.classList.add('d-none');
+                cancelBtn.classList.add('d-none');
+            }
+        }
+
+        // Funkce pro uložení změn v diskuzi
+        async function saveDiscussionChanges() {
+            const titleEdit = document.getElementById('discussion-title-edit');
+            const contentEdit = document.getElementById('discussion-content-edit');
+            const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/api/discussions/@Model.Discussion.Id`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: titleEdit.value,
+                        content: contentEdit.value,
+                        type: @((int)Model.Discussion.Type)
+                    })
+                });
+
+                if (response.ok) {
+                    document.getElementById('discussion-title-display').textContent = titleEdit.value;
+                    document.getElementById('discussion-content-display').innerHTML = contentEdit.value;
+                    toggleDiscussionEdit(false);
+                } else {
+                    alert('Nepodařilo se uložit změny.');
+                }
+            } catch (error) {
+                console.error('Chyba při ukládání:', error);
+                alert('Došlo k chybě při ukládání změn.');
+            }
+        }
+
+        // Funkce pro změnu viditelnosti diskuze
+        async function toggleDiscussionVisibility(discussionId) {
+            try {
+                const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+                const response = await fetch(`${apiBaseUrl}/api/discussions/${discussionId}/toggle-visibility`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+                    }
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Nepodařilo se změnit viditelnost diskuze.');
+                }
+            } catch (error) {
+                console.error('Chyba při změně viditelnosti:', error);
+                alert('Došlo k chybě při změně viditelnosti diskuze.');
+            }
+        }
+
+        // Funkce pro změnu viditelnosti komentáře
+        async function toggleCommentVisibility(discussionId, commentId) {
+            try {
+                const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+                const response = await fetch(`${apiBaseUrl}/api/discussions/${discussionId}/comments/${commentId}/toggle-visibility`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+                    }
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Nepodařilo se změnit viditelnost komentáře.');
+                }
+            } catch (error) {
+                console.error('Chyba při změně viditelnosti:', error);
+                alert('Došlo k chybě při změně viditelnosti komentáře.');
             }
         }
     </script>
