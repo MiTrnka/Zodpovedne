@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 namespace Zodpovedne.Web;
 
@@ -8,15 +9,46 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Cookie autentizace pro razor pages
+        // Nastavení autentizace pro používání cookie autentizace jako výchozího schématu. Toto se muselo pøidat k tokenùm (autentizace/autorizace pro volání RESTAPI) kvùli tomu, aby fungovala autentizace i pro razor pages.
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-            .AddCookie(options =>
-            {
-                options.LoginPath = "/Account/Login";
-                options.LogoutPath = "/Account/Logout";
-                options.ExpireTimeSpan = TimeSpan.FromHours(12); // Stejná doba jako JWT
-            });
+           // Konfigurace cookie autentizace
+           .AddCookie(options =>
+           {
+               // Cesta kam pøesmìrovat, když uživatel není pøihlášen
+               options.LoginPath = "/Account/Login";
 
+               // Cesta kam pøesmìrovat pøi odhlášení
+               options.LogoutPath = "/Account/Logout";
+
+               // Doba platnosti cookie
+               options.ExpireTimeSpan = TimeSpan.FromHours(12);
+
+               // Událost která se spustí pøi pøihlášení uživatele
+               // Protože nìkteré claimy z JWT tokenù se nenamapují automaticky, je potøeba je pøidat ruènì
+               // Napøíklad ClaimType.Role se automaticky mapuje na Role claim, ale NameIdentifier ne
+               options.Events.OnSigningIn = async context =>
+               {
+                   // Získání identity uživatele z kontextu
+                   var identity = (ClaimsIdentity)context.Principal.Identity;
+
+                   // Kontrola jestli už existuje NameIdentifier claim
+                   var userId = identity.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                   // Pokud NameIdentifier neexistuje
+                   if (userId == null)
+                   {
+                       // Hledání ID uživatele v jiných standardních claimech (sub nebo nameid)
+                       var userIdClaim = identity.FindFirst("sub") ??
+                                        identity.FindFirst("nameid");
+
+                       // Pokud byl nalezen claim s ID uživatele, pøidá se jako NameIdentifier
+                       if (userIdClaim != null)
+                       {
+                           identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
+                       }
+                   }
+               };
+           });
         // Add services to the container.
         builder.Services.AddRazorPages();
 
