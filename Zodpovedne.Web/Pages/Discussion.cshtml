@@ -50,7 +50,7 @@
                             }
                             @if (Model.Discussion.Type == DiscussionType.Hidden)
                             {
-                                <span class="badge bg-warning ms-2">Skrytá</span>
+                                //<span class="badge bg-warning ms-2">Tvá diskuze je skrytá</span>
                             }
                         </div>
                     </div>
@@ -154,7 +154,7 @@
                                             @comment.CreatedAt.ToString("dd.MM.yyyy HH:mm")
                                             @if (comment.Type == CommentType.Hidden)
                                             {
-                                                <span class="badge bg-warning ms-2">Skrytý</span>
+                                                //<span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span>
                                             }
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
@@ -220,7 +220,7 @@
                                                     @reply.CreatedAt.ToString("dd.MM.yyyy HH:mm")
                                                     @if (reply.Type == CommentType.Hidden)
                                                     {
-                                                        <span class="badge bg-warning ms-2">Skrytý</span>
+                                                        //<span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span>
                                                     }
                                                 </div>
                                                 <div class="d-flex align-items-center gap-2">
