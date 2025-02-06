@@ -14,4 +14,8 @@
     <ProjectReference Include="..\Zodpovedne.Contracts\Zodpovedne.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
 </Project>
