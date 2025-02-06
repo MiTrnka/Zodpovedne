@@ -15,6 +15,7 @@ using System.Security.Claims;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Web.Extensions;
+using Zodpovedne.Web.Models.Base;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -22,15 +23,10 @@ namespace Zodpovedne.Web.Pages;
 /// Model pro stránku zobrazující detail diskuze vèetnì komentáøù.
 /// Zajišuje funkcionalitu pro zobrazení diskuze, pøidávání komentáøù a jejich správu.
 /// </summary>
-public class DiscussionModel : PageModel
+public class DiscussionModel : BasePageModel
 {
-    private readonly IHttpClientFactory _clientFactory;
-    private readonly IConfiguration _configuration;
-
-    public DiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration)
+    public DiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory, configuration)
     {
-        _clientFactory = clientFactory;
-        _configuration = configuration;
     }
 
     /// <summary>
@@ -63,31 +59,6 @@ public class DiscussionModel : PageModel
     /// </summary>
     [BindProperty]
     public int? ReplyToCommentId { get; set; }
-
-    /// <summary>
-    /// Base URL pro API endpointy získaná z konfigurace
-    /// </summary>
-    public string ApiBaseUrl => _configuration["ApiBaseUrl"] ?? "";
-
-    /// <summary>
-    /// JWT token aktuálnì pøihlášeného uivatele získanı ze session
-    /// </summary>
-    public string? JwtToken => HttpContext.Session.GetString("JWTToken");
-
-    /// <summary>
-    /// ID aktuálnì pøihlášeného uivatele získané z claims
-    /// </summary>
-    public string? CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-    /// <summary>
-    /// Urèuje, zda je pøihlášenı uivatel admin
-    /// </summary>
-    public bool IsAdmin => User.IsInRole("Admin");
-
-    /// <summary>
-    /// Indikuje, zda je uivatel pøihlášen (má platnı JWT token)
-    /// </summary>
-    public bool IsUserLoggedIn => !string.IsNullOrEmpty(JwtToken);
 
     /// <summary>
     /// Handler pro získání detailu diskuze z API

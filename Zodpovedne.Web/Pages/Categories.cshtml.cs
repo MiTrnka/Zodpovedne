@@ -2,20 +2,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Filters;
+using Zodpovedne.Web.Models.Base;
 
 namespace Zodpovedne.Web.Pages;
 
 //[AuthenticationFilter]
 //[AdminAuthorizationFilter]
-public class CategoriesModel : PageModel
+public class CategoriesModel : BasePageModel
 {
-    private readonly IHttpClientFactory _clientFactory;
-    private readonly IConfiguration _configuration;
-
-    public CategoriesModel(IHttpClientFactory clientFactory, IConfiguration configuration)
+    public CategoriesModel(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory, configuration)
     {
-        _clientFactory = clientFactory;
-        _configuration = configuration;
     }
 
     public List<CategoryListDto> Categories { get; set; } = new();

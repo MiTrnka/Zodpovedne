@@ -4,19 +4,15 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Filters;
+using Zodpovedne.Web.Models.Base;
 
 namespace Zodpovedne.Web.Pages;
 
 [AuthenticationFilter]
-public class CreateDiscussionModel : PageModel
+public class CreateDiscussionModel : BasePageModel
 {
-    private readonly IHttpClientFactory _clientFactory;
-    private readonly IConfiguration _configuration;
-
-    public CreateDiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration)
+    public CreateDiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory, configuration)
     {
-        _clientFactory = clientFactory;
-        _configuration = configuration;
     }
 
     [BindProperty]

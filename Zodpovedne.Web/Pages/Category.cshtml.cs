@@ -4,18 +4,14 @@ using System.Net.Http.Headers;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Filters;
+using Zodpovedne.Web.Models.Base;
 
 namespace Zodpovedne.Web.Pages;
 
-public class CategoryModel : PageModel
+public class CategoryModel : BasePageModel
 {
-    private readonly IHttpClientFactory _clientFactory;
-    private readonly IConfiguration _configuration;
-
-    public CategoryModel(IHttpClientFactory clientFactory, IConfiguration configuration)
+    public CategoryModel(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory, configuration)
     {
-        _clientFactory = clientFactory;
-        _configuration = configuration;
     }
 
     [BindProperty(SupportsGet = true)]

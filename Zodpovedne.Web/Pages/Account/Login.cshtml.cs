@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Zodpovedne.Contracts.DTO;
+using Zodpovedne.Web.Models.Base;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -12,15 +13,11 @@ namespace Zodpovedne.Web.Pages.Account;
 /// Model pro p¯ihlaöovacÌ str·nku
 /// Zajiöùuje autentizaci pomocÌ JWT token˘ pro API vol·nÌ a cookies pro Razor Pages
 /// </summary>
-public class LoginModel : PageModel
+public class LoginModel : BasePageModel
 {
-    private readonly IHttpClientFactory _clientFactory;
-    private readonly IConfiguration _configuration;
 
-    public LoginModel(IHttpClientFactory clientFactory, IConfiguration configuration)
+    public LoginModel(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory, configuration)
     {
-        _clientFactory = clientFactory;
-        _configuration = configuration;
     }
 
     /// <summary>
