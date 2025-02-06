@@ -17,6 +17,15 @@ public class RegisterModelDto
     public string Nickname { get; set; } = "";
 }
 
+public class UserProfileDto
+{
+    public string Id { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Nickname { get; set; } = "";
+    public DateTime Created { get; set; }
+    public List<string> Roles { get; set; } = new();
+}
+
 public class LoginModelDto
 {
     [Required]
@@ -27,7 +36,7 @@ public class LoginModelDto
     public string Password { get; set; } = "";
 }
 
-public class UpdateProfileModelDto
+public class UpdateNicknameDto
 {
     [Required]
     public string Nickname { get; set; } = "";

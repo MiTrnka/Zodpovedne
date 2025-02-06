@@ -1,0 +1,68 @@
+﻿@page "/Account/Profile"
+@model ProfileModel
+@{
+    ViewData["Title"] = "Profil";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h2>Profil uživatele</h2>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <dl>
+                        <dt>Email</dt>
+                        <dd>@Model.UserProfile?.Email</dd>
+                        <dt>Přezdívka</dt>
+                        <dd>@Model.UserProfile?.Nickname</dd>
+                        <dt>Registrován</dt>
+                        <dd>@Model.UserProfile?.Created.ToString("dd.MM.yyyy HH:mm")</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Změna přezdívky</h5>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.NicknameErrorMessage))
+                    {
+                        <div class="alert alert-danger">@Model.NicknameErrorMessage</div>
+                    }
+                    <form method="post" asp-page-handler="UpdateNickname">
+                        <div class="mb-3">
+                            <label class="form-label">Nová přezdívka</label>
+                            <input type="text" asp-for="NewNickname" class="form-control" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Změnit přezdívku</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Změna hesla</h5>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.PasswordErrorMessage))
+                    {
+                        <div class="alert alert-danger">@Model.PasswordErrorMessage</div>
+                    }
+                    <form method="post" asp-page-handler="ChangePassword">
+                        <div class="mb-3">
+                            <label class="form-label">Současné heslo</label>
+                            <input type="password" asp-for="CurrentPassword" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nové heslo</label>
+                            <input type="password" asp-for="NewPassword" class="form-control" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Změnit heslo</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

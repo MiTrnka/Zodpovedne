@@ -52,22 +52,22 @@ public class UsersController : ControllerBase
     /// Vrátí informace o přihlášeném uživateli
     /// </summary>
     /// <returns></returns>
+    [Authorize]
     [HttpGet("authenticated-user")]
-    public async Task<IActionResult> GetAuthenticatedUser()
+    public async Task<ActionResult<UserProfileDto>> GetAuthenticatedUser()
     {
-        // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
         var user = await GetCurrentUserAsync();
         if (user == null) return NotFound();
 
         var roles = await this.userManager.GetRolesAsync(user);
 
-        return Ok(new
+        return Ok(new UserProfileDto
         {
-            user.Id,
-            user.Email,
-            user.Nickname,
-            user.Created,
-            Roles = roles
+            Id = user.Id,
+            Email = user.Email!,
+            Nickname = user.Nickname,
+            Created = user.Created,
+            Roles = roles.ToList()
         });
     }
 
@@ -149,31 +149,28 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Aktualizuje profil přihlášeného uživatele (FirstName, LastName)
+    /// Aktualizuje přezdívku přihlášeného uživatele
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>
-    [HttpPut("authenticated-user")]
-    public async Task<IActionResult> UpdateAuthenticatedUser(UpdateProfileModelDto model)
+    [Authorize]
+    [HttpPut("authenticated-user/nickname")]
+    public async Task<IActionResult> UpdateNickname(UpdateNicknameDto model)
     {
-        // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
         var user = await GetCurrentUserAsync();
         if (user == null) return NotFound();
 
         // Kontrola existence stejného nickname
         if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
-            return BadRequest(new { error = $"Přezdívka {model.Nickname} je již používána." });
-
+            return BadRequest("Tato přezdívka je již používána.");
 
         user.Nickname = model.Nickname;
+        var result = await userManager.UpdateAsync(user);
 
-        var result = await this.userManager.UpdateAsync(user);
         if (result.Succeeded)
-        {
             return Ok();
-        }
 
-        return BadRequest(new { errors = result.Errors });
+        return BadRequest(result.Errors);
     }
 
     /// <summary>

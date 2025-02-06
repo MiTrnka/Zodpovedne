@@ -3,6 +3,9 @@ using System.Security.Claims;
 
 namespace Zodpovedne.Web.Models.Base;
 
+/// <summary>
+/// Předek pro všechny PageModely, obsahuje společné vlastnosti a metody
+/// </summary>
 public abstract class BasePageModel : PageModel
 {
     protected readonly IHttpClientFactory _clientFactory;

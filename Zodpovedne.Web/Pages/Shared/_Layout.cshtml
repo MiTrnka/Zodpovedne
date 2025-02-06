@@ -31,7 +31,7 @@
                         @if (Context.Session.GetString("JWTToken") != null)
                         {
                             <li class="nav-item">
-                                <span class="nav-link text-dark">@Context.Session.GetString("UserNickname")</span>
+                                <a class="nav-link text-dark" asp-page="/Account/Profile">@Context.Session.GetString("UserNickname")</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-page="/Account/Logout">Odhlásit se</a>
