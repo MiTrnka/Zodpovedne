@@ -159,10 +159,6 @@ public class DiscussionsController : ControllerBase
                 .ToList();
         }
 
-        // Inkrementace počítadla zobrazení
-        discussion.ViewCount++;
-        await dbContext.SaveChangesAsync();
-
         // Mapování na DTO s respektováním oprávnění
         var result = new DiscussionDetailDto
         {
@@ -255,10 +251,6 @@ public class DiscussionsController : ControllerBase
                         r.UserId == userId))                 // - autory odpovědi
                 .ToList();
         }
-
-        // Zvýšení počítadla zobrazení
-        discussion.ViewCount++;
-        await dbContext.SaveChangesAsync();
 
         // Mapování entity na DTO objekt pro odpověď
         var result = new DiscussionDetailDto
@@ -793,5 +785,21 @@ public class DiscussionsController : ControllerBase
         await dbContext.SaveChangesAsync();
 
         return Ok(new { type = comment.Type });
+    }
+
+    /// <summary>
+    /// Inkrementuje počítadlo zobrazení diskuze
+    /// </summary>
+    [HttpPost("{discussionId}/increment-view")]
+    public async Task<IActionResult> IncrementViewCount(int discussionId)
+    {
+        var discussion = await dbContext.Discussions.FindAsync(discussionId);
+        if (discussion == null)
+            return NotFound();
+
+        discussion.ViewCount++;
+        await dbContext.SaveChangesAsync();
+
+        return Ok();
     }
 }

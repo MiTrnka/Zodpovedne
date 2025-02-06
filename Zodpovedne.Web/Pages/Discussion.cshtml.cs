@@ -110,6 +110,12 @@ public class DiscussionModel : PageModel
         if (Discussion == null)
             return NotFound();
 
+        // Inkrementujeme poèítadlo zhlédnutí dané diskuze
+        await client.PostAsync(
+            $"{_configuration["ApiBaseUrl"]}/api/discussions/{Discussion.Id}/increment-view",
+            null
+        );
+
         return Page();
     }
 
