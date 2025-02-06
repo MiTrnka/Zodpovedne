@@ -18,21 +18,24 @@
 
     <nav class="navbar navbar-expand-sm navbar-light">
         <div class="container">
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Categories">Diskuze na různá témata</a>
+                            <a class="nav-link @(Url.Page("/Categories") == Context.Request.Path ? "active" : "")"
+                               asp-area="" asp-page="/Categories">Diskuze na různá témata</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/katalog/hracky">Hračky</a>
+                            <a class="nav-link @(Url.Page("/katalog/hracky") == Context.Request.Path ? "active" : "")"
+                               asp-area="" asp-page="/katalog/hracky">Hračky</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/katalog/obleceni">Oblečení</a>
+                            <a class="nav-link @(Url.Page("/katalog/obleceni") == Context.Request.Path ? "active" : "")"
+                               asp-area="" asp-page="/katalog/obleceni">Oblečení</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/katalog/elektronika">Elektronika</a>
+                            <a class="nav-link @(Url.Page("/katalog/elektronika") == Context.Request.Path ? "active" : "")"
+                               asp-area="" asp-page="/katalog/elektronika">Elektronika</a>
                         </li>
-
                     </ul>
                     <ul class="navbar-nav">
                         @if (Context.Session.GetString("JWTToken") != null)

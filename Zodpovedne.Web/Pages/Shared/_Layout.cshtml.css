@@ -99,3 +99,22 @@ button.accept-policy {
 .footer a {
         color: white;
 }
+
+.navbar-light .navbar-nav .nav-link {
+    color: white !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: background-color 0.3s, font-weight 0.3s, color 0.3s;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+    background-color: var(--secondary-pink);
+    border-radius: 20px;
+}
+
+.navbar-light .navbar-nav .nav-link.active {
+    background-color: var(--secondary-pink);
+    border-radius: 20px;
+    font-weight: bold;
+    color: black !important;
+}
