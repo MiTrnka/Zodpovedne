@@ -1,5 +1,6 @@
 ﻿// DTO - objekty slouží pro transfer dat mezi klientem (PostMan, aplikace...) a API
 using System.ComponentModel.DataAnnotations;
+using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Contracts.DTO;
 
@@ -58,4 +59,21 @@ public class TokenResponseDto
     public DateTime ExpiresAt { get; set; }
     public string Email { get; set; } = "";
     public string Nickname { get; set; } = "";
+}
+public class UserListDto
+{
+    public string Id { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Nickname { get; set; } = "";
+    public DateTime? LastLogin { get; set; }
+    public UserType Type { get; set; }
+}
+
+public class PagedResultDto<T>
+{
+    public List<T> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int PageSize { get; set; }
+    public int CurrentPage { get; set; }
+    public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
 }

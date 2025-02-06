@@ -1,0 +1,74 @@
+﻿@* Pages/Admin/Users.cshtml *@
+@page
+@model UsersModel
+@{
+    ViewData["Title"] = "Správa uživatelů";
+}
+
+<div class="container mt-4">
+    <h2>Správa uživatelů</h2>
+
+    @if (Model.PagedUsers?.Items.Any() == true)
+    {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Přezdívka</th>
+                        <th>Email</th>
+                        <th>Poslední přihlášení</th>
+                        <th>Akce</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.PagedUsers.Items)
+                    {
+                        <tr>
+                            <td>@user.Nickname</td>
+                            <td>@user.Email</td>
+                            <td>@(user.LastLogin?.ToString("dd.MM.yyyy HH:mm") ?? "Nikdy")</td>
+                            <td>
+                                <form method="post" class="d-inline">
+                                    <button type="submit"
+                                            asp-page-handler="ToggleVisibility"
+                                            asp-route-userId="@user.Id"
+                                            class="btn btn-warning btn-sm">
+                                        @(user.Type == Zodpovedne.Contracts.Enums.UserType.Hidden ? "Odkrýt" : "Skrýt")
+                                    </button>
+                                    <button type="submit"
+                                            asp-page-handler="DeleteUser"
+                                            asp-route-userId="@user.Id"
+                                            class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Opravdu chcete smazat tohoto uživatele?')">
+                                        Smazat
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* Stránkování *@
+        @if (Model.PagedUsers.TotalPages > 1)
+        {
+            <nav>
+                <ul class="pagination justify-content-center">
+                    @for (int i = 1; i <= Model.PagedUsers.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.PagedUsers.CurrentPage ? "active" : "")">
+                            <a class="page-link" href="/Admin/Users?CurrentPage=@i">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    }
+    else
+    {
+        <div class="alert alert-info">
+            Žádní uživatelé nebyli nalezeni.
+        </div>
+    }
+</div>

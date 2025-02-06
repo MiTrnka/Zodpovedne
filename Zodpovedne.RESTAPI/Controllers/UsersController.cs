@@ -174,24 +174,72 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Smaže uživatele podle emailu
+    /// Smaže uživatele podle ID
     /// </summary>
-    /// <param name="email"></param>
+    /// <param name="userId"></param>
     /// <returns></returns>
-    [HttpDelete("user/{email}")]
-    [Authorize(Policy = "RequireAdminRole")]  // Pouze admin může mazat uživatele
-    public async Task<IActionResult> DeleteUser([FromRoute] string email)
+    [HttpDelete("user/{userId}")]
+    [Authorize(Policy = "RequireAdminRole")]
+    public async Task<IActionResult> DeleteUser([FromRoute] string userId)
     {
-        var user = await this.userManager.FindByEmailAsync(email);
+        var user = await userManager.FindByIdAsync(userId);
         if (user == null)
             return NotFound();
 
-        var result = await this.userManager.DeleteAsync(user);
-        if (result.Succeeded)
-            return Ok();
-
-        return BadRequest(new { errors = result.Errors });
+        user.Type = UserType.Deleted;
+        await userManager.UpdateAsync(user);
+        return Ok();
     }
+
+    /// <summary>
+    /// Změní viditelnost uživatele podle jeho ID, používá se pro skrytí uživatele z veřejného seznamu
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    [HttpPut("{userId}/toggle-visibility")]
+    [Authorize(Policy = "RequireAdminRole")]
+    public async Task<IActionResult> ToggleUserVisibility(string userId)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null) return NotFound();
+
+        user.Type = user.Type == UserType.Normal ? UserType.Hidden : UserType.Normal;
+        await userManager.UpdateAsync(user);
+
+        return Ok(new { type = user.Type });
+    }
+    [HttpGet("paged")]
+    [Authorize(Policy = "RequireAdminRole")]
+    public async Task<ActionResult<PagedResultDto<UserListDto>>> GetPagedUsers(int page = 1)
+    {
+        var pageSize = 50;
+        var query = userManager.Users
+            .Where(u => u.Type != UserType.Deleted)
+            .OrderBy(u => u.Nickname);
+
+        var totalUsers = await query.CountAsync();
+        var users = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(u => new UserListDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                Nickname = u.Nickname,
+                LastLogin = u.LastLogin,
+                Type = u.Type
+            })
+            .ToListAsync();
+
+        return Ok(new PagedResultDto<UserListDto>
+        {
+            Items = users,
+            TotalCount = totalUsers,
+            PageSize = pageSize,
+            CurrentPage = page
+        });
+    }
+
 
     /// <summary>
     /// Změní heslo přihlášeného uživatele

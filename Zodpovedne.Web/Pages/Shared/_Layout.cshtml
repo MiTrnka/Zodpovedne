@@ -30,6 +30,12 @@
                     <ul class="navbar-nav">
                         @if (Context.Session.GetString("JWTToken") != null)
                         {
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-page="/Admin/Users">Uživatelé</a>
+                                </li>
+                            }
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-page="/Account/Profile">@Context.Session.GetString("UserNickname")</a>
                             </li>
