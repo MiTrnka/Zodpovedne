@@ -1,4 +1,22 @@
 ﻿@page "/obleceni"
 @model Zodpovedne.Web.Pages.Katalog.ObleceniModel
 @{
+    ViewData["Title"] = "Dětské oblečení";
 }
+
+<div class="container py-4">
+    <h1 class="mb-4" style="color: var(--text-gray);">Dětské oblečení</h1>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="product-card">
+                <img src="https://picsum.photos/400/300" class="card-img-top" alt="Dětské body">
+                <div class="card-body">
+                    <h5 class="card-title">Organické bavlněné body</h5>
+                    <p class="card-text">Měkké a pohodlné body z organické bavlny, ideální pro citlivou dětskou pokožku.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Add more product cards -->
+    </div>
+</div>

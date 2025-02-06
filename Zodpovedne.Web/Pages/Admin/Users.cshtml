@@ -4,52 +4,77 @@
 @{
     ViewData["Title"] = "Správa uživatelů";
 }
+<style>
+    .user-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .user-list-header, .user-list-item {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr auto;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .user-list-header {
+        font-weight: bold;
+        background-color: #f8f9fa;
+    }
+
+    .user-actions {
+        display: flex;
+        gap: 5px;
+    }
+
+    .fixed-width {
+        min-width: 80px; /* Zajistí stejnou šířku tlačítek */
+    }
+</style>
+
 
 <div class="container mt-4">
     <h2>Správa uživatelů</h2>
 
     @if (Model.PagedUsers?.Items.Any() == true)
     {
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Přezdívka</th>
-                        <th>Email</th>
-                        <th>Poslední přihlášení</th>
-                        <th>Akce</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var user in Model.PagedUsers.Items)
-                    {
-                        <tr>
-                            <td>@user.Nickname</td>
-                            <td>@user.Email</td>
-                            <td>@(user.LastLogin?.ToString("dd.MM.yyyy HH:mm") ?? "Nikdy")</td>
-                            <td>
-                                <form method="post" class="d-inline">
-                                    <button type="submit"
-                                            asp-page-handler="ToggleVisibility"
-                                            asp-route-userId="@user.Id"
-                                            class="btn btn-warning btn-sm">
-                                        @(user.Type == Zodpovedne.Contracts.Enums.UserType.Hidden ? "Odkrýt" : "Skrýt")
-                                    </button>
-                                    <button type="submit"
-                                            asp-page-handler="DeleteUser"
-                                            asp-route-userId="@user.Id"
-                                            class="btn btn-danger btn-sm"
-                                            onclick="return confirm('Opravdu chcete smazat tohoto uživatele?')">
-                                        Smazat
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <div class="user-list">
+            <div class="user-list-header">
+                <span>Přezdívka</span>
+                <span>Email</span>
+                <span>Poslední přihlášení</span>
+                <span>Akce</span>
+            </div>
+            @foreach (var user in Model.PagedUsers.Items)
+            {
+                <div class="user-list-item">
+                    <span>@user.Nickname</span>
+                    <span>@user.Email</span>
+                    <span>@(user.LastLogin?.ToString("dd.MM.yyyy HH:mm") ?? "Nikdy")</span>
+                    <div class="user-actions">
+                        <form method="post">
+                            <button type="submit"
+                                    asp-page-handler="ToggleVisibility"
+                                    asp-route-userId="@user.Id"
+                                    class="btn btn-warning btn-sm fixed-width">
+                                @(user.Type == Zodpovedne.Contracts.Enums.UserType.Hidden ? "Odkrýt" : "Skrýt")
+                            </button>
+                        </form>
+                        <form method="post">
+                            <button type="submit"
+                                    asp-page-handler="DeleteUser"
+                                    asp-route-userId="@user.Id"
+                                    class="btn btn-danger btn-sm fixed-width"
+                                    onclick="return confirm('Opravdu chcete smazat tohoto uživatele?')">
+                                Smazat
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
         </div>
-
         @* Stránkování *@
         @if (Model.PagedUsers.TotalPages > 1)
         {

@@ -46,3 +46,56 @@ button.accept-policy {
   white-space: nowrap;
   line-height: 60px;
 }
+
+:root {
+    --primary-pink: #FF9E9E;
+    --secondary-pink: #FFB5B5;
+    --text-gray: #666666;
+}
+
+.navbar {
+    background-color: var(--primary-pink) !important;
+    padding: 1rem 0;
+}
+
+.navbar-light .navbar-nav .nav-link {
+    color: white !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
+
+    .navbar-light .navbar-nav .nav-link:hover {
+        background-color: var(--secondary-pink);
+        border-radius: 20px;
+    }
+
+.site-header {
+    padding: 1rem 0;
+    background-color: white;
+}
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.product-card {
+    border: 1px solid #eee;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+.footer {
+    background-color: var(--primary-pink);
+    color: white;
+    padding: 2rem 0;
+}
+.footer a {
+        color: white;
+}

@@ -1,4 +1,22 @@
 ﻿@page "/hracky"
 @model Zodpovedne.Web.Pages.Katalog.HrackyModel
 @{
+    ViewData["Title"] = "Hračky";
 }
+
+<div class="container py-4">
+    <h1 class="mb-4" style="color: var(--text-gray);">Hračky pro děti</h1>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="product-card">
+                <img src="https://picsum.photos/400/300" class="card-img-top" alt="Dřevěné kostky">
+                <div class="card-body">
+                    <h5 class="card-title">Edukativní dřevěné kostky</h5>
+                    <p class="card-text">Sada 50 dřevěných kostek v různých barvách pro rozvoj motoriky a kreativity vašeho dítěte.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Add more product cards -->
+    </div>
+</div>

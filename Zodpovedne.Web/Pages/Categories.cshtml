@@ -1,15 +1,11 @@
 ﻿@page "/categories"
 @model CategoriesModel
 @{
-    ViewData["Title"] = "Kategorie";
+    ViewData["Title"] = "Témata diskuzí";
 }
 
-<div class="container">
-    <div class="row mb-4">
-        <div class="col">
-            <h1>Kategorie</h1>
-        </div>
-    </div>
+<div class="container py-4">
+    <h1 class="mb-4" style="color: var(--text-gray);">Témata diskuzí</h1>
 
     @if (Model.Categories.Any())
     {
