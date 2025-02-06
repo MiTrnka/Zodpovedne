@@ -449,6 +449,12 @@ public class DiscussionsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole("Admin");
 
+        // Získáme detaily uživatele z databáze dle userId aktualně přihlášeného uživatele
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            return Unauthorized();
+
+
         var discussion = await dbContext.Discussions.FindAsync(discussionId);
         if (discussion == null ||
             discussion.Type == DiscussionType.Deleted ||  // Smazané diskuze nejsou dostupné nikomu
@@ -484,7 +490,7 @@ public class DiscussionsController : ControllerBase
             UserId = userId,
             Content = model.Content,
             CreatedAt = DateTime.UtcNow,
-            Type = model.Type  // Použijeme typ z modelu
+            Type = user.Type == UserType.Hidden ? CommentType.Hidden : model.Type
         };
 
         dbContext.Comments.Add(reply);
