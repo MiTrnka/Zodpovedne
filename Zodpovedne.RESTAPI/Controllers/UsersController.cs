@@ -277,9 +277,10 @@ public class UsersController : ControllerBase
     {
         var user = await this.userManager.FindByEmailAsync(model.Email);
         if (user == null)
-        {
             return Unauthorized();
-        }
+
+        if (user.Type == UserType.Deleted)
+            return Unauthorized();
 
         //Metoda ověří heslo(false zde znamená, že se nezamkne účet při špatném hesle)
         var result = await this.signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: true);
