@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Zodpovedne.Data.Interfaces;
 using Microsoft.Extensions.Logging;
+using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Data.Services;
 
@@ -51,7 +52,8 @@ public class IdentityDataSeeder : IIdentityDataSeeder
                 UserName = adminEmail,
                 Email = adminEmail,
                 Nickname = "Admin",
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                Type = UserType.Normal
             };
 
             var result = await userManager.CreateAsync(admin, "abc");
