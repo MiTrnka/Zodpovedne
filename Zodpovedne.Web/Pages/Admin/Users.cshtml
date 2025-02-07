@@ -8,6 +8,11 @@
 <div class="container">
     <h2>Správa uživatelů</h2>
 
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
     @if (Model.PagedUsers?.Items.Any() == true)
     {
         <div class="user-list">
@@ -22,9 +27,9 @@
                 <div class="user-list-item">
                     <span>@user.Nickname</span>
                     <span>@user.Email</span>
-                    <span>@(user.LastLogin?.ToString("dd.MM.yyyy HH:mm") ?? "Nikdy")</span>
+                    <span>@(user.LastLogin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "Nikdy")</span>
                     <div class="user-actions">
-                        <form method="post">
+                        <form method="post" class="d-inline">
                             <button type="submit"
                                     asp-page-handler="ToggleVisibility"
                                     asp-route-userId="@user.Id"
@@ -32,7 +37,7 @@
                                 @(user.Type == Zodpovedne.Contracts.Enums.UserType.Hidden ? "Odkrýt" : "Skrýt")
                             </button>
                         </form>
-                        <form method="post">
+                        <form method="post" class="d-inline">
                             <button type="submit"
                                     asp-page-handler="DeleteUser"
                                     asp-route-userId="@user.Id"
@@ -41,11 +46,20 @@
                                 Smazat
                             </button>
                         </form>
+                        <form method="post" class="d-inline">
+                            <button type="submit"
+                                    asp-page-handler="DeleteUserPermanently"
+                                    asp-route-userId="@user.Id"
+                                    class="btn btn-danger btn-sm fixed-width"
+                                    onclick="return confirm('POZOR! Tato akce je nevratná. Opravdu chcete trvale smazat tohoto uživatele včetně všech jeho dat?')">
+                                Smazat navždy
+                            </button>
+                        </form>
                     </div>
                 </div>
             }
         </div>
-        @* Stránkování *@
+
         @if (Model.PagedUsers.TotalPages > 1)
         {
             <nav>

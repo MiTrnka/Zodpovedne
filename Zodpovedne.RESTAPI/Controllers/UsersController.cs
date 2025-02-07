@@ -9,6 +9,7 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Zodpovedne.Contracts.Enums;
+using Zodpovedne.Data.Data;
 
 namespace Zodpovedne.Controllers;
 
@@ -18,13 +19,17 @@ public class UsersController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
+    private readonly ApplicationDbContext dbContext;
+
     private readonly IConfiguration configuration;
 
-    public UsersController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
+    public UsersController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
     {
         this.userManager = userManager;
         this.signInManager = signInManager;
         this.configuration = configuration;
+        this.dbContext = dbContext;
+
     }
 
     /// <summary>
@@ -189,6 +194,76 @@ public class UsersController : ControllerBase
         user.Type = UserType.Deleted;
         await userManager.UpdateAsync(user);
         return Ok();
+    }
+
+    /// <summary>
+    /// Provede úplné smazání uživatele a všech jeho dat z databáze.
+    /// Přístupné pouze pro samotného uživatele nebo admina.
+    /// </summary>
+    [Authorize]
+    [HttpDelete("permanently/{userId}")]
+    public async Task<IActionResult> DeleteUserPermanently([FromRoute] string userId)
+    {
+        // Kontrola oprávnění - může mazat jen admin nebo samotný uživatel
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = User.IsInRole("Admin");
+        if (!isAdmin && currentUserId != userId)
+            return Forbid();
+
+        // Najdeme uživatele
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+            return NotFound();
+
+        using var transaction = await dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            // 1. Smažeme všechny lajky diskuzí od uživatele
+            await dbContext.DiscussionLikes
+                .Where(l => l.UserId == userId)
+                .ExecuteDeleteAsync();
+
+            // 2. Smažeme všechny lajky komentářů od uživatele
+            await dbContext.CommentLikes
+                .Where(l => l.UserId == userId)
+                .ExecuteDeleteAsync();
+
+            // 3. Smažeme všechny reakční komentáře od uživatele
+            await dbContext.Comments
+                .Where(c => c.UserId == userId && c.ParentCommentId != null)
+                .ExecuteDeleteAsync();
+
+            // 4. Smažeme všechny reakční komentáře na rootové komentáře mazaného uživatele
+            await dbContext.Comments
+                .Where(c => c.ParentCommentId != null && c.ParentComment.UserId == userId)
+                .ExecuteDeleteAsync();
+
+            // 5. Smažeme všechny komentáře od uživatele
+            await dbContext.Comments
+                .Where(c => c.UserId == userId)
+                .ExecuteDeleteAsync();
+
+            // 6. Smažeme všechny lajky na diskuzích uživatele
+            await dbContext.DiscussionLikes
+                .Where(l => l.Discussion.UserId == userId)
+                .ExecuteDeleteAsync();
+
+            // 7. Smažeme všechny diskuze uživatele
+            await dbContext.Discussions
+                .Where(d => d.UserId == userId)
+                .ExecuteDeleteAsync();
+
+            // 8. Smažeme samotného uživatele
+            await userManager.DeleteAsync(user);
+
+            await transaction.CommitAsync();
+            return Ok();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            return BadRequest();
+        }
     }
 
     /// <summary>

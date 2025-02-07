@@ -37,7 +37,7 @@
                                 </span>
                                 <span class="mx-2">•</span>
                                 <span title="Datum vytvoření">
-                                    <i class="bi bi-calendar"></i> @discussion.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                    <i class="bi bi-calendar"></i> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
                                 </span>
                                 <span class="mx-2">•</span>
                                 <span title="Počet komentářů">

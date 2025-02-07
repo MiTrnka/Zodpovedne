@@ -19,6 +19,27 @@ public class UsersModel : BasePageModel
     {
     }
 
+    // Users.cshtml.cs - pøidat property a metodu
+    public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// Akce na trvalé smazání uživatele
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    public async Task<IActionResult> OnPostDeleteUserPermanentlyAsync(string userId)
+    {
+        var client = _clientFactory.CreateBearerClient(HttpContext);
+        var response = await client.DeleteAsync($"{ApiBaseUrl}/api/users/permanently/{userId}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            ErrorMessage = "Trvalé smazání uživatele se nezdaøilo.";
+        }
+
+        return RedirectToPage();
+    }
+
     public async Task<IActionResult> OnGetAsync()
     {
         if (!IsAdmin)

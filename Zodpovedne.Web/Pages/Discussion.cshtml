@@ -36,7 +36,7 @@
                             </span>
                             <span class="mx-2">•</span>
                             <span title="Datum vytvoření">
-                                <i class="bi bi-calendar"></i> @Model.Discussion.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                <i class="bi bi-calendar"></i> @Model.Discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
                             </span>
                             <span class="mx-2">•</span>
                             <span title="Počet zobrazení">
@@ -149,7 +149,7 @@
                                         <div class="text-muted small">
                                             <i class="bi bi-person"></i> @comment.AuthorNickname
                                             <span class="mx-2">•</span>
-                                            @comment.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                            @comment.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
                                             @if (comment.Type == CommentType.Hidden)
                                             {
                                                 //<span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span>
@@ -215,7 +215,7 @@
                                                 <div class="text-muted small">
                                                     <i class="bi bi-person"></i> @reply.AuthorNickname
                                                     <span class="mx-2">•</span>
-                                                    @reply.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                                                    @reply.CreatedAt.ToLocalTime().ToLocalTime().ToString("dd.MM.yyyy HH:mm")
                                                     @if (reply.Type == CommentType.Hidden)
                                                     {
                                                         //<span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span>
