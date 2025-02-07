@@ -43,20 +43,26 @@
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Admin/Users">Uživatelé</a>
+                                <a class="nav-link" asp-page="/Admin/Users">Uživatelé</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-page="/Account/RegisterAdmin" asp-route-returnUrl="@Context.Request.Path">Registrovat dalšího admina</a>
                             </li>
                         }
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Account/Profile">@Context.Session.GetString("UserNickname")</a>
+                            <a class="nav-link" asp-page="/Account/Profile">@Context.Session.GetString("UserNickname")</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Account/Logout">Odhlásit se</a>
+                            <a class="nav-link" asp-page="/Account/Logout">Odhlásit se</a>
                         </li>
                     }
                     else
                     {
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Account/Login" asp-route-returnUrl="@Context.Request.Path">Přihlásit se</a>
+                            <a class="nav-link" asp-page="/Account/Register" asp-route-returnUrl="@Context.Request.Path">Registrovat se</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Account/Login" asp-route-returnUrl="@Context.Request.Path">Přihlásit se</a>
                         </li>
                     }
                 </ul>
