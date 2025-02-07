@@ -8,6 +8,7 @@ using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Data.Helpers;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.Design;
 
 
 namespace Zodpovedne.RESTAPI.Controllers;
@@ -403,27 +404,71 @@ public class DiscussionsController : ControllerBase
     [HttpPost("{discussionId}/comments")]
     public async Task<ActionResult<CommentDto>> CreateComment(int discussionId, CreateCommentDto model)
     {
-        var discussion = await dbContext.Discussions.FindAsync(discussionId);
-        if (discussion == null)
-            return NotFound();
+        return await CreateCommentOrReply(discussionId, null, model);
+    }
 
+    /// <summary>
+    /// Přidá reakci na existující komentář
+    /// Přístupné pouze pro přihlášené uživatele
+    /// </summary>
+    [Authorize]
+    [HttpPost("{discussionId}/comments/{commentId}/replies")]
+    public async Task<ActionResult<CommentDto>> CreateReply(int discussionId, int commentId, CreateCommentDto model)
+    {
+        return await CreateCommentOrReply(discussionId, commentId, model);
+    }
+
+    /// <summary>
+    /// Pomocná metoda pro vytvoření komentáře nebo reakce na komentář.
+    /// Společná logika pro vytvoření root komentáře i odpovědi.
+    /// </summary>
+    /// <param name="discussionId">ID diskuze</param>
+    /// <param name="parentCommentId">ID rodičovského komentáře (null pro root komentář)</param>
+    /// <param name="model">Data pro vytvoření komentáře</param>
+    /// <returns>Vytvořený komentář nebo chybový stav</returns>
+    private async Task<ActionResult<CommentDto>> CreateCommentOrReply(int discussionId, int? parentCommentId, CreateCommentDto model)
+    {
+        // Získáme detaily přihlášeného uživatele
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
         var isAdmin = User.IsInRole("Admin");
-
-        // Získáme detaily uživatele z databáze dle userId aktualně přihlášeného uživatele
         var user = await userManager.FindByIdAsync(userId);
         if (user == null)
             return Unauthorized();
 
+        // Získáme diskuzi, ke které komentář bude patřit
+        var discussion = await dbContext.Discussions.FindAsync(discussionId);
+        if (discussion == null || discussion.Type == DiscussionType.Deleted)
+            return NotFound("Diskuze neexistuje.");
+
+
+
+        if (parentCommentId != null) // Jedná se o vytváření reakčního komentáře
+        {
+            // Ověříme existenci rodičovského komentáře
+            var parentComment = await dbContext.Comments.FindAsync(parentCommentId);
+            if (parentComment == null || parentComment.Type == CommentType.Deleted)
+                return NotFound("Rodičovský komentář neexistuje.");
+
+
+            // Ověříme, že rodičovský komentář patří k této diskuzi
+            if (parentComment.DiscussionId != discussionId)
+                return BadRequest("Komentář nepatří k této diskuzi.");
+
+            // Ověříme, že rodičovský komentář je root komentář
+            if (parentComment.ParentCommentId != null)
+                return BadRequest("Lze reagovat pouze na hlavní komentáře.");
+        }
+
         var comment = new Comment
         {
             DiscussionId = discussionId,
+            ParentCommentId = parentCommentId,
             UserId = userId,
             Content = model.Content,
-            Type = user.Type == UserType.Hidden ? CommentType.Hidden : model.Type,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Type = user.Type == UserType.Hidden ? CommentType.Hidden : model.Type
         };
 
         dbContext.Comments.Add(comment);
@@ -435,73 +480,6 @@ public class DiscussionsController : ControllerBase
             .FirstAsync(c => c.Id == comment.Id);
 
         return Ok(MapCommentToDto(comment, userId, isAdmin));
-    }
-
-    /// <summary>
-    /// Přidá reakci na existující komentář
-    /// Přístupné pouze pro přihlášené uživatele
-    /// </summary>
-    [Authorize]
-    [HttpPost("{discussionId}/comments/{commentId}/replies")]
-    public async Task<ActionResult<CommentDto>> CreateReply(int discussionId, int commentId, CreateCommentDto model)
-    {
-        // Ověříme existenci diskuze a její viditelnost pro uživatele
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("Admin");
-
-        // Získáme detaily uživatele z databáze dle userId aktualně přihlášeného uživatele
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Unauthorized();
-
-
-        var discussion = await dbContext.Discussions.FindAsync(discussionId);
-        if (discussion == null ||
-            discussion.Type == DiscussionType.Deleted ||  // Smazané diskuze nejsou dostupné nikomu
-            (discussion.Type == DiscussionType.Hidden && !isAdmin && discussion.UserId != userId))  // Hidden diskuze jen pro adminy a autory
-        {
-            return NotFound("Diskuze neexistuje.");
-        }
-
-        // Ověříme existenci rodičovského komentáře a jeho viditelnost
-        var parentComment = await dbContext.Comments.FindAsync(commentId);
-        if (parentComment == null ||
-            parentComment.Type == CommentType.Deleted ||  // Smazané komentáře nejsou dostupné nikomu
-            (parentComment.Type == CommentType.Hidden && !isAdmin && parentComment.UserId != userId))  // Hidden komentáře jen pro adminy a autory
-        {
-            return NotFound("Rodičovský komentář neexistuje.");
-        }
-
-        // Ověříme, že rodičovský komentář patří k této diskuzi
-        if (parentComment.DiscussionId != discussionId)
-            return BadRequest("Komentář nepatří k této diskuzi.");
-
-        // Ověříme, že rodičovský komentář je root komentář
-        if (parentComment.ParentCommentId != null)
-            return BadRequest("Lze reagovat pouze na hlavní komentáře.");
-
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
-
-        var reply = new Comment
-        {
-            DiscussionId = discussionId,
-            ParentCommentId = commentId,
-            UserId = userId,
-            Content = model.Content,
-            CreatedAt = DateTime.UtcNow,
-            Type = user.Type == UserType.Hidden ? CommentType.Hidden : model.Type
-        };
-
-        dbContext.Comments.Add(reply);
-        await dbContext.SaveChangesAsync();
-
-        // Načteme vytvořenou odpověď včetně uživatele pro správné mapování
-        reply = await dbContext.Comments
-            .Include(c => c.User)
-            .FirstAsync(c => c.Id == reply.Id);
-
-        return Ok(MapCommentToDto(reply, userId, isAdmin));
     }
 
     /// <summary>
