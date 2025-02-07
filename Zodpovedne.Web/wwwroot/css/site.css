@@ -29,3 +29,55 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+
+
+
+.navbar-light .navbar-nav .nav-link {
+    color: Black !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: background-color 0.3s, font-weight 0.3s, color 0.3s;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+    background-color: var(--secondary-pink);
+    border-radius: 20px;
+}
+
+.navbar-light .navbar-nav .nav-link.active {
+    background-color: var(--secondary-pink);
+    border-radius: 20px;
+    font-weight: bold;
+    color: black !important;
+}
+
+
+
+.user-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.user-list-header, .user-list-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.user-list-header {
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+.user-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.fixed-width {
+    min-width: 80px; /* Zajistí stejnou šíøku tlaèítek */
+}

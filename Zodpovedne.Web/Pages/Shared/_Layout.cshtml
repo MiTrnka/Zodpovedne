@@ -19,51 +19,50 @@
     <nav class="navbar navbar-expand-sm navbar-light">
         <div class="container">
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link @(Url.Page("/Categories") == Context.Request.Path ? "active" : "")"
-                               asp-area="" asp-page="/Categories">Diskuze na různá témata</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(Url.Page("/katalog/hracky") == Context.Request.Path ? "active" : "")"
-                               asp-area="" asp-page="/katalog/hracky">Hračky</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(Url.Page("/katalog/obleceni") == Context.Request.Path ? "active" : "")"
-                               asp-area="" asp-page="/katalog/obleceni">Oblečení</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(Url.Page("/katalog/elektronika") == Context.Request.Path ? "active" : "")"
-                               asp-area="" asp-page="/katalog/elektronika">Elektronika</a>
-                        </li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        @if (Context.Session.GetString("JWTToken") != null)
-                        {
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-page="/Admin/Users">Uživatelé</a>
-                                </li>
-                            }
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Profile">@Context.Session.GetString("UserNickname")</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Logout">Odhlásit se</a>
-                            </li>
-                        }
-                        else
+                <ul class="navbar-nav flex-grow-1">
+                    <li class="nav-item">
+                        <a class="nav-link @(Url.Page("/Categories") == Context.Request.Path ? "active" : "")"
+                            asp-area="" asp-page="/Categories">Diskuze na různá témata</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(Url.Page("/katalog/hracky") == Context.Request.Path ? "active" : "")"
+                            asp-area="" asp-page="/katalog/hracky">Hračky</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(Url.Page("/katalog/obleceni") == Context.Request.Path ? "active" : "")"
+                            asp-area="" asp-page="/katalog/obleceni">Oblečení</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(Url.Page("/katalog/elektronika") == Context.Request.Path ? "active" : "")"
+                            asp-area="" asp-page="/katalog/elektronika">Elektronika</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    @if (Context.Session.GetString("JWTToken") != null)
+                    {
+                        @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Login" asp-route-returnUrl="@Context.Request.Path">Přihlásit se</a>
+                                <a class="nav-link text-dark" asp-page="/Admin/Users">Uživatelé</a>
                             </li>
                         }
-                    </ul>
-                </div>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-page="/Account/Profile">@Context.Session.GetString("UserNickname")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-page="/Account/Logout">Odhlásit se</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-page="/Account/Login" asp-route-returnUrl="@Context.Request.Path">Přihlásit se</a>
+                        </li>
+                    }
+                </ul>
             </div>
-        </nav>
-    </header>
+        </div>
+    </nav>
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
