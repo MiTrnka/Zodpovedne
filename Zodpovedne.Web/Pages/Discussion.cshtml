@@ -9,11 +9,7 @@
 <div class="container">
     <div class="row mb-4">
         <div class="col">
-            @* Navigační tlačítko zpět na kategorii *@
-            <a href="/categories/@Model.CategoryCode" class="btn btn-outline-secondary mb-3">
-                <i class="bi bi-arrow-left"></i> Zpět na kategorii
-            </a>
-
+            <h1>@Model.CategoryName</h1>
             @if (Model.Discussion != null)
             {
                 <div class="card">

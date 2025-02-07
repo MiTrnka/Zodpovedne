@@ -1,4 +1,23 @@
-﻿<!DOCTYPE html>
+﻿@{
+    // Získání aktuální cesty a její rozdělení na části
+    var currentPath = ViewContext.RouteData.Values["Page"]?.ToString() ?? "";
+
+    // Funkce pro určení, zda je položka menu aktivní
+    bool IsMenuItemActive(string pagePath)
+    {
+        if (pagePath == "/Categories")
+        {
+            // Pro sekci diskuzí považujeme za aktivní i všechny podstránky kategorií
+            return currentPath.StartsWith("/Categories") ||
+                   currentPath.StartsWith("/Discussion") ||
+                   currentPath.StartsWith("/Category");
+        }
+
+        // Pro ostatní položky menu přesná shoda cesty
+        return currentPath == pagePath;
+    }
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -21,36 +40,41 @@
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
-                        <a class="nav-link @(Url.Page("/Categories") == Context.Request.Path ? "active" : "")"
-                            asp-area="" asp-page="/Categories">Diskuze na různá témata</a>
+                        <a class="nav-link @(IsMenuItemActive("/Categories") ? "active" : "")"
+                           asp-page="/Categories">Diskuze</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link @(Url.Page("/katalog/hracky") == Context.Request.Path ? "active" : "")"
-                            asp-area="" asp-page="/katalog/hracky">Hračky</a>
+                        <a class="nav-link @(IsMenuItemActive("/Katalog/Hracky") ? "active" : "")"
+                           asp-page="/katalog/hracky">Hračky</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link @(Url.Page("/katalog/obleceni") == Context.Request.Path ? "active" : "")"
-                            asp-area="" asp-page="/katalog/obleceni">Oblečení</a>
+                        <a class="nav-link @(IsMenuItemActive("/Katalog/Obleceni") ? "active" : "")"
+                           asp-page="/katalog/obleceni">Oblečení</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link @(Url.Page("/katalog/elektronika") == Context.Request.Path ? "active" : "")"
-                            asp-area="" asp-page="/katalog/elektronika">Elektronika</a>
+                        <a class="nav-link @(IsMenuItemActive("/Katalog/Elektronika") ? "active" : "")"
+                           asp-page="/katalog/elektronika">Elektronika</a>
                     </li>
                 </ul>
+
                 <ul class="navbar-nav">
                     @if (Context.Session.GetString("JWTToken") != null)
                     {
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-page="/Admin/Users">Uživatelé</a>
+                                <a class="nav-link @(IsMenuItemActive("/Admin/Users") ? "active" : "")"
+                                   asp-page="/Admin/Users">Uživatelé</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-page="/Account/RegisterAdmin" asp-route-returnUrl="@Context.Request.Path">Registrovat dalšího admina</a>
+                                <a class="nav-link @(IsMenuItemActive("/Account/RegisterAdmin") ? "active" : "")"
+                                   asp-page="/Account/RegisterAdmin"
+                                   asp-route-returnUrl="@Context.Request.Path">Registrovat dalšího admina</a>
                             </li>
                         }
                         <li class="nav-item">
-                            <a class="nav-link" asp-page="/Account/Profile">@Context.Session.GetString("UserNickname")</a>
+                            <a class="nav-link @(IsMenuItemActive("/Account/Profile") ? "active" : "")"
+                               asp-page="/Account/Profile">@Context.Session.GetString("UserNickname")</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-page="/Account/Logout">Odhlásit se</a>
@@ -59,10 +83,14 @@
                     else
                     {
                         <li class="nav-item">
-                            <a class="nav-link" asp-page="/Account/Register" asp-route-returnUrl="@Context.Request.Path">Registrovat se</a>
+                            <a class="nav-link @(IsMenuItemActive("/Account/Register") ? "active" : "")"
+                               asp-page="/Account/Register"
+                               asp-route-returnUrl="@Context.Request.Path">Registrovat se</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" asp-page="/Account/Login" asp-route-returnUrl="@Context.Request.Path">Přihlásit se</a>
+                            <a class="nav-link @(IsMenuItemActive("/Account/Login") ? "active" : "")"
+                               asp-page="/Account/Login"
+                               asp-route-returnUrl="@Context.Request.Path">Přihlásit se</a>
                         </li>
                     }
                 </ul>

@@ -30,6 +30,12 @@ public class DiscussionModel : BasePageModel
     }
 
     /// <summary>
+    /// Jméno kategorie diskuze
+    /// </summary>
+    public string CategoryName { get; set; } = "";
+
+
+    /// <summary>
     /// Code kategorie získaný z URL
     /// </summary>
     [BindProperty(SupportsGet = true)]
@@ -76,6 +82,15 @@ public class DiscussionModel : BasePageModel
         var response = await client.GetAsync($"{ApiBaseUrl}/api/discussions/byCode/{DiscussionCode}");
         if (!response.IsSuccessStatusCode)
             return NotFound();
+
+        // Získání kategorie, protože potøebujeme zobrazit název kategorie
+        var categoryResponse = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/categories/{CategoryCode}");
+        if (!categoryResponse.IsSuccessStatusCode)
+            return NotFound();
+        var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryListDto>();
+        if (category == null)
+            return NotFound();
+        CategoryName = category.Name;
 
         Discussion = await response.Content.ReadFromJsonAsync<DiscussionDetailDto>();
         if (Discussion == null)
