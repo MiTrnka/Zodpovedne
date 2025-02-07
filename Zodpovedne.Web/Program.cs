@@ -9,6 +9,12 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ListenAnyIP(5214); // Naslouchá na všech IP adresách, abych mohl pøistupovat z jiných zaøízení (ne jen z Localhost)
+            //options.Listen(System.Net.IPAddress.Parse("192.168.0.213"), 5214); // Naslouchá na konkrétní IP adrese
+        });
+
         // Nastavení autentizace pro používání cookie autentizace jako výchozího schématu. Toto se muselo pøidat k tokenùm (autentizace/autorizace pro volání RESTAPI) kvùli tomu, aby fungovala autentizace i pro razor pages.
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
            // Konfigurace cookie autentizace
