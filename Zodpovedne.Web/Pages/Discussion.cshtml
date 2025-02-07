@@ -9,7 +9,9 @@
 <div class="container">
     <div class="row mb-4">
         <div class="col">
-            <h1>@Model.CategoryName</h1>
+            <h1>
+                <a href="/categories/@Model.CategoryCode" class="text-decoration-none">@Model.CategoryName</a>
+            </h1>
             @if (Model.Discussion != null)
             {
                 <div class="card">

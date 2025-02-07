@@ -81,3 +81,13 @@ body {
 .fixed-width {
     min-width: 80px; /* Zajistí stejnou šíøku tlaèítek */
 }
+
+
+h1 a {
+    color: inherit;
+}
+
+h1 a:hover {
+    color: var(--primary-pink);
+    // nebo jakoukoliv jinou barvu pro hover stav
+}
