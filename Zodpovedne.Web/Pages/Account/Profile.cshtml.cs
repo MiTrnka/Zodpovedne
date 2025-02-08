@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
@@ -82,10 +84,10 @@ public class ProfileModel : BasePageModel
 
         if (response.IsSuccessStatusCode)
         {
-            // Email se zmìnil úspìšnì, musíme aktualizovat token
-            // protože ten obsahuje starý email
-            await OnGetAsync(); // Znovu naèteme data profilu
-            return RedirectToPage();
+            // Email se zmìnil úspìšnì, uživatel bude odhlášen a bude se muset znovu nalogovat, aby se mu vygeneroval nový JWT token
+            HttpContext.Session.Clear();
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToPage("/Account/Login");
         }
 
         EmailErrorMessage = "Zmìna emailu se nezdaøila. Email je již používán.";
