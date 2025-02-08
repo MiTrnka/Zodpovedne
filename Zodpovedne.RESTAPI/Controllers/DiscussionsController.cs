@@ -304,13 +304,19 @@ public class DiscussionsController : ControllerBase
     /// Smaže diskuzi a všechny její komentáře
     /// Přístupné pouze pro adminy
     /// </summary>
-    [Authorize(Policy = "RequireAdminRole")]
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteDiscussion(int id)
     {
         var discussion = await dbContext.Discussions.FindAsync(id);
         if (discussion == null)
             return NotFound();
+
+        // Kontrola oprávnění - může smazat jen admin nebo autor
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isAdmin = User.IsInRole("Admin");
+        if (!isAdmin && discussion.UserId != userId)
+            return Forbid();
 
         // Nastavíme diskuzi jako smazanou (typ Deleted)
         discussion.Type = DiscussionType.Deleted;

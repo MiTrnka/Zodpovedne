@@ -150,6 +150,45 @@ public class DiscussionModel : BasePageModel
     }
 
     /// <summary>
+    /// Handler pro smazání diskuze
+    /// Volá se pøi odeslání formuláøe pro smazání diskuze (HTTP POST)
+    /// Po úspìšném smazání pøesmìruje na kategorii
+    /// </summary>
+    public async Task<IActionResult> OnPostDeleteDiscussionAsync()
+    {
+        if (!IsUserLoggedIn)
+            return RedirectToPage("/Account/Login");
+
+        var client = _clientFactory.CreateBearerClient(HttpContext);
+
+        // Naèteme diskuzi pro ovìøení existence
+        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/api/discussions/byCode/{DiscussionCode}");
+        if (!discussionResponse.IsSuccessStatusCode)
+            return NotFound();
+
+        Discussion = await discussionResponse.Content.ReadFromJsonAsync<DiscussionDetailDto>();
+        if (Discussion == null)
+            return NotFound();
+
+        // Kontrola oprávnìní
+        if (!CanEditDiscussion)
+            return Forbid();
+
+        // Zavolání endpointu pro smazání
+        var response = await client.DeleteAsync($"{ApiBaseUrl}/api/discussions/{Discussion.Id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Po úspìšném smazání pøesmìrujeme na kategorii
+            return RedirectToPage("/Category", new { categoryCode = CategoryCode });
+        }
+
+        // V pøípadì chyby pøidáme chybovou zprávu
+        ModelState.AddModelError("", "Nepodaøilo se smazat diskuzi.");
+        return Page();
+    }
+
+    /// <summary>
     /// Urèuje, zda pøihlášený uživatel mùže editovat diskuzi
     /// (musí být buï admin nebo autor diskuze)
     /// </summary>

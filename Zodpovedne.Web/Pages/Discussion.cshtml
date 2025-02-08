@@ -113,6 +113,12 @@
                                 <button id="cancel-discussion-btn" class="btn btn-outline-secondary d-none" onclick="toggleDiscussionEdit(false)">
                                     <i class="bi bi-x"></i> Zrušit
                                 </button>
+                                <form method="post" asp-page-handler="DeleteDiscussion" class="d-inline">
+                                    <button type="submit" class="btn btn-danger"
+                                            onclick="return confirm('Opravdu chcete smazat tuto diskuzi včetně všech komentářů?')">
+                                        <i class="bi bi-trash"></i> Smazat
+                                    </button>
+                                </form>
                             </div>
                         }
                     </div>
