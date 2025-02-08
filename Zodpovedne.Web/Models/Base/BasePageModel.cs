@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using Ganss.Xss;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 
 namespace Zodpovedne.Web.Models.Base;
@@ -11,10 +12,42 @@ public abstract class BasePageModel : PageModel
     protected readonly IHttpClientFactory _clientFactory;
     protected readonly IConfiguration _configuration;
 
+    // HtmlSanitizer pro bezpečné čištění HTML vstupu
+    protected readonly HtmlSanitizer _sanitizer;
+
     protected BasePageModel(IHttpClientFactory clientFactory, IConfiguration configuration)
     {
         _clientFactory = clientFactory;
         _configuration = configuration;
+
+        // Inicializace a konfigurace HTML sanitizeru pro bezpečné čištění HTML vstupu
+        _sanitizer = new HtmlSanitizer();
+
+        // Povolené HTML tagy
+        _sanitizer.AllowedTags.Clear();
+        _sanitizer.AllowedTags.Add("p");
+        _sanitizer.AllowedTags.Add("br");
+        _sanitizer.AllowedTags.Add("b");
+        _sanitizer.AllowedTags.Add("strong");
+        _sanitizer.AllowedTags.Add("i");
+        _sanitizer.AllowedTags.Add("em");
+        _sanitizer.AllowedTags.Add("ul");
+        _sanitizer.AllowedTags.Add("ol");
+        _sanitizer.AllowedTags.Add("li");
+        _sanitizer.AllowedTags.Add("h2");
+        _sanitizer.AllowedTags.Add("h3");
+        _sanitizer.AllowedTags.Add("h4");
+        _sanitizer.AllowedTags.Add("a");
+        _sanitizer.AllowedTags.Add("img");
+
+        // Povolené HTML atributy
+        _sanitizer.AllowedAttributes.Clear();
+        _sanitizer.AllowedAttributes.Add("href");
+        _sanitizer.AllowedAttributes.Add("src");
+        _sanitizer.AllowedAttributes.Add("alt");
+
+        // Povolené CSS styly (žádné)
+        _sanitizer.AllowedCssProperties.Clear();
     }
 
     /// <summary>

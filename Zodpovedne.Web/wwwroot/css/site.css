@@ -133,3 +133,38 @@ h1 a {
     background-color: var(--primary-pink);
     border-color: var(--primary-pink);
 }
+
+
+#editor-container {
+    /* Minimální výška */
+    min-height: 200px;
+    /* Maximální výška */
+    max-height: 600px;
+    /* Výchozí výška jako procento výšky viewport */
+    height: 40vh;
+    /* Ohranièení a padding */
+    border: 1px solid #ccc;
+    padding: 10px;
+    /* Povolení scrollování pøi pøeteèení */
+    overflow-y: auto;
+}
+
+/* Styly pro toolbar editoru textu */
+#toolbar-container {
+    border: 1px solid #ccc;
+    border-bottom: none;
+    padding: 5px;
+}
+
+/* Responzivní chování */
+@media (max-height: 600px) {
+    #editor-container {
+        height: 200px; /* Minimální výška na malých obrazovkách */
+    }
+}
+
+@media (min-height: 1200px) {
+    #editor-container {
+        height: 600px; /* Maximální výška na velkých obrazovkách */
+    }
+}

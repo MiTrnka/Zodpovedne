@@ -1,5 +1,6 @@
 // NuGet Microsoft.AspNetCore.Authentication.JwtBearer
 // NuGet Swashbuckle.AspNetCore
+// NuGet HtmlSanitizer   //pro bezpeèné èištìní HTML vstupu
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -17,7 +18,7 @@ namespace Zodpovedne.RESTAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            
+
             // Kontrola existence konfiguraèního souboru a jeho položek
             if (builder.Configuration == null)
             {

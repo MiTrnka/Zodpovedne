@@ -4,36 +4,93 @@
     ViewData["Title"] = "Nová diskuze";
 }
 
+<!-- Hlavní container pro celou stránku -->
 <div class="container">
+    <!-- Záhlaví stránky s názvem kategorie -->
     <div class="row mb-4">
         <div class="col">
             <h1>Nová diskuze v kategorii @Model.CategoryName</h1>
         </div>
     </div>
 
+    <!-- Formulář pro vytvoření diskuze -->
     <div class="row">
         <div class="col-md-8">
             <form method="post">
+                <!-- Validační zprávy pro celý formulář -->
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <input type="hidden" asp-for="Input.CategoryId" />
 
+                <!-- Pole pro nadpis diskuze -->
                 <div class="mb-3">
                     <label asp-for="Input.Title" class="form-label">Nadpis</label>
-                    <input asp-for="Input.Title" class="form-control" />
+                    <input asp-for="Input.Title" class="form-control" maxlength="200" />
                     <span asp-validation-for="Input.Title" class="text-danger"></span>
                 </div>
 
+                <!-- Sekce s WYSIWYG editorem -->
                 <div class="mb-3">
                     <label asp-for="Input.Content" class="form-label">Obsah</label>
-                    <textarea asp-for="Input.Content" class="form-control" rows="10"></textarea>
+                    <div id="toolbar-container"></div>
+                    <div id="editor-container"></div>
+                    <textarea asp-for="Input.Content" id="editor-content" style="display: none;"></textarea>
                     <span asp-validation-for="Input.Content" class="text-danger"></span>
                 </div>
 
+                <!-- Tlačítka pro ovládání formuláře -->
                 <div class="mb-3">
                     <a href="/categories/@Model.CategoryCode" class="btn btn-secondary">Zpět</a>
-                    <button type="submit" class="btn btn-primary">Vytvořit diskuzi</button>
+                    <button type="submit" class="btn btn-primary" onclick="updateContent()">Vytvořit diskuzi</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <!-- Načtení CKEditoru z CDN -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/decoupled-document/ckeditor.js"></script>
+
+    <script>
+        // Globální proměnná pro přístup k editoru
+        let editor;
+
+        // Inicializace CKEditoru
+        DecoupledEditor
+            .create(document.querySelector('#editor-container'), {
+                // Základní konfigurace nástrojů
+                // Možné další nástroje: italic, underline, strikethrough, code, subscript, superscript
+                // heading, alignment, indent, outdent, link, imageUpload, blockQuote, insertTable
+                toolbar: ['bold', '|', 'bulletedList', 'numberedList'],
+
+                // Nastavení jazyka editoru
+                // Možné hodnoty: 'en', 'cs', 'sk', 'de', 'es', 'fr', atd.
+                language: 'cs',
+
+                // Zde je možné přidat další konfigurace:
+                // placeholder: 'Začněte psát...',
+                // height: '500px',
+                // width: '100%',
+                // removePlugins: ['...'],
+                // fontFamily: { options: ['Arial', 'Times New Roman'] },
+                // fontSize: { options: ['small', 'normal', 'big'] },
+                // fontColor: { colors: [{ color: '#FF0000', label: 'Červená' }] },
+                // alignment: { options: ['left', 'center', 'right'] }
+            })
+            .then(newEditor => {
+                // Uložení instance editoru
+                editor = newEditor;
+
+                // Připojení toolbaru do příslušného containeru
+                const toolbarContainer = document.querySelector('#toolbar-container');
+                toolbarContainer.appendChild(editor.ui.view.toolbar.element);
+            });
+
+        // Funkce pro přenos obsahu z editoru do skrytého textarea před odesláním formuláře
+        function updateContent() {
+            if (editor) {
+                document.querySelector('#editor-content').value = editor.getData();
+            }
+        }
+    </script>
+}

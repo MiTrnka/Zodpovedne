@@ -9,6 +9,8 @@ using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Data.Helpers;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.Design;
+using Ganss.Xss;
+
 
 
 namespace Zodpovedne.RESTAPI.Controllers;
@@ -23,11 +25,41 @@ public class DiscussionsController : ControllerBase
     private readonly ApplicationDbContext dbContext;
     private readonly UserManager<ApplicationUser> userManager;
 
+    // HtmlSanitizer pro bezpečné čištění HTML vstupu
+    private readonly HtmlSanitizer _sanitizer;
+
 
     public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager)
     {
         this.dbContext = dbContext;
         this.userManager = userManager;
+
+        // Inicializace a konfigurace sanitizeru pro bezpečné čištění HTML vstupu
+        _sanitizer = new HtmlSanitizer();
+
+        // Stejná konfigurace jako jsme měli v CreateDiscussion
+        _sanitizer.AllowedTags.Clear();
+        _sanitizer.AllowedTags.Add("p");
+        _sanitizer.AllowedTags.Add("br");
+        _sanitizer.AllowedTags.Add("b");
+        _sanitizer.AllowedTags.Add("strong");
+        _sanitizer.AllowedTags.Add("i");
+        _sanitizer.AllowedTags.Add("em");
+        _sanitizer.AllowedTags.Add("ul");
+        _sanitizer.AllowedTags.Add("ol");
+        _sanitizer.AllowedTags.Add("li");
+        _sanitizer.AllowedTags.Add("h2");
+        _sanitizer.AllowedTags.Add("h3");
+        _sanitizer.AllowedTags.Add("h4");
+        _sanitizer.AllowedTags.Add("a");
+        _sanitizer.AllowedTags.Add("img");
+
+        _sanitizer.AllowedAttributes.Clear();
+        _sanitizer.AllowedAttributes.Add("href");
+        _sanitizer.AllowedAttributes.Add("src");
+        _sanitizer.AllowedAttributes.Add("alt");
+
+        _sanitizer.AllowedCssProperties.Clear();
     }
 
     /// <summary>
@@ -246,10 +278,15 @@ public class DiscussionsController : ControllerBase
         if (user == null)
             return Unauthorized();
 
+        // Sanitizace vstupů
+        var sanitizedTitle = _sanitizer.Sanitize(model.Title);
+        var sanitizedContent = _sanitizer.Sanitize(model.Content);
+
         // Vygenerujeme URL-friendly kód
-        var baseCode = UrlHelper.GenerateUrlFriendlyCode(model.Title);
+        var baseCode = UrlHelper.GenerateUrlFriendlyCode(sanitizedTitle);
         var suffix = UrlHelper.GenerateUniqueSuffix();
         var code = $"{baseCode}-{suffix}";
+
 
         var discussion = new Discussion
         {
@@ -287,8 +324,9 @@ public class DiscussionsController : ControllerBase
         if (!isAdmin && discussion.UserId != userId)
             return Forbid();
 
-        discussion.Title = model.Title;
-        discussion.Content = model.Content;
+        // Přidaná sanitizace
+        discussion.Title = _sanitizer.Sanitize(model.Title);
+        discussion.Content = _sanitizer.Sanitize(model.Content);
         discussion.UpdatedAt = DateTime.UtcNow;
         // Typ diskuze může měnit pouze admin
         if (isAdmin)

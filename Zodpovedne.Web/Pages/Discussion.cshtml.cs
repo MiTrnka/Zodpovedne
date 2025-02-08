@@ -188,6 +188,7 @@ public class DiscussionModel : BasePageModel
         return Page();
     }
 
+    
     /// <summary>
     /// Urèuje, zda pøihlášený uživatel mùže editovat diskuzi
     /// (musí být buï admin nebo autor diskuze)

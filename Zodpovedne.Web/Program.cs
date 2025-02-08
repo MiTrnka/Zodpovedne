@@ -1,3 +1,4 @@
+// NuGet HtmlSanitizer   //pro bezpeèné èištìní HTML vstupu
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 

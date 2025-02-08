@@ -59,7 +59,8 @@
                         {
                             <div class="editable-content">
                                 <div id="discussion-content-display">@Html.Raw(Model.Discussion.Content)</div>
-                                <textarea class="form-control d-none" id="discussion-content-edit" rows="10">@Model.Discussion.Content</textarea>
+                                <div id="toolbar-container" class="d-none"></div>
+                                <div id="editor-container" class="d-none">@Html.Raw(Model.Discussion.Content)</div>
                             </div>
                         }
                         else
@@ -287,6 +288,8 @@
 <input type="hidden" id="apiBaseUrl" value="@Model.ApiBaseUrl" />
 
 @section Scripts {
+    <!-- Import CKEditoru -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/decoupled-document/ckeditor.js"></script>
     @if (Model.IsUserLoggedIn)
     {
         <script>
@@ -376,10 +379,11 @@
 
         // Funkce pro editaci diskuze
         function toggleDiscussionEdit(show) {
-            const titleDisplay = document.getElementById('discussion-title-display');
+                    const titleDisplay = document.getElementById('discussion-title-display');
             const titleEdit = document.getElementById('discussion-title-edit');
             const contentDisplay = document.getElementById('discussion-content-display');
-            const contentEdit = document.getElementById('discussion-content-edit');
+            const toolbarContainer = document.getElementById('toolbar-container');
+            const editorContainer = document.getElementById('editor-container');
             const editBtn = document.getElementById('edit-discussion-btn');
             const saveBtn = document.getElementById('save-discussion-btn');
             const cancelBtn = document.getElementById('cancel-discussion-btn');
@@ -388,15 +392,31 @@
                 titleDisplay.classList.add('d-none');
                 titleEdit.classList.remove('d-none');
                 contentDisplay.classList.add('d-none');
-                contentEdit.classList.remove('d-none');
+                toolbarContainer.classList.remove('d-none');
+                editorContainer.classList.remove('d-none');
                 editBtn.classList.add('d-none');
                 saveBtn.classList.remove('d-none');
                 cancelBtn.classList.remove('d-none');
+
+                // Inicializace editoru při prvním zobrazení
+                if (!window.discussionEditor) {
+                    DecoupledEditor
+                        .create(document.querySelector('#editor-container'), {
+                            toolbar: ['bold', '|', 'bulletedList', 'numberedList'],
+                            language: 'cs'
+                        })
+                        .then(editor => {
+                            window.discussionEditor = editor;
+                            const toolbarContainer = document.querySelector('#toolbar-container');
+                            toolbarContainer.appendChild(editor.ui.view.toolbar.element);
+                        });
+                }
             } else {
                 titleDisplay.classList.remove('d-none');
                 titleEdit.classList.add('d-none');
                 contentDisplay.classList.remove('d-none');
-                contentEdit.classList.add('d-none');
+                toolbarContainer.classList.add('d-none');
+                editorContainer.classList.add('d-none');
                 editBtn.classList.remove('d-none');
                 saveBtn.classList.add('d-none');
                 cancelBtn.classList.add('d-none');
@@ -405,11 +425,12 @@
 
         // Funkce pro uložení změn v diskuzi
         async function saveDiscussionChanges() {
-            const titleEdit = document.getElementById('discussion-title-edit');
-            const contentEdit = document.getElementById('discussion-content-edit');
+                    const titleEdit = document.getElementById('discussion-title-edit');
+            const contentDisplay = document.getElementById('discussion-content-display');
             const apiBaseUrl = document.getElementById('apiBaseUrl').value;
 
             try {
+                const content = window.discussionEditor ? window.discussionEditor.getData() : '';
                 const response = await fetch(`${apiBaseUrl}/api/discussions/@Model.Discussion.Id`, {
                     method: 'PUT',
                     headers: {
@@ -418,14 +439,13 @@
                     },
                     body: JSON.stringify({
                         title: titleEdit.value,
-                        content: contentEdit.value,
+                        content: content,
                         type: @((int)Model.Discussion.Type)
                     })
                 });
 
                 if (response.ok) {
-                    document.getElementById('discussion-title-display').textContent = titleEdit.value;
-                    document.getElementById('discussion-content-display').innerHTML = contentEdit.value;
+                    contentDisplay.innerHTML = content;
                     toggleDiscussionEdit(false);
                 } else {
                     alert('Nepodařilo se uložit změny.');
