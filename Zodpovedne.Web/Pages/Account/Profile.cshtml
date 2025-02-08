@@ -23,6 +23,25 @@
 
         <div class="card mb-4">
             <div class="card-header">
+                <h5 class="mb-0">Změna emailu</h5>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(Model.EmailErrorMessage))
+                {
+                    <div class="alert alert-danger">@Model.EmailErrorMessage</div>
+                }
+                <form method="post" asp-page-handler="UpdateEmail">
+                    <div class="mb-3">
+                        <label class="form-label">Nový email</label>
+                        <input type="email" asp-for="NewEmail" class="form-control" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Změnit email</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
                 <h5 class="mb-0">Změna přezdívky</h5>
             </div>
             <div class="card-body">

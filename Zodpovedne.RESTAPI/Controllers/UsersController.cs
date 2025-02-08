@@ -179,6 +179,34 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
+    /// Aktualizuje email přihlášeného uživatele
+    /// </summary>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    [HttpPut("authenticated-user/email")]
+    public async Task<IActionResult> UpdateEmail(UpdateEmailDto model)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return NotFound();
+
+        // Kontrola existence stejného emailu
+        if (await userManager.FindByEmailAsync(model.Email) != null)
+            return BadRequest("Tento email je již používán.");
+
+        // Použití vestavěné metody Identity, která se postará o všechny potřebné změny
+        var result = await userManager.SetEmailAsync(user, model.Email);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        // Musíme také změnit UserName, protože ten používáme jako login
+        result = await userManager.SetUserNameAsync(user, model.Email);
+        if (result.Succeeded)
+            return Ok();
+
+        return BadRequest(result.Errors);
+    }
+
+    /// <summary>
     /// Smaže uživatele podle ID
     /// </summary>
     /// <param name="userId"></param>

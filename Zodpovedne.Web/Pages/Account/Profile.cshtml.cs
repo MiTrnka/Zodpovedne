@@ -10,6 +10,11 @@ public class ProfileModel : BasePageModel
 {
     [BindProperty]
     public string? NewNickname { get; set; }
+
+    [BindProperty]
+    public string? NewEmail { get; set; }
+
+    public string? EmailErrorMessage { get; set; }
     [BindProperty]
     public string? CurrentPassword { get; set; }
     [BindProperty]
@@ -61,6 +66,30 @@ public class ProfileModel : BasePageModel
         NicknameErrorMessage = "Pøezdívka je již používána.";
 
         await OnGetAsync();
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostUpdateEmailAsync()
+    {
+        if (!IsUserLoggedIn)
+            return RedirectToPage("/Account/Login");
+
+        var client = _clientFactory.CreateBearerClient(HttpContext);
+        var response = await client.PutAsJsonAsync(
+            $"{ApiBaseUrl}/api/users/authenticated-user/email",
+            new { Email = NewEmail }
+        );
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Email se zmìnil úspìšnì, musíme aktualizovat token
+            // protože ten obsahuje starý email
+            await OnGetAsync(); // Znovu naèteme data profilu
+            return RedirectToPage();
+        }
+
+        EmailErrorMessage = "Zmìna emailu se nezdaøila. Email je již používán.";
+        await OnGetAsync(); // Znovu naèteme data profilu
         return Page();
     }
 

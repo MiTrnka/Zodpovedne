@@ -43,6 +43,13 @@ public class UpdateNicknameDto
     public string Nickname { get; set; } = "";
 }
 
+public class UpdateEmailDto
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = "";
+}
+
 public class ChangePasswordModelDto
 {
     [Required]
