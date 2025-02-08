@@ -1,6 +1,0 @@
-@Zodpovedne.RESTAPI_HostAddress = http://localhost:5250
-
-GET {{Zodpovedne.RESTAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
