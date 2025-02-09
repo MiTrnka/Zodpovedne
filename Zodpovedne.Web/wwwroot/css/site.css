@@ -1,4 +1,4 @@
-/* Základní CSS promìnné pro celou aplikaci */
+ï»¿/* ZÃ¡kladnÃ­ CSS promÄ›nnÃ© */
 :root {
     --primary-pink: #e06f70;
     --primary-pink-hover: #d15657;
@@ -6,45 +6,34 @@
     --text-gray: #666666;
 }
 
-/* Základní nastavení velikosti písma a layoutu */
+/* Reset a zÃ¡kladnÃ­ nastavenÃ­ (platÃ­ pro vÅ¡echny velikosti) */
 html {
     font-size: 14px;
     position: relative;
     min-height: 100%;
 }
 
-@media (min-width: 768px) {
-    html {
-        font-size: 16px;
-    }
-}
-
-/* Nastavení okraje pro body kvùli patièce */
 body {
-    margin-bottom: 60px;
+    margin-bottom: 100px; /* VÄ›tÅ¡Ã­ margin pro patiÄku na mobilu */
 }
 
-/* Základní container padding */
+/* ZÃ¡kladnÃ­ container */
 .container {
     padding-left: 15px;
     padding-right: 15px;
 }
 
-/* Stylování odkazù */
+/* ZÃ¡kladnÃ­ styly pro odkazy */
 a {
     color: var(--primary-pink);
 }
 
-/* Stylování focus stavu pro interaktivní prvky */
-.btn:focus,
-.btn:active:focus,
-.btn-link.nav-link:focus,
-.form-control:focus,
-.form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--primary-pink);
+/* ZÃ¡kladnÃ­ styly pro tlaÄÃ­tka */
+.btn {
+    width: 100%; /* Na mobilu tlaÄÃ­tka pÅ™es celou Å¡Ã­Å™ku */
+    margin-bottom: 0.5rem;
 }
 
-/* Stylování primárních tlaèítek */
 .btn-primary {
     color: #fff;
     background-color: var(--primary-pink);
@@ -61,61 +50,59 @@ a {
         border-color: var(--secondary-pink);
     }
 
-/* Stylování outline tlaèítek */
-.btn-outline-primary {
-    color: var(--primary-pink);
-    border-color: var(--primary-pink);
+.btn:focus,
+.btn:active:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--primary-pink);
 }
 
-    .btn-outline-primary:hover {
-        color: #fff;
-        background-color: var(--primary-pink);
-        border-color: var(--primary-pink);
-    }
-
-/* Stylování navigace */
-.navbar-light .navbar-nav .nav-link {
-    color: Black !important;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    transition: background-color 0.3s, font-weight 0.3s, color 0.3s;
-}
-
-    .navbar-light .navbar-nav .nav-link:hover {
-        background-color: var(--secondary-pink);
-        border-radius: 20px;
-    }
-
-    .navbar-light .navbar-nav .nav-link.active {
-        background-color: var(--secondary-pink);
-        border-radius: 20px;
-        font-weight: bold;
-        color: black !important;
-    }
-
-/* Stylování hamburger menu */
-.navbar-toggler {
-    position: absolute;
-    right: 1rem;
-    top: 1rem;
-    border-color: var(--primary-pink);
+/* Navigace - mobilnÃ­ verze */
+.navbar {
     padding: 0.5rem;
 }
 
-.navbar-toggler:focus {
-    box-shadow: 0 0 0 0.1rem var(--primary-pink);
+.navbar-toggler {
+    position: absolute;
+    right: 1rem;
+    top: 0.5rem;
+    border-color: var(--primary-pink);
+    padding: 0.5rem;
+    z-index: 1000;
 }
 
-/* Stylování nadpisù s odkazy */
-h1 a {
-    color: inherit;
+.navbar-nav {
+    padding: 1rem 0;
+    text-align: center;
 }
 
-    h1 a:hover {
-        color: var(--primary-pink);
+.navbar-nav .nav-item {
+    margin-bottom: 0.5rem;
+}
+
+.navbar-nav .nav-link {
+    color: black !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
+
+/* Logo na mobilu */
+.logo-container img {
+    width: 150px;
+}
+
+/* Nadpisy - mobilnÃ­ verze */
+h1 {
+    font-size: 1.8rem;
+}
+
+    h1 a {
+        color: inherit;
     }
 
-/* Grid pro seznam uivatelù */
+        h1 a:hover {
+            color: var(--primary-pink);
+        }
+
+/* Grid pro seznam uÅ¾ivatelÅ¯ - mobilnÃ­ verze */
 .user-list {
     display: flex;
     flex-direction: column;
@@ -125,8 +112,8 @@ h1 a {
 .user-list-header,
 .user-list-item {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
-    align-items: center;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
     padding: 10px;
     border-bottom: 1px solid #ddd;
 }
@@ -138,26 +125,15 @@ h1 a {
 
 .user-actions {
     display: flex;
+    justify-content: center;
     gap: 5px;
 }
 
-.fixed-width {
-    min-width: 80px;
-}
-
-/* Stylování pills navigace */
-.nav-pills .nav-link.active,
-.nav-pills .show > .nav-link {
-    color: #fff;
-    background-color: var(--primary-pink);
-    border-color: var(--primary-pink);
-}
-
-/* Stylování WYSIWYG editoru */
+/* Editor - mobilnÃ­ verze */
 #editor-container {
     min-height: 200px;
-    max-height: 600px;
-    height: 40vh;
+    max-height: 400px;
+    height: 35vh;
     border: 1px solid #ccc;
     padding: 10px;
     overflow-y: auto;
@@ -169,84 +145,101 @@ h1 a {
     padding: 5px;
 }
 
-/* Stylování patièky */
+/* PatiÄka - mobilnÃ­ verze */
 .footer {
     position: absolute;
     bottom: 0;
     width: 100%;
-    line-height: 60px;
+    text-align: center;
+    padding: 1rem 0;
+    line-height: 1.5;
     background-color: #f8f9fa;
 }
 
-/* Responsivní styly pro mobilní zaøízení */
-@media (max-width: 575.98px) {
-    /* Úpravy navigace */
-    .navbar-nav {
-        padding: 1rem 0;
-        text-align: center;
-    }
-
-        .navbar-nav .nav-item {
-            margin-bottom: 0.5rem;
-        }
-
-    /* Úprava velikosti loga */
-    .logo-container img {
-        width: 150px;
-    }
-
-    /* Úprava velikosti písma */
-    html {
-        font-size: 14px;
-    }
-
-    h1 {
-        font-size: 1.8rem;
-    }
-
-    /* Úprava layoutu pro admin sekci */
-    .user-list-header,
-    .user-list-item {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-    }
-
-    .user-actions {
-        justify-content: center;
-    }
-
-    /* Úprava tlaèítek */
+/* Styly pro tablet a vÄ›tÅ¡Ã­ obrazovky (â‰¥576px) */
+@media (min-width: 576px) {
+    /* TlaÄÃ­tka na Å¡irÅ¡Ã­ch obrazovkÃ¡ch */
     .btn {
-        width: 100%;
-        margin-bottom: 0.5rem;
+        width: auto;
+        margin-bottom: 0;
     }
 
-    /* Úprava patièky */
-    .footer {
-        text-align: center;
-        padding: 1rem 0;
-        line-height: 1.5;
-    }
-
-    body {
-        margin-bottom: 100px;
-    }
-
-    /* Úprava karet */
-    .card {
-        margin-bottom: 1rem;
-    }
-}
-
-/* Responsivní styly pro tablety */
-@media (min-width: 576px) and (max-width: 767.98px) {
+    /* Navigace pro tablet */
     .navbar-nav .nav-link {
         padding: 0.5rem;
         font-size: 0.9rem;
     }
+
+    /* Grid pro seznam uÅ¾ivatelÅ¯ */
+    .user-list-header,
+    .user-list-item {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
-/* Responsivní chování editoru */
+/* Styly pro vÄ›tÅ¡Ã­ tablety a menÅ¡Ã­ notebooky (â‰¥768px) */
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+
+    /* Nadpisy */
+    h1 {
+        font-size: 2rem;
+    }
+
+    /* Grid pro seznam uÅ¾ivatelÅ¯ */
+    .user-list-header,
+    .user-list-item {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    /* Logo */
+    .logo-container img {
+        width: 200px;
+    }
+}
+
+/* Styly pro notebooky a desktopy (â‰¥992px) */
+@media (min-width: 992px) {
+    /* Grid pro seznam uÅ¾ivatelÅ¯ */
+    .user-list-header,
+    .user-list-item {
+        grid-template-columns: 1fr 1fr 1fr auto;
+    }
+
+    /* Navigace */
+    .navbar-nav .nav-link:hover {
+        background-color: var(--secondary-pink);
+        border-radius: 20px;
+    }
+
+    .navbar-nav .nav-link.active {
+        background-color: var(--secondary-pink);
+        border-radius: 20px;
+        font-weight: bold;
+    }
+
+    /* Editor */
+    #editor-container {
+        max-height: 600px;
+    }
+
+    /* TlaÄÃ­tka v Å™Ã¡dku vedle sebe */
+    .user-actions {
+        justify-content: flex-end;
+    }
+}
+
+/* Styly pro velkÃ© desktopy (â‰¥1200px) */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1140px;
+        margin: 0 auto;
+    }
+}
+
+/* SpeciÃ¡lnÃ­ media query pro vÃ½Å¡ku editoru */
 @media (max-height: 600px) {
     #editor-container {
         height: 200px;
