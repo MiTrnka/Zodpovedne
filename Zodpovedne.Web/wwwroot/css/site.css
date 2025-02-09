@@ -95,13 +95,16 @@ a {
 
 /* Stylování hamburger menu */
 .navbar-toggler {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
     border-color: var(--primary-pink);
     padding: 0.5rem;
 }
 
-    .navbar-toggler:focus {
-        box-shadow: 0 0 0 0.1rem var(--primary-pink);
-    }
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.1rem var(--primary-pink);
+}
 
 /* Stylování nadpisù s odkazy */
 h1 a {
