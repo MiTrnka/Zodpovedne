@@ -33,7 +33,7 @@ public class Program
                // Událost která se spustí pøi pøihlášení uživatele
                // Protože nìkteré claimy z JWT tokenù se nenamapují automaticky, je potøeba je pøidat ruènì
                // Napøíklad ClaimType.Role se automaticky mapuje na Role claim, ale NameIdentifier ne
-               options.Events.OnSigningIn = async context =>
+               options.Events.OnSigningIn = context =>
                {
                    // Získání identity uživatele z kontextu
                    var identity = (ClaimsIdentity)context.Principal.Identity;
@@ -54,6 +54,8 @@ public class Program
                            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
                        }
                    }
+
+                   return Task.CompletedTask; //Protože se jedná o událost, je potøeba vrátit Task (pøípadnì událost deklarovat s async, pokud bych v ní mìl nìjaký await)
                };
            });
         // Add services to the container.

@@ -339,14 +339,41 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
+    /// Přepne typ diskuze mezi Normal a Top
+    /// Přístupné pouze pro adminy
+    /// </summary>
+    [Authorize(Policy = "RequireAdminRole")]
+    [HttpPut("{discussionId}/toggle-top")]
+    public async Task<IActionResult> ToggleDiscussionTop(int discussionId)
+    {
+        var discussion = await dbContext.Discussions.FindAsync(discussionId);
+        if (discussion == null)
+            return NotFound();
+
+        // Přepnutí typu mezi Normal a Top je možné jen pro tyto dva stavy
+        if (discussion.Type != DiscussionType.Normal && discussion.Type != DiscussionType.Top)
+            return BadRequest("Nelze měnit TOP status pro tento typ diskuze.");
+
+        // Přepnutí typu mezi Normal a Top
+        discussion.Type = discussion.Type == DiscussionType.Normal
+            ? DiscussionType.Top
+            : DiscussionType.Normal;
+
+        discussion.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+
+        return Ok(new { type = discussion.Type });
+    }
+
+    /// <summary>
     /// Smaže diskuzi a všechny její komentáře
     /// Přístupné pouze pro adminy
     /// </summary>
     [Authorize]
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteDiscussion(int id)
+    [HttpDelete("{discussionId}")]
+    public async Task<IActionResult> DeleteDiscussion(int discussionId)
     {
-        var discussion = await dbContext.Discussions.FindAsync(id);
+        var discussion = await dbContext.Discussions.FindAsync(discussionId);
         if (discussion == null)
             return NotFound();
 
@@ -362,7 +389,7 @@ public class DiscussionsController : ControllerBase
 
         // Smažeme i všechny její komentáře (nastavíme na typ Deleted)
         var comments = await dbContext.Comments
-            .Where(c => c.DiscussionId == id)
+            .Where(c => c.DiscussionId == discussionId)
             .ToListAsync();
 
         foreach (var comment in comments)
@@ -523,6 +550,9 @@ public class DiscussionsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole("Admin");
 
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
         // Najdeme diskuzi
         var discussion = await dbContext.Discussions
             .Include(d => d.Likes)
@@ -570,6 +600,9 @@ public class DiscussionsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var isAdmin = User.IsInRole("Admin");
+
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
 
         // Najdeme komentář
         var comment = await dbContext.Comments

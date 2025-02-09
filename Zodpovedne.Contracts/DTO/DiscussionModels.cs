@@ -16,6 +16,7 @@ public class CreateDiscussionDto
     public string Title { get; set; } = "";
 
     [Required(ErrorMessage = "Obsah diskuze je povinný")]
+    [MaxLength(3000, ErrorMessage = "Obsah diskuze může mít maximálně 3 000 znaků")]
     public string Content { get; set; } = "";
 
     // Pro budoucí implementaci
@@ -33,6 +34,7 @@ public class UpdateDiscussionDto
     public string Title { get; set; } = "";
 
     [Required(ErrorMessage = "Obsah diskuze je povinný")]
+    [MaxLength(3000, ErrorMessage = "Obsah diskuze může mít maximálně 3 000 znaků")]
     public string Content { get; set; } = "";
 
     // Typ diskuze může měnit jen admin

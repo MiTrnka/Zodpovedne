@@ -99,6 +99,16 @@
                                     @(Model.Discussion.Type == DiscussionType.Hidden ? "Odkryj" : "Skryj")
                                 </button>
                             }
+
+                            @* Tlačítko pro přepínání typu diskuze mezi Top a Normal (pouze pro adminy) *@
+                            @if (Model.IsAdmin && (Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Top))
+                            {
+                                <button class="btn @(Model.Discussion.Type == DiscussionType.Top ? "btn-outline-primary" : "btn-primary")"
+                                        onclick="toggleTopStatus(@Model.Discussion.Id)">
+                                    <i class="bi bi-star@(Model.Discussion.Type == DiscussionType.Top ? "-fill" : "")"></i>
+                                    @(Model.Discussion.Type == DiscussionType.Top ? "Zrušit TOP" : "Nastavit TOP")
+                                </button>
+                            }
                         </div>
 
                         @* Tlačítka pro editaci *@
@@ -298,6 +308,28 @@
     }
 
     <script>
+        // Funkce pro přepínání typu diskuze mezi DiscussionType.Normal a DiscussionType.Top
+        async function toggleTopStatus(discussionId) {
+            try {
+                const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+                const response = await fetch(`${apiBaseUrl}/api/discussions/${discussionId}/toggle-top`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+                    }
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Nepodařilo se změnit TOP status diskuze.');
+                }
+            } catch (error) {
+                console.error('Chyba při změně TOP statusu:', error);
+                alert('Došlo k chybě při změně TOP statusu diskuze.');
+            }
+        }
+
         // Funkce pro přidání like k diskuzi
         async function likeDiscussion(discussionId) {
             try {
@@ -425,7 +457,7 @@
 
         // Funkce pro uložení změn v diskuzi
         async function saveDiscussionChanges() {
-                    const titleEdit = document.getElementById('discussion-title-edit');
+            const titleEdit = document.getElementById('discussion-title-edit');
             const contentDisplay = document.getElementById('discussion-content-display');
             const apiBaseUrl = document.getElementById('apiBaseUrl').value;
 
@@ -448,7 +480,15 @@
                     contentDisplay.innerHTML = content;
                     toggleDiscussionEdit(false);
                 } else {
-                    alert('Nepodařilo se uložit změny.');
+                    // Zkusíme přečíst detaily chyby
+                    const errorData = await response.json();
+                    if (errorData && errorData.errors && errorData.errors.Content) {
+                        // Zobrazíme specifickou chybu pro délku obsahu
+                        alert(errorData.errors.Content[0]);
+                    } else {
+                        // Obecná chybová hláška
+                        alert('Nepodařilo se uložit změny.');
+                    }
                 }
             } catch (error) {
                 console.error('Chyba při ukládání:', error);

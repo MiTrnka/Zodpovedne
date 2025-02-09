@@ -12,7 +12,7 @@ namespace Zodpovedne.Web.Pages
             _logger = logger;
         }
 
-        public async Task<IActionResult> OnGet()
+        public IActionResult OnGet()
         {
             return RedirectToPage("/categories");
         }
