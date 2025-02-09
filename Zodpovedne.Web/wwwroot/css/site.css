@@ -6,7 +6,7 @@
     --text-gray: #666666;
 }
 
-/* Základní nastavení velikosti písma */
+/* Základní nastavení velikosti písma a layoutu */
 html {
     font-size: 14px;
     position: relative;
@@ -22,6 +22,12 @@ html {
 /* Nastavení okraje pro body kvùli patièce */
 body {
     margin-bottom: 60px;
+}
+
+/* Základní container padding */
+.container {
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 /* Stylování odkazù */
@@ -87,6 +93,16 @@ a {
         color: black !important;
     }
 
+/* Stylování hamburger menu */
+.navbar-toggler {
+    border-color: var(--primary-pink);
+    padding: 0.5rem;
+}
+
+    .navbar-toggler:focus {
+        box-shadow: 0 0 0 0.1rem var(--primary-pink);
+    }
+
 /* Stylování nadpisù s odkazy */
 h1 a {
     color: inherit;
@@ -134,37 +150,108 @@ h1 a {
     border-color: var(--primary-pink);
 }
 
-
+/* Stylování WYSIWYG editoru */
 #editor-container {
-    /* Minimální výška */
     min-height: 200px;
-    /* Maximální výška */
     max-height: 600px;
-    /* Výchozí výška jako procento výšky viewport */
     height: 40vh;
-    /* Ohranièení a padding */
     border: 1px solid #ccc;
     padding: 10px;
-    /* Povolení scrollování pøi pøeteèení */
     overflow-y: auto;
 }
 
-/* Styly pro toolbar editoru textu */
 #toolbar-container {
     border: 1px solid #ccc;
     border-bottom: none;
     padding: 5px;
 }
 
-/* Responzivní chování */
+/* Stylování patièky */
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    line-height: 60px;
+    background-color: #f8f9fa;
+}
+
+/* Responsivní styly pro mobilní zaøízení */
+@media (max-width: 575.98px) {
+    /* Úpravy navigace */
+    .navbar-nav {
+        padding: 1rem 0;
+        text-align: center;
+    }
+
+        .navbar-nav .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+    /* Úprava velikosti loga */
+    .logo-container img {
+        width: 150px;
+    }
+
+    /* Úprava velikosti písma */
+    html {
+        font-size: 14px;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    /* Úprava layoutu pro admin sekci */
+    .user-list-header,
+    .user-list-item {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .user-actions {
+        justify-content: center;
+    }
+
+    /* Úprava tlaèítek */
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Úprava patièky */
+    .footer {
+        text-align: center;
+        padding: 1rem 0;
+        line-height: 1.5;
+    }
+
+    body {
+        margin-bottom: 100px;
+    }
+
+    /* Úprava karet */
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Responsivní styly pro tablety */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .navbar-nav .nav-link {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Responsivní chování editoru */
 @media (max-height: 600px) {
     #editor-container {
-        height: 200px; /* Minimální výška na malých obrazovkách */
+        height: 200px;
     }
 }
 
 @media (min-height: 1200px) {
     #editor-container {
-        height: 600px; /* Maximální výška na velkých obrazovkách */
+        height: 600px;
     }
 }

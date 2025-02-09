@@ -37,7 +37,13 @@
 
     <nav class="navbar navbar-expand-sm navbar-light">
         <div class="container">
-            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+            <!-- Toggle button pro mobilní menu -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                    aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between" id="navbarContent">
+                <!-- Levá část menu -->
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
                         <a class="nav-link @(IsMenuItemActive("/Categories") ? "active" : "")"
@@ -57,6 +63,7 @@
                     </li>
                 </ul>
 
+                <!-- Pravá část menu -->
                 <ul class="navbar-nav">
                     @if (Context.Session.GetString("JWTToken") != null)
                     {
