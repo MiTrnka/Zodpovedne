@@ -467,12 +467,15 @@ public class DiscussionsController : ControllerBase
                 return BadRequest("Lze reagovat pouze na hlavní komentáře.");
         }
 
+        // Sanitizace vstupů
+        var sanitizedContent = _sanitizer.Sanitize(model.Content);
+
         var comment = new Comment
         {
             DiscussionId = discussionId,
             ParentCommentId = parentCommentId,
             UserId = userId,
-            Content = model.Content,
+            Content = _sanitizer.Sanitize(model.Content), //Pro zamezení XSS útoků
             CreatedAt = DateTime.UtcNow,
             Type = user.Type == UserType.Hidden ? CommentType.Hidden : model.Type
         };
