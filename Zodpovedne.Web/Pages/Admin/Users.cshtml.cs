@@ -30,7 +30,7 @@ public class UsersModel : BasePageModel
     public async Task<IActionResult> OnPostDeleteUserPermanentlyAsync(string userId)
     {
         var client = _clientFactory.CreateBearerClient(HttpContext);
-        var response = await client.DeleteAsync($"{ApiBaseUrl}/api/users/permanently/{userId}");
+        var response = await client.DeleteAsync($"{ApiBaseUrl}/users/permanently/{userId}");
 
         if (!response.IsSuccessStatusCode)
         {
@@ -46,7 +46,7 @@ public class UsersModel : BasePageModel
             return RedirectToPage("/Index");
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
-        var response = await client.GetAsync($"{ApiBaseUrl}/api/users/paged?page={CurrentPage}");
+        var response = await client.GetAsync($"{ApiBaseUrl}/users/paged?page={CurrentPage}");
 
         if (response.IsSuccessStatusCode)
         {
@@ -60,14 +60,14 @@ public class UsersModel : BasePageModel
     public async Task<IActionResult> OnPostToggleVisibilityAsync(string userId)
     {
         var client = _clientFactory.CreateBearerClient(HttpContext);
-        await client.PutAsync($"{ApiBaseUrl}/api/users/{userId}/toggle-visibility", null);
+        await client.PutAsync($"{ApiBaseUrl}/users/{userId}/toggle-visibility", null);
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostDeleteUserAsync(string userId)
     {
         var client = _clientFactory.CreateBearerClient(HttpContext);
-        await client.DeleteAsync($"{ApiBaseUrl}/api/users/user/{userId}");
+        await client.DeleteAsync($"{ApiBaseUrl}/users/user/{userId}");
         return RedirectToPage();
     }
 }

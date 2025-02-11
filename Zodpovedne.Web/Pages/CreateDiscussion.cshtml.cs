@@ -27,7 +27,7 @@ public class CreateDiscussionModel : BasePageModel
     {
         // Získání detailù kategorie
         var client = _clientFactory.CreateBearerClient(HttpContext);
-        var response = await client.GetAsync($"{ApiBaseUrl}/api/categories/{CategoryCode}");
+        var response = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
 
         if (!response.IsSuccessStatusCode)
             return NotFound();
@@ -53,7 +53,7 @@ public class CreateDiscussionModel : BasePageModel
             Input.Content = _sanitizer.Sanitize(Input.Content);
 
             var client = _clientFactory.CreateBearerClient(HttpContext);
-            var response = await client.PostAsJsonAsync($"{ApiBaseUrl}/api/discussions", Input);
+            var response = await client.PostAsJsonAsync($"{ApiBaseUrl}/discussions", Input);
 
             if (response.IsSuccessStatusCode)
                 return RedirectToPage("/Category", new { categoryCode = CategoryCode });

@@ -312,7 +312,7 @@
         async function toggleTopStatus(discussionId) {
             try {
                 const apiBaseUrl = document.getElementById('apiBaseUrl').value;
-                const response = await fetch(`${apiBaseUrl}/api/discussions/${discussionId}/toggle-top`, {
+                const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/toggle-top`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
@@ -334,7 +334,7 @@
         async function likeDiscussion(discussionId) {
             try {
                 const apiBaseUrl = document.getElementById('apiBaseUrl').value;
-                const response = await fetch(`${apiBaseUrl}/api/discussions/${discussionId}/like`, {
+                const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/like`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`,
@@ -363,7 +363,7 @@
         async function likeComment(discussionId, commentId) {
             try {
                 const apiBaseUrl = document.getElementById('apiBaseUrl').value;
-                const response = await fetch(`${apiBaseUrl}/api/discussions/${discussionId}/comments/${commentId}/like`, {
+                const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/comments/${commentId}/like`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`,
@@ -463,7 +463,7 @@
 
             try {
                 const content = window.discussionEditor ? window.discussionEditor.getData() : '';
-                const response = await fetch(`${apiBaseUrl}/api/discussions/@Model.Discussion.Id`, {
+                const response = await fetch(`${apiBaseUrl}/discussions/@Model.Discussion.Id`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`,
@@ -500,7 +500,7 @@
         async function toggleDiscussionVisibility(discussionId) {
             try {
                 const apiBaseUrl = document.getElementById('apiBaseUrl').value;
-                const response = await fetch(`${apiBaseUrl}/api/discussions/${discussionId}/toggle-visibility`, {
+                const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/toggle-visibility`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
@@ -522,7 +522,7 @@
         async function toggleCommentVisibility(discussionId, commentId) {
             try {
                 const apiBaseUrl = document.getElementById('apiBaseUrl').value;
-                const response = await fetch(`${apiBaseUrl}/api/discussions/${discussionId}/comments/${commentId}/toggle-visibility`, {
+                const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/comments/${commentId}/toggle-visibility`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`

@@ -27,7 +27,7 @@ public class RegisterModel : BasePageModel
 
         var client = _clientFactory.CreateClient();
         var response = await client.PostAsJsonAsync(
-            $"{ApiBaseUrl}/api/users/member",
+            $"{ApiBaseUrl}/users/member",
             Input
         );
 
@@ -35,7 +35,7 @@ public class RegisterModel : BasePageModel
         {
             // Pøihlášení nového uživatele
             var loginResponse = await client.PostAsJsonAsync(
-                $"{ApiBaseUrl}/api/users/token",
+                $"{ApiBaseUrl}/users/token",
                 new { Email = Input.Email, Password = Input.Password }
             );
 

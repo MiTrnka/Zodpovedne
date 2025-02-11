@@ -30,7 +30,7 @@ public class RegisterAdminModel : BasePageModel
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
         var response = await client.PostAsJsonAsync(
-            $"{ApiBaseUrl}/api/users/admin",
+            $"{ApiBaseUrl}/users/admin",
             Input
         );
 

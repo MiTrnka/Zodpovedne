@@ -79,12 +79,12 @@ public class DiscussionModel : BasePageModel
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", JwtToken);
         }
 
-        var response = await client.GetAsync($"{ApiBaseUrl}/api/discussions/byCode/{DiscussionCode}");
+        var response = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
         if (!response.IsSuccessStatusCode)
             return NotFound();
 
         // Získání kategorie, protože potøebujeme zobrazit název kategorie
-        var categoryResponse = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/categories/{CategoryCode}");
+        var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
             return NotFound();
         var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryListDto>();
@@ -98,7 +98,7 @@ public class DiscussionModel : BasePageModel
 
         // Inkrementujeme poèítadlo zhlédnutí dané diskuze
         await client.PostAsync(
-            $"{_configuration["ApiBaseUrl"]}/api/discussions/{Discussion.Id}/increment-view",
+            $"{ApiBaseUrl}/discussions/{Discussion.Id}/increment-view",
             null
         );
 
@@ -122,7 +122,7 @@ public class DiscussionModel : BasePageModel
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", JwtToken);
 
         // Naèteme znovu detail diskuze pro pøípad, že se mezitím zmìnil
-        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/api/discussions/byCode/{DiscussionCode}");
+        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
         if (!discussionResponse.IsSuccessStatusCode)
             return NotFound();
 
@@ -132,8 +132,8 @@ public class DiscussionModel : BasePageModel
 
         // Sestavíme URL podle toho, zda jde o odpovìï na komentáø nebo nový root komentáø
         var url = ReplyToCommentId.HasValue
-            ? $"{ApiBaseUrl}/api/discussions/{Discussion.Id}/comments/{ReplyToCommentId}/replies"
-            : $"{ApiBaseUrl}/api/discussions/{Discussion.Id}/comments";
+            ? $"{ApiBaseUrl}/discussions/{Discussion.Id}/comments/{ReplyToCommentId}/replies"
+            : $"{ApiBaseUrl}/discussions/{Discussion.Id}/comments";
 
         // Odešleme požadavek na vytvoøení komentáøe
         var response = await client.PostAsJsonAsync(url, NewComment);
@@ -162,7 +162,7 @@ public class DiscussionModel : BasePageModel
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
         // Naèteme diskuzi pro ovìøení existence
-        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/api/discussions/byCode/{DiscussionCode}");
+        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
         if (!discussionResponse.IsSuccessStatusCode)
             return NotFound();
 
@@ -175,7 +175,7 @@ public class DiscussionModel : BasePageModel
             return Forbid();
 
         // Zavolání endpointu pro smazání
-        var response = await client.DeleteAsync($"{ApiBaseUrl}/api/discussions/{Discussion.Id}");
+        var response = await client.DeleteAsync($"{ApiBaseUrl}/discussions/{Discussion.Id}");
 
         if (response.IsSuccessStatusCode)
         {

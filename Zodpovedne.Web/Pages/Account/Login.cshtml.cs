@@ -49,7 +49,7 @@ public class LoginModel : BasePageModel
         // Získání JWT tokenu z API
         var client = _clientFactory.CreateClient();
         var response = await client.PostAsJsonAsync(
-            $"{_configuration["ApiBaseUrl"]}/api/users/token",
+            $"{ApiBaseUrl}/users/token",
             new { Email = Input.Email, Password = Input.Password }
         );
 

@@ -37,7 +37,7 @@ public class ProfileModel : BasePageModel
             return RedirectToPage("/Account/Login");
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
-        var response = await client.GetAsync($"{ApiBaseUrl}/api/users/authenticated-user");
+        var response = await client.GetAsync($"{ApiBaseUrl}/users/authenticated-user");
 
         if (response.IsSuccessStatusCode)
         {
@@ -55,7 +55,7 @@ public class ProfileModel : BasePageModel
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
         var response = await client.PutAsJsonAsync(
-            $"{ApiBaseUrl}/api/users/authenticated-user/nickname",
+            $"{ApiBaseUrl}/users/authenticated-user/nickname",
             new { Nickname = NewNickname }
         );
 
@@ -78,7 +78,7 @@ public class ProfileModel : BasePageModel
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
         var response = await client.PutAsJsonAsync(
-            $"{ApiBaseUrl}/api/users/authenticated-user/email",
+            $"{ApiBaseUrl}/users/authenticated-user/email",
             new { Email = NewEmail }
         );
 
@@ -102,7 +102,7 @@ public class ProfileModel : BasePageModel
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
         var response = await client.PutAsJsonAsync(
-            $"{ApiBaseUrl}/api/users/authenticated-user/password",
+            $"{ApiBaseUrl}/users/authenticated-user/password",
             new
             {
                 CurrentPassword,

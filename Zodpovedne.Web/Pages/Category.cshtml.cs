@@ -26,7 +26,7 @@ public class CategoryModel : BasePageModel
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
         // Získání detailu kategorie
-        var categoryResponse = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/categories/{CategoryCode}");
+        var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
             return NotFound();
 
@@ -38,7 +38,7 @@ public class CategoryModel : BasePageModel
         CategoryDescription = category.Description;
 
         // Získání seznamu diskuzí pro danou kategorii
-        var discussionsResponse = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/api/discussions?categoryId={category.Id}");
+        var discussionsResponse = await client.GetAsync($"{ApiBaseUrl}/discussions?categoryId={category.Id}");
         if (discussionsResponse.IsSuccessStatusCode)
         {
             Discussions = await discussionsResponse.Content.ReadFromJsonAsync<List<DiscussionListDto>>() ?? new();
