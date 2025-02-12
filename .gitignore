@@ -363,3 +363,7 @@ MigrationBackup/
 FodyWeavers.xsd
 /Zodpovedne.RESTAPI/appsettings.json
 /Zodpovedne.Data/appsettings.json
+
+# Logy z adresářů Logs
+/Zodpovedne.RESTAPI/Logs/
+/Zodpovedne.Web/Logs/
