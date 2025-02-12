@@ -145,6 +145,18 @@ namespace Zodpovedne.RESTAPI
             // Pøidáme tøídu pro logování
             builder.Services.AddSingleton<FileLogger>();
 
+            // Pak pøidáme konfiguraci pro ASP.NET Core logging za použití našeho FileLoggeru
+            builder.Services.AddLogging(logging =>
+            {
+                logging.ClearProviders(); // Odstraní výchozí loggery
+                logging.AddConsole(); // Ponechá logování do konzole
+
+                // Pøidá náš vlastní logger pro kritické chyby
+                logging.AddProvider(new CustomFileLoggerProvider(
+                    logging.Services.BuildServiceProvider().GetRequiredService<FileLogger>()
+                ));
+            });
+
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
