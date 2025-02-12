@@ -791,17 +791,30 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Inkrementuje počítadlo zobrazení diskuze
+    /// Atomicky inkrementuje počítadlo zobrazení diskuze.
+    /// Používá ExecuteUpdateAsync pro přímou aktualizaci v databázi bez nutnosti načítání entity.
     /// </summary>
-    [HttpPost("{discussionId}/increment-view")]
+    /// <param name="discussionId">ID diskuze, u které se má zvýšit počítadlo</param>
+    /// <returns>
+    /// - Ok pokud byla diskuze nalezena a počítadlo úspěšně navýšeno
+    /// - NotFound pokud diskuze s daným ID neexistuje
+    /// </returns>
+    /// {ApiBaseUrl}/discussions/{Discussion.Id}/increment-view-count",
+    [HttpPost("{discussionId}/increment-view-count")]
     public async Task<IActionResult> IncrementViewCount(int discussionId)
     {
-        var discussion = await dbContext.Discussions.FindAsync(discussionId);
-        if (discussion == null)
-            return NotFound();
+        // ExecuteUpdateAsync provede atomickou aktualizaci přímo v databázi
+        // Vrací počet aktualizovaných řádků (0 pokud diskuze neexistuje, 1 pokud byla aktualizována)
+        var updated = await dbContext.Discussions
+            .Where(d => d.Id == discussionId)     // Najde diskuzi podle ID
+            .ExecuteUpdateAsync(s => s.SetProperty(
+                d => d.ViewCount,                  // Vlastnost kterou aktualizujeme
+                d => d.ViewCount + 1               // Nová hodnota = současná hodnota + 1
+            ));
 
-        discussion.ViewCount++;
-        await dbContext.SaveChangesAsync();
+        // Pokud nebyl aktualizován žádný řádek, diskuze neexistuje
+        if (updated == 0)
+            return NotFound();
 
         return Ok();
     }

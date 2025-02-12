@@ -99,7 +99,7 @@ public class DiscussionModel : BasePageModel
 
         // Inkrementujeme poèítadlo zhlédnutí dané diskuze
         await client.PostAsync(
-            $"{ApiBaseUrl}/discussions/{Discussion.Id}/increment-view",
+            $"{ApiBaseUrl}/discussions/{Discussion.Id}/increment-view-count",
             null
         );
 
@@ -189,7 +189,7 @@ public class DiscussionModel : BasePageModel
         return Page();
     }
 
-    
+
     /// <summary>
     /// Urèuje, zda pøihlášený uživatel mùže editovat diskuzi
     /// (musí být buï admin nebo autor diskuze)
