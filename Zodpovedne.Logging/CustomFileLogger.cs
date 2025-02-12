@@ -33,7 +33,7 @@ public class CustomFileLogger : ILogger
     public bool IsEnabled(LogLevel logLevel)
     {
         // Logujeme pouze Critical a Error
-        return logLevel == LogLevel.Critical || logLevel == LogLevel.Error;
+        return logLevel == LogLevel.Critical || logLevel == LogLevel.Error || logLevel == LogLevel.Warning;
     }
 
     /// <summary>
