@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Filters;
 using Zodpovedne.Web.Models.Base;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -10,7 +11,7 @@ namespace Zodpovedne.Web.Pages;
 //[AdminAuthorizationFilter]
 public class CategoriesModel : BasePageModel
 {
-    public CategoriesModel(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory, configuration)
+    public CategoriesModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
 
@@ -25,7 +26,6 @@ public class CategoriesModel : BasePageModel
         {
             Categories = await response.Content.ReadFromJsonAsync<List<CategoryListDto>>() ?? new();
         }
-
         return Page();
     }
 }

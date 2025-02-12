@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Data.Data;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Controllers;
 
@@ -20,16 +21,17 @@ public class UsersController : ControllerBase
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
     private readonly ApplicationDbContext dbContext;
+    private readonly FileLogger _logger;
 
     private readonly IConfiguration configuration;
 
-    public UsersController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
+    public UsersController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger)
     {
         this.userManager = userManager;
         this.signInManager = signInManager;
         this.configuration = configuration;
         this.dbContext = dbContext;
-
+        _logger = logger;
     }
 
     /// <summary>
@@ -42,15 +44,53 @@ public class UsersController : ControllerBase
     {
         var users = await this.userManager.Users
             .Where(u => u.Type != UserType.Deleted)
-            .Select(u => new {
-                u.Id,
-                u.Email,
-                u.Nickname,
-                u.Created
+            .Select(u => new UserListDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                Nickname = u.Nickname,
+                LastLogin = u.LastLogin,
+                Type = u.Type
+            })
+            .ToListAsync();
+        return Ok(users);
+    }
+
+    /// <summary>
+    /// Vrátí seznam všech uživatelů s možností stránkování
+    /// </summary>
+    /// <param name="page"></param>
+    /// <returns></returns>
+    [HttpGet("paged")]
+    [Authorize(Policy = "RequireAdminRole")]
+    public async Task<ActionResult<PagedResultDto<UserListDto>>> GetPagedUsers(int page = 1)
+    {
+        var pageSize = 50;
+        var query = userManager.Users
+            .Where(u => u.Type != UserType.Deleted)
+            .OrderBy(u => u.Nickname);
+
+        var totalUsers = await query.CountAsync();
+        var users = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(u => new UserListDto
+            {
+                Id = u.Id,
+                Email = u.Email,
+                Nickname = u.Nickname,
+                LastLogin = u.LastLogin,
+                Type = u.Type
             })
             .ToListAsync();
 
-        return Ok(users);
+        return Ok(new PagedResultDto<UserListDto>
+        {
+            Items = users,
+            TotalCount = totalUsers,
+            PageSize = pageSize,
+            CurrentPage = page
+        });
     }
 
     /// <summary>
@@ -311,38 +351,6 @@ public class UsersController : ControllerBase
 
         return Ok(new { type = user.Type });
     }
-    [HttpGet("paged")]
-    [Authorize(Policy = "RequireAdminRole")]
-    public async Task<ActionResult<PagedResultDto<UserListDto>>> GetPagedUsers(int page = 1)
-    {
-        var pageSize = 50;
-        var query = userManager.Users
-            .Where(u => u.Type != UserType.Deleted)
-            .OrderBy(u => u.Nickname);
-
-        var totalUsers = await query.CountAsync();
-        var users = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(u => new UserListDto
-            {
-                Id = u.Id,
-                Email = u.Email,
-                Nickname = u.Nickname,
-                LastLogin = u.LastLogin,
-                Type = u.Type
-            })
-            .ToListAsync();
-
-        return Ok(new PagedResultDto<UserListDto>
-        {
-            Items = users,
-            TotalCount = totalUsers,
-            PageSize = pageSize,
-            CurrentPage = page
-        });
-    }
-
 
     /// <summary>
     /// Změní heslo přihlášeného uživatele

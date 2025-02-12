@@ -6,6 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Models.Base;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -16,7 +17,7 @@ namespace Zodpovedne.Web.Pages.Account;
 public class LoginModel : BasePageModel
 {
 
-    public LoginModel(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory, configuration)
+    public LoginModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
 

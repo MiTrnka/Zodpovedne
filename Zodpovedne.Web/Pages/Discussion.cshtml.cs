@@ -16,6 +16,7 @@ using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Models.Base;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -25,7 +26,7 @@ namespace Zodpovedne.Web.Pages;
 /// </summary>
 public class DiscussionModel : BasePageModel
 {
-    public DiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory, configuration)
+    public DiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
 

@@ -5,12 +5,13 @@ using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Filters;
 using Zodpovedne.Web.Models.Base;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages;
 
 public class CategoryModel : BasePageModel
 {
-    public CategoryModel(IHttpClientFactory clientFactory, IConfiguration configuration) : base(clientFactory, configuration)
+    public CategoryModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
 

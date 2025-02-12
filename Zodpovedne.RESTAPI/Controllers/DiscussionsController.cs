@@ -10,6 +10,7 @@ using Zodpovedne.Data.Helpers;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.Design;
 using Ganss.Xss;
+using Zodpovedne.Logging;
 
 
 
@@ -24,15 +25,18 @@ public class DiscussionsController : ControllerBase
 {
     private readonly ApplicationDbContext dbContext;
     private readonly UserManager<ApplicationUser> userManager;
+    private readonly FileLogger _logger;
+
 
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
     private readonly HtmlSanitizer _sanitizer;
 
 
-    public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager)
+    public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger)
     {
         this.dbContext = dbContext;
         this.userManager = userManager;
+        _logger = logger;
 
         // Inicializace a konfigurace sanitizeru pro bezpečné čištění HTML vstupu
         _sanitizer = new HtmlSanitizer();

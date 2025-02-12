@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Models.Base;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -15,8 +16,7 @@ public class RegisterModel : BasePageModel
 
     public string? ErrorMessage { get; set; }
 
-    public RegisterModel(IHttpClientFactory clientFactory, IConfiguration configuration)
-        : base(clientFactory, configuration)
+    public RegisterModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
 

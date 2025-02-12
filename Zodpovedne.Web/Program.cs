@@ -1,6 +1,7 @@
 // NuGet HtmlSanitizer   //pro bezpeèné èištìní HTML vstupu
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web;
 
@@ -72,6 +73,9 @@ public class Program
 
         // Pøidáme HttpClient pro volání API
         builder.Services.AddHttpClient();
+
+        // Pøidáme tøídu pro logování
+        builder.Services.AddSingleton<FileLogger>();
 
         var app = builder.Build();
 

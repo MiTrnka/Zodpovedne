@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Contracts.DTO;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
@@ -10,10 +11,13 @@ namespace Zodpovedne.RESTAPI.Controllers;
 public class CategoriesController : ControllerBase
 {
     private readonly ApplicationDbContext dbContext;
+    private readonly FileLogger _logger;
 
-    public CategoriesController(ApplicationDbContext dbContext)
+
+    public CategoriesController(ApplicationDbContext dbContext, FileLogger logger)
     {
         this.dbContext = dbContext;
+        _logger = logger;
     }
 
     /// <summary>

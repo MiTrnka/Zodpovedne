@@ -1,6 +1,7 @@
 ﻿using Ganss.Xss;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Models.Base;
 
@@ -11,14 +12,16 @@ public abstract class BasePageModel : PageModel
 {
     protected readonly IHttpClientFactory _clientFactory;
     protected readonly IConfiguration _configuration;
+    protected readonly FileLogger _logger;
 
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
     protected readonly HtmlSanitizer _sanitizer;
 
-    protected BasePageModel(IHttpClientFactory clientFactory, IConfiguration configuration)
+    protected BasePageModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger)
     {
         _clientFactory = clientFactory;
         _configuration = configuration;
+        _logger = logger;
 
         // Inicializace a konfigurace HTML sanitizeru pro bezpečné čištění HTML vstupu
         _sanitizer = new HtmlSanitizer();

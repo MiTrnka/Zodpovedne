@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Models.Base;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -26,8 +27,7 @@ public class ProfileModel : BasePageModel
     public string? NicknameErrorMessage { get; set; }
     public string? PasswordErrorMessage { get; set; }
 
-    public ProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration)
-        : base(clientFactory, configuration)
+    public ProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
 

@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Zodpovedne.Contracts\Zodpovedne.Contracts.csproj" />
     <ProjectReference Include="..\Zodpovedne.Data\Zodpovedne.Data.csproj" />
+    <ProjectReference Include="..\Zodpovedne.Logging\Zodpovedne.Logging.csproj" />
   </ItemGroup>
 
 </Project>
