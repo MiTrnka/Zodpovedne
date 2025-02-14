@@ -119,20 +119,39 @@ public class DiscussionModel : BasePageModel
 
         // Získání detailu diskuze
         var response = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
+
         if (!response.IsSuccessStatusCode)
-            return NotFound();
+        {
+            _logger.Log($"Detail diskuze nenalezen: {DiscussionCode}");
+            ErrorMessage = "Omlouváme se, ale požadovanou diskuzi se nepodaøilo naèíst.";
+            return Page();
+        }
         Discussion = await response.Content.ReadFromJsonAsync<DiscussionDetailDto>();
         if (Discussion == null)
-            return NotFound();
+        {
+            _logger.Log($"Detail diskuze nenalezen: {DiscussionCode}");
+            ErrorMessage = "Omlouváme se, ale požadovanou diskuzi se nepodaøilo naèíst.";
+            return Page();
+        }
 
         // Získání kategorie, protože potøebujeme zobrazit název kategorie
         var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
-            return NotFound();
-        var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>();
-        if (category == null)
-            return NotFound();
-        CategoryName = category.Name;
+        {
+            _logger.Log("Nenalezena kategorie");
+            CategoryName = "Kategorie diskuze";
+        }
+        else
+        {
+            var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>();
+            if (category == null)
+            {
+                _logger.Log("Nenalezena kategorie");
+                CategoryName = "Kategorie diskuze";
+            }
+            else
+                CategoryName = category.Name;
+        }
 
         // Inkrementujeme poèítadlo zhlédnutí dané diskuze
         await client.PostAsync($"{ApiBaseUrl}/discussions/{Discussion.Id}/increment-view-count", null);
@@ -147,7 +166,11 @@ public class DiscussionModel : BasePageModel
     public async Task<IActionResult> OnPostAddCommentAsync()
     {
         if (!ModelState.IsValid)
+        {
+            _logger.Log("Neplatný model pøi pøidávání komentáøe");
+            ErrorMessage = "Omlouváme se, ale komentáø se nepodaøilo vložit.";
             return Page();
+        }
 
         // Pokud není uživatel pøihlášen, pøesmìrujeme na login
         if (!IsUserLoggedIn)
@@ -158,11 +181,19 @@ public class DiscussionModel : BasePageModel
         // Naèteme znovu detail diskuze pro pøípad, že se mezitím zmìnil
         var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
         if (!discussionResponse.IsSuccessStatusCode)
-            return NotFound();
+        {
+            _logger.Log($"Nepodaøilo se naèíst detail diskuze podlé kódu {DiscussionCode} pøi pøidávání komentáøe");
+            ErrorMessage = "Omlouváme se, ale komentáø se nepodaøilo vložit.";
+            return Page();
+        }
 
         Discussion = await discussionResponse.Content.ReadFromJsonAsync<DiscussionDetailDto>();
         if (Discussion == null)
-            return NotFound();
+        {
+            _logger.Log($"Nepodaøilo se naèíst detail diskuze podlé kódu {DiscussionCode} pøi pøidávání komentáøe");
+            ErrorMessage = "Omlouváme se, ale komentáø se nepodaøilo vložit.";
+            return Page();
+        }
 
         // Sestavíme URL podle toho, zda jde o odpovìï na komentáø nebo nový root komentáø
         var url = ReplyToCommentId.HasValue
@@ -172,15 +203,16 @@ public class DiscussionModel : BasePageModel
         // Odešleme požadavek na vytvoøení komentáøe
         var response = await client.PostAsJsonAsync(url, NewComment);
 
-        if (response.IsSuccessStatusCode)
+        // V pøípadì úspìchu se provede refresh
+        if (!response.IsSuccessStatusCode)
         {
-            // Pøesmìrujeme zpìt na stejnou stránku pro zobrazení nového komentáøe
-            return RedirectToPage();
+            _logger.Log($"Nepodaøilo se odeslat požadavek na pøidávání komentáøe do diskuze {DiscussionCode}");
+            ErrorMessage = "Omlouváme se, ale komentáø se nepodaøilo vložit.";
+            return Page();
         }
 
-        // V pøípadì chyby pøidáme chybovou zprávu
-        ModelState.AddModelError("", "Nepodaøilo se pøidat komentáø.");
-        return Page();
+        // Pøesmìrujeme zpìt na stejnou stránku pro zobrazení nového komentáøe, provede se vlastnì refresh
+        return RedirectToPage();
     }
 
     /// <summary>
@@ -198,7 +230,11 @@ public class DiscussionModel : BasePageModel
         // Naèteme diskuzi pro ovìøení existence
         var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
         if (!discussionResponse.IsSuccessStatusCode)
-            return NotFound();
+        {
+            _logger.Log($"Nepodaøilo se odeslat požadavek na naètení detailu diskuze {DiscussionCode}");
+            ErrorMessage = "Omlouváme se, ale nepodaøilo se smazat diskuzi.";
+            return Page();
+        }
 
         Discussion = await discussionResponse.Content.ReadFromJsonAsync<DiscussionDetailDto>();
         if (Discussion == null)
@@ -213,13 +249,13 @@ public class DiscussionModel : BasePageModel
 
         if (response.IsSuccessStatusCode)
         {
-            // Po úspìšném smazání pøesmìrujeme na kategorii
-            return RedirectToPage("/Category", new { categoryCode = CategoryCode });
+            // V pøípadì chyby pøidáme chybovou zprávu
+            _logger.Log($"Nepodaøilo se odeslat požadavek na smazání diskuze dle Id {Discussion.Id}");
+            ErrorMessage = "Omlouváme se, ale nepodaøilo se smazat diskuzi.";
+            return Page();
         }
 
-        // V pøípadì chyby pøidáme chybovou zprávu
-        ModelState.AddModelError("", "Nepodaøilo se smazat diskuzi.");
-        return Page();
+        // Po úspìšném smazání pøesmìrujeme na kategorii
+        return RedirectToPage("/Category", new { categoryCode = CategoryCode });
     }
-
 }

@@ -4,6 +4,15 @@
 @model DiscussionModel
 @{
     ViewData["Title"] = Model.Discussion?.Title ?? "Diskuze";
+
+    //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
+    if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning">
+            <h4>@Model.ErrorMessage</h4>
+        </div>
+        return;
+    }
 }
 
 <div class="container">
@@ -411,7 +420,7 @@
 
         // Funkce pro editaci diskuze
         function toggleDiscussionEdit(show) {
-                    const titleDisplay = document.getElementById('discussion-title-display');
+            const titleDisplay = document.getElementById('discussion-title-display');
             const titleEdit = document.getElementById('discussion-title-edit');
             const contentDisplay = document.getElementById('discussion-content-display');
             const toolbarContainer = document.getElementById('toolbar-container');

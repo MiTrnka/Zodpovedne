@@ -1,5 +1,6 @@
 ﻿// NuGet Microsoft.Extensions.Configuration
 using Microsoft.Extensions.Configuration;
+using System.Runtime.CompilerServices;
 
 namespace Zodpovedne.Logging;
 
@@ -22,9 +23,14 @@ public class FileLogger
         _logPath = Path.Combine(logDirectory, logFileName);
     }
 
-    public void Log(string message, Exception? exception = null)
+    public void Log(
+        string message,
+        Exception? exception = null,
+        [CallerMemberName] string caller = "",
+        [CallerFilePath] string file = "",
+        [CallerLineNumber] int line = 0)
     {
-        var logMessage = $"{DateTime.UtcNow.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}\n{message}";
+        var logMessage = $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}\n[{Path.GetFileName(file)}::{caller}::{line}]\n{message}";
 
         if (exception != null)
         {

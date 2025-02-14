@@ -19,9 +19,6 @@ public class UsersModel : BasePageModel
     {
     }
 
-    // Users.cshtml.cs - pøidat property a metodu
-    public string? ErrorMessage { get; set; }
-
     /// <summary>
     /// Akce na trvalé smazání uživatele
     /// </summary>

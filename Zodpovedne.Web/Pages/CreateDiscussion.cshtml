@@ -2,6 +2,15 @@
 @model CreateDiscussionModel
 @{
     ViewData["Title"] = "Nová diskuze";
+
+    //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
+    if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning">
+            <h4>@Model.ErrorMessage</h4>
+        </div>
+        return;
+    }
 }
 
 <!-- Hlavní container pro celou stránku -->

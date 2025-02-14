@@ -1,4 +1,7 @@
 ﻿using Ganss.Xss;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 using Zodpovedne.Logging;
@@ -16,6 +19,24 @@ public abstract class BasePageModel : PageModel
 
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
     protected readonly HtmlSanitizer _sanitizer;
+
+    /// <summary>
+    /// Handler se volá těsně před zpracováním požadavku na stránku (třeba OnGet, OnPost...) a umožňuje provést akce před zpracováním požadavku
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="next"></param>
+    /// <returns></returns>
+    public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
+    {
+        // Kontrola nekonzistentního stavu autentizace (má autentizační cookie, ale ne token, například když se naposledy neodhlásil a autentizační cookie ještě platí)
+        if (!IsUserLoggedIn && User?.Identity?.IsAuthenticated == true)
+        {
+            // Uživatel má cookie ale ne token - odhlásíme ho
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        }
+
+        await next();
+    }
 
     protected BasePageModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger)
     {
@@ -54,6 +75,11 @@ public abstract class BasePageModel : PageModel
     }
 
     /// <summary>
+    /// Chybová zpráva pro zobrazení uživateli
+    /// </summary>
+    public string? ErrorMessage { get; set; }
+
+    /// <summary>
     /// Base URL pro API endpointy z konfigurace
     /// </summary>
     public string ApiBaseUrl => _configuration["ApiBaseUrl"] ?? "";
@@ -66,12 +92,12 @@ public abstract class BasePageModel : PageModel
     /// <summary>
     /// Přezdívka přihlášeného uživatele
     /// </summary>
-    public string? UserNickname => HttpContext.Session.GetString("UserNickname");
+    public string? UserNickname => IsUserLoggedIn ? HttpContext.Session.GetString("UserNickname"): null;
 
     /// <summary>
     /// ID přihlášeného uživatele
     /// </summary>
-    public string? CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier);
+    public string? CurrentUserId => IsUserLoggedIn ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
 
     /// <summary>
     /// Indikuje, zda je uživatel přihlášen
@@ -81,5 +107,5 @@ public abstract class BasePageModel : PageModel
     /// <summary>
     /// Indikuje, zda je přihlášený uživatel admin
     /// </summary>
-    public bool IsAdmin => User.IsInRole("Admin");
+    public bool IsAdmin => IsUserLoggedIn && User.IsInRole("Admin");
 }

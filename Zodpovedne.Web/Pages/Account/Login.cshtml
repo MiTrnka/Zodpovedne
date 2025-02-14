@@ -1,5 +1,17 @@
 ﻿@page "/Account/Login"
 @model Zodpovedne.Web.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Přihlášení";
+
+    //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
+    if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning">
+            <h4>@Model.ErrorMessage</h4>
+        </div>
+        return;
+    }
+}
 
 <div class="container">
     <div class="">
