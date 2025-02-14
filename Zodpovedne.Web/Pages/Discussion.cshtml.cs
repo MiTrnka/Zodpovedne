@@ -68,6 +68,48 @@ public class DiscussionModel : BasePageModel
     public int? ReplyToCommentId { get; set; }
 
     /// <summary>
+    /// Urèuje, zda pøihlášený uživatel mùže editovat diskuzi
+    /// (musí být buï admin nebo autor diskuze)
+    /// </summary>
+    public bool CanEditDiscussion =>
+        Discussion != null && IsUserLoggedIn &&
+        (IsAdmin || Discussion.AuthorId == CurrentUserId);
+
+    /// <summary>
+    /// Urèuje, zda je komentáø root (není reakcí na jiný komentáø)
+    /// </summary>
+    public bool IsRootComment(CommentDto comment) =>
+        comment.ParentCommentId == null;
+
+    /// <summary>
+    /// Urèuje, zda mùže aktuální uživatel dát like diskuzi
+    /// </summary>
+    public bool CanLikeDiscussion =>
+        Discussion != null && IsUserLoggedIn &&
+        Discussion.AuthorId != CurrentUserId &&
+        Discussion.Likes.CanUserLike;
+
+    /// <summary>
+    /// Urèuje, zda mùže aktuální uživatel dát like komentáøi
+    /// Admin mùže dát like jakémukoliv komentáøi, ostatní nemohou lajkovat své vlastní komentáøe
+    /// </summary>
+    public bool CanLikeComment(CommentDto comment) =>
+        IsUserLoggedIn &&
+        (IsAdmin || comment.AuthorNickname != User.Identity?.Name) &&
+        comment.Likes.CanUserLike;
+
+    /// <summary>
+    /// Vrací CSS tøídu pro tlaèítko like podle stavu
+    /// </summary>
+    public string GetLikeButtonClass(bool canLike) =>
+        canLike ? "btn-outline-primary" : "btn-outline-secondary";
+
+    /// <summary>
+    /// Generuje unikátní ID pro formuláø s odpovìdí na komentáø
+    /// </summary>
+    public string GetReplyFormId(int commentId) => $"reply-form-{commentId}";
+
+    /// <summary>
     /// Handler pro získání detailu diskuze z API
     /// Volá se pøi naètení stránky (HTTP GET)
     /// </summary>
@@ -75,33 +117,25 @@ public class DiscussionModel : BasePageModel
     {
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
-        if (IsUserLoggedIn)
-        {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", JwtToken);
-        }
-
+        // Získání detailu diskuze
         var response = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
         if (!response.IsSuccessStatusCode)
+            return NotFound();
+        Discussion = await response.Content.ReadFromJsonAsync<DiscussionDetailDto>();
+        if (Discussion == null)
             return NotFound();
 
         // Získání kategorie, protože potøebujeme zobrazit název kategorie
         var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
             return NotFound();
-        var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryListDto>();
+        var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>();
         if (category == null)
             return NotFound();
         CategoryName = category.Name;
 
-        Discussion = await response.Content.ReadFromJsonAsync<DiscussionDetailDto>();
-        if (Discussion == null)
-            return NotFound();
-
         // Inkrementujeme poèítadlo zhlédnutí dané diskuze
-        await client.PostAsync(
-            $"{ApiBaseUrl}/discussions/{Discussion.Id}/increment-view-count",
-            null
-        );
+        await client.PostAsync($"{ApiBaseUrl}/discussions/{Discussion.Id}/increment-view-count", null);
 
         return Page();
     }
@@ -120,7 +154,6 @@ public class DiscussionModel : BasePageModel
             return RedirectToPage("/Account/Login");
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", JwtToken);
 
         // Naèteme znovu detail diskuze pro pøípad, že se mezitím zmìnil
         var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
@@ -189,46 +222,4 @@ public class DiscussionModel : BasePageModel
         return Page();
     }
 
-
-    /// <summary>
-    /// Urèuje, zda pøihlášený uživatel mùže editovat diskuzi
-    /// (musí být buï admin nebo autor diskuze)
-    /// </summary>
-    public bool CanEditDiscussion =>
-        Discussion != null && IsUserLoggedIn &&
-        (IsAdmin || Discussion.AuthorId == CurrentUserId);
-
-    /// <summary>
-    /// Urèuje, zda je komentáø root (není reakcí na jiný komentáø)
-    /// </summary>
-    public bool IsRootComment(CommentDto comment) =>
-        comment.ParentCommentId == null;
-
-    /// <summary>
-    /// Urèuje, zda mùže aktuální uživatel dát like diskuzi
-    /// </summary>
-    public bool CanLikeDiscussion =>
-        Discussion != null && IsUserLoggedIn &&
-        Discussion.AuthorId != CurrentUserId &&
-        Discussion.Likes.CanUserLike;
-
-    /// <summary>
-    /// Urèuje, zda mùže aktuální uživatel dát like komentáøi
-    /// Admin mùže dát like jakémukoliv komentáøi, ostatní nemohou lajkovat své vlastní komentáøe
-    /// </summary>
-    public bool CanLikeComment(CommentDto comment) =>
-        IsUserLoggedIn &&
-        (IsAdmin || comment.AuthorNickname != User.Identity?.Name) &&
-        comment.Likes.CanUserLike;
-
-    /// <summary>
-    /// Vrací CSS tøídu pro tlaèítko like podle stavu
-    /// </summary>
-    public string GetLikeButtonClass(bool canLike) =>
-        canLike ? "btn-outline-primary" : "btn-outline-secondary";
-
-    /// <summary>
-    /// Generuje unikátní ID pro formuláø s odpovìdí na komentáø
-    /// </summary>
-    public string GetReplyFormId(int commentId) => $"reply-form-{commentId}";
 }

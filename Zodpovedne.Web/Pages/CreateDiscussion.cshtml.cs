@@ -32,7 +32,7 @@ public class CreateDiscussionModel : BasePageModel
         if (!response.IsSuccessStatusCode)
             return NotFound();
 
-        var category = await response.Content.ReadFromJsonAsync<CategoryListDto>();
+        var category = await response.Content.ReadFromJsonAsync<CategoryDto>();
         if (category == null)
             return NotFound();
 

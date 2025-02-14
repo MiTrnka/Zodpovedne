@@ -15,7 +15,7 @@ public class CategoriesModel : BasePageModel
     {
     }
 
-    public List<CategoryListDto> Categories { get; set; } = new();
+    public List<CategoryDto> Categories { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -24,7 +24,7 @@ public class CategoriesModel : BasePageModel
 
         if (response.IsSuccessStatusCode)
         {
-            Categories = await response.Content.ReadFromJsonAsync<List<CategoryListDto>>() ?? new();
+            Categories = await response.Content.ReadFromJsonAsync<List<CategoryDto>>() ?? new();
         }
         return Page();
     }

@@ -31,7 +31,7 @@ public class CategoryModel : BasePageModel
         if (!categoryResponse.IsSuccessStatusCode)
             return NotFound();
 
-        var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryListDto>();
+        var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>();
         if (category == null)
             return NotFound();
 

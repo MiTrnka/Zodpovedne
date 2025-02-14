@@ -25,11 +25,11 @@ public class CategoriesController : ControllerBase
     /// Tento endpoint může volat kdokoliv (i nepřihlášený uživatel)
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<CategoryListDto>>> GetCategories()
+    public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
     {
         var categories = await dbContext.Categories
             .OrderBy(c => c.DisplayOrder)
-            .Select(c => new CategoryListDto
+            .Select(c => new CategoryDto
             {
                 Id = c.Id,
                 Name = c.Name,
@@ -46,7 +46,7 @@ public class CategoriesController : ControllerBase
     /// Vrátí detail konkrétní kategorie podle jejího kódu
     /// </summary>
     [HttpGet("{code}")]
-    public async Task<ActionResult<CategoryListDto>> GetCategoryByCode(string code)
+    public async Task<ActionResult<CategoryDto>> GetCategoryByCode(string code)
     {
         var category = await dbContext.Categories
             .FirstOrDefaultAsync(c => c.Code == code);
@@ -54,7 +54,7 @@ public class CategoriesController : ControllerBase
         if (category == null)
             return NotFound();
 
-        var categoryDto = new CategoryListDto
+        var categoryDto = new CategoryDto
         {
             Id = category.Id,
             Name = category.Name,
