@@ -31,6 +31,10 @@ public class ProfileModel : BasePageModel
     {
     }
 
+    /// <summary>
+    /// Pøi naètení stránky se naètou data pøihlášeného uživatele
+    /// </summary>
+    /// <returns></returns>
     public async Task<IActionResult> OnGetAsync()
     {
         if (!IsUserLoggedIn)
@@ -39,44 +43,41 @@ public class ProfileModel : BasePageModel
         var client = _clientFactory.CreateBearerClient(HttpContext);
         var response = await client.GetAsync($"{ApiBaseUrl}/users/authenticated-user");
 
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
-            UserProfile = await response.Content.ReadFromJsonAsync<UserProfileDto>();
+            _logger.Log("Nepodaøilo se naèíst data pøihlášeného uživatele.");
+            ErrorMessage = "Omlouváme se, nepodaøilo se naèíst Váš profil.";
             return Page();
         }
 
-        return RedirectToPage("/Index");
-    }
-
-    public async Task<IActionResult> OnPostUpdateNicknameAsync()
-    {
-        if (!IsUserLoggedIn)
-            return RedirectToPage("/Account/Login");
-
-        var client = _clientFactory.CreateBearerClient(HttpContext);
-        var response = await client.PutAsJsonAsync(
-            $"{ApiBaseUrl}/users/authenticated-user/nickname",
-            new { Nickname = NewNickname }
-        );
-
-        if (response.IsSuccessStatusCode)
+        UserProfile = await response.Content.ReadFromJsonAsync<UserProfileDto>();
+        if (UserProfile == null)
         {
-            HttpContext.Session.SetString("UserNickname", NewNickname);
-            return RedirectToPage();
+            _logger.Log("Nepodaøilo se naèíst data pøihlášeného uživatele z response.");
+            ErrorMessage = "Omlouváme se, nepodaøilo se naèíst Váš profil.";
+            return Page();
         }
 
-        NicknameErrorMessage = "Pøezdívka je již používána.";
-
-        await OnGetAsync();
         return Page();
     }
 
+    /// <summary>
+    /// Kliknutí na tlaèítko pro zmìnu emailu
+    /// </summary>
+    /// <returns></returns>
     public async Task<IActionResult> OnPostUpdateEmailAsync()
     {
         if (!IsUserLoggedIn)
             return RedirectToPage("/Account/Login");
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
+        if (client == null)
+        {
+            _logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
+            ErrorMessage = "Omlouváme se, nìco se pokazilo.";
+            return Page();
+        }
+
         var response = await client.PutAsJsonAsync(
             $"{ApiBaseUrl}/users/authenticated-user/email",
             new { Email = NewEmail }
@@ -85,9 +86,10 @@ public class ProfileModel : BasePageModel
         if (response.IsSuccessStatusCode)
         {
             // Email se zmìnil úspìšnì, uživatel bude odhlášen a bude se muset znovu nalogovat, aby se mu vygeneroval nový JWT token
-            HttpContext.Session.Clear();
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToPage("/Account/Login");
+            if (await SignedOutIsOK())
+                return RedirectToPage("/Account/Login");
+            else
+                return Page();
         }
 
         EmailErrorMessage = "Zmìna emailu se nezdaøila. Email je již používán.";
@@ -95,12 +97,65 @@ public class ProfileModel : BasePageModel
         return Page();
     }
 
+    /// <summary>
+    /// Kliknutí na tlaèítko pro zmìnu nickname
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IActionResult> OnPostUpdateNicknameAsync()
+    {
+        if (!IsUserLoggedIn)
+            return RedirectToPage("/Account/Login");
+
+        var client = _clientFactory.CreateBearerClient(HttpContext);
+        if (client == null)
+        {
+            _logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
+            ErrorMessage = "Omlouváme se, nìco se pokazilo.";
+            return Page();
+        }
+
+        if (string.IsNullOrWhiteSpace(NewNickname))
+        {
+            NicknameErrorMessage = "Pøezdívka nesmí být prázdná.";
+            await OnGetAsync();
+            return Page();
+        }
+
+        var response = await client.PutAsJsonAsync(
+            $"{ApiBaseUrl}/users/authenticated-user/nickname",
+            new { Nickname = NewNickname }
+        );
+
+        if (response.IsSuccessStatusCode)
+        {
+            HttpContext.Session.SetString("UserNickname", NewNickname);
+            StatusMessage = "Pøezdívka byla úspìšnì zmìnìna.";
+            return Page();
+        }
+
+        NicknameErrorMessage = "Pøezdívka je již používána.";
+
+        await OnGetAsync();
+        return Page();
+    }
+
+    /// <summary>
+    /// Kliknutí na tlaèítko pro zmìnu hesla
+    /// </summary>
+    /// <returns></returns>
     public async Task<IActionResult> OnPostChangePasswordAsync()
     {
         if (!IsUserLoggedIn)
             return RedirectToPage("/Account/Login");
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
+        if (client == null)
+        {
+            _logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
+            ErrorMessage = "Omlouváme se, nìco se pokazilo.";
+            return Page();
+        }
+
         var response = await client.PutAsJsonAsync(
             $"{ApiBaseUrl}/users/authenticated-user/password",
             new
@@ -111,9 +166,12 @@ public class ProfileModel : BasePageModel
         );
 
         if (response.IsSuccessStatusCode)
-            return RedirectToPage();
+        {
+            StatusMessage = "Heslo bylo úspìšnì zmìnìno.";
+            return Page();
+        }
 
-        PasswordErrorMessage = "Nesprávné souèasné heslo nebo nastala chyba.";
+        PasswordErrorMessage = "Nesprávné souèasné heslo.";
         await OnGetAsync();
         return Page();
     }

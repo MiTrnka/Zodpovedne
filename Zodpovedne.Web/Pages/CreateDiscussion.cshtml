@@ -11,6 +11,13 @@
         </div>
         return;
     }
+    //Pokud je jakýkoliv text v StatusMessage, tak se zobrazí úplně nahoře a pokračuje se ve vykreslování stránky
+    if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert alert-info">
+            <h4>@Model.StatusMessage</h4>
+        </div>
+    }
 }
 
 <!-- Hlavní container pro celou stránku -->

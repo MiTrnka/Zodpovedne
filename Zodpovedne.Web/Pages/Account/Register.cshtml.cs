@@ -14,8 +14,6 @@ public class RegisterModel : BasePageModel
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
 
-    public string? ErrorMessage { get; set; }
-
     public RegisterModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
@@ -23,39 +21,45 @@ public class RegisterModel : BasePageModel
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
-            return Page();
-
-        var client = _clientFactory.CreateClient();
-        var response = await client.PostAsJsonAsync(
-            $"{ApiBaseUrl}/users/member",
-            Input
-        );
-
-        if (response.IsSuccessStatusCode)
         {
-            // Pøihlášení nového uživatele
-            var loginResponse = await client.PostAsJsonAsync(
-                $"{ApiBaseUrl}/users/token",
-                new { Email = Input.Email, Password = Input.Password }
-            );
-
-            if (loginResponse.IsSuccessStatusCode)
-            {
-                var result = await loginResponse.Content.ReadFromJsonAsync<TokenResponseDto>();
-                if (result != null)
-                {
-                    HttpContext.Session.SetString("JWTToken", result.Token);
-                    HttpContext.Session.SetString("UserNickname", result.Nickname);
-
-                    if (!string.IsNullOrEmpty(ReturnUrl))
-                        return LocalRedirect(ReturnUrl);
-
-                    return RedirectToPage("/Index");
-                }
-            }
+            ErrorMessage = "Omlouváme se, nastala chyba";
+            _logger.Log("Chyba pøi registraci nového uživatele");
+            return Page();
         }
 
-        ErrorMessage = "Registrace se nezdaøila. Uživatel s danou pøezdívkou nebo emailem již existuje";
+        var client = _clientFactory.CreateClient();
+        var response = await client.PostAsJsonAsync($"{ApiBaseUrl}/users/member", Input);
+        if (!response.IsSuccessStatusCode)
+        {
+            ErrorMessage = "Registrace se nezdaøila. Uživatel s danou pøezdívkou nebo emailem již existuje";
+            return Page();
+        }
+
+        // Pøihlášení nového uživatele
+        var loginResponse = await client.PostAsJsonAsync(
+            $"{ApiBaseUrl}/users/token",
+            new { Email = Input.Email, Password = Input.Password }
+        );
+        if (!loginResponse.IsSuccessStatusCode)
+        {
+            ErrorMessage = "Registrace probìhla úspìšnì, ale nepodaøilo se pøihlásit";
+            _logger.Log($"Registrace probìhla úspìšnì, ale nepodaøilo se pøihlásit pro {Input.Email}");
+            return Page();
+        }
+
+        var result = await loginResponse.Content.ReadFromJsonAsync<TokenResponseDto>();
+        if (result == null)
+        {
+            ErrorMessage = "Registrace probìhla úspìšnì, ale nepodaøilo se pøihlásit";
+            _logger.Log($"Registrace probìhla úspìšnì, ale nepodaøilo se pøihlásit pro {Input.Email}, chyba se získáním response");
+            return Page();
+        }
+
+        HttpContext.Session.SetString("JWTToken", result.Token);
+        HttpContext.Session.SetString("UserNickname", result.Nickname);
+        StatusMessage = "Registrace probìhla úspìšnì";
+        if (!string.IsNullOrEmpty(ReturnUrl))
+            return LocalRedirect(ReturnUrl);
         return Page();
     }
 }

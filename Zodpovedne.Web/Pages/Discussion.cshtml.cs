@@ -138,7 +138,7 @@ public class DiscussionModel : BasePageModel
         var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
         {
-            _logger.Log("Nenalezena kategorie");
+            _logger.Log($"Nenalezena kategorie {CategoryCode}");
             CategoryName = "Kategorie diskuze";
         }
         else

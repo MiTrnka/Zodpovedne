@@ -11,6 +11,13 @@
         </div>
         return;
     }
+    //Pokud je jakýkoliv text v StatusMessage, tak se zobrazí úplně nahoře a pokračuje se ve vykreslování stránky
+    if (!string.IsNullOrEmpty(Model.StatusMessage))
+    {
+        <div class="alert alert-info">
+            <h4>@Model.StatusMessage</h4>
+        </div>
+    }
 }
 
 <div class="container">
@@ -18,10 +25,10 @@
         <div class="col-md-4">
             <h2>Přihlášení</h2>
 
-            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            @if (!string.IsNullOrEmpty(Model.ErrorMessageWrongUser))
             {
                 <div class="alert alert-danger" role="alert">
-                    @Model.ErrorMessage
+                    @Model.ErrorMessageWrongUser
                 </div>
             }
 

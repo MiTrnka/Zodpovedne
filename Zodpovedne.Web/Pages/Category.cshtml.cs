@@ -9,6 +9,9 @@ using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages;
 
+/// <summary>
+/// Model pro stránku zobrazující detail konkrétní kategorie vèetnì seznamu jejích diskuzí
+/// </summary>
 public class CategoryModel : BasePageModel
 {
     public CategoryModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
@@ -29,11 +32,19 @@ public class CategoryModel : BasePageModel
         // Získání detailu kategorie
         var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
-            return NotFound();
+        {
+            _logger.Log($"Nenalezena kategorie {CategoryCode}");
+            ErrorMessage = "Omlouváme se, ale požadovanou kategorii diskuze se nepodaøilo naèíst.";
+            return Page();
+        }
 
         var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>();
         if (category == null)
-            return NotFound();
+        {
+            _logger.Log($"Kategorie {CategoryCode} nezle z categoryResponse naèíst.");
+            ErrorMessage = "Omlouváme se, ale požadovanou kategorii diskuze se nepodaøilo naèíst.";
+            return Page();
+        }
 
         CategoryName = category.Name;
         CategoryDescription = category.Description;
@@ -43,6 +54,12 @@ public class CategoryModel : BasePageModel
         if (discussionsResponse.IsSuccessStatusCode)
         {
             Discussions = await discussionsResponse.Content.ReadFromJsonAsync<List<DiscussionListDto>>() ?? new();
+        }
+        else
+        {
+            _logger.Log($"Pro kategori Code: {CategoryCode}, Id: {category.Id} nezle naèíst její seznam diskuzí.");
+            ErrorMessage = "Omlouváme se, ale požadovanou kategorii diskuze se nepodaøilo naèíst.";
+            return Page();
         }
 
         return Page();

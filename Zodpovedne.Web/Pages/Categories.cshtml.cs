@@ -7,8 +7,9 @@ using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages;
 
-//[AuthenticationFilter]
-//[AdminAuthorizationFilter]
+/// <summary>
+/// Model pro stránku zobrazující seznam kategorií
+/// </summary>
 public class CategoriesModel : BasePageModel
 {
     public CategoriesModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
@@ -22,10 +23,20 @@ public class CategoriesModel : BasePageModel
         var client = _clientFactory.CreateClient();
         var response = await client.GetAsync($"{ApiBaseUrl}/categories");
 
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
-            Categories = await response.Content.ReadFromJsonAsync<List<CategoryDto>>() ?? new();
+            ErrorMessage = "Omlouváme se, ale seznam kategorií se nepodaøilo naèíst.";
+            _logger.Log("Nepodaøilo se naèíst seznam všech kategorií");
+            return Page();
         }
+        Categories = await response.Content.ReadFromJsonAsync<List<CategoryDto>>() ?? new();
+        if (Categories == null)
+        {
+            ErrorMessage = "Omlouváme se, ale seznam kategorií se nepodaøilo naèíst.";
+            _logger.Log("Nepodaøilo se naèíst seznam všech kategorií z response");
+            return Page();
+        }
+
         return Page();
     }
 }

@@ -1,20 +1,19 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using Zodpovedne.Web.Models.Base;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages.Account;
 
-public class LogoutModel : PageModel
+public class LogoutModel : BasePageModel
 {
+    public LogoutModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+    {
+    }
     public async Task<IActionResult> OnGetAsync()
     {
-        // Smazání JWT ze session
-        HttpContext.Session.Clear();
-
-        // Smazání autentizaèní cookie
-        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-        return RedirectToPage("/Index");
+        await SignedOutIsOK();
+        return Page();
     }
 }

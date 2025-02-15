@@ -34,10 +34,7 @@ public class LoginModel : BasePageModel
     [BindProperty]
     public Models.LoginModel Input { get; set; } = new();
 
-    /// <summary>
-    /// Chybová zpráva v pøípadì neúspìšného pøihlášení
-    /// </summary>
-    public string? ErrorMessage { get; set; }
+    public string? ErrorMessageWrongUser { get; set; } = null;
 
     /// <summary>
     /// Zpracování POST požadavku pøi odeslání pøihlašovacího formuláøe
@@ -45,7 +42,10 @@ public class LoginModel : BasePageModel
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
+        {
+            ErrorMessage = "Omlouváme se, momentálnì se nelze pøihlásit.";
             return Page();
+        }
 
         // Získání JWT tokenu z API
         var client = _clientFactory.CreateClient();
@@ -54,52 +54,58 @@ public class LoginModel : BasePageModel
             new { Email = Input.Email, Password = Input.Password }
         );
 
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
-            var result = await response.Content.ReadFromJsonAsync<TokenResponseDto>();
-            if (result != null)
-            {
-                // Uložení JWT do session pro pozdìjší API volání
-                HttpContext.Session.SetString("JWTToken", result.Token);
-                HttpContext.Session.SetString("UserNickname", result.Nickname);
-
-                // Vytvoøení cookie autentizace z JWT tokenu
-                var handler = new JwtSecurityTokenHandler();
-                var jwtToken = handler.ReadJwtToken(result.Token);
-
-                // Extrakce claimù z JWT tokenu pro cookie autentizaci
-                var claims = new List<Claim>();
-                claims.AddRange(jwtToken.Claims);
-
-                // Vytvoøení identity pro cookie autentizaci
-                var claimsIdentity = new ClaimsIdentity(
-                    claims,
-                    CookieAuthenticationDefaults.AuthenticationScheme
-                );
-
-                // Nastavení vlastností cookie
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = true, // Cookie pøežije zavøení prohlížeèe
-                    ExpiresUtc = DateTime.UtcNow.AddHours(12) // Stejná doba jako u JWT
-                };
-
-                // Pøihlášení uživatele pomocí cookie
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity),
-                    authProperties
-                );
-
-                // Pøesmìrování na pùvodní stránku nebo na hlavní stránku
-                if (!string.IsNullOrEmpty(ReturnUrl))
-                    return LocalRedirect(ReturnUrl);
-
-                return RedirectToPage("/Index");
-            }
+            // uživatel zadal špatné pøihlašovací údaje
+            ErrorMessageWrongUser = "Neplatné pøihlašovací údaje";
+            return Page();
         }
 
-        ErrorMessage = "Neplatné pøihlašovací údaje";
-        return Page();
+        var result = await response.Content.ReadFromJsonAsync<TokenResponseDto>();
+        if (result == null)
+        {
+            ErrorMessage = "Omlouváme se, momentálnì se nelze pøihlásit.";
+            _logger.Log($"Nepodaøilo se naèíst pro {Input.Email} token z API");
+            return Page();
+
+        }
+        // Uložení JWT do session pro pozdìjší API volání
+        HttpContext.Session.SetString("JWTToken", result.Token);
+        HttpContext.Session.SetString("UserNickname", result.Nickname);
+
+        // Vytvoøení cookie autentizace z JWT tokenu
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(result.Token);
+
+        // Extrakce claimù z JWT tokenu pro cookie autentizaci
+        var claims = new List<Claim>();
+        claims.AddRange(jwtToken.Claims);
+
+        // Vytvoøení identity pro cookie autentizaci
+        var claimsIdentity = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme
+        );
+
+        // Nastavení vlastností cookie
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = true, // Cookie pøežije zavøení prohlížeèe
+            ExpiresUtc = DateTime.UtcNow.AddHours(12) // Stejná doba jako u JWT
+        };
+
+        // Pøihlášení uživatele pomocí cookie
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity),
+            authProperties
+        );
+
+        // Pøesmìrování na pùvodní stránku nebo na hlavní stránku
+        if (!string.IsNullOrEmpty(ReturnUrl))
+            return LocalRedirect(ReturnUrl);
+
+        return RedirectToPage("/Index");
+
     }
 }

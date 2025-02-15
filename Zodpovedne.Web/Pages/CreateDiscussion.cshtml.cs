@@ -7,6 +7,9 @@ using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages;
 
+/// <summary>
+/// Model pro stránku vytváøení nové diskuze
+/// </summary>
 [AuthenticationFilter]
 public class CreateDiscussionModel : BasePageModel
 {
@@ -30,11 +33,19 @@ public class CreateDiscussionModel : BasePageModel
         var response = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
 
         if (!response.IsSuccessStatusCode)
-            return NotFound();
+        {
+            _logger.Log($"Kategorie {CategoryCode} nenalezena");
+            ErrorMessage = "Omlouváme se, ale diskuzi nejde momentálnì založit.";
+            return Page();
+        }
 
         var category = await response.Content.ReadFromJsonAsync<CategoryDto>();
         if (category == null)
-            return NotFound();
+        {
+            _logger.Log($"Kategorie {CategoryCode} nelze naèíst");
+            ErrorMessage = "Omlouváme se, ale diskuzi nejde momentálnì založit.";
+            return Page();
+        }
 
         CategoryName = category.Name;
         Input.CategoryId = category.Id;
@@ -44,7 +55,11 @@ public class CreateDiscussionModel : BasePageModel
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
+        {
+            _logger.Log("Neplatný model pøi vytváøení  diskuze");
+            ErrorMessage = "Omlouváme se, ale diskuzi se nepodaøilo založit.";
             return Page();
+        }
 
         try
         {
@@ -62,7 +77,9 @@ public class CreateDiscussionModel : BasePageModel
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("", $"Došlo k chybì pøi vytváøení diskuze: {ex.Message}");
+            _logger.Log("Došlo k chybì pøi vytváøení diskuze", ex);
+            ErrorMessage = "Omlouváme se, ale došlo k chybì pøi vytváøení diskuze.";
+            return Page();
         }
 
         // Znovu naèteme kategorii pro zobrazení
