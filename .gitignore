@@ -367,3 +367,5 @@ FodyWeavers.xsd
 # Logy z adresářů Logs
 /Zodpovedne.RESTAPI/Logs/
 /Zodpovedne.Web/Logs/
+/Zodpovedne.Web/Logs/web.log
+/Zodpovedne.Web/Logs/web.log
