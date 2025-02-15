@@ -27,19 +27,27 @@ public class CategoriesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
     {
-        var categories = await dbContext.Categories
-            .OrderBy(c => c.DisplayOrder)
-            .Select(c => new CategoryDto
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Code = c.Code,
-                Description = c.Description,
-                DisplayOrder = c.DisplayOrder
-            })
-            .ToListAsync();
+        try
+        {
+            var categories = await dbContext.Categories
+                .OrderBy(c => c.DisplayOrder)
+                .Select(c => new CategoryDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Code = c.Code,
+                    Description = c.Description,
+                    DisplayOrder = c.DisplayOrder
+                })
+                .ToListAsync();
 
-        return Ok(categories);
+            return Ok(categories);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetCategories endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -48,21 +56,29 @@ public class CategoriesController : ControllerBase
     [HttpGet("{code}")]
     public async Task<ActionResult<CategoryDto>> GetCategoryByCode(string code)
     {
-        var category = await dbContext.Categories
-            .FirstOrDefaultAsync(c => c.Code == code);
-
-        if (category == null)
-            return NotFound();
-
-        var categoryDto = new CategoryDto
+        try
         {
-            Id = category.Id,
-            Name = category.Name,
-            Code = category.Code,
-            Description = category.Description,
-            DisplayOrder = category.DisplayOrder
-        };
+            var category = await dbContext.Categories
+                .FirstOrDefaultAsync(c => c.Code == code);
 
-        return Ok(categoryDto);
+            if (category == null)
+                return NotFound();
+
+            var categoryDto = new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Code = category.Code,
+                Description = category.Description,
+                DisplayOrder = category.DisplayOrder
+            };
+
+            return Ok(categoryDto);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetCategoryByCode endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 }

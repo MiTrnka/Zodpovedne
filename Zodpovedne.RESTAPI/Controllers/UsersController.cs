@@ -42,18 +42,26 @@ public class UsersController : ControllerBase
     [Authorize(Policy = "RequireAdminRole")] // Pouze pro adminy
     public async Task<IActionResult> GetUsers()
     {
-        var users = await this.userManager.Users
-            .Where(u => u.Type != UserType.Deleted)
-            .Select(u => new UserListDto
-            {
-                Id = u.Id,
-                Email = u.Email,
-                Nickname = u.Nickname,
-                LastLogin = u.LastLogin,
-                Type = u.Type
-            })
-            .ToListAsync();
-        return Ok(users);
+        try
+        {
+            var users = await this.userManager.Users
+                .Where(u => u.Type != UserType.Deleted)
+                .Select(u => new UserListDto
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    Nickname = u.Nickname,
+                    LastLogin = u.LastLogin,
+                    Type = u.Type
+                })
+                .ToListAsync();
+            return Ok(users);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetUsers endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -65,32 +73,40 @@ public class UsersController : ControllerBase
     [Authorize(Policy = "RequireAdminRole")]
     public async Task<ActionResult<PagedResultDto<UserListDto>>> GetPagedUsers(int page = 1)
     {
-        var pageSize = 50;
-        var query = userManager.Users
-            .Where(u => u.Type != UserType.Deleted)
-            .OrderBy(u => u.Nickname);
-
-        var totalUsers = await query.CountAsync();
-        var users = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(u => new UserListDto
-            {
-                Id = u.Id,
-                Email = u.Email,
-                Nickname = u.Nickname,
-                LastLogin = u.LastLogin,
-                Type = u.Type
-            })
-            .ToListAsync();
-
-        return Ok(new PagedResultDto<UserListDto>
+        try
         {
-            Items = users,
-            TotalCount = totalUsers,
-            PageSize = pageSize,
-            CurrentPage = page
-        });
+            var pageSize = 50;
+            var query = userManager.Users
+                .Where(u => u.Type != UserType.Deleted)
+                .OrderBy(u => u.Nickname);
+
+            var totalUsers = await query.CountAsync();
+            var users = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new UserListDto
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    Nickname = u.Nickname,
+                    LastLogin = u.LastLogin,
+                    Type = u.Type
+                })
+                .ToListAsync();
+
+            return Ok(new PagedResultDto<UserListDto>
+            {
+                Items = users,
+                TotalCount = totalUsers,
+                PageSize = pageSize,
+                CurrentPage = page
+            });
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetPagedUsers endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -101,21 +117,28 @@ public class UsersController : ControllerBase
     [HttpGet("authenticated-user")]
     public async Task<ActionResult<UserProfileDto>> GetAuthenticatedUser()
     {
-        var user = await GetCurrentUserAsync();
-        if (user == null) return NotFound();
-
-        var roles = await this.userManager.GetRolesAsync(user);
-
-        return Ok(new UserProfileDto
+        try
         {
-            Id = user.Id,
-            Email = user.Email!,
-            Nickname = user.Nickname,
-            Created = user.Created,
-            Roles = roles.ToList()
-        });
-    }
+            var user = await GetCurrentUserAsync();
+            if (user == null) return NotFound();
 
+            var roles = await this.userManager.GetRolesAsync(user);
+
+            return Ok(new UserProfileDto
+            {
+                Id = user.Id,
+                Email = user.Email!,
+                Nickname = user.Nickname,
+                Created = user.Created,
+                Roles = roles.ToList()
+            });
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetAuthenticatedUser endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
     /// <summary>
     /// Vytvoří nového uživatele s rolí Member
     /// </summary>
@@ -124,34 +147,42 @@ public class UsersController : ControllerBase
     [HttpPost("member")]
     public async Task<IActionResult> CreateMemberUser(RegisterModelDto model)
     {
-        // Kontrola existence stejného emailu a stejného nickname
-        if (await userManager.FindByEmailAsync(model.Email) != null)
-            return BadRequest(new { error = $"Email {model.Email} je již používán." });
-        if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
-            return BadRequest(new { error = $"Přezdívka {model.Nickname} je již používána." });
-
-        var user = new ApplicationUser
+        try
         {
-            UserName = model.Email,
-            Email = model.Email,
-            Nickname = model.Nickname
-        };
+            // Kontrola existence stejného emailu a stejného nickname
+            if (await userManager.FindByEmailAsync(model.Email) != null)
+                return BadRequest(new { error = $"Email {model.Email} je již používán." });
+            if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
+                return BadRequest(new { error = $"Přezdívka {model.Nickname} je již používána." });
 
-        var result = await this.userManager.CreateAsync(user, model.Password);
-        if (result.Succeeded)
-        {
-            // Přidání výchozí role "User"
-            await this.userManager.AddToRoleAsync(user, "Member");
+            var user = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                Nickname = model.Nickname
+            };
 
-            // V produkci přidat:
-            // - Odeslání potvrzovacího emailu
-            // - Logování události
-            // - Notifikace admina
+            var result = await this.userManager.CreateAsync(user, model.Password);
+            if (result.Succeeded)
+            {
+                // Přidání výchozí role "User"
+                await this.userManager.AddToRoleAsync(user, "Member");
 
-            return Ok();
+                // V produkci přidat:
+                // - Odeslání potvrzovacího emailu
+                // - Logování události
+                // - Notifikace admina
+
+                return Ok();
+            }
+
+            return BadRequest(new { errors = result.Errors });
         }
-
-        return BadRequest(new { errors = result.Errors });
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce CreateMemberUser endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -163,34 +194,42 @@ public class UsersController : ControllerBase
     [Authorize(Policy = "RequireAdminRole")] // Pouze pro adminy
     public async Task<IActionResult> CreateAdminUser(RegisterModelDto model)
     {
-        // Kontrola existence stejného emailu a stejného nickname
-        if (await userManager.FindByEmailAsync(model.Email) != null)
-            return BadRequest(new { error = $"Email {model.Email} je již používán." });
-        if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
-            return BadRequest(new { error = $"Přezdívka {model.Nickname} je již používána." });
-
-        var user = new ApplicationUser
+        try
         {
-            UserName = model.Email,
-            Email = model.Email,
-            Nickname = model.Nickname
-        };
+            // Kontrola existence stejného emailu a stejného nickname
+            if (await userManager.FindByEmailAsync(model.Email) != null)
+                return BadRequest(new { error = $"Email {model.Email} je již používán." });
+            if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
+                return BadRequest(new { error = $"Přezdívka {model.Nickname} je již používána." });
 
-        var result = await this.userManager.CreateAsync(user, model.Password);
-        if (result.Succeeded)
-        {
-            // Přidání výchozí role "Admin"
-            await this.userManager.AddToRoleAsync(user, "Admin");
+            var user = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                Nickname = model.Nickname
+            };
 
-            // V produkci přidat:
-            // - Odeslání potvrzovacího emailu
-            // - Logování události
-            // - Notifikace admina
+            var result = await this.userManager.CreateAsync(user, model.Password);
+            if (result.Succeeded)
+            {
+                // Přidání výchozí role "Admin"
+                await this.userManager.AddToRoleAsync(user, "Admin");
 
-            return Ok();
+                // V produkci přidat:
+                // - Odeslání potvrzovacího emailu
+                // - Logování události
+                // - Notifikace admina
+
+                return Ok();
+            }
+
+            return BadRequest(new { errors = result.Errors });
         }
-
-        return BadRequest(new { errors = result.Errors });
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce CreateAdminUser endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -202,20 +241,28 @@ public class UsersController : ControllerBase
     [HttpPut("authenticated-user/nickname")]
     public async Task<IActionResult> UpdateNickname(UpdateNicknameDto model)
     {
-        var user = await GetCurrentUserAsync();
-        if (user == null) return NotFound();
+        try
+        {
+            var user = await GetCurrentUserAsync();
+            if (user == null) return NotFound();
 
-        // Kontrola existence stejného nickname
-        if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
-            return BadRequest("Tato přezdívka je již používána.");
+            // Kontrola existence stejného nickname
+            if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
+                return BadRequest("Tato přezdívka je již používána.");
 
-        user.Nickname = model.Nickname;
-        var result = await userManager.UpdateAsync(user);
+            user.Nickname = model.Nickname;
+            var result = await userManager.UpdateAsync(user);
 
-        if (result.Succeeded)
-            return Ok();
+            if (result.Succeeded)
+                return Ok();
 
-        return BadRequest(result.Errors);
+            return BadRequest(result.Errors);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce UpdateNickname endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -226,24 +273,32 @@ public class UsersController : ControllerBase
     [HttpPut("authenticated-user/email")]
     public async Task<IActionResult> UpdateEmail(UpdateEmailDto model)
     {
-        var user = await GetCurrentUserAsync();
-        if (user == null) return NotFound();
+        try
+        {
+            var user = await GetCurrentUserAsync();
+            if (user == null) return NotFound();
 
-        // Kontrola existence stejného emailu
-        if (await userManager.FindByEmailAsync(model.Email) != null)
-            return BadRequest("Tento email je již používán.");
+            // Kontrola existence stejného emailu
+            if (await userManager.FindByEmailAsync(model.Email) != null)
+                return BadRequest("Tento email je již používán.");
 
-        // Použití vestavěné metody Identity, která se postará o všechny potřebné změny
-        var result = await userManager.SetEmailAsync(user, model.Email);
-        if (!result.Succeeded)
+            // Použití vestavěné metody Identity, která se postará o všechny potřebné změny
+            var result = await userManager.SetEmailAsync(user, model.Email);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            // Musíme také změnit UserName, protože ten používáme jako login
+            result = await userManager.SetUserNameAsync(user, model.Email);
+            if (result.Succeeded)
+                return Ok();
+
             return BadRequest(result.Errors);
-
-        // Musíme také změnit UserName, protože ten používáme jako login
-        result = await userManager.SetUserNameAsync(user, model.Email);
-        if (result.Succeeded)
-            return Ok();
-
-        return BadRequest(result.Errors);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce UpdateEmail endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -255,13 +310,21 @@ public class UsersController : ControllerBase
     [Authorize(Policy = "RequireAdminRole")]
     public async Task<IActionResult> DeleteUser([FromRoute] string userId)
     {
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return NotFound();
+        try
+        {
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+                return NotFound();
 
-        user.Type = UserType.Deleted;
-        await userManager.UpdateAsync(user);
-        return Ok();
+            user.Type = UserType.Deleted;
+            await userManager.UpdateAsync(user);
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce DeleteUser endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -272,65 +335,74 @@ public class UsersController : ControllerBase
     [HttpDelete("permanently/{userId}")]
     public async Task<IActionResult> DeleteUserPermanently([FromRoute] string userId)
     {
-        // Kontrola oprávnění - může mazat jen admin nebo samotný uživatel
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("Admin");
-        if (!isAdmin && currentUserId != userId)
-            return Forbid();
-
-        // Najdeme uživatele
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return NotFound();
-
-        using var transaction = await dbContext.Database.BeginTransactionAsync();
         try
         {
-            // 1. Smažeme všechny lajky diskuzí od uživatele
-            await dbContext.DiscussionLikes
-                .Where(l => l.UserId == userId)
-                .ExecuteDeleteAsync();
+            // Kontrola oprávnění - může mazat jen admin nebo samotný uživatel
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+            if (!isAdmin && currentUserId != userId)
+                return Forbid();
 
-            // 2. Smažeme všechny lajky komentářů od uživatele
-            await dbContext.CommentLikes
-                .Where(l => l.UserId == userId)
-                .ExecuteDeleteAsync();
+            // Najdeme uživatele
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+                return NotFound();
 
-            // 3. Smažeme všechny reakční komentáře od uživatele
-            await dbContext.Comments
-                .Where(c => c.UserId == userId && c.ParentCommentId != null)
-                .ExecuteDeleteAsync();
+            using var transaction = await dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                // 1. Smažeme všechny lajky diskuzí od uživatele
+                await dbContext.DiscussionLikes
+                    .Where(l => l.UserId == userId)
+                    .ExecuteDeleteAsync();
 
-            // 4. Smažeme všechny reakční komentáře na rootové komentáře mazaného uživatele
-            await dbContext.Comments
-                .Where(c => c.ParentCommentId != null && c.ParentComment.UserId == userId)
-                .ExecuteDeleteAsync();
+                // 2. Smažeme všechny lajky komentářů od uživatele
+                await dbContext.CommentLikes
+                    .Where(l => l.UserId == userId)
+                    .ExecuteDeleteAsync();
 
-            // 5. Smažeme všechny komentáře od uživatele
-            await dbContext.Comments
-                .Where(c => c.UserId == userId)
-                .ExecuteDeleteAsync();
+                // 3. Smažeme všechny reakční komentáře od uživatele
+                await dbContext.Comments
+                    .Where(c => c.UserId == userId && c.ParentCommentId != null)
+                    .ExecuteDeleteAsync();
 
-            // 6. Smažeme všechny lajky na diskuzích uživatele
-            await dbContext.DiscussionLikes
-                .Where(l => l.Discussion.UserId == userId)
-                .ExecuteDeleteAsync();
+                // 4. Smažeme všechny reakční komentáře na rootové komentáře mazaného uživatele
+                await dbContext.Comments
+                    .Where(c => c.ParentCommentId != null && c.ParentComment.UserId == userId)
+                    .ExecuteDeleteAsync();
 
-            // 7. Smažeme všechny diskuze uživatele
-            await dbContext.Discussions
-                .Where(d => d.UserId == userId)
-                .ExecuteDeleteAsync();
+                // 5. Smažeme všechny komentáře od uživatele
+                await dbContext.Comments
+                    .Where(c => c.UserId == userId)
+                    .ExecuteDeleteAsync();
 
-            // 8. Smažeme samotného uživatele
-            await userManager.DeleteAsync(user);
+                // 6. Smažeme všechny lajky na diskuzích uživatele
+                await dbContext.DiscussionLikes
+                    .Where(l => l.Discussion.UserId == userId)
+                    .ExecuteDeleteAsync();
 
-            await transaction.CommitAsync();
-            return Ok();
+                // 7. Smažeme všechny diskuze uživatele
+                await dbContext.Discussions
+                    .Where(d => d.UserId == userId)
+                    .ExecuteDeleteAsync();
+
+                // 8. Smažeme samotného uživatele
+                await userManager.DeleteAsync(user);
+
+                await transaction.CommitAsync();
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync();
+                _logger.Log("Chyba při vykonávání transakce v akci DeleteUserPermanently endpointu.", e);
+                return BadRequest();
+            }
         }
-        catch
+        catch (Exception e)
         {
-            await transaction.RollbackAsync();
-            return BadRequest();
+            _logger.Log("Chyba při vykonávání akce DeleteUserPermanently endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
 
@@ -343,13 +415,21 @@ public class UsersController : ControllerBase
     [Authorize(Policy = "RequireAdminRole")]
     public async Task<IActionResult> ToggleUserVisibility(string userId)
     {
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null) return NotFound();
+        try
+        {
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
 
-        user.Type = user.Type == UserType.Normal ? UserType.Hidden : UserType.Normal;
-        await userManager.UpdateAsync(user);
+            user.Type = user.Type == UserType.Normal ? UserType.Hidden : UserType.Normal;
+            await userManager.UpdateAsync(user);
 
-        return Ok(new { type = user.Type });
+            return Ok(new { type = user.Type });
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce ToggleUserVisibility endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -360,22 +440,30 @@ public class UsersController : ControllerBase
     [HttpPut("authenticated-user/password")]
     public async Task<IActionResult> UpdateAuthenticatedUserPassword(ChangePasswordModelDto model)
     {
-        // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
-        var user = await GetCurrentUserAsync();
-        if (user == null) return NotFound();
-
-        var result = await this.userManager.ChangePasswordAsync(
-            user,
-            model.CurrentPassword,
-            model.NewPassword
-        );
-
-        if (result.Succeeded)
+        try
         {
-            return Ok();
-        }
+            // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
+            var user = await GetCurrentUserAsync();
+            if (user == null) return NotFound();
 
-        return BadRequest(new { errors = result.Errors });
+            var result = await this.userManager.ChangePasswordAsync(
+                user,
+                model.CurrentPassword,
+                model.NewPassword
+            );
+
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+
+            return BadRequest(new { errors = result.Errors });
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce UpdateAuthenticatedUserPassword endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -386,37 +474,45 @@ public class UsersController : ControllerBase
     [HttpPost("token")]
     public async Task<IActionResult> CreateToken(LoginModelDto model)
     {
-        var user = await this.userManager.FindByEmailAsync(model.Email);
-        if (user == null)
-            return Unauthorized();
-
-        if (user.Type == UserType.Deleted)
-            return Unauthorized();
-
-        //Metoda ověří heslo(false zde znamená, že se nezamkne účet při špatném hesle)
-        var result = await this.signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: true);
-        if (result.IsLockedOut)
+        try
         {
-            return Unauthorized(new { message = "Účet je uzamčen" });
-        }
-        if (result.Succeeded)
-        {
-            // Aktualizace posledního přihlášení a rovnou uložení do databáze (SaveChanges)
-            user.LastLogin = DateTime.UtcNow;
-            await this.userManager.UpdateAsync(user);
+            var user = await this.userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+                return Unauthorized();
 
-            var token = await GenerateJwtToken(user);
+            if (user.Type == UserType.Deleted)
+                return Unauthorized();
 
-            return Ok(new TokenResponseDto
+            //Metoda ověří heslo(false zde znamená, že se nezamkne účet při špatném hesle)
+            var result = await this.signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: true);
+            if (result.IsLockedOut)
             {
-                Token = token,
-                ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru"))),
-                Email = user.Email!,
-                Nickname = user.Nickname
-            });
-        }
+                return Unauthorized(new { message = "Účet je uzamčen" });
+            }
+            if (result.Succeeded)
+            {
+                // Aktualizace posledního přihlášení a rovnou uložení do databáze (SaveChanges)
+                user.LastLogin = DateTime.UtcNow;
+                await this.userManager.UpdateAsync(user);
 
-        return Unauthorized();
+                var token = await GenerateJwtToken(user);
+
+                return Ok(new TokenResponseDto
+                {
+                    Token = token,
+                    ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru"))),
+                    Email = user.Email!,
+                    Nickname = user.Nickname
+                });
+            }
+
+            return Unauthorized();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce CreateToken endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>

@@ -102,10 +102,9 @@ public class LoginModel : BasePageModel
         );
 
         // Pøesmìrování na pùvodní stránku nebo na hlavní stránku
-        if (!string.IsNullOrEmpty(ReturnUrl))
-            return LocalRedirect(ReturnUrl);
+        if ((string.IsNullOrEmpty(ReturnUrl)) || (ReturnUrl == "/Account/Logout") || (ReturnUrl == "/Account/login"))
+            return RedirectToPage("/Index");
 
-        return RedirectToPage("/Index");
-
+        return LocalRedirect(ReturnUrl);
     }
 }
