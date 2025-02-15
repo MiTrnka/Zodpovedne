@@ -12,8 +12,6 @@ using System.ComponentModel.Design;
 using Ganss.Xss;
 using Zodpovedne.Logging;
 
-
-
 namespace Zodpovedne.RESTAPI.Controllers;
 
 /// <summary>
@@ -34,36 +32,44 @@ public class DiscussionsController : ControllerBase
 
     public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger)
     {
+        _logger = logger;
         this.dbContext = dbContext;
         this.userManager = userManager;
-        _logger = logger;
 
-        // Inicializace a konfigurace sanitizeru pro bezpečné čištění HTML vstupu
-        _sanitizer = new HtmlSanitizer();
+        try
+        {
 
-        // Stejná konfigurace jako jsme měli v CreateDiscussion
-        _sanitizer.AllowedTags.Clear();
-        _sanitizer.AllowedTags.Add("p");
-        _sanitizer.AllowedTags.Add("br");
-        _sanitizer.AllowedTags.Add("b");
-        _sanitizer.AllowedTags.Add("strong");
-        _sanitizer.AllowedTags.Add("i");
-        _sanitizer.AllowedTags.Add("em");
-        _sanitizer.AllowedTags.Add("ul");
-        _sanitizer.AllowedTags.Add("ol");
-        _sanitizer.AllowedTags.Add("li");
-        _sanitizer.AllowedTags.Add("h2");
-        _sanitizer.AllowedTags.Add("h3");
-        _sanitizer.AllowedTags.Add("h4");
-        _sanitizer.AllowedTags.Add("a");
-        _sanitizer.AllowedTags.Add("img");
+            // Inicializace a konfigurace sanitizeru pro bezpečné čištění HTML vstupu
+            _sanitizer = new HtmlSanitizer();
 
-        _sanitizer.AllowedAttributes.Clear();
-        _sanitizer.AllowedAttributes.Add("href");
-        _sanitizer.AllowedAttributes.Add("src");
-        _sanitizer.AllowedAttributes.Add("alt");
+            // Stejná konfigurace jako jsme měli v CreateDiscussion
+            _sanitizer.AllowedTags.Clear();
+            _sanitizer.AllowedTags.Add("p");
+            _sanitizer.AllowedTags.Add("br");
+            _sanitizer.AllowedTags.Add("b");
+            _sanitizer.AllowedTags.Add("strong");
+            _sanitizer.AllowedTags.Add("i");
+            _sanitizer.AllowedTags.Add("em");
+            _sanitizer.AllowedTags.Add("ul");
+            _sanitizer.AllowedTags.Add("ol");
+            _sanitizer.AllowedTags.Add("li");
+            _sanitizer.AllowedTags.Add("h2");
+            _sanitizer.AllowedTags.Add("h3");
+            _sanitizer.AllowedTags.Add("h4");
+            _sanitizer.AllowedTags.Add("a");
+            _sanitizer.AllowedTags.Add("img");
 
-        _sanitizer.AllowedCssProperties.Clear();
+            _sanitizer.AllowedAttributes.Clear();
+            _sanitizer.AllowedAttributes.Add("href");
+            _sanitizer.AllowedAttributes.Add("src");
+            _sanitizer.AllowedAttributes.Add("alt");
+
+            _sanitizer.AllowedCssProperties.Clear();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("V konstruktoru DiscussionsController se nepoda+rilo nastavit sanitizer", e);
+        }
     }
 
     /// <summary>
@@ -76,66 +82,74 @@ public class DiscussionsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<DiscussionListDto>>> GetDiscussions(int? categoryId = null)
     {
-        // Identifikace uživatele pro správné filtrování obsahu
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("Admin");
-
-        // Základní dotaz s eager loadingem souvisejících dat
-        var query = dbContext.Discussions
-            .Include(d => d.Category)        // Pro zobrazení názvu kategorie
-            .Include(d => d.User)            // Pro zobrazení autora
-            .Include(d => d.Comments)        // Pro počítání relevantních komentářů
-            .Include(d => d.Likes)           // Pro informace o lajcích
-                                             // Bezpečnostní filtry
-            .Where(d => d.Type != DiscussionType.Deleted)  // Smazané diskuze nikdo nevidí
-            .Where(d => d.Type != DiscussionType.Hidden || // Hidden diskuze vidí jen:
-                isAdmin ||                                  // - admin
-                d.UserId == userId);                       // - autor diskuze
-
-        // Aplikace filtru podle kategorie, pokud je zadána
-        if (categoryId.HasValue)
+        try
         {
-            query = query.Where(d => d.CategoryId == categoryId.Value);
-        }
+            // Identifikace uživatele pro správné filtrování obsahu
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
 
-        // Načtení dat s aplikovaným řazením a projekcí do DTO
-        var discussions = await query
-            // Řazení:
-            .OrderByDescending(d => d.Type == DiscussionType.Top)  // 1. TOP diskuze
-            .ThenByDescending(d => d.CreatedAt)                    // 2. Nejnovější první
-                                                                   // Mapování na DTO přímo v databázovém dotazu
-            .Select(d => new DiscussionListDto
+            // Základní dotaz s eager loadingem souvisejících dat
+            var query = dbContext.Discussions
+                .Include(d => d.Category)        // Pro zobrazení názvu kategorie
+                .Include(d => d.User)            // Pro zobrazení autora
+                .Include(d => d.Comments)        // Pro počítání relevantních komentářů
+                .Include(d => d.Likes)           // Pro informace o lajcích
+                                                 // Bezpečnostní filtry
+                .Where(d => d.Type != DiscussionType.Deleted)  // Smazané diskuze nikdo nevidí
+                .Where(d => d.Type != DiscussionType.Hidden || // Hidden diskuze vidí jen:
+                    isAdmin ||                                  // - admin
+                    d.UserId == userId);                       // - autor diskuze
+
+            // Aplikace filtru podle kategorie, pokud je zadána
+            if (categoryId.HasValue)
             {
-                Id = d.Id,
-                Title = d.Title,
-                CategoryName = d.Category.Name,
-                AuthorNickname = d.User.Nickname,
-                CreatedAt = d.CreatedAt,
-                // Počítání relevantních komentářů s respektováním viditelnosti
-                CommentsCount = d.Comments.Count(c =>
-                    c.Type != CommentType.Deleted &&       // Ignorujeme smazané
-                    (c.Type != CommentType.Hidden ||      // Hidden komentáře počítáme pro:
-                        isAdmin ||                        // - adminy
-                        c.UserId == userId)),            // - autory komentářů
-                ViewCount = d.ViewCount,
-                Type = d.Type,
-                Code = d.Code,
-                // Informace o lajcích
-                Likes = new LikeInfoDto
-                {
-                    LikeCount = d.Likes.Count,           // Celkový počet lajků
-                    HasUserLiked = d.Likes               // Zda přihlášený uživatel lajkoval
-                        .Any(l => l.UserId == userId),
-                    CanUserLike = isAdmin ||             // Může lajkovat pokud:
-                        (!string.IsNullOrEmpty(userId) && // - je přihlášen
-                         d.UserId != userId &&           // - není autor
-                         !d.Likes                        // - ještě nelajkoval
-                            .Any(l => l.UserId == userId))
-                }
-            })
-            .ToListAsync();
+                query = query.Where(d => d.CategoryId == categoryId.Value);
+            }
 
-        return Ok(discussions);
+            // Načtení dat s aplikovaným řazením a projekcí do DTO
+            var discussions = await query
+                // Řazení:
+                .OrderByDescending(d => d.Type == DiscussionType.Top)  // 1. TOP diskuze
+                .ThenByDescending(d => d.CreatedAt)                    // 2. Nejnovější první
+                                                                       // Mapování na DTO přímo v databázovém dotazu
+                .Select(d => new DiscussionListDto
+                {
+                    Id = d.Id,
+                    Title = d.Title,
+                    CategoryName = d.Category.Name,
+                    AuthorNickname = d.User.Nickname,
+                    CreatedAt = d.CreatedAt,
+                    // Počítání relevantních komentářů s respektováním viditelnosti
+                    CommentsCount = d.Comments.Count(c =>
+                        c.Type != CommentType.Deleted &&       // Ignorujeme smazané
+                        (c.Type != CommentType.Hidden ||      // Hidden komentáře počítáme pro:
+                            isAdmin ||                        // - adminy
+                            c.UserId == userId)),            // - autory komentářů
+                    ViewCount = d.ViewCount,
+                    Type = d.Type,
+                    Code = d.Code,
+                    // Informace o lajcích
+                    Likes = new LikeInfoDto
+                    {
+                        LikeCount = d.Likes.Count,           // Celkový počet lajků
+                        HasUserLiked = d.Likes               // Zda přihlášený uživatel lajkoval
+                            .Any(l => l.UserId == userId),
+                        CanUserLike = isAdmin ||             // Může lajkovat pokud:
+                            (!string.IsNullOrEmpty(userId) && // - je přihlášen
+                             d.UserId != userId &&           // - není autor
+                             !d.Likes                        // - ještě nelajkoval
+                                .Any(l => l.UserId == userId))
+                    }
+                })
+                .ToListAsync();
+
+            return Ok(discussions);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetDiscussions endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -147,96 +161,104 @@ public class DiscussionsController : ControllerBase
     [HttpGet("{discussionId}")]
     public async Task<ActionResult<DiscussionDetailDto>> GetDiscussion(int discussionId)
     {
-        // Pro přihlášené uživatele získání ID a role přihlášeného uživatele pro případné dodání skrytého obsahu (pokud na to bude mít práva)
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("Admin");
-
-        // Načtení diskuze včetně všech souvisejících komentářů a dalších dat pomocí eager loading
-        // Museli jsme opakovat Include(d => d.Comments) protože,EF Core neumožňuje řetězit více ThenInclude rozvětveních na jeden Include (více ThenInclude za sebou jde, ale jen pro jednu cestu)
-        var discussion = await dbContext.Discussions
-           // Načtení základních souvisejících dat pro diskuzi
-           .Include(d => d.Category)                    // Kategorie pro zobrazení názvu kategorie
-           .Include(d => d.User)                        // Autor diskuze pro zobrazení jeho nicknamu
-           .Include(d => d.Likes)                       // Lajky diskuze pro zobrazení počtu a kontrolu, zda už uživatel lajkoval
-
-           // Načtení dat pro root komentáře
-           .Include(d => d.Comments)                    // Všechny komentáře k diskuzi
-               .ThenInclude(c => c.User)                // Autoři těchto komentářů
-           .Include(d => d.Comments)                    // Znovu komentáře (potřeba pro další ThenInclude)
-               .ThenInclude(c => c.Likes)               // Lajky u komentářů
-
-           // Načtení dat pro odpovědi na komentáře (druhá úroveň komentářů)
-           .Include(d => d.Comments)                    // Znovu komentáře (potřeba pro načtení replies)
-               .ThenInclude(c => c.Replies)             // Odpovědi na komentáře
-                   .ThenInclude(r => r.User)            // Autoři odpovědí
-           .Include(d => d.Comments)                    // Znovu komentáře (potřeba pro další větev replies)
-               .ThenInclude(c => c.Replies)             // Znovu odpovědi
-                   .ThenInclude(r => r.Likes)           // Lajky u odpovědí
-
-           // Filtrování diskuze podle oprávnění:
-           .FirstOrDefaultAsync(d => d.Id == discussionId &&   // Hledáme konkrétní diskuzi podle ID
-               d.Type != DiscussionType.Deleted &&      // Nikdy nezobrazujeme smazané diskuze
-               (d.Type != DiscussionType.Hidden ||      // Pro skryté diskuze kontrolujeme:
-                   isAdmin ||                           // - buď je uživatel admin (vidí vše)
-                   d.UserId == userId));                // - nebo je autorem této diskuze
-
-
-        if (discussion == null)
-            return NotFound();
-
-        // Filtrování komentářů podle viditelnosti
-        var filteredComments = discussion.Comments
-            .Where(c => c.Type != CommentType.Deleted && // Odstranění smazaných
-                (c.Type != CommentType.Hidden ||         // Skryté zobrazit jen pro:
-                    isAdmin ||                           // - adminy
-                    c.UserId == userId))                 // - autory komentáře
-            .ToList();
-
-        // Filtrování odpovědí na komentáře podle viditelnosti
-        foreach (var comment in filteredComments)
+        try
         {
-            comment.Replies = comment.Replies
-                .Where(r => r.Type != CommentType.Deleted && // Odstranění smazaných
-                    (r.Type != CommentType.Hidden ||         // Skryté zobrazit jen pro:
+            // Pro přihlášené uživatele získání ID a role přihlášeného uživatele pro případné dodání skrytého obsahu (pokud na to bude mít práva)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            // Načtení diskuze včetně všech souvisejících komentářů a dalších dat pomocí eager loading
+            // Museli jsme opakovat Include(d => d.Comments) protože,EF Core neumožňuje řetězit více ThenInclude rozvětveních na jeden Include (více ThenInclude za sebou jde, ale jen pro jednu cestu)
+            var discussion = await dbContext.Discussions
+               // Načtení základních souvisejících dat pro diskuzi
+               .Include(d => d.Category)                    // Kategorie pro zobrazení názvu kategorie
+               .Include(d => d.User)                        // Autor diskuze pro zobrazení jeho nicknamu
+               .Include(d => d.Likes)                       // Lajky diskuze pro zobrazení počtu a kontrolu, zda už uživatel lajkoval
+
+               // Načtení dat pro root komentáře
+               .Include(d => d.Comments)                    // Všechny komentáře k diskuzi
+                   .ThenInclude(c => c.User)                // Autoři těchto komentářů
+               .Include(d => d.Comments)                    // Znovu komentáře (potřeba pro další ThenInclude)
+                   .ThenInclude(c => c.Likes)               // Lajky u komentářů
+
+               // Načtení dat pro odpovědi na komentáře (druhá úroveň komentářů)
+               .Include(d => d.Comments)                    // Znovu komentáře (potřeba pro načtení replies)
+                   .ThenInclude(c => c.Replies)             // Odpovědi na komentáře
+                       .ThenInclude(r => r.User)            // Autoři odpovědí
+               .Include(d => d.Comments)                    // Znovu komentáře (potřeba pro další větev replies)
+                   .ThenInclude(c => c.Replies)             // Znovu odpovědi
+                       .ThenInclude(r => r.Likes)           // Lajky u odpovědí
+
+               // Filtrování diskuze podle oprávnění:
+               .FirstOrDefaultAsync(d => d.Id == discussionId &&   // Hledáme konkrétní diskuzi podle ID
+                   d.Type != DiscussionType.Deleted &&      // Nikdy nezobrazujeme smazané diskuze
+                   (d.Type != DiscussionType.Hidden ||      // Pro skryté diskuze kontrolujeme:
+                       isAdmin ||                           // - buď je uživatel admin (vidí vše)
+                       d.UserId == userId));                // - nebo je autorem této diskuze
+
+
+            if (discussion == null)
+                return NotFound();
+
+            // Filtrování komentářů podle viditelnosti
+            var filteredComments = discussion.Comments
+                .Where(c => c.Type != CommentType.Deleted && // Odstranění smazaných
+                    (c.Type != CommentType.Hidden ||         // Skryté zobrazit jen pro:
                         isAdmin ||                           // - adminy
-                        r.UserId == userId))                 // - autory odpovědi
+                        c.UserId == userId))                 // - autory komentáře
                 .ToList();
-        }
 
-        // Mapování na DTO s respektováním oprávnění
-        var result = new DiscussionDetailDto
-        {
-            Id = discussion.Id,
-            Title = discussion.Title,
-            Content = discussion.Content,
-            ImagePath = discussion.ImagePath,
-            CategoryName = discussion.Category.Name,
-            AuthorNickname = discussion.User.Nickname,
-            AuthorId = discussion.UserId,
-            CreatedAt = discussion.CreatedAt,
-            UpdatedAt = discussion.UpdatedAt,
-            ViewCount = discussion.ViewCount,
-            Type = discussion.Type,
-            // Konfigurace lajků
-            Likes = new LikeInfoDto
+            // Filtrování odpovědí na komentáře podle viditelnosti
+            foreach (var comment in filteredComments)
             {
-                LikeCount = discussion.Likes.Count,            // Celkový počet lajků
-                HasUserLiked = discussion.Likes                // Informace zda uživatel již lajkoval
-                    .Any(l => l.UserId == userId),
-                CanUserLike = isAdmin ||                       // Může lajkovat pokud:
-                    (!string.IsNullOrEmpty(userId) &&          // - je přihlášen
-                     discussion.UserId != userId &&            // - není autor
-                     !discussion.Likes                         // - ještě nelajkoval
-                        .Any(l => l.UserId == userId))
-            },
-            // Mapování komentářů - pouze root komentáře (bez rodičovského komentáře)
-            Comments = filteredComments
-                .Where(c => c.ParentCommentId == null)
-                .Select(c => MapCommentToDto(c, userId, isAdmin))
-                .ToList()
-        };
+                comment.Replies = comment.Replies
+                    .Where(r => r.Type != CommentType.Deleted && // Odstranění smazaných
+                        (r.Type != CommentType.Hidden ||         // Skryté zobrazit jen pro:
+                            isAdmin ||                           // - adminy
+                            r.UserId == userId))                 // - autory odpovědi
+                    .ToList();
+            }
 
-        return Ok(result);
+            // Mapování na DTO s respektováním oprávnění
+            var result = new DiscussionDetailDto
+            {
+                Id = discussion.Id,
+                Title = discussion.Title,
+                Content = discussion.Content,
+                ImagePath = discussion.ImagePath,
+                CategoryName = discussion.Category.Name,
+                AuthorNickname = discussion.User.Nickname,
+                AuthorId = discussion.UserId,
+                CreatedAt = discussion.CreatedAt,
+                UpdatedAt = discussion.UpdatedAt,
+                ViewCount = discussion.ViewCount,
+                Type = discussion.Type,
+                // Konfigurace lajků
+                Likes = new LikeInfoDto
+                {
+                    LikeCount = discussion.Likes.Count,            // Celkový počet lajků
+                    HasUserLiked = discussion.Likes                // Informace zda uživatel již lajkoval
+                        .Any(l => l.UserId == userId),
+                    CanUserLike = isAdmin ||                       // Může lajkovat pokud:
+                        (!string.IsNullOrEmpty(userId) &&          // - je přihlášen
+                         discussion.UserId != userId &&            // - není autor
+                         !discussion.Likes                         // - ještě nelajkoval
+                            .Any(l => l.UserId == userId))
+                },
+                // Mapování komentářů - pouze root komentáře (bez rodičovského komentáře)
+                Comments = filteredComments
+                    .Where(c => c.ParentCommentId == null)
+                    .Select(c => MapCommentToDto(c, userId, isAdmin))
+                    .ToList()
+            };
+
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetDiscussion endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -248,15 +270,23 @@ public class DiscussionsController : ControllerBase
     [HttpGet("byCode/{code}")]
     public async Task<ActionResult<DiscussionDetailDto>> GetDiscussionByCode(string code)
     {
-        var discussionId = await dbContext.Discussions
-                .Where(d => d.Code == code)
-                .Select(d => d.Id)
-                .FirstOrDefaultAsync();
+        try
+        {
+            var discussionId = await dbContext.Discussions
+                    .Where(d => d.Code == code)
+                    .Select(d => d.Id)
+                    .FirstOrDefaultAsync();
 
-        if (discussionId == 0)  // diskuze s daným kódem neexistuje
-            return NotFound();
+            if (discussionId == 0)  // diskuze s daným kódem neexistuje
+                return NotFound();
 
-        return await GetDiscussion(discussionId);
+            return await GetDiscussion(discussionId);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetDiscussionByCode endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -267,46 +297,54 @@ public class DiscussionsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<DiscussionDetailDto>> CreateDiscussion(CreateDiscussionDto model)
     {
-        // Ověříme, zda kategorie existuje
-        var category = await dbContext.Categories.FindAsync(model.CategoryId);
-        if (category == null)
-            return BadRequest("Zvolená kategorie neexistuje.");
-
-        // Získáme ID přihlášeného uživatele z tokenu
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
-
-        // Získáme detaily uživatele z databáze dle userId aktualně přihlášeného uživatele
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-            return Unauthorized();
-
-        // Sanitizace vstupů
-        var sanitizedTitle = _sanitizer.Sanitize(model.Title);
-        var sanitizedContent = _sanitizer.Sanitize(model.Content);
-
-        // Vygenerujeme URL-friendly kód
-        var baseCode = UrlHelper.GenerateUrlFriendlyCode(sanitizedTitle);
-        var suffix = UrlHelper.GenerateUniqueSuffix();
-        var code = $"{baseCode}-{suffix}";
-
-
-        var discussion = new Discussion
+        try
         {
-            CategoryId = model.CategoryId,
-            UserId = userId,
-            Title = model.Title,
-            Content = model.Content,
-            CreatedAt = DateTime.UtcNow,
-            Type = user.Type == UserType.Hidden ? DiscussionType.Hidden : model.Type,
-            Code = code
-        };
-        dbContext.Discussions.Add(discussion);
-        await dbContext.SaveChangesAsync();
+            // Ověříme, zda kategorie existuje
+            var category = await dbContext.Categories.FindAsync(model.CategoryId);
+            if (category == null)
+                return BadRequest("Zvolená kategorie neexistuje.");
 
-        // Vrátíme detail vytvořené diskuze
-        return CreatedAtAction(nameof(GetDiscussion), new { discussionId = discussion.Id }, null);
+            // Získáme ID přihlášeného uživatele z tokenu
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            // Získáme detaily uživatele z databáze dle userId aktualně přihlášeného uživatele
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Unauthorized();
+
+            // Sanitizace vstupů
+            var sanitizedTitle = _sanitizer.Sanitize(model.Title);
+            var sanitizedContent = _sanitizer.Sanitize(model.Content);
+
+            // Vygenerujeme URL-friendly kód
+            var baseCode = UrlHelper.GenerateUrlFriendlyCode(sanitizedTitle);
+            var suffix = UrlHelper.GenerateUniqueSuffix();
+            var code = $"{baseCode}-{suffix}";
+
+
+            var discussion = new Discussion
+            {
+                CategoryId = model.CategoryId,
+                UserId = userId,
+                Title = model.Title,
+                Content = model.Content,
+                CreatedAt = DateTime.UtcNow,
+                Type = user.Type == UserType.Hidden ? DiscussionType.Hidden : model.Type,
+                Code = code
+            };
+            dbContext.Discussions.Add(discussion);
+            await dbContext.SaveChangesAsync();
+
+            // Vrátíme detail vytvořené diskuze
+            return CreatedAtAction(nameof(GetDiscussion), new { discussionId = discussion.Id }, null);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce CreateDiscussion endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -317,29 +355,37 @@ public class DiscussionsController : ControllerBase
     [HttpPut("{discussionId}")]
     public async Task<IActionResult> UpdateDiscussion(int discussionId, UpdateDiscussionDto model)
     {
-        var discussion = await dbContext.Discussions.FindAsync(discussionId);
-        if (discussion == null)
-            return NotFound();
-
-        // Kontrola oprávnění - může editovat pouze autor nebo admin
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("Admin");
-
-        if (!isAdmin && discussion.UserId != userId)
-            return Forbid();
-
-        // Přidaná sanitizace
-        discussion.Title = _sanitizer.Sanitize(model.Title);
-        discussion.Content = _sanitizer.Sanitize(model.Content);
-        discussion.UpdatedAt = DateTime.UtcNow;
-        // Typ diskuze může měnit pouze admin
-        if (isAdmin)
+        try
         {
-            discussion.Type = model.Type;
-        }
+            var discussion = await dbContext.Discussions.FindAsync(discussionId);
+            if (discussion == null)
+                return NotFound();
 
-        await dbContext.SaveChangesAsync();
-        return NoContent();
+            // Kontrola oprávnění - může editovat pouze autor nebo admin
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            if (!isAdmin && discussion.UserId != userId)
+                return Forbid();
+
+            // Přidaná sanitizace
+            discussion.Title = _sanitizer.Sanitize(model.Title);
+            discussion.Content = _sanitizer.Sanitize(model.Content);
+            discussion.UpdatedAt = DateTime.UtcNow;
+            // Typ diskuze může měnit pouze admin
+            if (isAdmin)
+            {
+                discussion.Type = model.Type;
+            }
+
+            await dbContext.SaveChangesAsync();
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce UpdateDiscussion endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -350,23 +396,31 @@ public class DiscussionsController : ControllerBase
     [HttpPut("{discussionId}/toggle-top")]
     public async Task<IActionResult> ToggleDiscussionTop(int discussionId)
     {
-        var discussion = await dbContext.Discussions.FindAsync(discussionId);
-        if (discussion == null)
-            return NotFound();
+        try
+        {
+            var discussion = await dbContext.Discussions.FindAsync(discussionId);
+            if (discussion == null)
+                return NotFound();
 
-        // Přepnutí typu mezi Normal a Top je možné jen pro tyto dva stavy
-        if (discussion.Type != DiscussionType.Normal && discussion.Type != DiscussionType.Top)
-            return BadRequest("Nelze měnit TOP status pro tento typ diskuze.");
+            // Přepnutí typu mezi Normal a Top je možné jen pro tyto dva stavy
+            if (discussion.Type != DiscussionType.Normal && discussion.Type != DiscussionType.Top)
+                return BadRequest("Nelze měnit TOP status pro tento typ diskuze.");
 
-        // Přepnutí typu mezi Normal a Top
-        discussion.Type = discussion.Type == DiscussionType.Normal
-            ? DiscussionType.Top
-            : DiscussionType.Normal;
+            // Přepnutí typu mezi Normal a Top
+            discussion.Type = discussion.Type == DiscussionType.Normal
+                ? DiscussionType.Top
+                : DiscussionType.Normal;
 
-        discussion.UpdatedAt = DateTime.UtcNow;
-        await dbContext.SaveChangesAsync();
+            discussion.UpdatedAt = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync();
 
-        return Ok(new { type = discussion.Type });
+            return Ok(new { type = discussion.Type });
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce ToggleDiscussionTop endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -377,33 +431,41 @@ public class DiscussionsController : ControllerBase
     [HttpDelete("{discussionId}")]
     public async Task<IActionResult> DeleteDiscussion(int discussionId)
     {
-        var discussion = await dbContext.Discussions.FindAsync(discussionId);
-        if (discussion == null)
-            return NotFound();
-
-        // Kontrola oprávnění - může smazat jen admin nebo autor
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("Admin");
-        if (!isAdmin && discussion.UserId != userId)
-            return Forbid();
-
-        // Nastavíme diskuzi jako smazanou (typ Deleted)
-        discussion.Type = DiscussionType.Deleted;
-        discussion.UpdatedAt = DateTime.UtcNow;
-
-        // Smažeme i všechny její komentáře (nastavíme na typ Deleted)
-        var comments = await dbContext.Comments
-            .Where(c => c.DiscussionId == discussionId)
-            .ToListAsync();
-
-        foreach (var comment in comments)
+        try
         {
-            comment.Type = CommentType.Deleted;
-            comment.UpdatedAt = DateTime.UtcNow;
-        }
+            var discussion = await dbContext.Discussions.FindAsync(discussionId);
+            if (discussion == null)
+                return NotFound();
 
-        await dbContext.SaveChangesAsync();
-        return NoContent();
+            // Kontrola oprávnění - může smazat jen admin nebo autor
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+            if (!isAdmin && discussion.UserId != userId)
+                return Forbid();
+
+            // Nastavíme diskuzi jako smazanou (typ Deleted)
+            discussion.Type = DiscussionType.Deleted;
+            discussion.UpdatedAt = DateTime.UtcNow;
+
+            // Smažeme i všechny její komentáře (nastavíme na typ Deleted)
+            var comments = await dbContext.Comments
+                .Where(c => c.DiscussionId == discussionId)
+                .ToListAsync();
+
+            foreach (var comment in comments)
+            {
+                comment.Type = CommentType.Deleted;
+                comment.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await dbContext.SaveChangesAsync();
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce DeleteDiscussion endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -414,7 +476,15 @@ public class DiscussionsController : ControllerBase
     [HttpPost("{discussionId}/comments")]
     public async Task<ActionResult<CommentDto>> CreateComment(int discussionId, CreateCommentDto model)
     {
-        return await CreateCommentOrReply(discussionId, null, model);
+        try
+        {
+            return await CreateCommentOrReply(discussionId, null, model);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce CreateComment endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -425,7 +495,15 @@ public class DiscussionsController : ControllerBase
     [HttpPost("{discussionId}/comments/{commentId}/replies")]
     public async Task<ActionResult<CommentDto>> CreateReply(int discussionId, int commentId, CreateCommentDto model)
     {
-        return await CreateCommentOrReply(discussionId, commentId, model);
+        try
+        {
+            return await CreateCommentOrReply(discussionId, commentId, model);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce CreateReply endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -503,17 +581,25 @@ public class DiscussionsController : ControllerBase
     [HttpPut("{discussionId}/comments/{commentId}")]
     public async Task<IActionResult> UpdateComment(int discussionId, int commentId, UpdateCommentDto model)
     {
-        var comment = await dbContext.Comments
-            .FirstOrDefaultAsync(c => c.Id == commentId && c.DiscussionId == discussionId);
+        try
+        {
+            var comment = await dbContext.Comments
+                .FirstOrDefaultAsync(c => c.Id == commentId && c.DiscussionId == discussionId);
 
-        if (comment == null)
-            return NotFound();
+            if (comment == null)
+                return NotFound();
 
-        comment.Content = model.Content;
-        comment.UpdatedAt = DateTime.UtcNow;
+            comment.Content = model.Content;
+            comment.UpdatedAt = DateTime.UtcNow;
 
-        await dbContext.SaveChangesAsync();
-        return NoContent();
+            await dbContext.SaveChangesAsync();
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce UpdateComment endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -524,26 +610,34 @@ public class DiscussionsController : ControllerBase
     [HttpDelete("{discussionId}/comments/{commentId}")]
     public async Task<IActionResult> DeleteComment(int discussionId, int commentId)
     {
-        var comment = await dbContext.Comments
-            .Include(c => c.Replies)
-            .FirstOrDefaultAsync(c => c.Id == commentId && c.DiscussionId == discussionId);
-
-        if (comment == null)
-            return NotFound();
-
-        // Nastavíme komentář jako smazaný (typ Deleted)
-        comment.Type = CommentType.Deleted;
-        comment.UpdatedAt = DateTime.UtcNow;
-
-        // Nastavíme i všechny reakce na smazané
-        foreach (var reply in comment.Replies)
+        try
         {
-            reply.Type = CommentType.Deleted;
-            reply.UpdatedAt = DateTime.UtcNow;
-        }
+            var comment = await dbContext.Comments
+                .Include(c => c.Replies)
+                .FirstOrDefaultAsync(c => c.Id == commentId && c.DiscussionId == discussionId);
 
-        await dbContext.SaveChangesAsync();
-        return NoContent();
+            if (comment == null)
+                return NotFound();
+
+            // Nastavíme komentář jako smazaný (typ Deleted)
+            comment.Type = CommentType.Deleted;
+            comment.UpdatedAt = DateTime.UtcNow;
+
+            // Nastavíme i všechny reakce na smazané
+            foreach (var reply in comment.Replies)
+            {
+                reply.Type = CommentType.Deleted;
+                reply.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await dbContext.SaveChangesAsync();
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce DeleteComment endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -554,47 +648,55 @@ public class DiscussionsController : ControllerBase
     [HttpPost("{id}/like")]
     public async Task<ActionResult<LikeInfoDto>> AddDiscussionLike(int id)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("Admin");
-
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
-
-        // Najdeme diskuzi
-        var discussion = await dbContext.Discussions
-            .Include(d => d.Likes)
-            .FirstOrDefaultAsync(d => d.Id == id &&
-                d.Type != DiscussionType.Deleted &&
-                (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId));
-
-        if (discussion == null)
-            return NotFound();
-
-        // Kontrola, zda už uživatel nedal like (přeskočíme pro adminy)
-        if (!isAdmin && discussion.Likes.Any(l => l.UserId == userId))
-            return BadRequest("Uživatel už dal této diskuzi like.");
-
-        // Kontrola, zda uživatel nedává like své vlastní diskuzi
-        if (discussion.UserId == userId)
-            return BadRequest("Nelze dát like vlastní diskuzi.");
-
-        // Přidáme like
-        var like = new DiscussionLike
+        try
         {
-            DiscussionId = id,
-            UserId = userId
-        };
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
 
-        dbContext.DiscussionLikes.Add(like);
-        await dbContext.SaveChangesAsync();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
 
-        // Vrátíme aktuální stav liků
-        return Ok(new LikeInfoDto
+            // Najdeme diskuzi
+            var discussion = await dbContext.Discussions
+                .Include(d => d.Likes)
+                .FirstOrDefaultAsync(d => d.Id == id &&
+                    d.Type != DiscussionType.Deleted &&
+                    (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId));
+
+            if (discussion == null)
+                return NotFound();
+
+            // Kontrola, zda už uživatel nedal like (přeskočíme pro adminy)
+            if (!isAdmin && discussion.Likes.Any(l => l.UserId == userId))
+                return BadRequest("Uživatel už dal této diskuzi like.");
+
+            // Kontrola, zda uživatel nedává like své vlastní diskuzi
+            if (discussion.UserId == userId)
+                return BadRequest("Nelze dát like vlastní diskuzi.");
+
+            // Přidáme like
+            var like = new DiscussionLike
+            {
+                DiscussionId = id,
+                UserId = userId
+            };
+
+            dbContext.DiscussionLikes.Add(like);
+            await dbContext.SaveChangesAsync();
+
+            // Vrátíme aktuální stav liků
+            return Ok(new LikeInfoDto
+            {
+                LikeCount = discussion.Likes.Count,
+                HasUserLiked = true,
+                CanUserLike = isAdmin  // Admin může dávat další liky
+            });
+        }
+        catch (Exception e)
         {
-            LikeCount = discussion.Likes.Count,
-            HasUserLiked = true,
-            CanUserLike = isAdmin  // Admin může dávat další liky
-        });
+            _logger.Log("Chyba při vykonávání akce AddDiscussionLike endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -605,48 +707,56 @@ public class DiscussionsController : ControllerBase
     [HttpPost("{discussionId}/comments/{commentId}/like")]
     public async Task<ActionResult<LikeInfoDto>> AddCommentLike(int discussionId, int commentId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var isAdmin = User.IsInRole("Admin");
-
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
-
-        // Najdeme komentář
-        var comment = await dbContext.Comments
-            .Include(c => c.Likes)
-            .FirstOrDefaultAsync(c => c.Id == commentId &&
-                c.DiscussionId == discussionId &&
-                c.Type != CommentType.Deleted &&
-                (c.Type != CommentType.Hidden || isAdmin || c.UserId == userId));
-
-        if (comment == null)
-            return NotFound();
-
-        // Kontrola, zda už uživatel nedal like (přeskočíme pro adminy)
-        if (!isAdmin && comment.Likes.Any(l => l.UserId == userId))
-            return BadRequest("Uživatel už dal tomuto komentáři like.");
-
-        // Kontrola, zda uživatel nedává like svému vlastnímu komentáři (přeskočit pro adminy)
-        if (!isAdmin && comment.UserId == userId)
-            return BadRequest("Nelze dát like vlastnímu komentáři.");
-
-        // Přidáme like
-        var like = new CommentLike
+        try
         {
-            CommentId = commentId,
-            UserId = userId
-        };
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
 
-        dbContext.CommentLikes.Add(like);
-        await dbContext.SaveChangesAsync();
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
 
-        // Vrátíme aktuální stav liků
-        return Ok(new LikeInfoDto
+            // Najdeme komentář
+            var comment = await dbContext.Comments
+                .Include(c => c.Likes)
+                .FirstOrDefaultAsync(c => c.Id == commentId &&
+                    c.DiscussionId == discussionId &&
+                    c.Type != CommentType.Deleted &&
+                    (c.Type != CommentType.Hidden || isAdmin || c.UserId == userId));
+
+            if (comment == null)
+                return NotFound();
+
+            // Kontrola, zda už uživatel nedal like (přeskočíme pro adminy)
+            if (!isAdmin && comment.Likes.Any(l => l.UserId == userId))
+                return BadRequest("Uživatel už dal tomuto komentáři like.");
+
+            // Kontrola, zda uživatel nedává like svému vlastnímu komentáři (přeskočit pro adminy)
+            if (!isAdmin && comment.UserId == userId)
+                return BadRequest("Nelze dát like vlastnímu komentáři.");
+
+            // Přidáme like
+            var like = new CommentLike
+            {
+                CommentId = commentId,
+                UserId = userId
+            };
+
+            dbContext.CommentLikes.Add(like);
+            await dbContext.SaveChangesAsync();
+
+            // Vrátíme aktuální stav liků
+            return Ok(new LikeInfoDto
+            {
+                LikeCount = comment.Likes.Count,
+                HasUserLiked = true,
+                CanUserLike = isAdmin  // Admin může dávat další liky
+            });
+        }
+        catch (Exception e)
         {
-            LikeCount = comment.Likes.Count,
-            HasUserLiked = true,
-            CanUserLike = isAdmin  // Admin může dávat další liky
-        });
+            _logger.Log("Chyba při vykonávání akce AddCommentLike endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -750,19 +860,27 @@ public class DiscussionsController : ControllerBase
     [HttpPut("{discussionId}/toggle-visibility")]
     public async Task<IActionResult> ToggleDiscussionVisibility(int discussionId)
     {
-        var discussion = await dbContext.Discussions.FindAsync(discussionId);
-        if (discussion == null)
-            return NotFound();
+        try
+        {
+            var discussion = await dbContext.Discussions.FindAsync(discussionId);
+            if (discussion == null)
+                return NotFound();
 
-        // Přepnutí typu mezi Normal a Hidden
-        discussion.Type = discussion.Type == DiscussionType.Normal
-            ? DiscussionType.Hidden
-            : DiscussionType.Normal;
+            // Přepnutí typu mezi Normal a Hidden
+            discussion.Type = discussion.Type == DiscussionType.Normal
+                ? DiscussionType.Hidden
+                : DiscussionType.Normal;
 
-        discussion.UpdatedAt = DateTime.UtcNow;
-        await dbContext.SaveChangesAsync();
+            discussion.UpdatedAt = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync();
 
-        return Ok(new { type = discussion.Type });
+            return Ok(new { type = discussion.Type });
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce ToggleDiscussionVisibility endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -773,21 +891,29 @@ public class DiscussionsController : ControllerBase
     [HttpPut("{discussionId}/comments/{commentId}/toggle-visibility")]
     public async Task<IActionResult> ToggleCommentVisibility(int discussionId, int commentId)
     {
-        var comment = await dbContext.Comments
-            .FirstOrDefaultAsync(c => c.Id == commentId && c.DiscussionId == discussionId);
+        try
+        {
+            var comment = await dbContext.Comments
+                .FirstOrDefaultAsync(c => c.Id == commentId && c.DiscussionId == discussionId);
 
-        if (comment == null)
-            return NotFound();
+            if (comment == null)
+                return NotFound();
 
-        // Přepnutí typu mezi Normal a Hidden
-        comment.Type = comment.Type == CommentType.Normal
-            ? CommentType.Hidden
-            : CommentType.Normal;
+            // Přepnutí typu mezi Normal a Hidden
+            comment.Type = comment.Type == CommentType.Normal
+                ? CommentType.Hidden
+                : CommentType.Normal;
 
-        comment.UpdatedAt = DateTime.UtcNow;
-        await dbContext.SaveChangesAsync();
+            comment.UpdatedAt = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync();
 
-        return Ok(new { type = comment.Type });
+            return Ok(new { type = comment.Type });
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce ToggleCommentVisibility endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 
     /// <summary>
@@ -803,19 +929,27 @@ public class DiscussionsController : ControllerBase
     [HttpPost("{discussionId}/increment-view-count")]
     public async Task<IActionResult> IncrementViewCount(int discussionId)
     {
-        // ExecuteUpdateAsync provede atomickou aktualizaci přímo v databázi
-        // Vrací počet aktualizovaných řádků (0 pokud diskuze neexistuje, 1 pokud byla aktualizována)
-        var updated = await dbContext.Discussions
-            .Where(d => d.Id == discussionId)     // Najde diskuzi podle ID
-            .ExecuteUpdateAsync(s => s.SetProperty(
-                d => d.ViewCount,                  // Vlastnost kterou aktualizujeme
-                d => d.ViewCount + 1               // Nová hodnota = současná hodnota + 1
-            ));
+        try
+        {
+            // ExecuteUpdateAsync provede atomickou aktualizaci přímo v databázi
+            // Vrací počet aktualizovaných řádků (0 pokud diskuze neexistuje, 1 pokud byla aktualizována)
+            var updated = await dbContext.Discussions
+                .Where(d => d.Id == discussionId)     // Najde diskuzi podle ID
+                .ExecuteUpdateAsync(s => s.SetProperty(
+                    d => d.ViewCount,                  // Vlastnost kterou aktualizujeme
+                    d => d.ViewCount + 1               // Nová hodnota = současná hodnota + 1
+                ));
 
-        // Pokud nebyl aktualizován žádný řádek, diskuze neexistuje
-        if (updated == 0)
-            return NotFound();
+            // Pokud nebyl aktualizován žádný řádek, diskuze neexistuje
+            if (updated == 0)
+                return NotFound();
 
-        return Ok();
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce IncrementViewCount endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
 }
