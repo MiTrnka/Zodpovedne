@@ -491,6 +491,8 @@ public class UsersController : ControllerBase
             }
             if (result.Succeeded)
             {
+                // Uložení předchozího posledního přihlášení
+                user.PreviousLastLogin = user.LastLogin;
                 // Aktualizace posledního přihlášení a rovnou uložení do databáze (SaveChanges)
                 user.LastLogin = DateTime.UtcNow;
                 await this.userManager.UpdateAsync(user);

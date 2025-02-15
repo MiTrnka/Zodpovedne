@@ -13,5 +13,6 @@ public class ApplicationUser : IdentityUser
     public string Nickname { get; set; } = "";
     public DateTime Created { get; set; } = DateTime.UtcNow;
     public DateTime? LastLogin { get; set; }
+    public DateTime? PreviousLastLogin { get; set; }
     public UserType Type { get; set; } = UserType.Normal;
 }
