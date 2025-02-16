@@ -133,6 +133,7 @@ public class DiscussionsController : ControllerBase
                     Id = d.Id,
                     Title = d.Title,
                     CategoryName = d.Category.Name,
+                    CategoryCode = d.Category.Code,
                     AuthorNickname = d.User.Nickname,
                     CreatedAt = d.CreatedAt,
                     // Počítání relevantních komentářů s respektováním viditelnosti

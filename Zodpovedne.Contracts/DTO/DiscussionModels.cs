@@ -47,6 +47,7 @@ public class DiscussionListDto
     public int Id { get; set; }
     public string Title { get; set; } = "";
     public string CategoryName { get; set; } = "";
+    public string CategoryCode { get; set; } = "";
     public string AuthorNickname { get; set; } = "";
     public DateTime CreatedAt { get; set; }
     public int CommentsCount { get; set; }

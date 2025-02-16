@@ -1,4 +1,4 @@
-﻿@* 
+﻿@*
     Partial View pro zobrazení jedné diskuze v seznamu.
     Používá se jak pro počáteční vykreslení seznamu diskuzí, tak pro dynamicky načtené diskuze.
 
@@ -6,10 +6,6 @@
     ViewData: Očekává "CategoryCode" pro správné vytvoření URL
 *@
 @model Zodpovedne.Contracts.DTO.DiscussionListDto
-@{
-    // Získání kódu kategorie z ViewData - potřebný pro vytvoření URL
-    var categoryCode = (string)ViewData["CategoryCode"];
-}
 
 <div class="col-12 mb-3">
     <div class="card">
@@ -21,7 +17,7 @@
                     <span class="badge bg-primary me-2">TOP</span>
                 }
                 @* Odkaz na detail diskuze *@
-                <a href="/categories/@categoryCode/@Model.Code" class="text-decoration-none">@Model.Title</a>
+                <a href="/categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none">@Model.Title</a>
             </h5>
             @* Metadata diskuze *@
             <div class="card-text small text-muted">

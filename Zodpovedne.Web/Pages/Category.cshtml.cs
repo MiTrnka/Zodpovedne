@@ -72,6 +72,7 @@ public class CategoryModel : BasePageModel
 
         // Uložení základních informací o kategorii
         CategoryName = category.Name;
+        CategoryCode = category.Code;
         CategoryDescription = category.Description;
         CategoryId = category.Id;
 
