@@ -1,33 +1,54 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Headers;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Extensions;
-using Zodpovedne.Web.Filters;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages;
 
 /// <summary>
-/// Model pro stránku zobrazující detail konkrétní kategorie vèetnì seznamu jejích diskuzí
+/// Model pro stránku zobrazující detail konkrétní kategorie vèetnì seznamu jejích diskuzí.
+/// Podporuje stránkované naèítání diskuzí - první stránka se naète pøi naètení stránky,
+/// další stránky se naèítají pomocí AJAX požadavkù.
 /// </summary>
+[IgnoreAntiforgeryToken]
 public class CategoryModel : BasePageModel
 {
-    public CategoryModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+    public CategoryModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger)
+        : base(clientFactory, configuration, logger)
     {
     }
 
-    [BindProperty(SupportsGet = true)]
-    public int CategoryId { get; private set; }
-
+    /// <summary>
+    /// Kód kategorie získaný z URL
+    /// </summary>
     [BindProperty(SupportsGet = true)]
     public string CategoryCode { get; set; } = "";
 
+    /// <summary>
+    /// Název kategorie pro zobrazení
+    /// </summary>
     public string CategoryName { get; set; } = "";
-    public string CategoryDescription { get; set; } = "";
-    public List<DiscussionListDto> Discussions { get; set; } = new();
 
+    /// <summary>
+    /// Popis kategorie pro zobrazení
+    /// </summary>
+    public string CategoryDescription { get; set; } = "";
+
+    /// <summary>
+    /// ID kategorie z databáze - používá se pro API volání
+    /// </summary>
+    public int CategoryId { get; private set; }
+
+    /// <summary>
+    /// Seznam diskuzí v aktuální kategorii
+    /// </summary>
+    public List<DiscussionListDto> Discussions { get; private set; } = new();
+
+    /// <summary>
+    /// Handler pro GET požadavek - naète detail kategorie a první stránku diskuzí
+    /// </summary>
     public async Task<IActionResult> OnGetAsync()
     {
         var client = _clientFactory.CreateBearerClient(HttpContext);
@@ -49,11 +70,12 @@ public class CategoryModel : BasePageModel
             return Page();
         }
 
+        // Uložení základních informací o kategorii
         CategoryName = category.Name;
         CategoryDescription = category.Description;
         CategoryId = category.Id;
 
-        // Naètení seznamu diskuzí s podporou stránkování
+        // Naètení první stránky diskuzí
         var discussionsResponse = await client.GetAsync(
             $"{ApiBaseUrl}/discussions?categoryId={CategoryId}&page={CurrentPage}&pageSize={PageSize}");
 
@@ -72,6 +94,7 @@ public class CategoryModel : BasePageModel
             return Page();
         }
 
+        // Uložení seznamu diskuzí a informace o další stránce
         Discussions = result.Items;
         HasNextPage = result.HasNextPage;
 
@@ -79,15 +102,19 @@ public class CategoryModel : BasePageModel
     }
 
     /// <summary>
-    /// Handler pro naètení další stránky diskuzí
+    /// Handler pro AJAX požadavek na naètení další stránky diskuzí
     /// </summary>
+    /// <param name="categoryId">ID kategorie</param>
+    /// <param name="currentPage">Aktuální èíslo stránky</param>
     public async Task<IActionResult> OnGetNextPageAsync(int categoryId, int currentPage)
     {
         try
         {
+            // Výpoèet èísla následující stránky
             var nextPage = currentPage + 1;
             _logger.Log($"Naèítání další stránky. CategoryId: {categoryId}, NextPage: {nextPage}");
 
+            // Naètení další stránky diskuzí z API
             var client = _clientFactory.CreateBearerClient(HttpContext);
             var response = await client.GetAsync(
                 $"{ApiBaseUrl}/discussions?categoryId={categoryId}&page={nextPage}&pageSize={PageSize}");
@@ -105,12 +132,13 @@ public class CategoryModel : BasePageModel
                 return BadRequest("Nepodaøilo se naèíst další diskuze.");
             }
 
+            // Vrácení dat pro JavaScript
             return new JsonResult(new
             {
                 discussions = result.Items,
                 hasNextPage = result.HasNextPage,
                 currentPage = nextPage,
-                categoryCode = CategoryCode  // Pøidáme categoryCode do response
+                categoryCode = CategoryCode
             });
         }
         catch (Exception ex)
@@ -118,5 +146,16 @@ public class CategoryModel : BasePageModel
             _logger.Log("Chyba pøi naèítání další stránky diskuzí", ex);
             return BadRequest("Došlo k chybì pøi naèítání diskuzí.");
         }
+    }
+
+    /// <summary>
+    /// Handler pro AJAX požadavek na vykreslení partial view pro jednu diskuzi
+    /// </summary>
+    /// <param name="discussion">Data diskuze</param>
+    /// <param name="categoryCode">Kód kategorie pro vytvoøení URL</param>
+    public async Task<IActionResult> OnPostDiscussionPartialAsync([FromBody] DiscussionListDto discussion, string categoryCode)
+    {
+        ViewData["CategoryCode"] = categoryCode;
+        return Partial("_DiscussionItem", discussion);
     }
 }

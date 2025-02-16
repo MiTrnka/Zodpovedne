@@ -1,10 +1,9 @@
-﻿@* Category.cshtml *@
-@page "/categories/{categoryCode}"
+﻿@page "/categories/{categoryCode}"
 @model CategoryModel
 @{
     ViewData["Title"] = Model.CategoryName;
 
-    //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
+    // Kontrola chybových stavů
     if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-warning">
@@ -12,7 +11,6 @@
         </div>
         return;
     }
-    //Pokud je jakýkoliv text v StatusMessage, tak se zobrazí úplně nahoře a pokračuje se ve vykreslování stránky
     if (!string.IsNullOrEmpty(Model.StatusMessage))
     {
         <div class="alert alert-info">
@@ -21,10 +19,8 @@
     }
 }
 
-<input type="hidden" id="category-id" value="@Model.CategoryId" />
-<input type="hidden" id="current-page" value="@Model.CurrentPage" />
-
 <div class="container">
+    @* Záhlaví kategorie *@
     <div class="row mb-4">
         <div class="col">
             <h1>@Model.CategoryName</h1>
@@ -35,45 +31,21 @@
         </div>
     </div>
 
+    @* Seznam diskuzí *@
     <div id="discussions-container">
         @if (Model.Discussions.Any())
         {
+            @* Kontejner pro seznam diskuzí - do něj se budou přidávat nové diskuze *@
             <div class="row" id="discussions-list">
-                @foreach (var discussion in Model.Discussions.OrderByDescending(d => d.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top).ThenByDescending(d => d.CreatedAt))
+                @foreach (var discussion in Model.Discussions.OrderByDescending(d => d.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
+               .ThenByDescending(d => d.CreatedAt))
                 {
-                    <div class="col-12 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    @if (discussion.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
-                                    {
-                                        <span class="badge bg-primary me-2">TOP</span>
-                                    }
-                                    <a href="/categories/@Model.CategoryCode/@discussion.Code" class="text-decoration-none">@discussion.Title</a>
-                                </h5>
-                                <div class="card-text small text-muted">
-                                    <span title="Autor">
-                                        <i class="bi bi-person"></i> @discussion.AuthorNickname
-                                    </span>
-                                    <span class="mx-2">•</span>
-                                    <span title="Datum vytvoření">
-                                        <i class="bi bi-calendar"></i> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
-                                    </span>
-                                    <span class="mx-2">•</span>
-                                    <span title="Počet komentářů">
-                                        <i class="bi bi-chat"></i> @discussion.CommentsCount
-                                    </span>
-                                    <span class="mx-2">•</span>
-                                    <span title="Počet zobrazení">
-                                        <i class="bi bi-eye"></i> @discussion.ViewCount
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    ViewData["CategoryCode"] = Model.CategoryCode;
+                    await Html.RenderPartialAsync("_DiscussionItem", discussion);
                 }
             </div>
 
+            @* Ovládací prvky pro načítání dalších diskuzí *@
             @if (Model.HasNextPage)
             {
                 <div id="loading-container" class="text-center mb-4">
@@ -100,6 +72,7 @@
         }
     </div>
 
+    @* Tlačítko pro vytvoření nové diskuze (pouze pro přihlášené uživatele) *@
     @if (HttpContext.Session.GetString("JWTToken") != null)
     {
         <div class="row mt-4">
@@ -112,10 +85,16 @@
     }
 </div>
 
+@* Skryté inputy pro JavaScript *@
+<input type="hidden" id="category-id" value="@Model.CategoryId" />
+<input type="hidden" id="current-page" value="@Model.CurrentPage" />
+
 @section Scripts {
+    @* Bootstrap ikony *@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <script>
+        // Inicializace při načtení stránky
         document.addEventListener('DOMContentLoaded', function () {
             const loadMoreBtn = document.getElementById('load-more');
             if (loadMoreBtn) {
@@ -123,6 +102,9 @@
             }
         });
 
+        /**
+         * Načte další stránku diskuzí pomocí AJAX a přidá je do seznamu
+         */
         async function loadMoreDiscussions() {
             const loadMoreBtn = document.getElementById('load-more');
             const loadingSpinner = document.getElementById('loading-spinner');
@@ -131,9 +113,11 @@
             const categoryId = document.getElementById('category-id').value;
 
             try {
+                // Zobrazení loading stavu
                 loadMoreBtn.classList.add('d-none');
                 loadingSpinner.classList.remove('d-none');
 
+                // Načtení dat další stránky
                 const response = await fetch(`?handler=NextPage&categoryId=${categoryId}&currentPage=${currentPage}`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -144,16 +128,27 @@
 
                 const data = await response.json();
 
-                    // Přidání nových diskuzí - předáváme categoryCode do createDiscussionElement
-                data.discussions.forEach(discussion => {
-                    const discussionHtml = createDiscussionElement(discussion, data.categoryCode);
-                    container.insertAdjacentHTML('beforeend', discussionHtml);
-                });
+                // Načtení HTML pro každou diskuzi pomocí Partial View
+                for (const discussion of data.discussions) {
+                    const htmlResponse = await fetch(`?handler=DiscussionPartial&categoryCode=${data.categoryCode}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(discussion)
+                    });
 
-                // Aktualizace čísla stránky
+                    if (htmlResponse.ok) {
+                        const html = await htmlResponse.text();
+                        container.insertAdjacentHTML('beforeend', html);
+                    }
+                }
+
+                // Aktualizace stavu stránkování
                 document.getElementById('current-page').value = data.currentPage;
 
-                // Pokud existují další stránky, zobrazíme tlačítko
+                // Zobrazení/skrytí tlačítka pro načtení dalších diskuzí
                 if (data.hasNextPage) {
                     loadMoreBtn.classList.remove('d-none');
                 } else {
@@ -165,37 +160,6 @@
             } finally {
                 loadingSpinner.classList.add('d-none');
             }
-        }
-        function createDiscussionElement(discussion, categoryCode) {
-            return `
-                <div class="col-12 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                ${discussion.type === 1 ? '<span class="badge bg-primary me-2">TOP</span>' : ''}
-                                <a href="/categories/${categoryCode}/${discussion.code}" class="text-decoration-none">${discussion.title}</a>
-                            </h5>
-                            <div class="card-text small text-muted">
-                                <span title="Autor">
-                                    <i class="bi bi-person"></i> ${discussion.authorNickname}
-                                </span>
-                                <span class="mx-2">•</span>
-                                <span title="Datum vytvoření">
-                                    <i class="bi bi-calendar"></i> ${new Date(discussion.createdAt).toLocaleString('cs-CZ')}
-                                </span>
-                                <span class="mx-2">•</span>
-                                <span title="Počet komentářů">
-                                    <i class="bi bi-chat"></i> ${discussion.commentsCount}
-                                </span>
-                                <span class="mx-2">•</span>
-                                <span title="Počet zobrazení">
-                                    <i class="bi bi-eye"></i> ${discussion.viewCount}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
         }
     </script>
 }
