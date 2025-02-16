@@ -253,6 +253,7 @@ public class DiscussionsController : ControllerBase
                 Content = discussion.Content,
                 ImagePath = discussion.ImagePath,
                 CategoryName = discussion.Category.Name,
+                CategoryCode = discussion.Category.Code,
                 AuthorNickname = discussion.User.Nickname,
                 AuthorId = discussion.UserId,
                 CreatedAt = discussion.CreatedAt,

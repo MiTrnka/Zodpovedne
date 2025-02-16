@@ -40,7 +40,6 @@
                 @foreach (var discussion in Model.Discussions.OrderByDescending(d => d.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
                .ThenByDescending(d => d.CreatedAt))
                 {
-                    ViewData["CategoryCode"] = Model.CategoryCode;
                     await Html.RenderPartialAsync("_DiscussionItem", discussion);
                 }
             </div>
