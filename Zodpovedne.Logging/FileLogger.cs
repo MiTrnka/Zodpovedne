@@ -30,7 +30,7 @@ public class FileLogger
         [CallerFilePath] string file = "",
         [CallerLineNumber] int line = 0)
     {
-        var logMessage = $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss.fff}\n[{Path.GetFileName(file)}::{caller}::{line}]\n{message}";
+        var logMessage = $"{DateTime.UtcNow.ToLocalTime():yyyy-MM-dd HH:mm:ss.fff}\n[{Path.GetFileName(file)}::{caller}::{line}]\n{message}";
 
         if (exception != null)
         {

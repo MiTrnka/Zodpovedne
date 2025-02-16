@@ -21,6 +21,9 @@
     }
 }
 
+<input type="hidden" id="category-id" value="@Model.CategoryId" />
+<input type="hidden" id="current-page" value="@Model.CurrentPage" />
+
 <div class="container">
     <div class="row mb-4">
         <div class="col">
@@ -32,54 +35,70 @@
         </div>
     </div>
 
-    @if (Model.Discussions.Any())
-    {
-        <div class="row">
-            @foreach (var discussion in Model.Discussions.OrderByDescending(d => d.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top).ThenByDescending(d => d.CreatedAt))
-            {
-                <div class="col-12 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                @if (discussion.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
-                                {
-                                    <span class="badge bg-primary me-2">TOP</span>
-                                }
-                                <a href="/categories/@Model.CategoryCode/@discussion.Code" class="text-decoration-none">@discussion.Title</a>
-                            </h5>
-                            <div class="card-text small text-muted">
-                                <span title="Autor">
-                                    <i class="bi bi-person"></i> @discussion.AuthorNickname
-                                </span>
-                                <span class="mx-2">•</span>
-                                <span title="Datum vytvoření">
-                                    <i class="bi bi-calendar"></i> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
-                                </span>
-                                <span class="mx-2">•</span>
-                                <span title="Počet komentářů">
-                                    <i class="bi bi-chat"></i> @discussion.CommentsCount
-                                </span>
-                                <span class="mx-2">•</span>
-                                <span title="Počet zobrazení">
-                                    <i class="bi bi-eye"></i> @discussion.ViewCount
-                                </span>
+    <div id="discussions-container">
+        @if (Model.Discussions.Any())
+        {
+            <div class="row" id="discussions-list">
+                @foreach (var discussion in Model.Discussions.OrderByDescending(d => d.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top).ThenByDescending(d => d.CreatedAt))
+                {
+                    <div class="col-12 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    @if (discussion.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
+                                    {
+                                        <span class="badge bg-primary me-2">TOP</span>
+                                    }
+                                    <a href="/categories/@Model.CategoryCode/@discussion.Code" class="text-decoration-none">@discussion.Title</a>
+                                </h5>
+                                <div class="card-text small text-muted">
+                                    <span title="Autor">
+                                        <i class="bi bi-person"></i> @discussion.AuthorNickname
+                                    </span>
+                                    <span class="mx-2">•</span>
+                                    <span title="Datum vytvoření">
+                                        <i class="bi bi-calendar"></i> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                    </span>
+                                    <span class="mx-2">•</span>
+                                    <span title="Počet komentářů">
+                                        <i class="bi bi-chat"></i> @discussion.CommentsCount
+                                    </span>
+                                    <span class="mx-2">•</span>
+                                    <span title="Počet zobrazení">
+                                        <i class="bi bi-eye"></i> @discussion.ViewCount
+                                    </span>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (Model.HasNextPage)
+            {
+                <div id="loading-container" class="text-center mb-4">
+                    <button id="load-more" class="btn btn-primary">
+                        Načíst další diskuze
+                    </button>
+                    <div id="loading-spinner" class="d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Načítání...</span>
                         </div>
                     </div>
                 </div>
             }
-        </div>
-    }
-    else
-    {
-        <div class="row">
-            <div class="col">
-                <div class="alert alert-info">
-                    V této kategorii zatím nejsou žádné diskuze.
+        }
+        else
+        {
+            <div class="row">
+                <div class="col">
+                    <div class="alert alert-info">
+                        V této kategorii zatím nejsou žádné diskuze.
+                    </div>
                 </div>
             </div>
-        </div>
-    }
+        }
+    </div>
 
     @if (HttpContext.Session.GetString("JWTToken") != null)
     {
@@ -95,4 +114,88 @@
 
 @section Scripts {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loadMoreBtn = document.getElementById('load-more');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', loadMoreDiscussions);
+            }
+        });
+
+        async function loadMoreDiscussions() {
+            const loadMoreBtn = document.getElementById('load-more');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const container = document.getElementById('discussions-list');
+            const currentPage = parseInt(document.getElementById('current-page').value);
+            const categoryId = document.getElementById('category-id').value;
+
+            try {
+                loadMoreBtn.classList.add('d-none');
+                loadingSpinner.classList.remove('d-none');
+
+                const response = await fetch(`?handler=NextPage&categoryId=${categoryId}&currentPage=${currentPage}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Načítání selhalo');
+
+                const data = await response.json();
+
+                    // Přidání nových diskuzí - předáváme categoryCode do createDiscussionElement
+                data.discussions.forEach(discussion => {
+                    const discussionHtml = createDiscussionElement(discussion, data.categoryCode);
+                    container.insertAdjacentHTML('beforeend', discussionHtml);
+                });
+
+                // Aktualizace čísla stránky
+                document.getElementById('current-page').value = data.currentPage;
+
+                // Pokud existují další stránky, zobrazíme tlačítko
+                if (data.hasNextPage) {
+                    loadMoreBtn.classList.remove('d-none');
+                } else {
+                    document.getElementById('loading-container').remove();
+                }
+            } catch (error) {
+                console.error('Chyba při načítání:', error);
+                loadMoreBtn.classList.remove('d-none');
+            } finally {
+                loadingSpinner.classList.add('d-none');
+            }
+        }
+        function createDiscussionElement(discussion, categoryCode) {
+            return `
+                <div class="col-12 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                ${discussion.type === 1 ? '<span class="badge bg-primary me-2">TOP</span>' : ''}
+                                <a href="/categories/${categoryCode}/${discussion.code}" class="text-decoration-none">${discussion.title}</a>
+                            </h5>
+                            <div class="card-text small text-muted">
+                                <span title="Autor">
+                                    <i class="bi bi-person"></i> ${discussion.authorNickname}
+                                </span>
+                                <span class="mx-2">•</span>
+                                <span title="Datum vytvoření">
+                                    <i class="bi bi-calendar"></i> ${new Date(discussion.createdAt).toLocaleString('cs-CZ')}
+                                </span>
+                                <span class="mx-2">•</span>
+                                <span title="Počet komentářů">
+                                    <i class="bi bi-chat"></i> ${discussion.commentsCount}
+                                </span>
+                                <span class="mx-2">•</span>
+                                <span title="Počet zobrazení">
+                                    <i class="bi bi-eye"></i> ${discussion.viewCount}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
 }

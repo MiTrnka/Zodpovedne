@@ -78,9 +78,24 @@ public class UserListDto
 
 public class PagedResultDto<T>
 {
+    // Seznam položek na aktuální stránce
     public List<T> Items { get; set; } = new();
+
+    // Celkový počet všech položek (napříč všemi stránkami)
     public int TotalCount { get; set; }
+
+    // Velikost stránky (kolik položek se načítá najednou)
     public int PageSize { get; set; }
+
+    // Aktuální stránka (číslováno od 1)
     public int CurrentPage { get; set; }
+
+    // Celkový počet stránek
     public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+
+    // Indikátor, zda existují další stránky
+    public bool HasNextPage => CurrentPage < TotalPages;
+
+    // Indikátor, zda je toto první stránka
+    public bool IsFirstPage => CurrentPage == 1;
 }

@@ -73,17 +73,27 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Načte seznam všech dostupných diskuzí s možností filtrování podle kategorie.
+    /// Načte seznam dostupných diskuzí s možností filtrování podle kategorie a stránkování.
     /// Poskytuje základní informace o diskuzích včetně počtu komentářů a lajků.
     /// Respektuje viditelnost obsahu podle typu uživatele.
     /// </summary>
     /// <param name="categoryId">Volitelný parametr pro filtrování podle kategorie</param>
-    /// <returns>Seznam diskuzí dle oprávnění přihlášeného uživatele</returns>
+    /// <param name="pageSize">Počet diskuzí na stránku (výchozí hodnota 10)</param>
+    /// <param name="page">Číslo stránky (číslováno od 1)</param>
+    /// <returns>Stránkovaný seznam diskuzí dle oprávnění přihlášeného uživatele</returns>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<DiscussionListDto>>> GetDiscussions(int? categoryId = null)
+    public async Task<ActionResult<PagedResultDto<DiscussionListDto>>> GetDiscussions(
+        int? categoryId = null,
+        int pageSize = 10,
+        int page = 1)
     {
         try
         {
+            // Validace vstupních parametrů
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 50) pageSize = 50; // Omezení maximální velikosti stránky
+
             // Identifikace uživatele pro správné filtrování obsahu
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
@@ -106,12 +116,18 @@ public class DiscussionsController : ControllerBase
                 query = query.Where(d => d.CategoryId == categoryId.Value);
             }
 
-            // Načtení dat s aplikovaným řazením a projekcí do DTO
+            // Získání celkového počtu položek pro stránkování
+            var totalCount = await query.CountAsync();
+
+            // Aplikace stránkování a načtení dat s projekcí do DTO
             var discussions = await query
-                // Řazení:
+                // Řazení
                 .OrderByDescending(d => d.Type == DiscussionType.Top)  // 1. TOP diskuze
                 .ThenByDescending(d => d.CreatedAt)                    // 2. Nejnovější první
-                                                                       // Mapování na DTO přímo v databázovém dotazu
+                                                                       // Stránkování
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                // Mapování na DTO přímo v databázovém dotazu
                 .Select(d => new DiscussionListDto
                 {
                     Id = d.Id,
@@ -143,7 +159,16 @@ public class DiscussionsController : ControllerBase
                 })
                 .ToListAsync();
 
-            return Ok(discussions);
+            // Vytvoření odpovědi se stránkováním
+            var result = new PagedResultDto<DiscussionListDto>
+            {
+                Items = discussions,
+                TotalCount = totalCount,
+                PageSize = pageSize,
+                CurrentPage = page
+            };
+
+            return Ok(result);
         }
         catch (Exception e)
         {

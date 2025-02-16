@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 using Zodpovedne.Logging;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Zodpovedne.Web.Models.Base;
 
@@ -31,9 +32,14 @@ public abstract class BasePageModel : PageModel
     public string? StatusMessage { get; set; }
 
     /// <summary>
-    /// Base URL pro API endpointy z konfigurace
+    /// Base URL pro web z konfigurace
     /// </summary>
     public string ApiBaseUrl => _configuration["ApiBaseUrl"] ?? "";
+
+    /// <summary>
+    /// Base URL pro API endpointy z konfigurace
+    /// </summary>
+    public string BaseUrl => _configuration["BaseUrl"] ?? "";
 
     /// <summary>
     /// JWT token přihlášeného uživatele
@@ -59,6 +65,40 @@ public abstract class BasePageModel : PageModel
     /// Indikuje, zda je přihlášený uživatel admin
     /// </summary>
     public bool IsAdmin => IsUserLoggedIn && User.IsInRole("Admin");
+
+
+
+
+
+
+
+    /// <summary>
+    /// Výchozí velikost stránky - kolik položek se načítá v jednom požadavku
+    /// </summary>
+    protected const int DEFAULT_PAGE_SIZE = 10;
+
+    /// <summary>
+    /// Číslo aktuální stránky (číslováno od 1)
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public int CurrentPage { get; set; } = 1;
+
+    /// <summary>
+    /// Velikost stránky - kolik položek načítat najednou
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public int PageSize { get; set; } = DEFAULT_PAGE_SIZE;
+
+    /// <summary>
+    /// Indikátor, zda existují další stránky k načtení
+    /// </summary>
+    public bool HasNextPage { get; protected set; }
+
+
+
+
+
+
 
     /// <summary>
     /// Handler se volá těsně před zpracováním požadavku na stránku (třeba OnGet, OnPost...) a umožňuje provést akce před zpracováním požadavku
