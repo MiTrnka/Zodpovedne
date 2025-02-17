@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.Design;
 using Ganss.Xss;
 using Zodpovedne.Logging;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
@@ -82,10 +83,7 @@ public class DiscussionsController : ControllerBase
     /// <param name="page">Číslo stránky (číslováno od 1)</param>
     /// <returns>Stránkovaný seznam diskuzí dle oprávnění přihlášeného uživatele</returns>
     [HttpGet]
-    public async Task<ActionResult<PagedResultDto<DiscussionListDto>>> GetDiscussions(
-        int? categoryId = null,
-        int pageSize = 10,
-        int page = 1)
+    public async Task<ActionResult<PagedResultDto<DiscussionListDto>>> GetDiscussions(int? categoryId = null, int pageSize = 10, int page = 1)
     {
         try
         {
@@ -185,7 +183,7 @@ public class DiscussionsController : ControllerBase
     /// <param name="discussionId">ID diskuze</param>
     /// <returns>Detail diskuze nebo NotFound, pokud diskuze neexistuje nebo není přístupná</returns>
     [HttpGet("{discussionId}")]
-    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussion(int discussionId)
+    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussion(int discussionId, int page = 1, int pageSize = 10)
     {
         try
         {
@@ -232,6 +230,10 @@ public class DiscussionsController : ControllerBase
                     (c.Type != CommentType.Hidden ||         // Skryté zobrazit jen pro:
                         isAdmin ||                           // - adminy
                         c.UserId == userId))                 // - autory komentáře
+                .Where(c => c.ParentCommentId == null) // Jen root komentáře
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((page - 1) * pageSize)  // Stránkování
+                .Take(pageSize)
                 .ToList();
 
             // Filtrování odpovědí na komentáře podle viditelnosti
@@ -274,9 +276,10 @@ public class DiscussionsController : ControllerBase
                 },
                 // Mapování komentářů - pouze root komentáře (bez rodičovského komentáře)
                 Comments = filteredComments
-                    .Where(c => c.ParentCommentId == null)
                     .Select(c => MapCommentToDto(c, userId, isAdmin))
-                    .ToList()
+                    .ToList(),
+                HasMoreComments = discussion.Comments
+                    .Count(c => c.ParentCommentId == null) > (page * pageSize)
             };
 
             return Ok(result);

@@ -24,11 +24,18 @@ namespace Zodpovedne.Web.Pages;
 /// Model pro stránku zobrazující detail diskuze vèetnì komentáøù.
 /// Zajišuje funkcionalitu pro zobrazení diskuze, pøidávání komentáøù a jejich správu.
 /// </summary>
+[IgnoreAntiforgeryToken]
 public class DiscussionModel : BasePageModel
 {
     public DiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
+
+
+    [BindProperty(SupportsGet = true)]
+    public int CurrentPage { get; set; } = 1;
+
+    public const int PageSize = 10;
 
     /// <summary>
     /// Jméno kategorie diskuze
@@ -257,5 +264,55 @@ public class DiscussionModel : BasePageModel
 
         // Po úspìšném smazání pøesmìrujeme na kategorii
         return RedirectToPage("/Category", new { categoryCode = CategoryCode });
+    }
+
+    /// <summary>
+    /// handler pro AJAX naèítání dalších komentáøù
+    /// </summary>
+    /// <param name="discussionId"></param>
+    /// <param name="currentPage"></param>
+    /// <returns></returns>
+    public async Task<IActionResult> OnGetNextPageAsync(int discussionId, int currentPage)
+    {
+        try
+        {
+            var nextPage = currentPage + 1;
+            var client = _clientFactory.CreateBearerClient(HttpContext);
+
+            var response = await client.GetAsync(
+                $"{ApiBaseUrl}/discussions/{discussionId}?page={nextPage}&pageSize={PageSize}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return BadRequest("Nepodaøilo se naèíst další komentáøe.");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<DiscussionDetailDto>();
+            if (result == null)
+            {
+                return BadRequest("Nepodaøilo se naèíst další komentáøe.");
+            }
+
+            return new JsonResult(new
+            {
+                comments = result.Comments,
+                hasMoreComments = result.HasMoreComments,
+                currentPage = nextPage
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Chyba pøi naèítání dalších komentáøù", ex);
+            return BadRequest("Došlo k chybì pøi naèítání komentáøù.");
+        }
+    }
+
+    /// <summary>
+    /// Handler pro AJAX poadavek na vykreslení partial view pro jeden komentáø
+    /// </summary>
+    /// <param name="comment">Data komentáøe</param>
+    public IActionResult OnPostCommentPartialAsync([FromBody] CommentDto comment, int discussionId)
+    {
+        return Partial("_CommentPartial", comment);
     }
 }

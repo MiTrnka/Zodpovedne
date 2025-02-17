@@ -74,6 +74,7 @@ public class DiscussionDetailDto
     public DiscussionType Type { get; set; }
     public ICollection<CommentDto> Comments { get; set; } = new List<CommentDto>();
     public LikeInfoDto Likes { get; set; } = new();
+    public bool HasMoreComments { get; set; }
 }
 
 // Pro komentáře
