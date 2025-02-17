@@ -137,7 +137,7 @@
                         },
                         body: JSON.stringify(discussion)
                     });
-                    alert(htmlResponse.statusText);
+
                     if (htmlResponse.ok) {
                         const html = await htmlResponse.text();
                         container.insertAdjacentHTML('beforeend', html);

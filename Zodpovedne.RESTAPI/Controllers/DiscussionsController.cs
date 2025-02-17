@@ -577,6 +577,9 @@ public class DiscussionsController : ControllerBase
             // Ověříme, že rodičovský komentář je root komentář
             if (parentComment.ParentCommentId != null)
                 return BadRequest("Lze reagovat pouze na hlavní komentáře.");
+
+            // Aktualizujeme datum vytvoření rodičovského komentáře
+            parentComment.CreatedAt = DateTime.UtcNow;
         }
 
         // Sanitizace vstupů
