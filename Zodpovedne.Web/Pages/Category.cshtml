@@ -48,7 +48,7 @@
             @if (Model.HasNextPage)
             {
                 <div id="loading-container" class="text-center mb-4">
-                    <button id="load-more" class="btn btn-primary">
+                    <button id="load-more" class="btn btn-primary" onclick="loadMoreDiscussions()">
                         Načíst další diskuze
                     </button>
                     <div id="loading-spinner" class="d-none">
@@ -95,10 +95,6 @@
     <script>
         // Inicializace při načtení stránky
         document.addEventListener('DOMContentLoaded', function () {
-            const loadMoreBtn = document.getElementById('load-more');
-            if (loadMoreBtn) {
-                loadMoreBtn.addEventListener('click', loadMoreDiscussions);
-            }
         });
 
         /**

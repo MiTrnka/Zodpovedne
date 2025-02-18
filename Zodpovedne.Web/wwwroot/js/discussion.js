@@ -9,7 +9,6 @@
 
 // Inicializace při načtení stránky
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('discussion.js loaded');
 });
 
 async function loadMoreComments(discussionId) {

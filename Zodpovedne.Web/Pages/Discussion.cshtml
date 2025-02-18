@@ -221,6 +221,7 @@
     <!-- Import CKEditoru -->
     <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/decoupled-document/ckeditor.js"></script>
 
+    <!-- Pro přihlášeného uživatele uloží jeho JWT (JSON Web Token) do sessionStorage prohlížeče. Ten se pak používá při AJAX požadavcích na endpointy (některé ho vyžadují) -->
     @if (Model.IsUserLoggedIn)
     {
         <script>
@@ -230,10 +231,6 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <script>
-        console.log('Scripts section loaded');
-    </script>
-
-
-    <script src="~/js/discussion.js"></script>
+    <!-- Import javascriptu, asp-append-version="true" automaticky přidává verzi k URL souboru, což zajistí, že prohlížeče načtou novou verzi po změně souboru -->
+    <script src="~/js/discussion.js" asp-append-version="true"></script>
 }
