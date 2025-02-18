@@ -6,44 +6,40 @@
 *@
 @model Zodpovedne.Contracts.DTO.DiscussionListDto
 
-<div class="col-12 mb-3">
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">
-                @* Zobrazení TOP badgu pro prioritní diskuze *@
-                @if (Model.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
-                {
-                    <span class="badge bg-primary me-2">TOP</span>
-                }
-                @* Odkaz na detail diskuze *@
-                <a href="/categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none">@Model.Title</a>
-            </h5>
-            @* Metadata diskuze *@
-            <div class="card-text small text-muted">
-                @* Autor *@
-                <span title="Autor">
-                    <i class="bi bi-person"></i> @Model.AuthorNickname
-                </span>
-                <span class="mx-2">•</span>
-                @* Datum vytvoření - převedené na lokální čas *@
-                <span title="Datum vytvoření">
-                    <i class="bi bi-calendar"></i> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
-                </span>
-                @* Datum aktualizace - převedené na lokální čas *@
-                <span title="Datum aktualizace">
-                    (<i class="bi bi-calendar"></i> @Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
-                </span>
-                <span class="mx-2">•</span>
-                @* Počet komentářů *@
-                <span title="Počet komentářů">
-                    <i class="bi bi-chat"></i> @Model.CommentsCount
-                </span>
-                <span class="mx-2">•</span>
-                @* Počet zobrazení *@
-                <span title="Počet zobrazení">
-                    <i class="bi bi-eye"></i> @Model.ViewCount
-                </span>
-            </div>
-        </div>
+<div class="card col-12 mb-2">
+    <h5 class="card-title">
+        @* Zobrazení TOP badgu pro prioritní diskuze *@
+        @if (Model.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
+        {
+            <span class="badge bg-primary me-2">TOP</span>
+        }
+        @* Odkaz na detail diskuze *@
+        <a href="/categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none">@Model.Title</a>
+    </h5>
+    @* Metadata diskuze *@
+    <div class="card-text small text-muted">
+        @* Autor *@
+        <span title="Autor">
+            <i class="bi bi-person"></i> @Model.AuthorNickname
+        </span>
+        <span class="mx-2">•</span>
+        @* Datum vytvoření - převedené na lokální čas *@
+        <span title="Datum vytvoření">
+            <i class="bi bi-calendar"></i> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+        </span>
+        @* Datum aktualizace - převedené na lokální čas *@
+        <span title="Datum aktualizace">
+            (<i class="bi bi-calendar"></i> @Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
+        </span>
+        <span class="mx-2">•</span>
+        @* Počet komentářů *@
+        <span title="Počet komentářů">
+            <i class="bi bi-chat"></i> @Model.CommentsCount
+        </span>
+        <span class="mx-2">•</span>
+        @* Počet zobrazení *@
+        <span title="Počet zobrazení">
+            <i class="bi bi-eye"></i> @Model.ViewCount
+        </span>
     </div>
 </div>
