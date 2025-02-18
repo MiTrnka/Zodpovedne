@@ -79,17 +79,17 @@ public class DiscussionsController : ControllerBase
     /// Respektuje viditelnost obsahu podle typu uživatele.
     /// </summary>
     /// <param name="categoryId">Volitelný parametr pro filtrování podle kategorie</param>
-    /// <param name="pageSize">Počet diskuzí na stránku (výchozí hodnota 10)</param>
+    /// <param name="pageSize">Počet diskuzí na stránku</param>
     /// <param name="page">Číslo stránky (číslováno od 1)</param>
     /// <returns>Stránkovaný seznam diskuzí dle oprávnění přihlášeného uživatele</returns>
     [HttpGet]
-    public async Task<ActionResult<PagedResultDto<DiscussionListDto>>> GetDiscussions(int? categoryId = null, int pageSize = 10, int page = 1)
+    public async Task<ActionResult<PagedResultDto<DiscussionListDto>>> GetDiscussions(int? categoryId = null, int pageSize = 1, int page = 1)
     {
         try
         {
             // Validace vstupních parametrů
             if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 10;
+            if (pageSize < 1) pageSize = 1;
             if (pageSize > 50) pageSize = 50; // Omezení maximální velikosti stránky
 
             // Identifikace uživatele pro správné filtrování obsahu
@@ -184,7 +184,7 @@ public class DiscussionsController : ControllerBase
     /// <param name="discussionId">ID diskuze</param>
     /// <returns>Detail diskuze nebo NotFound, pokud diskuze neexistuje nebo není přístupná</returns>
     [HttpGet("{discussionId}")]
-    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussion(int discussionId, int page = 1, int pageSize = 10)
+    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussion(int discussionId, int page, int pageSize)
     {
         try
         {
@@ -299,7 +299,7 @@ public class DiscussionsController : ControllerBase
     /// <param name="code">URL-friendly kód diskuze</param>
     /// <returns>Detail diskuze nebo NotFound, pokud diskuze neexistuje nebo není přístupná</returns>
     [HttpGet("byCode/{code}")]
-    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussionByCode(string code)
+    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussionByCode(string code, int page, int pageSize)
     {
         try
         {
@@ -311,7 +311,7 @@ public class DiscussionsController : ControllerBase
             if (discussionId == 0)  // diskuze s daným kódem neexistuje
                 return NotFound();
 
-            return await GetDiscussion(discussionId);
+            return await GetDiscussion(discussionId, page, pageSize);
         }
         catch (Exception e)
         {

@@ -73,21 +73,10 @@ public abstract class BasePageModel : PageModel
 
 
     /// <summary>
-    /// Výchozí velikost stránky - kolik položek se načítá v jednom požadavku
-    /// </summary>
-    protected const int DEFAULT_PAGE_SIZE = 10;
-
-    /// <summary>
     /// Číslo aktuální stránky (číslováno od 1)
     /// </summary>
     [BindProperty(SupportsGet = true)]
     public int CurrentPage { get; set; } = 1;
-
-    /// <summary>
-    /// Velikost stránky - kolik položek načítat najednou
-    /// </summary>
-    [BindProperty(SupportsGet = true)]
-    public int PageSize { get; set; } = DEFAULT_PAGE_SIZE;
 
     /// <summary>
     /// Indikátor, zda existují další stránky k načtení

@@ -32,6 +32,13 @@ public class CategoryModel : BasePageModel
     public string CategoryName { get; set; } = "";
 
     /// <summary>
+    /// Velikost stránky - kolik položek naèítat najednou
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public virtual int PageSize { get; set; } = 20;
+
+
+    /// <summary>
     /// Popis kategorie pro zobrazení
     /// </summary>
     public string CategoryDescription { get; set; } = "";
@@ -103,7 +110,7 @@ public class CategoryModel : BasePageModel
     }
 
     /// <summary>
-    /// Handler pro AJAX požadavek na naètení další stránky diskuzí
+    /// Handler pro AJAX požadavek na naètení pomocí API další stránky diskuzí, vrátí JSON s novými diskuzemi a informacemi o stránkování
     /// </summary>
     /// <param name="categoryId">ID kategorie</param>
     /// <param name="currentPage">Aktuální èíslo stránky</param>
@@ -113,7 +120,6 @@ public class CategoryModel : BasePageModel
         {
             // Výpoèet èísla následující stránky
             var nextPage = currentPage + 1;
-            _logger.Log($"Naèítání další stránky. CategoryId: {categoryId}, NextPage: {nextPage}");
 
             // Naètení další stránky diskuzí z API
             var client = _clientFactory.CreateBearerClient(HttpContext);
@@ -133,7 +139,7 @@ public class CategoryModel : BasePageModel
                 return BadRequest("Nepodaøilo se naèíst další diskuze.");
             }
 
-            // Vrácení dat pro JavaScript
+            // Vrácení dat (diskuze pro jednu stránku plus info pro stránkování) pro JavaScript, který dále bude zpracovávat 
             return new JsonResult(new
             {
                 discussions = result.Items,

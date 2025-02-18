@@ -35,12 +35,16 @@ public class DiscussionModel : BasePageModel
     [BindProperty(SupportsGet = true)]
     public int CurrentPage { get; set; } = 1;
 
-    public const int PageSize = 10;
-
     /// <summary>
     /// Jméno kategorie diskuze
     /// </summary>
     public string CategoryName { get; set; } = "";
+
+    /// <summary>
+    /// Velikost stránky - kolik položek naèítat najednou
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public virtual int PageSize { get; set; } = 10;
 
 
     /// <summary>
@@ -124,8 +128,8 @@ public class DiscussionModel : BasePageModel
     {
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
-        // Získání detailu diskuze
-        var response = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
+        // Získání detailu diskuze (1. stránka)
+        var response = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}?page=1&pageSize={PageSize}");
 
         if (!response.IsSuccessStatusCode)
         {
@@ -185,8 +189,8 @@ public class DiscussionModel : BasePageModel
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
-        // Naèteme znovu detail diskuze pro pøípad, že se mezitím zmìnil
-        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
+        // Naèteme znovu detail diskuze (1. stránka) pro pøípad, že se mezitím zmìnil
+        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}?page=1&pageSize={PageSize}");
         if (!discussionResponse.IsSuccessStatusCode)
         {
             _logger.Log($"Nepodaøilo se naèíst detail diskuze podlé kódu {DiscussionCode} pøi pøidávání komentáøe");
@@ -234,8 +238,8 @@ public class DiscussionModel : BasePageModel
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
-        // Naèteme diskuzi pro ovìøení existence
-        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}");
+        // Naèteme detail diskuze (1. stránka) pro ovìøení existence
+        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}?page=1&pageSize={PageSize}");
         if (!discussionResponse.IsSuccessStatusCode)
         {
             _logger.Log($"Nepodaøilo se odeslat požadavek na naètení detailu diskuze {DiscussionCode}");
@@ -267,7 +271,7 @@ public class DiscussionModel : BasePageModel
     }
 
     /// <summary>
-    /// handler pro AJAX naèítání dalších komentáøù
+    /// Handler pro AJAX požadavek na naètení pomocí API další stránky komentáøù, vrátí JSON s novými komentáøi a informacemi o stránkování
     /// </summary>
     /// <param name="discussionId"></param>
     /// <param name="currentPage"></param>
@@ -276,11 +280,12 @@ public class DiscussionModel : BasePageModel
     {
         try
         {
+            // Výpoèet èísla následující stránky
             var nextPage = currentPage + 1;
             var client = _clientFactory.CreateBearerClient(HttpContext);
 
-            var response = await client.GetAsync(
-                $"{ApiBaseUrl}/discussions/{discussionId}?page={nextPage}&pageSize={PageSize}");
+            // Naètení další stránky komentáøù z API
+            var response = await client.GetAsync($"{ApiBaseUrl}/discussions/{discussionId}?page={nextPage}&pageSize={PageSize}");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -293,6 +298,7 @@ public class DiscussionModel : BasePageModel
                 return BadRequest("Nepodaøilo se naèíst další komentáøe.");
             }
 
+            // Vrácení dat (komentáøe pro jednu stránku plus info pro stránkování) pro JavaScript, který dále bude zpracovávat
             return new JsonResult(new
             {
                 comments = result.Comments,

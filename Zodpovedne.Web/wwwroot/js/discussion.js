@@ -22,7 +22,9 @@ async function loadMoreComments(discussionId) {
         loadMoreBtn.classList.add('d-none');
         loadingSpinner.classList.remove('d-none');
 
-        // Načtení dat další stránky
+        // Tento kód volá handler OnGetNextPageAsync (z Category.cshtml) pro načtení dat další stránky komentářů z API
+        // do response vrátí načtené komentáře (pro 1 stránku) plus informace ok stránkování
+        // Je to konvence ASP.NET Core Razor Pages, že ?handler=NextPage zavolá C# metodu OnGetNextPageAsync...
         const response = await fetch(
             `?handler=NextPage&discussionId=${discussionId}&currentPage=${currentPage}`, {
             headers: {
@@ -33,10 +35,13 @@ async function loadMoreComments(discussionId) {
 
         if (!response.ok) throw new Error('Načítání selhalo');
 
+        // do data se dostane json s načtenými komentáři plus informace o stránkování
         const data = await response.json();
 
-        // Načtení HTML pro každý komentář pomocí Partial View
+        // Načtení HTML pro každý komentář (root + reakční) pomocí Partial View
         for (const comment of data.comments) {
+            // Pro každý root komentář z nově načtených dat zavolá handler pro vykreslení jednoho komentáře (root + reakční)
+            // Tento AJAX požadavek volá handler OnPostDiscussionPartialAsync (DiscussionModel z Discussion.cshtml.cs)
             const htmlResponse = await fetch(`?handler=CommentPartial&discussionId=${discussionId}`, {
                 method: 'POST',
                 headers: {

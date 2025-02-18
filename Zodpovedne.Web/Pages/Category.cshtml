@@ -112,7 +112,9 @@
                 loadMoreBtn.classList.add('d-none');
                 loadingSpinner.classList.remove('d-none');
 
-                // Načtení dat další stránky
+                // Tento kód volá handler OnGetNextPageAsync (z Category.cshtml) pro načtení dat další stránky diskuzí z API
+                // do response vrátí načtené diskuze (pro 1 stránku) plus informace ok stránkování
+                // Je to konvence ASP.NET Core Razor Pages, že ?handler=NextPage zavolá C# metodu OnGetNextPageAsync...
                 const response = await fetch(`?handler=NextPage&categoryId=${categoryId}&currentPage=${currentPage}`, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
@@ -121,10 +123,13 @@
 
                 if (!response.ok) throw new Error('Načítání selhalo');
 
+                // do data se dostane json s načtenými diskuzemi plus informace o stránkování
                 const data = await response.json();
 
                 // Načtení HTML pro každou diskuzi pomocí Partial View
                 for (const discussion of data.discussions) {
+                    // Pro každou diskuzi z nově načtených dat zavolá handler pro vykreslení jedné diskuze
+                    // Tento AJAX požadavek volá handler OnPostDiscussionPartialAsync (CategoryModel z Category.cshtml.cs)
                     const htmlResponse = await fetch(`?handler=DiscussionPartial&categoryCode=${data.categoryCode}`, {
                         method: 'POST',
                         headers: {
