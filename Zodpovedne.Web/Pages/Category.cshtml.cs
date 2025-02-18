@@ -21,6 +21,17 @@ public class CategoryModel : BasePageModel
     }
 
     /// <summary>
+    /// Èíslo aktuální stránky (èíslováno od 1)
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public int CurrentPage { get; set; } = 1;
+
+    /// <summary>
+    /// Velikost stránky - kolik položek naèítat najednou
+    /// </summary>
+    public int PageSize { get; set; } = 20;
+
+    /// <summary>
     /// Kód kategorie získaný z URL
     /// </summary>
     [BindProperty(SupportsGet = true)]
@@ -30,13 +41,6 @@ public class CategoryModel : BasePageModel
     /// Název kategorie pro zobrazení
     /// </summary>
     public string CategoryName { get; set; } = "";
-
-    /// <summary>
-    /// Velikost stránky - kolik položek naèítat najednou
-    /// </summary>
-    [BindProperty(SupportsGet = true)]
-    public virtual int PageSize { get; set; } = 20;
-
 
     /// <summary>
     /// Popis kategorie pro zobrazení
@@ -139,7 +143,7 @@ public class CategoryModel : BasePageModel
                 return BadRequest("Nepodaøilo se naèíst další diskuze.");
             }
 
-            // Vrácení dat (diskuze pro jednu stránku plus info pro stránkování) pro JavaScript, který dále bude zpracovávat 
+            // Vrácení dat (diskuze pro jednu stránku plus info pro stránkování) pro JavaScript, který dále bude zpracovávat
             return new JsonResult(new
             {
                 discussions = result.Items,

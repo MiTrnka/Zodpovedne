@@ -66,18 +66,6 @@ public abstract class BasePageModel : PageModel
     /// </summary>
     public bool IsAdmin => IsUserLoggedIn && User.IsInRole("Admin");
 
-
-
-
-
-
-
-    /// <summary>
-    /// Číslo aktuální stránky (číslováno od 1)
-    /// </summary>
-    [BindProperty(SupportsGet = true)]
-    public int CurrentPage { get; set; } = 1;
-
     /// <summary>
     /// Indikátor, zda existují další stránky k načtení
     /// </summary>

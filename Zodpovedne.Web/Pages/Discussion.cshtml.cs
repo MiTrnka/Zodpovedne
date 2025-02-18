@@ -31,27 +31,27 @@ public class DiscussionModel : BasePageModel
     {
     }
 
-
+    /// <summary>
+    /// Èíslo aktuální stránky (èíslováno od 1)
+    /// </summary>
     [BindProperty(SupportsGet = true)]
     public int CurrentPage { get; set; } = 1;
 
     /// <summary>
-    /// Jméno kategorie diskuze
-    /// </summary>
-    public string CategoryName { get; set; } = "";
-
-    /// <summary>
     /// Velikost stránky - kolik položek naèítat najednou
     /// </summary>
-    [BindProperty(SupportsGet = true)]
-    public virtual int PageSize { get; set; } = 10;
-
+    public int PageSize { get; set; } = 10;
 
     /// <summary>
     /// Code kategorie získaný z URL
     /// </summary>
     [BindProperty(SupportsGet = true)]
     public string CategoryCode { get; set; } = "";
+
+    /// <summary>
+    /// Jméno kategorie diskuze
+    /// </summary>
+    public string CategoryName { get; set; } = "";
 
     /// <summary>
     /// Code diskuze získaný z URL
