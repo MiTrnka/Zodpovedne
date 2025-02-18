@@ -54,6 +54,9 @@
                             <span title="Datum vytvoření">
                                 <i class="bi bi-calendar"></i> @Model.Discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
                             </span>
+                            <span title="Datum aktualizace">
+                                (<i class="bi bi-calendar"></i> <span id="discussionUpdatedAtValue">@Model.Discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))</span>
+                            </span>
                             <span class="mx-2">•</span>
                             <span title="Počet zobrazení">
                                 <i class="bi bi-eye"></i> @Model.Discussion.ViewCount
@@ -189,6 +192,7 @@
                                                     <i class="bi bi-person"></i> @comment.AuthorNickname
                                                     <span class="mx-2">•</span>
                                                     @comment.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                                    (@comment.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
                                                     @if (comment.Type == CommentType.Hidden)
                                                     {
                                                         @* <span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span> *@
@@ -251,7 +255,7 @@
                                             }
 
                                             @* Odpovědi na komentář *@
-                                            @foreach (var reply in comment.Replies.OrderBy(r => r.CreatedAt))
+                                            @foreach (var reply in comment.Replies.OrderBy(r => r.UpdatedAt))
                                             {
                                                 <div class="card-body border-top ms-4 mt-3">
                                                     @* Hlavička odpovědi *@
@@ -260,6 +264,7 @@
                                                             <i class="bi bi-person"></i> @reply.AuthorNickname
                                                             <span class="mx-2">•</span>
                                                             @reply.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                                            (@reply.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
                                                             @if (reply.Type == CommentType.Hidden)
                                                             {
                                                                 @* <span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span> *@
@@ -596,6 +601,25 @@
                 if (response.ok) {
                     contentDisplay.innerHTML = content;
                     toggleDiscussionEdit(false);
+                    // Nastavení data a času aktualizace pro rychlé zobrazení na FE (po refreshi se zahodí a použije se to z BE)
+                    try
+                    {
+                    const now = new Date();
+                    const formatter = new Intl.DateTimeFormat('cs-CZ', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false
+                    });
+                    const formatted = formatter.format(now).replace(/\u00A0/g, '');
+                    document.getElementById('discussionUpdatedAtValue').textContent =  formatted;
+                    }
+                    catch (error)
+                    {
+                        document.getElementById('discussionUpdatedAtValue').textContent = '';
+                    }
                 } else {
                     // Zkusíme přečíst detaily chyby
                     const errorData = await response.json();

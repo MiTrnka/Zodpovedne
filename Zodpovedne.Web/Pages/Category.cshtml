@@ -38,7 +38,7 @@
             @* Kontejner pro seznam diskuzí - do něj se budou přidávat nové diskuze *@
             <div class="row" id="discussions-list">
                 @foreach (var discussion in Model.Discussions.OrderByDescending(d => d.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
-               .ThenByDescending(d => d.CreatedAt))
+               .ThenByDescending(d => d.UpdatedAt))
                 {
                     await Html.RenderPartialAsync("_DiscussionItem", discussion);
                 }

@@ -200,6 +200,7 @@ public class TestDataSeeder : ITestDataSeeder
             foreach (var discussionData in discussions)
             {
                 var author = createdUsers[random.Next(createdUsers.Count)];
+                DateTime createdUpdatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30));
                 var discussion = new Discussion
                 {
                     CategoryId = category.Id,
@@ -208,7 +209,8 @@ public class TestDataSeeder : ITestDataSeeder
                     Code = discussionData.Code,
                     Content = discussionData.Content,
                     Type = DiscussionType.Normal,
-                    CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30))
+                    CreatedAt = createdUpdatedAt,
+                    UpdatedAt = createdUpdatedAt
                 };
                 dbContext.Discussions.Add(discussion);
                 await dbContext.SaveChangesAsync();
@@ -224,17 +226,20 @@ public class TestDataSeeder : ITestDataSeeder
         // Vytvoření 3-7 root komentářů
         var rootCommentsCount = random.Next(3, 8);
         var createdRootComments = new List<Comment>();
+        DateTime createdUpdatedAt;
 
         for (int i = 0; i < rootCommentsCount; i++)
         {
             var author = users[random.Next(users.Count)];
+            createdUpdatedAt = discussion.CreatedAt.AddHours(random.Next(1, 72));
             var rootComment = new Comment
             {
                 DiscussionId = discussion.Id,
                 UserId = author.Id,
                 Content = GetRandomComment(discussion.Title),
                 Type = CommentType.Normal,
-                CreatedAt = discussion.CreatedAt.AddHours(random.Next(1, 72))
+                CreatedAt = createdUpdatedAt,
+                UpdatedAt = createdUpdatedAt
             };
             dbContext.Comments.Add(rootComment);
             await dbContext.SaveChangesAsync();
@@ -247,6 +252,7 @@ public class TestDataSeeder : ITestDataSeeder
                 for (int j = 0; j < repliesCount; j++)
                 {
                     var replyAuthor = users[random.Next(users.Count)];
+                    createdUpdatedAt = rootComment.CreatedAt.AddHours(random.Next(1, 24));
                     var reply = new Comment
                     {
                         DiscussionId = discussion.Id,
@@ -254,7 +260,8 @@ public class TestDataSeeder : ITestDataSeeder
                         ParentCommentId = rootComment.Id,
                         Content = GetRandomReply(rootComment.Content),
                         Type = CommentType.Normal,
-                        CreatedAt = rootComment.CreatedAt.AddHours(random.Next(1, 24))
+                        CreatedAt = createdUpdatedAt,
+                        UpdatedAt = createdUpdatedAt
                     };
                     dbContext.Comments.Add(reply);
                     await dbContext.SaveChangesAsync();

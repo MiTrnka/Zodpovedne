@@ -121,7 +121,7 @@ public class DiscussionsController : ControllerBase
             var discussions = await query
                 // Řazení
                 .OrderByDescending(d => d.Type == DiscussionType.Top)  // 1. TOP diskuze
-                .ThenByDescending(d => d.CreatedAt)                    // 2. Nejnovější první
+                .ThenByDescending(d => d.UpdatedAt)                    // 2. Nejnovější první
                                                                        // Stránkování
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -134,6 +134,7 @@ public class DiscussionsController : ControllerBase
                     CategoryCode = d.Category.Code,
                     AuthorNickname = d.User.Nickname,
                     CreatedAt = d.CreatedAt,
+                    UpdatedAt = d.UpdatedAt,
                     // Počítání relevantních komentářů s respektováním viditelnosti
                     CommentsCount = d.Comments.Count(c =>
                         c.Type != CommentType.Deleted &&       // Ignorujeme smazané
@@ -231,7 +232,7 @@ public class DiscussionsController : ControllerBase
                         isAdmin ||                           // - adminy
                         c.UserId == userId))                 // - autory komentáře
                 .Where(c => c.ParentCommentId == null) // Jen root komentáře
-                .OrderByDescending(c => c.CreatedAt)
+                .OrderByDescending(c => c.UpdatedAt)
                 .Skip((page - 1) * pageSize)  // Stránkování
                 .Take(pageSize)
                 .ToList();
@@ -361,6 +362,7 @@ public class DiscussionsController : ControllerBase
                 Title = model.Title,
                 Content = model.Content,
                 CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
                 Type = user.Type == UserType.Hidden ? DiscussionType.Hidden : model.Type,
                 Code = code
             };
@@ -579,7 +581,7 @@ public class DiscussionsController : ControllerBase
                 return BadRequest("Lze reagovat pouze na hlavní komentáře.");
 
             // Aktualizujeme datum vytvoření rodičovského komentáře
-            parentComment.CreatedAt = DateTime.UtcNow;
+            parentComment.UpdatedAt = DateTime.UtcNow;
         }
 
         // Sanitizace vstupů
@@ -592,6 +594,7 @@ public class DiscussionsController : ControllerBase
             UserId = userId,
             Content = _sanitizer.Sanitize(model.Content), //Pro zamezení XSS útoků
             CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
             Type = user.Type == UserType.Hidden ? CommentType.Hidden : model.Type
         };
 

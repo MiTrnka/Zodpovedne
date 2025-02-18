@@ -50,6 +50,7 @@ public class DiscussionListDto
     public string CategoryCode { get; set; } = "";
     public string AuthorNickname { get; set; } = "";
     public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public int CommentsCount { get; set; }
     public int ViewCount { get; set; }
     public DiscussionType Type { get; set; }
@@ -69,7 +70,7 @@ public class DiscussionDetailDto
     public string AuthorNickname { get; set; } = "";
     public string AuthorId { get; set; } = "";
     public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public int ViewCount { get; set; }
     public DiscussionType Type { get; set; }
     public ICollection<CommentDto> Comments { get; set; } = new List<CommentDto>();
@@ -84,7 +85,7 @@ public class CommentDto
     public string Content { get; set; } = "";
     public string AuthorNickname { get; set; } = "";
     public DateTime CreatedAt { get; set; }
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     public int? ParentCommentId { get; set; }
     public CommentType Type { get; set; }
     public ICollection<CommentDto> Replies { get; set; } = new List<CommentDto>();

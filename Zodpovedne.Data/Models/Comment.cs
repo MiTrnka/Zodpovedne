@@ -21,7 +21,7 @@ public class Comment
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Pomocná vlastnost pro zjištění, zda jde o root komentář
     public bool IsRootComment => ParentCommentId == null;

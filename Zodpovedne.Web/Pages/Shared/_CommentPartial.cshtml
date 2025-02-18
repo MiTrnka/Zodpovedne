@@ -9,6 +9,7 @@
                 <i class="bi bi-person"></i> @Model.AuthorNickname
                 <span class="mx-2">•</span>
                 @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                (@Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
                 @if (Model.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden)
                 {
                     @* <span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span> *@
@@ -70,7 +71,7 @@
         }
 
         @* Odpovědi na komentář *@
-        @foreach (var reply in Model.Replies.OrderBy(r => r.CreatedAt))
+        @foreach (var reply in Model.Replies.OrderBy(r => r.UpdatedAt))
         {
             <div class="card-body border-top ms-4 mt-3">
                 @* Hlavička odpovědi *@
@@ -79,6 +80,7 @@
                         <i class="bi bi-person"></i> @reply.AuthorNickname
                         <span class="mx-2">•</span>
                         @reply.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                        (@reply.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
                         @if (reply.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden)
                         {
                             @* <span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span> *@
