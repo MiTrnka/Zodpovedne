@@ -40,7 +40,7 @@
                 @foreach (var discussion in Model.Discussions.OrderByDescending(d => d.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
                .ThenByDescending(d => d.UpdatedAt))
                 {
-                    await Html.RenderPartialAsync("_DiscussionItem", discussion);
+                    await Html.RenderPartialAsync("_DiscussionPartial", discussion);
                 }
             </div>
 

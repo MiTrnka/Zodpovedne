@@ -156,6 +156,6 @@ public class CategoryModel : BasePageModel
     /// <param name="categoryCode">Kód kategorie pro vytvoøení URL</param>
     public async Task<IActionResult> OnPostDiscussionPartialAsync([FromBody] DiscussionListDto discussion, string categoryCode)
     {
-        return Partial("_DiscussionItem", discussion);
+        return Partial("_DiscussionPartial", discussion);
     }
 }
