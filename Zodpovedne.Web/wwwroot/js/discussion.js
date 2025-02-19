@@ -322,3 +322,36 @@ async function toggleCommentVisibility(discussionId, commentId) {
         alert('Došlo k chybě při změně viditelnosti komentáře.');
     }
 }
+
+/**
+ * Funkce pro smazání komentáře
+ * @param {number} discussionId - ID diskuze, ve které se komentář nachází
+ * @param {number} commentId - ID komentáře, který má být smazán
+ */
+async function deleteComment(discussionId, commentId) {
+    // Zobrazení potvrzovacího dialogu
+    if (!confirm('Opravdu chcete smazat tento komentář?')) {
+        return; // Uživatel zrušil akci
+    }
+
+    try {
+        const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+        const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+            }
+        });
+
+        if (response.ok) {
+            // Pokud se smazání podařilo, obnovíme stránku pro zobrazení aktuálního stavu
+            location.reload();
+        } else {
+            // Pokud nastala chyba, zobrazíme uživateli chybovou hlášku
+            alert('Nepodařilo se smazat komentář.');
+        }
+    } catch (error) {
+        console.error('Chyba při mazání komentáře:', error);
+        alert('Došlo k chybě při mazání komentáře.');
+    }
+}

@@ -640,20 +640,41 @@ public class DiscussionsController : ControllerBase
 
     /// <summary>
     /// Smaže komentář a všechny jeho reakce
-    /// Přístupné pouze pro adminy
     /// </summary>
-    [Authorize(Policy = "RequireAdminRole")]
+    [Authorize]
     [HttpDelete("{discussionId}/comments/{commentId}")]
     public async Task<IActionResult> DeleteComment(int discussionId, int commentId)
     {
         try
         {
+            // Získáme ID přihlášeného uživatele
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.Log("Pokus o smazání komentáře neexistujícím uživatelem, který ale měl token...");
+                return Unauthorized();
+            }
+
+            // Zjistíme, zda je uživatel admin
+            var isAdmin = User.IsInRole("Admin");
+
+            // Načteme komentář včetně odpovědí
             var comment = await dbContext.Comments
                 .Include(c => c.Replies)
                 .FirstOrDefaultAsync(c => c.Id == commentId && c.DiscussionId == discussionId);
 
             if (comment == null)
+            {
+                _logger.Log($"Pokus o smazání neexistujícího komentáře s ID {commentId}.");
                 return NotFound();
+            }
+
+            // Kontrola oprávnění - smazat může pouze admin nebo autor komentáře
+            if (!isAdmin && comment.UserId != userId)
+            {
+                _logger.Log($"Pokus o smazání komentáře s ID {commentId} uživatelem {userId}, který na to nemá právo.");
+                return Forbid();
+            }
 
             // Nastavíme komentář jako smazaný (typ Deleted)
             comment.Type = CommentType.Deleted;

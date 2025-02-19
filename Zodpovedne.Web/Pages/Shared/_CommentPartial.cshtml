@@ -48,6 +48,16 @@
                     @(Model.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "Odkryj" : "Skryj")
                 </button>
             }
+
+            @* Tlačítko pro smazání rootového komentáře (viditelné pro adminy nebo autory komentářů) *@
+            @if (User.IsInRole("Admin") || Model.AuthorNickname == Context.Session.GetString("UserNickname"))
+            {
+                <button class="btn btn-sm btn-outline-danger"
+                        onclick="deleteComment(@discussionId, @Model.Id)">
+                    <i class="bi bi-trash"></i>
+                    Smazat
+                </button>
+            }
         </div>
     </div>
 
@@ -117,6 +127,16 @@
                                 onclick="toggleCommentVisibility(@discussionId, @reply.Id)">
                             <i class="bi bi-eye@(reply.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "" : "-slash")"></i>
                             @(reply.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "Odkryj" : "Skryj")
+                        </button>
+                    }
+
+                    @* Tlačítko pro smazání reakčního komentáře (viditelné pro adminy nebo autory komentářů) *@
+                    @if (User.IsInRole("Admin") || reply.AuthorNickname == Context.Session.GetString("UserNickname"))
+                    {
+                        <button class="btn btn-sm btn-outline-danger"
+                                onclick="deleteComment(@discussionId, @reply.Id)">
+                            <i class="bi bi-trash"></i>
+                            Smazat
                         </button>
                     }
                 </div>
