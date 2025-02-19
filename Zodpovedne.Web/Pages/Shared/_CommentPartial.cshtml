@@ -1,5 +1,10 @@
 ﻿@model Zodpovedne.Contracts.DTO.CommentDto
 
+@{
+    // Donačtu si ještě id diskuze, který není součástí CommentDto a posílám si ho zvenčí, když volám toto partial view
+    var discussionId = (int)ViewData["DiscussionId"];
+}
+
 <div class="card mb-2">
     @* Hlavička komentáře s metadaty a tlačítky *@
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -21,7 +26,7 @@
             @if (Model.Likes.CanUserLike)
             {
                 <button class="btn btn-sm btn-outline-primary"
-                        onclick="likeComment(@Context.Request.RouteValues["discussionId"], @Model.Id)">
+                        onclick="likeComment(@discussionId, @Model.Id)">
                     <i class="bi bi-heart-fill"></i>
                     <span id="comment-@Model.Id-likes-count">@Model.Likes.LikeCount</span>
                 </button>
@@ -38,7 +43,7 @@
             @if (User.IsInRole("Admin"))
             {
                 <button class="btn btn-sm @(Model.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "btn-warning" : "btn-outline-warning")"
-                        onclick="toggleCommentVisibility(@Context.Request.RouteValues["discussionId"], @Model.Id)">
+                        onclick="toggleCommentVisibility(@discussionId, @Model.Id)">
                     <i class="bi bi-eye@(Model.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "" : "-slash")"></i>
                     @(Model.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "Odkryj" : "Skryj")
                 </button>
@@ -92,7 +97,7 @@
                     @if (reply.Likes.CanUserLike)
                     {
                         <button class="btn btn-sm btn-outline-primary"
-                                onclick="likeComment(@Context.Request.RouteValues["discussionId"], @reply.Id)">
+                                onclick="likeComment(@discussionId, @reply.Id)">
                             <i class="bi bi-heart-fill"></i>
                             <span id="comment-@reply.Id-likes-count">@reply.Likes.LikeCount</span>
                         </button>
@@ -109,7 +114,7 @@
                     @if (User.IsInRole("Admin"))
                     {
                         <button class="btn btn-sm @(reply.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "btn-warning" : "btn-outline-warning")"
-                                onclick="toggleCommentVisibility(@Context.Request.RouteValues["discussionId"], @reply.Id)">
+                                onclick="toggleCommentVisibility(@discussionId, @reply.Id)">
                             <i class="bi bi-eye@(reply.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "" : "-slash")"></i>
                             @(reply.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "Odkryj" : "Skryj")
                         </button>
