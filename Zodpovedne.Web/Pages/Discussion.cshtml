@@ -87,7 +87,7 @@
                             </span>
                             @if (Model.Discussion.Type == DiscussionType.Top)
                             {
-                                <span class="badge bg-primary ms-2">TOP</span>
+                                <span class="bi-star-fill ms-1 text-primary">@*TOP*@</span>
                             }
                             @if (Model.Discussion.Type == DiscussionType.Hidden)
                             {
@@ -149,7 +149,7 @@
                                 <button class="btn @(Model.Discussion.Type == DiscussionType.Top ? "btn-outline-primary" : "btn-primary")"
                                         onclick="toggleTopStatus(@Model.Discussion.Id)">
                                     <i class="bi bi-star@(Model.Discussion.Type == DiscussionType.Top ? "-fill" : "")"></i>
-                                    @(Model.Discussion.Type == DiscussionType.Top ? "Zrušit TOP" : "Nastavit TOP")
+                                    @(Model.Discussion.Type == DiscussionType.Top ? "Zrušit" : "Nastavit")
                                 </button>
                             }
                         </div>
@@ -170,7 +170,7 @@
                                 <form method="post" asp-page-handler="DeleteDiscussion" class="d-inline">
                                     <button type="submit" class="btn btn-danger"
                                             onclick="return confirm('Opravdu chcete smazat tuto diskuzi včetně všech komentářů?')">
-                                        <i class="bi bi-trash"></i> Smazat
+                                        <i class="bi bi-trash"></i>@* Smazat *@
                                     </button>
                                 </form>
                             </div>

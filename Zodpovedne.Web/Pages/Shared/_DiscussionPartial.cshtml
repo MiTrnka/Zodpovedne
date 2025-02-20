@@ -11,7 +11,7 @@
         @* Zobrazení TOP badgu pro prioritní diskuze *@
         @if (Model.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
         {
-            <span class="badge bg-primary me-2">TOP</span>
+            <span class="bi-star-fill me-1 text-primary">@*TOP*@</span>
         }
         @* Odkaz na detail diskuze *@
         <a href="/categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none">@Model.Title</a>
