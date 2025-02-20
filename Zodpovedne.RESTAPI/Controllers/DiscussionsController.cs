@@ -841,7 +841,7 @@ public class DiscussionsController : ControllerBase
                 return BadRequest("Uživatel už dal této diskuzi like.");
 
             // Kontrola, zda uživatel nedává like své vlastní diskuzi
-            if (discussion.UserId == userId)
+            if (!isAdmin && discussion.UserId == userId)
                 return BadRequest("Nelze dát like vlastní diskuzi.");
 
             // Přidáme like

@@ -106,7 +106,7 @@ public class DiscussionModel : BasePageModel
     /// <summary>
     /// Urèuje, zda mùže aktuální uživatel dát like diskuzi
     /// </summary>
-    public bool CanLikeDiscussion =>
+    public bool CanLikeDiscussion => IsAdmin ||
         Discussion != null && IsUserLoggedIn &&
         Discussion.AuthorId != CurrentUserId &&
         Discussion.Likes.CanUserLike;
@@ -357,15 +357,15 @@ public class DiscussionModel : BasePageModel
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
         // Nejprve naèteme detail diskuze, abychom získali ID
-        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}?page=1&pageSize=1");
+        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/basic-info/by-code/{DiscussionCode}");
         if (!discussionResponse.IsSuccessStatusCode)
         {
             ErrorMessage = "Diskuzi se nepodaøilo naèíst.";
             return Page();
         }
 
-        Discussion = await discussionResponse.Content.ReadFromJsonAsync<DiscussionDetailDto>();
-        if (Discussion == null)
+        var basicDiscussionInfoDto = await discussionResponse.Content.ReadFromJsonAsync<BasicDiscussionInfoDto>();
+        if (basicDiscussionInfoDto == null)
         {
             ErrorMessage = "Diskuzi se nepodaøilo naèíst.";
             return Page();
@@ -373,7 +373,7 @@ public class DiscussionModel : BasePageModel
 
         // Nyní máme ID diskuze, mùžeme zavolat API pro zmìnu kategorie
         var response = await client.PutAsync(
-            $"{ApiBaseUrl}/discussions/{Discussion.Id}/change-category/{SelectedCategoryId}",
+            $"{ApiBaseUrl}/discussions/{basicDiscussionInfoDto.Id}/change-category/{SelectedCategoryId}",
             null
         );
 
