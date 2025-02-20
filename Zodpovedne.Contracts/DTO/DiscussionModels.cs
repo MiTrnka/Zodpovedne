@@ -79,6 +79,23 @@ public class DiscussionDetailDto
     public bool HasMoreComments { get; set; }
 }
 
+public class BasicDiscussionInfoDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Content { get; set; } = "";
+    public string? ImagePath { get; set; }
+    public string CategoryName { get; set; } = "";
+    public int CategoryId { get; set; }
+    public string CategoryCode { get; set; } = "";
+    public string AuthorNickname { get; set; } = "";
+    public string AuthorId { get; set; } = "";
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public int ViewCount { get; set; }
+    public DiscussionType Type { get; set; }
+}
+
 // Pro komentáře
 public class CommentDto
 {

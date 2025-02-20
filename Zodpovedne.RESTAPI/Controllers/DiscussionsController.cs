@@ -325,6 +325,95 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
+    /// Vrátí základní informace o diskuzi podle jejího ID bez načítání komentářů.
+    /// Obsahuje metadata jako titulek, obsah, informace o kategorii a autorovi,
+    /// ale neobsahuje komentáře ani další náročná data.
+    /// </summary>
+    /// <param name="discussionId">ID diskuze</param>
+    /// <returns>Základní informace o diskuzi nebo NotFound</returns>
+    [HttpGet("{discussionId}/basic-info")]
+    public async Task<ActionResult<BasicDiscussionInfoDto>> GetBasicDiscussionInfo(int discussionId)
+    {
+        try
+        {
+            // Pro přihlášené uživatele získání ID a role
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            // Efektivní načtení diskuze s minimem souvisejících dat
+            var discussion = await dbContext.Discussions
+                .AsNoTracking()
+                .Include(d => d.Category)
+                .Include(d => d.User)
+                .Where(d => d.Id == discussionId &&
+                       d.Type != DiscussionType.Deleted &&
+                       (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId))
+                .Select(d => new BasicDiscussionInfoDto
+                {
+                    Id = d.Id,
+                    Title = d.Title,
+                    Content = d.Content,
+                    ImagePath = d.ImagePath,
+                    CategoryName = d.Category.Name,
+                    CategoryId = d.CategoryId,
+                    CategoryCode = d.Category.Code,
+                    AuthorNickname = d.User.Nickname,
+                    AuthorId = d.UserId,
+                    CreatedAt = d.CreatedAt,
+                    UpdatedAt = d.UpdatedAt,
+                    ViewCount = d.ViewCount,
+                    Type = d.Type
+                })
+                .FirstOrDefaultAsync();
+
+            if (discussion == null)
+            {
+                _logger.Log($"Diskuze s ID {discussionId} nebyla nalezena.");
+                return NotFound();
+            }
+
+            return Ok(discussion);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetBasicDiscussionInfo endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Vrátí základní informace o diskuzi podle jejího URL kódu přesměrováním na endpoint podle ID.
+    /// </summary>
+    /// <param name="code">URL kód diskuze</param>
+    /// <returns>Základní informace o diskuzi nebo NotFound</returns>
+    [HttpGet("basic-info/by-code/{code}")]
+    public async Task<ActionResult<BasicDiscussionInfoDto>> GetBasicDiscussionInfoByCode(string code)
+    {
+        try
+        {
+            // Nejprve zjistíme ID diskuze podle kódu
+            var discussionId = await dbContext.Discussions
+                .AsNoTracking()
+                .Where(d => d.Code == code)
+                .Select(d => d.Id)
+                .FirstOrDefaultAsync();
+
+            if (discussionId == 0)  // ID 0 znamená, že diskuze nebyla nalezena
+            {
+                _logger.Log($"Diskuze s kódem {code} nebyla nalezena.");
+                return NotFound("Diskuze s daným kódem nebyla nalezena.");
+            }
+
+            // Přesměrování na endpoint podle ID
+            return await GetBasicDiscussionInfo(discussionId);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetBasicDiscussionInfoByCode endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+    /// <summary>
     /// Vytvoří novou diskuzi
     /// Přístupné pouze pro přihlášené uživatele
     /// </summary>
@@ -572,7 +661,7 @@ public class DiscussionsController : ControllerBase
 
             // Změníme kategorii diskuze
             discussion.CategoryId = newCategoryId;
-            discussion.UpdatedAt = DateTime.UtcNow;
+            //discussion.UpdatedAt = DateTime.UtcNow;
 
             await dbContext.SaveChangesAsync();
 
@@ -866,6 +955,7 @@ public class DiscussionsController : ControllerBase
             Content = discussion.Content,
             ImagePath = discussion.ImagePath,
             CategoryName = discussion.Category.Name,
+            CategoryId = discussion.CategoryId,
             AuthorNickname = discussion.User.Nickname,
             AuthorId = discussion.UserId,
             CreatedAt = discussion.CreatedAt,

@@ -355,3 +355,27 @@ async function deleteComment(discussionId, commentId) {
         alert('Došlo k chybě při mazání komentáře.');
     }
 }
+
+// Funkce pro potvrzení změny kategorie diskuze (admin má tuto možnost na detailu diskuze, tato funkce je je pro závěrečné potvrzení)
+function confirmCategoryChange() {
+    const select = document.getElementById('SelectedCategoryId');
+    if (!select) return true; // Pokud element neexistuje, necháme formulář odeslat
+
+    const selectedOption = select.options[select.selectedIndex];
+
+    // Zjistíme ID aktuální kategorie z toho, která možnost je označená jako selected
+    let currentCategoryId = null;
+    for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].hasAttribute('selected')) {
+            currentCategoryId = select.options[i].value;
+            break;
+        }
+    }
+
+    // Pokud není vybrána žádná kategorie nebo je vybrána stejná, zabráníme odeslání
+    if (!select.value || select.value === currentCategoryId) {
+        return false;
+    }
+
+    return confirm(`Opravdu chcete přesunout diskuzi do kategorie "${selectedOption.text}"?`);
+}

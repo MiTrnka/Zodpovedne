@@ -45,6 +45,30 @@
                             <h1 class="h3 mb-0">@Model.Discussion.Title</h1>
                         }
 
+                        @* Přidejte toto do sekce s detaily diskuze, např. do card-header *@
+                        @if (Model.IsAdmin && Model.Discussion != null)
+                        {
+                            <div class="mt-3">
+                                <form method="post" asp-page-handler="ChangeCategory" onsubmit="return confirmCategoryChange()">
+                                    <div class="input-group">
+                                        <select asp-for="SelectedCategoryId" class="form-select">
+                                            <option value="">-- Vyberte kategorii --</option>
+                                            @foreach (var category in Model.AllCategories)
+                                            {
+                                                bool isSelected = category.Id == Model.Discussion.CategoryId;
+                                                <option value="@category.Id" selected="@isSelected">
+                                                    @category.Name
+                                                </option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-outline-primary">
+                                            Změnit kategorii
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        }
+
                         @* Metadata diskuze *@
                         <div class="text-muted small">
                             <span title="Autor">

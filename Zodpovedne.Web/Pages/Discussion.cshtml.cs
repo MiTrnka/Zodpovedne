@@ -65,6 +65,17 @@ public class DiscussionModel : BasePageModel
     public DiscussionDetailDto? Discussion { get; set; }
 
     /// <summary>
+    /// Všechny kategorie
+    /// </summary>
+    public List<CategoryDto> AllCategories { get; private set; } = new();
+
+    /// <summary>
+    /// ID vybrané kategorie pøi pøesouvání diskuze pod jinou kategorii
+    /// </summary>
+    [BindProperty]
+    public int? SelectedCategoryId { get; set; }
+
+    /// <summary>
     /// Model pro vytvoøení nového komentáøe
     /// Použije se jak pro root komentáøe, tak pro odpovìdi
     /// </summary>
@@ -162,6 +173,16 @@ public class DiscussionModel : BasePageModel
             }
             else
                 CategoryName = category.Name;
+        }
+
+        // Pokud je uživatel admin, naèteme seznam všech kategorií
+        if (IsAdmin)
+        {
+            var categoriesResponse = await client.GetAsync($"{ApiBaseUrl}/categories");
+            if (categoriesResponse.IsSuccessStatusCode)
+            {
+                AllCategories = await categoriesResponse.Content.ReadFromJsonAsync<List<CategoryDto>>() ?? new();
+            }
         }
 
         // Inkrementujeme poèítadlo zhlédnutí dané diskuze
@@ -320,5 +341,61 @@ public class DiscussionModel : BasePageModel
     public IActionResult OnPostCommentPartialAsync([FromBody] CommentDto comment, int discussionId)
     {
         return Partial("_CommentPartial", comment);
+    }
+
+    /// <summary>
+    /// Handler pro AJAX požadavek na zmìnu kategorie diskuze ze souèasné na tu v property SelectedCategoryId
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IActionResult> OnPostChangeCategoryAsync()
+    {
+        if (!IsAdmin || SelectedCategoryId is null)
+        {
+            return RedirectToPage();
+        }
+
+        var client = _clientFactory.CreateBearerClient(HttpContext);
+
+        // Nejprve naèteme detail diskuze, abychom získali ID
+        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}?page=1&pageSize=1");
+        if (!discussionResponse.IsSuccessStatusCode)
+        {
+            ErrorMessage = "Diskuzi se nepodaøilo naèíst.";
+            return Page();
+        }
+
+        Discussion = await discussionResponse.Content.ReadFromJsonAsync<DiscussionDetailDto>();
+        if (Discussion == null)
+        {
+            ErrorMessage = "Diskuzi se nepodaøilo naèíst.";
+            return Page();
+        }
+
+        // Nyní máme ID diskuze, mùžeme zavolat API pro zmìnu kategorie
+        var response = await client.PutAsync(
+            $"{ApiBaseUrl}/discussions/{Discussion.Id}/change-category/{SelectedCategoryId}",
+            null
+        );
+
+        if (response.IsSuccessStatusCode)
+        {
+            // Získání kódu nové kategorie
+            var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{SelectedCategoryId}");
+            if (categoryResponse.IsSuccessStatusCode)
+            {
+                var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>();
+                if (category != null)
+                {
+                    // Pøesmìrování na novou URL s novým kódem kategorie
+                    return RedirectToPage("/Discussion", new { categoryCode = category.Code, discussionCode = DiscussionCode });
+                }
+            }
+
+            // Pokud se nepodaøilo získat novou kategorii, aspoò obnovíme stránku
+            return RedirectToPage();
+        }
+
+        ErrorMessage = "Nepodaøilo se zmìnit kategorii diskuze.";
+        return Page();
     }
 }
