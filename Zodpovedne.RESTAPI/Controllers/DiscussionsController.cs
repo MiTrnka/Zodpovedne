@@ -259,6 +259,7 @@ public class DiscussionsController : ControllerBase
                 ImagePath = discussion.ImagePath,
                 CategoryName = discussion.Category.Name,
                 CategoryCode = discussion.Category.Code,
+                CategoryId = discussion.CategoryId,
                 AuthorNickname = discussion.User.Nickname,
                 AuthorId = discussion.UserId,
                 CreatedAt = discussion.CreatedAt,
@@ -537,6 +538,55 @@ public class DiscussionsController : ControllerBase
         catch (Exception e)
         {
             _logger.Log("Chyba při vykonávání akce CreateReply endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Přesune diskuzi do jiné kategorie. Pouze pro administrátory.
+    /// </summary>
+    [Authorize(Policy = "RequireAdminRole")]
+    [HttpPut("{discussionId}/change-category/{newCategoryId}")]
+    public async Task<IActionResult> ChangeDiscussionCategory(int discussionId, int newCategoryId)
+    {
+        try
+        {
+            // Najdeme diskuzi
+            var discussion = await dbContext.Discussions.FindAsync(discussionId);
+            if (discussion == null)
+            {
+                _logger.Log($"Při pokusu o přesunutí diskuze {discussionId} do kategorie {newCategoryId} nebyla daná diskuze nalezena.");
+                return NotFound("Diskuze nebyla nalezena.");
+            }
+
+            // Ověříme, zda nová kategorie existuje
+            var newCategory = await dbContext.Categories.FindAsync(newCategoryId);
+            if (newCategory == null)
+            {
+                _logger.Log($"Pokus o přesunutí diskuze {discussionId} do neexistující kategorie {newCategoryId}.");
+                return NotFound("Cílová kategorie nebyla nalezena.");
+            }
+
+            // Uložíme původní kategorii pro odpověď
+            var oldCategoryId = discussion.CategoryId;
+
+            // Změníme kategorii diskuze
+            discussion.CategoryId = newCategoryId;
+            discussion.UpdatedAt = DateTime.UtcNow;
+
+            await dbContext.SaveChangesAsync();
+
+            // Vrátíme informace o přesunu
+            return Ok(new
+            {
+                oldCategoryId,
+                newCategoryId,
+                updatedAt = discussion.UpdatedAt
+            });
+        }
+        catch (Exception e)
+        {
+            _logger.Log($"Chyba při přesunu diskuze {discussionId} do kategorie {newCategoryId}.");
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

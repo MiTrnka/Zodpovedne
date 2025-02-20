@@ -66,6 +66,7 @@ public class DiscussionDetailDto
     public string Content { get; set; } = "";
     public string? ImagePath { get; set; }
     public string CategoryName { get; set; } = "";
+    public int CategoryId { get; set; }
     public string CategoryCode { get; set; } = "";
     public string AuthorNickname { get; set; } = "";
     public string AuthorId { get; set; } = "";
