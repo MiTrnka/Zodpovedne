@@ -74,7 +74,7 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Načte seznam dostupných diskuzí s možností filtrování podle kategorie a stránkování.
+    /// Načte netrackovaný seznam dostupných diskuzí s možností filtrování podle kategorie a stránkování.
     /// Poskytuje základní informace o diskuzích včetně počtu komentářů a lajků.
     /// Respektuje viditelnost obsahu podle typu uživatele.
     /// </summary>
@@ -98,6 +98,7 @@ public class DiscussionsController : ControllerBase
 
             // Základní dotaz s eager loadingem souvisejících dat
             var query = dbContext.Discussions
+                .AsNoTracking()                  // Netrackovaný dotaz pro lepší výkon
                 .Include(d => d.Category)        // Pro zobrazení názvu kategorie
                 .Include(d => d.User)            // Pro zobrazení autora
                 .Include(d => d.Comments)        // Pro počítání relevantních komentářů
@@ -178,7 +179,7 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Načte kompletní detail diskuze podle jejího ID včetně všech souvisejících dat jako jsou komentáře, odpovědi, lajky a informace o autorech.
+    /// Načte netrackovaný kompletní detail diskuze podle jejího ID včetně všech souvisejících dat jako jsou komentáře, odpovědi, lajky a informace o autorech.
     /// Endpoint lze použít pro zobrazení diskuze, komentářů a lajků s respektováním oprávnění přihlášeného uživatele.
     /// </summary>
     /// <param name="discussionId">ID diskuze</param>
@@ -195,7 +196,8 @@ public class DiscussionsController : ControllerBase
             // Načtení diskuze včetně všech souvisejících komentářů a dalších dat pomocí eager loading
             // Museli jsme opakovat Include(d => d.Comments) protože,EF Core neumožňuje řetězit více ThenInclude rozvětveních na jeden Include (více ThenInclude za sebou jde, ale jen pro jednu cestu)
             var discussion = await dbContext.Discussions
-               // Načtení základních souvisejících dat pro diskuzi
+               // Načtení netrackovaných základních souvisejících dat pro diskuzi
+               .AsNoTracking()
                .Include(d => d.Category)                    // Kategorie pro zobrazení názvu kategorie
                .Include(d => d.User)                        // Autor diskuze pro zobrazení jeho nicknamu
                .Include(d => d.Likes)                       // Lajky diskuze pro zobrazení počtu a kontrolu, zda už uživatel lajkoval
@@ -293,7 +295,7 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Načte kompletní detail diskuze podle jejího URL-friendly kódu včetně všech souvisejících dat jako jsou komentáře, odpovědi, lajky a informace o autorech.
+    /// Načte netrackovaný kompletní detail diskuze podle jejího URL-friendly kódu včetně všech souvisejících dat jako jsou komentáře, odpovědi, lajky a informace o autorech.
     /// Endpoint lze použít pro zobrazení diskuze, komentářů a lajků s respektováním oprávnění přihlášeného uživatele.
     /// </summary>
     /// <param name="code">URL-friendly kód diskuze</param>
@@ -304,6 +306,7 @@ public class DiscussionsController : ControllerBase
         try
         {
             var discussionId = await dbContext.Discussions
+                    .AsNoTracking()
                     .Where(d => d.Code == code)
                     .Select(d => d.Id)
                     .FirstOrDefaultAsync();
@@ -607,35 +610,6 @@ public class DiscussionsController : ControllerBase
             .FirstAsync(c => c.Id == comment.Id);
 
         return Ok(MapCommentToDto(comment, userId, isAdmin));
-    }
-
-    /// <summary>
-    /// Upraví existující komentář
-    /// Přístupné pouze pro adminy
-    /// </summary>
-    [Authorize(Policy = "RequireAdminRole")]
-    [HttpPut("{discussionId}/comments/{commentId}")]
-    public async Task<IActionResult> UpdateComment(int discussionId, int commentId, UpdateCommentDto model)
-    {
-        try
-        {
-            var comment = await dbContext.Comments
-                .FirstOrDefaultAsync(c => c.Id == commentId && c.DiscussionId == discussionId);
-
-            if (comment == null)
-                return NotFound();
-
-            comment.Content = model.Content;
-            comment.UpdatedAt = DateTime.UtcNow;
-
-            await dbContext.SaveChangesAsync();
-            return NoContent();
-        }
-        catch (Exception e)
-        {
-            _logger.Log("Chyba při vykonávání akce UpdateComment endpointu.", e);
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        }
     }
 
     /// <summary>

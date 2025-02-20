@@ -35,37 +35,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Vrátí seznam všech nesmazaných uživatelů
-    /// </summary>
-    /// <returns></returns>
-    [HttpGet]
-    [Authorize(Policy = "RequireAdminRole")] // Pouze pro adminy
-    public async Task<IActionResult> GetUsers()
-    {
-        try
-        {
-            var users = await this.userManager.Users
-                .Where(u => u.Type != UserType.Deleted)
-                .Select(u => new UserListDto
-                {
-                    Id = u.Id,
-                    Email = u.Email,
-                    Nickname = u.Nickname,
-                    LastLogin = u.LastLogin,
-                    Type = u.Type
-                })
-                .ToListAsync();
-            return Ok(users);
-        }
-        catch (Exception e)
-        {
-            _logger.Log("Chyba při vykonávání akce GetUsers endpointu.", e);
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        }
-    }
-
-    /// <summary>
-    /// Vrátí seznam všech uživatelů s možností stránkování
+    /// Vrátí netrackovaný seznam všech uživatelů s možností stránkování
     /// </summary>
     /// <param name="page"></param>
     /// <returns></returns>
@@ -77,6 +47,7 @@ public class UsersController : ControllerBase
         {
             var pageSize = 50;
             var query = userManager.Users
+                .AsNoTracking()
                 .Where(u => u.Type != UserType.Deleted)
                 .OrderBy(u => u.Nickname);
 

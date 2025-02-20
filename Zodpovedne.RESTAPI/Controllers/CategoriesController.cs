@@ -21,7 +21,7 @@ public class CategoriesController : ControllerBase
     }
 
     /// <summary>
-    /// Vrátí seznam všech kategorií seřazený podle DisplayOrder
+    /// Vrátí seznam všech kategorií (netrackovaný) seřazený podle DisplayOrder
     /// Tento endpoint může volat kdokoliv (i nepřihlášený uživatel)
     /// </summary>
     [HttpGet]
@@ -30,6 +30,7 @@ public class CategoriesController : ControllerBase
         try
         {
             var categories = await dbContext.Categories
+                .AsNoTracking()
                 .OrderBy(c => c.DisplayOrder)
                 .Select(c => new CategoryDto
                 {
@@ -51,7 +52,7 @@ public class CategoriesController : ControllerBase
     }
 
     /// <summary>
-    /// Vrátí detail konkrétní kategorie podle jejího kódu
+    /// Vrátí netrackovaný detail konkrétní kategorie podle jejího kódu
     /// </summary>
     [HttpGet("{code}")]
     public async Task<ActionResult<CategoryDto>> GetCategoryByCode(string code)
@@ -59,6 +60,7 @@ public class CategoriesController : ControllerBase
         try
         {
             var category = await dbContext.Categories
+                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Code == code);
 
             if (category == null)
