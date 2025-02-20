@@ -408,6 +408,7 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     [HttpPut("authenticated-user/password")]
     public async Task<IActionResult> UpdateAuthenticatedUserPassword(ChangePasswordModelDto model)
     {
@@ -442,6 +443,7 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     [HttpPost("token")]
     public async Task<IActionResult> CreateToken(LoginModelDto model)
     {

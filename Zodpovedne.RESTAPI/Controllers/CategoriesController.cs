@@ -24,6 +24,8 @@ public class CategoriesController : ControllerBase
     /// Vrátí seznam všech kategorií (netrackovaný) seřazený podle DisplayOrder
     /// Tento endpoint může volat kdokoliv (i nepřihlášený uživatel)
     /// </summary>
+    // Cachování seznamu všech kategorií pro nepřihlášené uživatele na 10 sekund
+    [ResponseCache(Duration = 10)]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
     {
@@ -54,6 +56,8 @@ public class CategoriesController : ControllerBase
     /// <summary>
     /// Vrátí netrackovaný detail konkrétní kategorie podle jejího kódu
     /// </summary>
+    // Cachování konkrétního (pro každý code) detailu kategorie pro nepřihlášené uživatele na 10 sekund
+    [ResponseCache(Duration = 10)]
     [HttpGet("{code}")]
     public async Task<ActionResult<CategoryDto>> GetCategoryByCode(string code)
     {

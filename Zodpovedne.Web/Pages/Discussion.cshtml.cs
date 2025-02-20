@@ -258,7 +258,7 @@ public class DiscussionModel : BasePageModel
         // Zavolání endpointu pro smazání
         var response = await client.DeleteAsync($"{ApiBaseUrl}/discussions/{Discussion.Id}");
 
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
             // V pøípadì chyby pøidáme chybovou zprávu
             _logger.Log($"Nepodaøilo se odeslat požadavek na smazání diskuze dle Id {Discussion.Id}");

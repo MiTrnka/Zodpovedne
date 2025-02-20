@@ -58,6 +58,14 @@ namespace Zodpovedne.RESTAPI
                 return;
             }
 
+            // Registrace služeb pro response caching, nastavení se týká celé aplikace pro všechny endpointy oznaèené atributem [ResponseCache]
+            builder.Services.AddResponseCaching(options =>
+            {
+                // Maximální velikost jedné položky v cache je 10 MB. Pokud by nìjaká HTTP odpovìï mìla vìtší velikost, nebude cachována.
+                options.MaximumBodySize = 10 * 1024 * 1024;
+                // celková maximální velikost všech položek v cache je 100 MB. Když tento limit bude pøekroèen, nejstarší nebo nejménì používané položky budou odstranìny z cache.
+                options.SizeLimit = 100 * 1024 * 1024;
+            });
 
             // Registrace služeb z projektu Data
             builder.Services.AddIdentityInfrastructure(builder.Configuration);
@@ -168,6 +176,28 @@ namespace Zodpovedne.RESTAPI
             {
                 app.UseHttpsRedirection();
             }
+
+            // Pøidání middleware pro response caching
+            app.UseResponseCaching();
+            // Middleware pro nastavení cache headers
+            app.Use(async (context, next) =>
+            {
+                // Výchozí cache control hodnoty
+                context.Response.GetTypedHeaders().CacheControl =
+                    new Microsoft.Net.Http.Headers.CacheControlHeaderValue()
+                    {
+                        // Pøidá do http hlavièky Cache-Control: public, max-age=2
+                        // I klientské prohlížeèe, veøejné proxyservery a cdn mohou cachovat odpovìï
+                        Public = true,
+
+                        // defaultní doba života v takovéto keší (prohlíže, cdn...) cache je 1 sekunda, dobu pak nastavím u konkrétních endpointù
+                        // napø: [ResponseCache(Duration = 360)], které nastaví èas uchování jak na klientovi, tak na serveru
+                        MaxAge = TimeSpan.FromSeconds(1)
+                    };
+
+                await next();
+            });
+
             app.UseCors("AllowSpecificOrigins");
             app.UseAuthentication();
             app.UseAuthorization();
