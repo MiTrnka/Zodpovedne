@@ -51,7 +51,7 @@
                             <div class="mt-3">
                                 <form method="post" asp-page-handler="ChangeCategory" onsubmit="return confirmCategoryChange()">
                                     <div class="input-group">
-                                        <select asp-for="SelectedCategoryId" class="form-select">
+                                        <select id="categorySelect" name="newCategoryId" class="form-select">
                                             <option value="">-- Vyberte kategorii --</option>
                                             @foreach (var category in Model.AllCategories)
                                             {

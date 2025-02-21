@@ -70,12 +70,6 @@ public class DiscussionModel : BasePageModel
     public List<CategoryDto> AllCategories { get; private set; } = new();
 
     /// <summary>
-    /// ID vybrané kategorie pøi pøesouvání diskuze pod jinou kategorii
-    /// </summary>
-    [BindProperty]
-    public int? SelectedCategoryId { get; set; }
-
-    /// <summary>
     /// Model pro vytvoøení nového komentáøe
     /// Použije se jak pro root komentáøe, tak pro odpovìdi
     /// </summary>
@@ -347,9 +341,9 @@ public class DiscussionModel : BasePageModel
     /// Handler pro AJAX požadavek na zmìnu kategorie diskuze ze souèasné na tu v property SelectedCategoryId
     /// </summary>
     /// <returns></returns>
-    public async Task<IActionResult> OnPostChangeCategoryAsync()
+    public async Task<IActionResult> OnPostChangeCategoryAsync(int newCategoryId)
     {
-        if (!IsAdmin || SelectedCategoryId is null)
+        if (!IsAdmin)
         {
             return RedirectToPage();
         }
@@ -372,7 +366,7 @@ public class DiscussionModel : BasePageModel
 
         // Nyní máme ID diskuze, mùžeme zavolat API pro zmìnu kategorie
         var response = await client.PutAsync(
-            $"{ApiBaseUrl}/discussions/{basicDiscussionInfoDto.Id}/change-category/{SelectedCategoryId}",
+            $"{ApiBaseUrl}/discussions/{basicDiscussionInfoDto.Id}/change-category/{newCategoryId}",
             null
         );
         if (!response.IsSuccessStatusCode)

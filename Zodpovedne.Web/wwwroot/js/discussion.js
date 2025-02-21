@@ -358,7 +358,7 @@ async function deleteComment(discussionId, commentId) {
 
 // Funkce pro potvrzení změny kategorie diskuze (admin má tuto možnost na detailu diskuze, tato funkce je je pro závěrečné potvrzení)
 function confirmCategoryChange() {
-    const select = document.getElementById('SelectedCategoryId');
+    const select = document.getElementById('categorySelect');
     if (!select) return true; // Pokud element neexistuje, necháme formulář odeslat
 
     const selectedOption = select.options[select.selectedIndex];
