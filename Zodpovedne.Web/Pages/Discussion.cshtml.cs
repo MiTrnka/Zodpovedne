@@ -204,27 +204,24 @@ public class DiscussionModel : BasePageModel
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
-        // Naèteme znovu detail diskuze (1. stránka) pro pøípad, že se mezitím zmìnil
-        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}?page=1&pageSize={PageSize}");
+        // Nejprve naèteme detail diskuze, abychom získali její ID
+        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/basic-info/by-code/{DiscussionCode}");
         if (!discussionResponse.IsSuccessStatusCode)
         {
-            _logger.Log($"Nepodaøilo se naèíst detail diskuze podlé kódu {DiscussionCode} pøi pøidávání komentáøe");
-            ErrorMessage = "Omlouváme se, ale komentáø se nepodaøilo vložit.";
+            ErrorMessage = "Diskuzi se nepodaøilo naèíst.";
             return Page();
         }
-
-        Discussion = await discussionResponse.Content.ReadFromJsonAsync<DiscussionDetailDto>();
-        if (Discussion == null)
+        var basicDiscussionInfoDto = await discussionResponse.Content.ReadFromJsonAsync<BasicDiscussionInfoDto>();
+        if (basicDiscussionInfoDto == null)
         {
-            _logger.Log($"Nepodaøilo se naèíst detail diskuze podlé kódu {DiscussionCode} pøi pøidávání komentáøe");
-            ErrorMessage = "Omlouváme se, ale komentáø se nepodaøilo vložit.";
+            ErrorMessage = "Diskuzi se nepodaøilo naèíst.";
             return Page();
         }
 
         // Sestavíme URL podle toho, zda jde o odpovìï na komentáø nebo nový root komentáø
         var url = ReplyToCommentId.HasValue
-            ? $"{ApiBaseUrl}/discussions/{Discussion.Id}/comments/{ReplyToCommentId}/replies"
-            : $"{ApiBaseUrl}/discussions/{Discussion.Id}/comments";
+            ? $"{ApiBaseUrl}/discussions/{basicDiscussionInfoDto.Id}/comments/{ReplyToCommentId}/replies"
+            : $"{ApiBaseUrl}/discussions/{basicDiscussionInfoDto.Id}/comments";
 
         // Odešleme požadavek na vytvoøení komentáøe
         var response = await client.PostAsJsonAsync(url, NewComment);
@@ -253,30 +250,35 @@ public class DiscussionModel : BasePageModel
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
-        // Naèteme detail diskuze (1. stránka) pro ovìøení existence
-        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}?page=1&pageSize={PageSize}");
+        // Nejprve naèteme detail diskuze, abychom získali její ID
+        var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/basic-info/by-code/{DiscussionCode}");
         if (!discussionResponse.IsSuccessStatusCode)
         {
-            _logger.Log($"Nepodaøilo se odeslat požadavek na naètení detailu diskuze {DiscussionCode}");
-            ErrorMessage = "Omlouváme se, ale nepodaøilo se smazat diskuzi.";
+            ErrorMessage = "Diskuzi se nepodaøilo naèíst.";
+            return Page();
+        }
+        var basicDiscussionInfoDto = await discussionResponse.Content.ReadFromJsonAsync<BasicDiscussionInfoDto>();
+        if (basicDiscussionInfoDto == null)
+        {
+            ErrorMessage = "Diskuzi se nepodaøilo naèíst.";
             return Page();
         }
 
-        Discussion = await discussionResponse.Content.ReadFromJsonAsync<DiscussionDetailDto>();
-        if (Discussion == null)
-            return NotFound();
-
-        // Kontrola oprávnìní
-        if (!CanEditDiscussion)
-            return Forbid();
+        // Kontrola oprávnìní na smazání diskuze
+        if (!(IsAdmin || basicDiscussionInfoDto.AuthorId == CurrentUserId))
+        {
+            _logger.Log($"Uživatel {CurrentUserId} nemá oprávnìní na smazání diskuze {basicDiscussionInfoDto.Id}: {basicDiscussionInfoDto.Title}");
+            ErrorMessage = "Nemáte oprávnìní na smazání této diskuze.";
+            return Page();
+        }
 
         // Zavolání endpointu pro smazání
-        var response = await client.DeleteAsync($"{ApiBaseUrl}/discussions/{Discussion.Id}");
+        var response = await client.DeleteAsync($"{ApiBaseUrl}/discussions/{basicDiscussionInfoDto.Id}");
 
         if (!response.IsSuccessStatusCode)
         {
             // V pøípadì chyby pøidáme chybovou zprávu
-            _logger.Log($"Nepodaøilo se odeslat požadavek na smazání diskuze dle Id {Discussion.Id}");
+            _logger.Log($"Nepodaøilo se odeslat požadavek na smazání diskuze dle Id {basicDiscussionInfoDto.Id}");
             ErrorMessage = "Omlouváme se, ale nepodaøilo se smazat diskuzi.";
             return Page();
         }
@@ -350,7 +352,7 @@ public class DiscussionModel : BasePageModel
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
-        // Nejprve naèteme detail diskuze, abychom získali ID
+        // Nejprve naèteme detail diskuze, abychom získali její ID
         var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/basic-info/by-code/{DiscussionCode}");
         if (!discussionResponse.IsSuccessStatusCode)
         {

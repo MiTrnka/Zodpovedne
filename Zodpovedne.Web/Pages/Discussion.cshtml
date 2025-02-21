@@ -146,7 +146,7 @@
                             @* Tlačítko pro přepínání typu diskuze mezi Top a Normal (pouze pro adminy) *@
                             @if (Model.IsAdmin && (Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Top))
                             {
-                                <button class="btn @(Model.Discussion.Type == DiscussionType.Top ? "btn-outline-primary" : "btn-primary")"
+                                <button class="btn @(Model.Discussion.Type == DiscussionType.Top ? "btn-outline-primary" : "btn-outline-primary")"
                                         onclick="toggleTopStatus(@Model.Discussion.Id)">
                                     <i class="bi bi-star@(Model.Discussion.Type == DiscussionType.Top ? "-fill" : "")"></i>
                                     @(Model.Discussion.Type == DiscussionType.Top ? "Zrušit" : "Nastavit")
