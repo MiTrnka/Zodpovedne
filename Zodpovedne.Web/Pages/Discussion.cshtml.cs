@@ -363,7 +363,6 @@ public class DiscussionModel : BasePageModel
             ErrorMessage = "Diskuzi se nepodaøilo naèíst.";
             return Page();
         }
-
         var basicDiscussionInfoDto = await discussionResponse.Content.ReadFromJsonAsync<BasicDiscussionInfoDto>();
         if (basicDiscussionInfoDto == null)
         {
@@ -376,26 +375,12 @@ public class DiscussionModel : BasePageModel
             $"{ApiBaseUrl}/discussions/{basicDiscussionInfoDto.Id}/change-category/{SelectedCategoryId}",
             null
         );
-
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
-            // Získání kódu nové kategorie
-            var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{SelectedCategoryId}");
-            if (categoryResponse.IsSuccessStatusCode)
-            {
-                var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>();
-                if (category != null)
-                {
-                    // Pøesmìrování na novou URL s novým kódem kategorie
-                    return RedirectToPage("/Discussion", new { categoryCode = category.Code, discussionCode = DiscussionCode });
-                }
-            }
-
-            // Pokud se nepodaøilo získat novou kategorii, aspoò obnovíme stránku
-            return RedirectToPage();
+            ErrorMessage = "Nepodaøilo se zmìnit kategorii diskuze.";
+            return Page();
         }
 
-        ErrorMessage = "Nepodaøilo se zmìnit kategorii diskuze.";
-        return Page();
+        return RedirectToPage();
     }
 }
