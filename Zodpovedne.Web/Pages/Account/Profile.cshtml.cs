@@ -27,6 +27,9 @@ public class ProfileModel : BasePageModel
     public string? NicknameErrorMessage { get; set; }
     public string? PasswordErrorMessage { get; set; }
 
+    // Pøidání seznamu diskuzí uživatele
+    public List<BasicDiscussionInfoDto> UserDiscussions { get; set; } = new();
+
     public ProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
@@ -41,6 +44,8 @@ public class ProfileModel : BasePageModel
             return RedirectToPage("/Account/Login");
 
         var client = _clientFactory.CreateBearerClient(HttpContext);
+
+        // Naètení profilu uživatele
         var response = await client.GetAsync($"{ApiBaseUrl}/users/authenticated-user");
 
         if (!response.IsSuccessStatusCode)
@@ -56,6 +61,25 @@ public class ProfileModel : BasePageModel
             _logger.Log("Nepodaøilo se naèíst data pøihlášeného uživatele z response.");
             ErrorMessage = "Omlouváme se, nepodaøilo se naèíst Váš profil.";
             return Page();
+        }
+
+        // Naètení diskuzí uživatele - zatím neexistující endpoint, musíme ho vytvoøit
+        try
+        {
+            var discussionsResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/user-discussions");
+            if (discussionsResponse.IsSuccessStatusCode)
+            {
+                var userDiscussions = await discussionsResponse.Content.ReadFromJsonAsync<List<BasicDiscussionInfoDto>>();
+                if (userDiscussions != null)
+                {
+                    UserDiscussions = userDiscussions;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
+            // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst diskuze
         }
 
         return Page();

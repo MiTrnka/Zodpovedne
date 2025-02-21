@@ -68,6 +68,7 @@ public class DiscussionDetailDto
     public string CategoryName { get; set; } = "";
     public int CategoryId { get; set; }
     public string CategoryCode { get; set; } = "";
+    public string DiscussionCode { get; set; } = "";
     public string AuthorNickname { get; set; } = "";
     public string AuthorId { get; set; } = "";
     public DateTime CreatedAt { get; set; }
@@ -88,6 +89,7 @@ public class BasicDiscussionInfoDto
     public string CategoryName { get; set; } = "";
     public int CategoryId { get; set; }
     public string CategoryCode { get; set; } = "";
+    public string DiscussionCode { get; set; } = "";
     public string AuthorNickname { get; set; } = "";
     public string AuthorId { get; set; } = "";
     public DateTime CreatedAt { get; set; }

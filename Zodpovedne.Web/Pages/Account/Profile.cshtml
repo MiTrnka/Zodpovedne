@@ -37,6 +37,44 @@
             </div>
         </div>
 
+        <!-- Sekce s diskuzemi uživatele -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" type="button" id="toggle-discussions">
+                        Moje diskuze <i class="bi bi-chevron-down" id="discussions-chevron"></i>
+                    </button>
+                </h5>
+            </div>
+            <div class="card-body" id="user-discussions" style="display: none;">
+                @if (Model.UserDiscussions.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var discussion in Model.UserDiscussions)
+                        {
+                            <a href="/categories/@discussion.CategoryCode/@discussion.DiscussionCode" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@discussion.Title</h5>
+                                    <small>@discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                                </div>
+                                <p class="mb-1">Kategorie: @discussion.CategoryName</p>
+                                <small>
+                                    <i class="bi bi-eye"></i> @discussion.ViewCount zobrazení
+                                    <span class="mx-2">•</span>
+                                    <i class="bi bi-calendar"></i> Vytvořeno: @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                </small>
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Zatím jste nevytvořili žádné diskuze.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Sekce pro změnu emailu -->
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">Změna emailu</h5>
@@ -56,6 +94,7 @@
             </div>
         </div>
 
+        <!-- Sekce pro změnu přezdívky -->
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">Změna přezdívky</h5>
@@ -75,6 +114,7 @@
             </div>
         </div>
 
+        <!-- Sekce pro změnu hesla -->
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">Změna hesla</h5>
@@ -99,3 +139,28 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <script>
+        // Funkce pro rozbalení/sbalení sekce s diskuzemi
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleButton = document.getElementById('toggle-discussions');
+            const discussionsContainer = document.getElementById('user-discussions');
+            const chevronIcon = document.getElementById('discussions-chevron');
+
+            toggleButton.addEventListener('click', function () {
+                if (discussionsContainer.style.display === 'none') {
+                    discussionsContainer.style.display = 'block';
+                    chevronIcon.classList.remove('bi-chevron-down');
+                    chevronIcon.classList.add('bi-chevron-up');
+                } else {
+                    discussionsContainer.style.display = 'none';
+                    chevronIcon.classList.remove('bi-chevron-up');
+                    chevronIcon.classList.add('bi-chevron-down');
+                }
+            });
+        });
+    </script>
+}

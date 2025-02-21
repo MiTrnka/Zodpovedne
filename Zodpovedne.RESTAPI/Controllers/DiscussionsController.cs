@@ -179,6 +179,56 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
+    /// Vrátí netrackovaný seznam diskuzí aktuálně přihlášeného uživatele
+    /// </summary>
+    /// <returns>Seznam základních informací o diskuzích uživatele</returns>
+    [Authorize]
+    [HttpGet("user-discussions")]
+    public async Task<ActionResult<IEnumerable<BasicDiscussionInfoDto>>> GetUserDiscussions()
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele z tokenu
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            // Získání diskuzí uživatele a seřazení podle data aktualizace
+            var discussions = await dbContext.Discussions
+                .AsNoTracking()
+                .Where(d => d.UserId == userId)
+                .Where(d => d.Type != DiscussionType.Deleted)
+                .Include(d => d.Category)
+                .OrderByDescending(d => d.UpdatedAt)
+                .Select(d => new BasicDiscussionInfoDto
+                {
+                    Id = d.Id,
+                    Title = d.Title,
+                    Content = d.Content,
+                    ImagePath = d.ImagePath,
+                    CategoryName = d.Category.Name,
+                    CategoryId = d.CategoryId,
+                    CategoryCode = d.Category.Code,
+                    DiscussionCode = d.Code,
+                    AuthorNickname = d.User.Nickname,
+                    AuthorId = d.UserId,
+                    CreatedAt = d.CreatedAt,
+                    UpdatedAt = d.UpdatedAt,
+                    ViewCount = d.ViewCount,
+                    Type = d.Type
+                })
+                .ToListAsync();
+
+            return Ok(discussions);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetUserDiscussions endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
     /// Načte netrackovaný kompletní detail diskuze podle jejího ID včetně všech souvisejících dat jako jsou komentáře, odpovědi, lajky a informace o autorech.
     /// Endpoint lze použít pro zobrazení diskuze, komentářů a lajků s respektováním oprávnění přihlášeného uživatele.
     /// </summary>
@@ -259,6 +309,7 @@ public class DiscussionsController : ControllerBase
                 ImagePath = discussion.ImagePath,
                 CategoryName = discussion.Category.Name,
                 CategoryCode = discussion.Category.Code,
+                DiscussionCode = discussion.Code,
                 CategoryId = discussion.CategoryId,
                 AuthorNickname = discussion.User.Nickname,
                 AuthorId = discussion.UserId,
@@ -357,6 +408,7 @@ public class DiscussionsController : ControllerBase
                     CategoryName = d.Category.Name,
                     CategoryId = d.CategoryId,
                     CategoryCode = d.Category.Code,
+                    DiscussionCode = d.Code,
                     AuthorNickname = d.User.Nickname,
                     AuthorId = d.UserId,
                     CreatedAt = d.CreatedAt,
@@ -927,55 +979,6 @@ public class DiscussionsController : ControllerBase
             _logger.Log("Chyba při vykonávání akce AddCommentLike endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
-    }
-
-    /// <summary>
-    /// Tato pomocná metoda převádí entitu Discussion na DTO objekt, který bude odeslán klientovi.
-    /// Zpracovává všechna související data včetně komentářů a informací o like.
-    /// </summary>
-    /// <param name="discussion">Entita diskuze s načtenými souvisejícími daty (Category, User, Comments, Likes)</param>
-    /// <param name="userId">ID aktuálně přihlášeného uživatele, nebo null pokud není nikdo přihlášen</param>
-    /// <param name="isAdmin">True pokud je přihlášený uživatel v roli Admin</param>
-    /// <returns>DTO objekt obsahující všechny potřebné informace pro zobrazení detailu diskuze</returns>
-    private DiscussionDetailDto MapDiscussionToDetailDto(Discussion discussion, string? userId, bool isAdmin)
-    {
-        // Zjistíme, zda aktuální uživatel už dal like této diskuzi
-        var userLikes = discussion.Likes.Any(l => l.UserId == userId);
-
-        // Uživatel může dát like pokud:
-        // - je admin (může dát neomezený počet liků)
-        // - nebo je přihlášen, není autorem diskuze a ještě nedal like
-        var canLike = isAdmin || (!string.IsNullOrEmpty(userId) &&
-            discussion.UserId != userId && !userLikes);
-
-        return new DiscussionDetailDto
-        {
-            Id = discussion.Id,
-            Title = discussion.Title,
-            Content = discussion.Content,
-            ImagePath = discussion.ImagePath,
-            CategoryName = discussion.Category.Name,
-            CategoryId = discussion.CategoryId,
-            AuthorNickname = discussion.User.Nickname,
-            AuthorId = discussion.UserId,
-            CreatedAt = discussion.CreatedAt,
-            UpdatedAt = discussion.UpdatedAt,
-            ViewCount = discussion.ViewCount,
-            Type = discussion.Type,
-            // Informace o like pro tuto diskuzi
-            Likes = new LikeInfoDto
-            {
-                LikeCount = discussion.Likes.Count,    // Celkový počet liků
-                HasUserLiked = userLikes,              // Zda přihlášený uživatel dal like
-                CanUserLike = canLike                  // Zda může přihlášený uživatel dát like
-            },
-            // Mapujeme jen root komentáře (bez reakcí)
-            // Reakce budou mapovány v rámci každého komentáře
-            Comments = discussion.Comments
-                .Where(c => c.ParentCommentId == null)
-                .Select(c => MapCommentToDto(c, userId, isAdmin))
-                .ToList()
-        };
     }
 
     /// <summary>
