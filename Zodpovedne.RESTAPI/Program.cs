@@ -10,6 +10,7 @@ using Zodpovedne.Data.Extensions;
 using Zodpovedne.Data.Interfaces;
 using Microsoft.OpenApi.Models;
 using Zodpovedne.Logging;
+using System.Net;
 
 namespace Zodpovedne.RESTAPI
 {
@@ -211,12 +212,12 @@ namespace Zodpovedne.RESTAPI
                 await identityDataSeeder.InitializeRolesAndAdminAsync();
             }
 
-            // Po inicializaci rolí a admin úètu
-            /*using (var scope = app.Services.CreateScope())
+            //Po inicializaci rolí a admin úètu
+            using (var scope = app.Services.CreateScope())
             {
                 var testDataSeeder = scope.ServiceProvider.GetRequiredService<ITestDataSeeder>();
-                //await testDataSeeder.SeedTestDataAsync();
-            }*/
+                await testDataSeeder.SeedTestDataAsync();
+            }
 
             app.Run();
         }
