@@ -109,7 +109,8 @@ namespace Zodpovedne.RESTAPI
                     {
                         policy.WithOrigins(
                                 "http://localhost:5214",
-                                "http://192.168.0.213:5214"
+                                "http://192.168.0.213:5214",
+                                "http://192.168.0.214:5214"
                             )
                             .AllowAnyMethod()
                             .AllowAnyHeader()
