@@ -359,13 +359,16 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/Zodpovedne.RESTAPI/appsettings.json
-/Zodpovedne.Data/appsettings.json
 
-# Logy z adresářů Logs
+# Logs
 /Zodpovedne.RESTAPI/Logs/
 /Zodpovedne.Web/Logs/
-/Zodpovedne.RESTAPI/Properties/launchSettings.json
 
+# appSettings.json
+/Zodpovedne.Data/appsettings.json
+/Zodpovedne.RESTAPI/appsettings.json
+/Zodpovedne.Web/appsettings.json
+
+# louncheSettings.json
 /Zodpovedne.RESTAPI/Properties/launchSettings.json
 /Zodpovedne.Web/Properties/launchSettings.json
