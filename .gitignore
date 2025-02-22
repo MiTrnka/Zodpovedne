@@ -365,3 +365,4 @@ FodyWeavers.xsd
 # Logy z adresářů Logs
 /Zodpovedne.RESTAPI/Logs/
 /Zodpovedne.Web/Logs/
+/Zodpovedne.RESTAPI/Properties/launchSettings.json
