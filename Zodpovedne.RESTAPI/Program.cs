@@ -212,11 +212,11 @@ namespace Zodpovedne.RESTAPI
             }
 
             // Po inicializaci rolí a admin úètu
-            using (var scope = app.Services.CreateScope())
+            /*using (var scope = app.Services.CreateScope())
             {
                 var testDataSeeder = scope.ServiceProvider.GetRequiredService<ITestDataSeeder>();
                 //await testDataSeeder.SeedTestDataAsync();
-            }
+            }*/
 
             app.Run();
         }
