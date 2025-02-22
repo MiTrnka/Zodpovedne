@@ -491,6 +491,206 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
+    /// Provede vyčištění databáze od záznamů označených jako smazané (Delete)
+    /// Tato operace je dostupná pouze pro administrátory.
+    /// </summary>
+    /// <returns>Informace o počtech smazaných entit</returns>
+    [HttpPost("cleanup-deleted")]
+    [Authorize(Policy = "RequireAdminRole")]
+    public async Task<ActionResult<CleanupResultDto>> CleanupDeletedData()
+    {
+        try
+        {
+            using var transaction = await dbContext.Database.BeginTransactionAsync();
+
+            var result = new CleanupResultDto();
+
+            try
+            {
+                // 1. Smazání lajků na komentářích se stavem Deleted
+                var deletedCommentLikes = await dbContext.CommentLikes
+                    .Where(cl => cl.Comment.Type == CommentType.Deleted)
+                    .ExecuteDeleteAsync();
+
+                result.DeletedCommentLikes = deletedCommentLikes;
+
+                // 2. Smazání lajků na diskuzích se stavem Deleted
+                var deletedDiscussionLikes = await dbContext.DiscussionLikes
+                    .Where(dl => dl.Discussion.Type == DiscussionType.Deleted)
+                    .ExecuteDeleteAsync();
+
+                result.DeletedDiscussionLikes = deletedDiscussionLikes;
+
+                // 3. Smazání odpovědí na komentáře (reakční komentáře) se stavem Deleted
+                var deletedReplies = await dbContext.Comments
+                    .Where(c => c.Type == CommentType.Deleted && c.ParentCommentId != null)
+                    .ExecuteDeleteAsync();
+
+                result.DeletedCommentReplies = deletedReplies;
+
+                // 4. Smazání root komentářů se stavem Deleted
+                var deletedRootComments = await dbContext.Comments
+                    .Where(c => c.Type == CommentType.Deleted && c.ParentCommentId == null)
+                    .ExecuteDeleteAsync();
+
+                result.DeletedRootComments = deletedRootComments;
+
+                // 5. Příprava na smazání uživatelů se stavem Deleted
+                // Získáme ID uživatelů, které budeme mazat
+                var usersToDelete = await dbContext.Users
+                    .Where(u => u.Type == UserType.Deleted)
+                    .Select(u => u.Id)
+                    .ToListAsync();
+
+                // Pro každého uživatele ke smazání musíme nejprve odstranit všechna jeho data
+                int deletedUserDiscussions = 0;
+                int deletedUserComments = 0;
+
+                foreach (var userId in usersToDelete)
+                {
+                    // Smazání všech lajků komentářů, které uživatel vytvořil (i v cizích diskuzích)
+                    await dbContext.CommentLikes
+                        .Where(cl => cl.Comment.UserId == userId)
+                        .ExecuteDeleteAsync();
+
+                    // Smazání všech lajků, které uživatel dal na komentáře
+                    await dbContext.CommentLikes
+                        .Where(cl => cl.UserId == userId)
+                        .ExecuteDeleteAsync();
+
+                    // Smazání všech lajků, které uživatel dal na diskuze
+                    await dbContext.DiscussionLikes
+                        .Where(dl => dl.UserId == userId)
+                        .ExecuteDeleteAsync();
+
+                    // Smazání všech diskuzí uživatele a jejich obsahu
+                    var discussionIds = await dbContext.Discussions
+                        .Where(d => d.UserId == userId)
+                        .Select(d => d.Id)
+                        .ToListAsync();
+
+                    foreach (var discussionId in discussionIds)
+                    {
+                        // Smazání všech lajků na komentářích v diskuzi
+                        await dbContext.CommentLikes
+                            .Where(cl => cl.Comment.DiscussionId == discussionId)
+                            .ExecuteDeleteAsync();
+
+                        // Smazání všech komentářů v diskuzi
+                        await dbContext.Comments
+                            .Where(c => c.DiscussionId == discussionId)
+                            .ExecuteDeleteAsync();
+
+                        // Smazání všech lajků na diskuzi
+                        await dbContext.DiscussionLikes
+                            .Where(dl => dl.DiscussionId == discussionId)
+                            .ExecuteDeleteAsync();
+                    }
+
+                    // Smazání všech odpovědí na komentáře (reakční komentáře) vytvořené uživatelem
+                    // Poznámka: Musíme nejprve smazat všechny reakce, protože na ně mohou odkazovat i jiné komentáře
+                    var deletedUserReplies = await dbContext.Comments
+                        .Where(c => c.UserId == userId && c.ParentCommentId != null)
+                        .ExecuteDeleteAsync();
+
+                    deletedUserComments += deletedUserReplies;
+
+                    // Smazání všech root komentářů vytvořených uživatelem, ale nejprve musíme odstranit všechny odpovědi na ně
+                    // Nejprve najdeme ID všech root komentářů uživatele
+                    var rootCommentIds = await dbContext.Comments
+                        .Where(c => c.UserId == userId && c.ParentCommentId == null)
+                        .Select(c => c.Id)
+                        .ToListAsync();
+
+                    // Smazání všech odpovědí na root komentáře uživatele (i od jiných uživatelů)
+                    foreach (var rootCommentId in rootCommentIds)
+                    {
+                        // Nejprve smazat lajky na odpovědích
+                        await dbContext.CommentLikes
+                            .Where(cl => cl.Comment.ParentCommentId == rootCommentId)
+                            .ExecuteDeleteAsync();
+
+                        // Pak smazat samotné odpovědi
+                        var deletedReplies2 = await dbContext.Comments
+                            .Where(c => c.ParentCommentId == rootCommentId)
+                            .ExecuteDeleteAsync();
+
+                        deletedUserComments += deletedReplies2;
+                    }
+
+                    // Nyní můžeme smazat root komentáře
+                    var deletedUserRootComments = await dbContext.Comments
+                        .Where(c => c.UserId == userId && c.ParentCommentId == null)
+                        .ExecuteDeleteAsync();
+
+                    deletedUserComments += deletedUserRootComments;
+
+                    // Nyní můžeme smazat diskuze uživatele
+                    var deletedDiscussions2 = await dbContext.Discussions
+                        .Where(d => d.UserId == userId)
+                        .ExecuteDeleteAsync();
+
+                    deletedUserDiscussions += deletedDiscussions2;
+                }
+
+                result.DeletedUserDiscussions = deletedUserDiscussions;
+                result.DeletedUserComments = deletedUserComments;
+
+                // 6. Smazání diskuzí se stavem Deleted (které ještě nebyly smazány v předchozím kroku)
+                var deletedDiscussions = await dbContext.Discussions
+                    .Where(d => d.Type == DiscussionType.Deleted)
+                    .ExecuteDeleteAsync();
+
+                result.DeletedDiscussions = deletedDiscussions;
+
+                // 7. Nyní můžeme smazat samotné uživatele a jejich identity entity
+                foreach (var userId in usersToDelete)
+                {
+                    // Smazání tokenů
+                    await dbContext.UserTokens
+                        .Where(ut => ut.UserId == userId)
+                        .ExecuteDeleteAsync();
+
+                    // Smazání claimů
+                    await dbContext.UserClaims
+                        .Where(uc => uc.UserId == userId)
+                        .ExecuteDeleteAsync();
+
+                    // Smazání loginů
+                    await dbContext.UserLogins
+                        .Where(ul => ul.UserId == userId)
+                        .ExecuteDeleteAsync();
+                }
+
+                // Nakonec smazat samotné uživatele
+                var deletedUsers = await dbContext.Users
+                    .Where(u => u.Type == UserType.Deleted)
+                    .ExecuteDeleteAsync();
+
+                result.DeletedUsers = deletedUsers;
+
+                // Potvrzení transakce
+                await transaction.CommitAsync();
+
+                _logger.Log($"Administrátor {User.FindFirstValue(ClaimTypes.NameIdentifier)} provedl vyčištění databáze");
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.Log("Chyba při čištění databáze", ex);
+                return StatusCode(StatusCodes.Status500InternalServerError, "Nastala chyba při čištění databáze.");
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce CleanupDeletedData endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
     /// Generuje JWT token pro uživatele
     /// </summary>
     /// <param name="user"></param>

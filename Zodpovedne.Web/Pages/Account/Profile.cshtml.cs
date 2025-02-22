@@ -17,18 +17,22 @@ public class ProfileModel : BasePageModel
     [BindProperty]
     public string? NewEmail { get; set; }
 
-    public string? EmailErrorMessage { get; set; }
     [BindProperty]
     public string? CurrentPassword { get; set; }
+
     [BindProperty]
     public string? NewPassword { get; set; }
 
     public UserProfileDto? UserProfile { get; set; }
     public string? NicknameErrorMessage { get; set; }
+    public string? EmailErrorMessage { get; set; }
     public string? PasswordErrorMessage { get; set; }
 
     // Pøidání seznamu diskuzí uživatele
     public List<BasicDiscussionInfoDto> UserDiscussions { get; set; } = new();
+
+    // Výsledek èištìní databáze
+    public CleanupResultDto? CleanupResult { get; set; }
 
     public ProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
@@ -63,7 +67,7 @@ public class ProfileModel : BasePageModel
             return Page();
         }
 
-        // Naètení diskuzí uživatele - zatím neexistující endpoint, musíme ho vytvoøit
+        // Naètení diskuzí uživatele
         try
         {
             var discussionsResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/user-discussions");
@@ -82,6 +86,44 @@ public class ProfileModel : BasePageModel
             // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst diskuze
         }
 
+        return Page();
+    }
+
+    /// <summary>
+    /// Handler pro tlaèítko èištìní databáze (pouze pro adminy)
+    /// </summary>
+    public async Task<IActionResult> OnPostCleanupDatabaseAsync()
+    {
+        if (!IsAdmin)
+        {
+            ErrorMessage = "Pro èištìní databáze musíte být administrátor.";
+            return Page();
+        }
+
+        var client = _clientFactory.CreateBearerClient(HttpContext);
+
+        try
+        {
+            var response = await client.PostAsync($"{ApiBaseUrl}/users/cleanup-deleted", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                CleanupResult = await response.Content.ReadFromJsonAsync<CleanupResultDto>();
+                StatusMessage = $"Databáze byla úspìšnì vyèištìna. Celkem smazáno {CleanupResult?.TotalDeleted} záznamù.";
+            }
+            else
+            {
+                ErrorMessage = "Pøi èištìní databáze došlo k chybì.";
+                _logger.Log($"Chyba pøi volání API pro èištìní databáze. Status: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Pøi èištìní databáze došlo k chybì.";
+            _logger.Log("Chyba pøi èištìní databáze", ex);
+        }
+
+        await OnGetAsync(); // Znovu naèteme data profilu
         return Page();
     }
 
