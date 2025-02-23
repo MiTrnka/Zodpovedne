@@ -18,14 +18,14 @@ namespace Zodpovedne.Controllers;
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
+    private readonly IDataContext dbContext;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
-    private readonly ApplicationDbContext dbContext;
     private readonly FileLogger _logger;
 
     private readonly IConfiguration configuration;
 
-    public UsersController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger)
+    public UsersController(IDataContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger)
     {
         this.userManager = userManager;
         this.signInManager = signInManager;

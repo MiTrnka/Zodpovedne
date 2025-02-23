@@ -9,10 +9,38 @@ using Zodpovedne.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Zodpovedne.Data.Data;
 
-public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+// Rozhraní definující kontrakt pro přístup k datům
+// Všechny potřebné DbSety a metody pro práci s daty
+// Díky tomuto rozhraní může RESTAPI projekt pracovat s daty bez přímé závislosti na EF Core
+public interface IDataContext
+{
+    // Přidáme vlastnost Database
+    DatabaseFacade Database { get; }
+
+    // DbSety pro všechny entity, které potřebujeme
+    DbSet<Category> Categories { get; }
+    DbSet<Discussion> Discussions { get; }
+    DbSet<Comment> Comments { get; }
+    DbSet<DiscussionLike> DiscussionLikes { get; }
+    DbSet<CommentLike> CommentLikes { get; }
+    DbSet<ApplicationUser> Users { get; }
+    DbSet<IdentityUserToken<string>> UserTokens { get; }
+    DbSet<IdentityUserClaim<string>> UserClaims { get; }
+    DbSet<IdentityUserLogin<string>> UserLogins { get; }
+    DbSet<IdentityUserRole<string>> UserRoles { get; }
+    DbSet<IdentityRole> Roles { get; }
+    DbSet<IdentityRoleClaim<string>> RoleClaims { get; }
+
+    // Metody pro ukládání změn
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    int SaveChanges();
+}
+
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IDataContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)

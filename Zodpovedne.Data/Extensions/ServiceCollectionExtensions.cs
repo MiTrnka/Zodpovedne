@@ -10,7 +10,7 @@ using Zodpovedne.Data.Data;
 namespace Zodpovedne.Data.Extensions;
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    /*public static IServiceCollection AddIdentityInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
@@ -31,5 +31,5 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITestDataSeeder, TestDataSeeder>();
 
         return services;
-    }
+    }*/
 }

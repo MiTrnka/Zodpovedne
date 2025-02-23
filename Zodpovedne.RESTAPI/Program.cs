@@ -7,10 +7,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
 using Zodpovedne.Data.Extensions;
-using Zodpovedne.Data.Interfaces;
 using Microsoft.OpenApi.Models;
 using Zodpovedne.Logging;
-using System.Net;
 
 namespace Zodpovedne.RESTAPI
 {
@@ -19,16 +17,6 @@ namespace Zodpovedne.RESTAPI
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Program skonèil s chybou: {ex.Message}");
-                ex.ToString();
-                return;
-            }
 
             // Kontrola existence konfiguraèního souboru a jeho položek
             if (builder.Configuration == null)
@@ -69,7 +57,10 @@ namespace Zodpovedne.RESTAPI
             });
 
             // Registrace služeb z projektu Data
-            builder.Services.AddIdentityInfrastructure(builder.Configuration);
+            //builder.Services.AddIdentityInfrastructure(builder.Configuration);
+
+            // Konfigurace/registrace datové vrstvy (DBContext, Identity)
+            builder.Services.AddDataLayer();
 
             // Konfigurace JWT autentizace
             builder.Services.AddAuthentication(options => {

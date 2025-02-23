@@ -366,6 +366,7 @@ FodyWeavers.xsd
 
 # appSettings.json
 /Zodpovedne.Data/appsettings.json
+/Zodpovedne.Data/appsettings.data.json
 /Zodpovedne.RESTAPI/appsettings.json
 /Zodpovedne.Web/appsettings.json
 
