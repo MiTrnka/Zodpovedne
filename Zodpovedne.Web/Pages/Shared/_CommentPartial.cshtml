@@ -18,6 +18,13 @@
             {
                 @* <span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span> *@
             }
+            @* Má tento rootový komentář nějakou novou reakci a zároveň se na to dívá autor rootového komentáře? *@
+            @if (Model.HasNewReplies && Model.AuthorNickname == Context.Session.GetString("UserNickname"))
+            {
+                <span class="badge bg-primary ms-2" title="Nové odpovědi od vašeho posledního přihlášení">
+                    <i class="bi bi-chat-dots-fill"></i> Nové
+                </span>
+            }
         </div>
 
         @* Pravá část - tlačítka pro akce *@

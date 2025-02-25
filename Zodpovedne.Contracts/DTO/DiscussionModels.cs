@@ -110,6 +110,7 @@ public class CommentDto
     public CommentType Type { get; set; }
     public ICollection<CommentDto> Replies { get; set; } = new List<CommentDto>();
     public LikeInfoDto Likes { get; set; } = new();
+    public bool HasNewReplies { get; set; }
 }
 
 // Pro vytvoření nového komentáře

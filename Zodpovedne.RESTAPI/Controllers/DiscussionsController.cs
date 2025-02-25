@@ -998,6 +998,23 @@ public class DiscussionsController : ControllerBase
         var canLike = isAdmin || (!string.IsNullOrEmpty(userId) &&
             comment.UserId != userId && !userLikes);
 
+        // Zjištění, zda má komentář nové odpovědi od posledního přihlášení autora
+        bool hasNewReplies = false;
+
+        // Pouze pro rootové komentáře, kde je přihlášen autor komentáře
+        if (comment.ParentCommentId == null && comment.UserId == userId)
+        {
+            // Získání informací o přihlášeném uživateli
+            var user = userManager.FindByIdAsync(userId).Result;
+
+            // Kontrola, zda existují nějaké odpovědi novější než předchozí přihlášení
+            if (user?.PreviousLastLogin != null)
+            {
+                hasNewReplies = comment.Replies
+                    .Any(r => r.CreatedAt > user.PreviousLastLogin && r.UserId != userId);
+            }
+        }
+
         return new CommentDto
         {
             Id = comment.Id,
@@ -1014,6 +1031,8 @@ public class DiscussionsController : ControllerBase
                 HasUserLiked = userLikes,            // Zda přihlášený uživatel dal like
                 CanUserLike = canLike                // Zda může přihlášený uživatel dát like
             },
+            // Indikátor nových odpovědí
+            HasNewReplies = hasNewReplies,
             // Rekurzivně mapujeme odpovědi na tento komentář
             // Filtrujeme jen viditelné odpovědi pro aktuálního uživatele
             Replies = comment.Replies
