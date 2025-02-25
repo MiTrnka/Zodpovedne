@@ -31,7 +31,8 @@ public class RegisterModel : BasePageModel
         var response = await client.PostAsJsonAsync($"{ApiBaseUrl}/users/member", Input);
         if (!response.IsSuccessStatusCode)
         {
-            ErrorMessage = "Registrace se nezdaøila. Uživatel s danou pøezdívkou nebo emailem již existuje";
+            string responseError = await response.Content.ReadAsStringAsync();
+            ErrorMessage = "Registrace se nezdaøila. "+ responseError;
             return Page();
         }
 
@@ -55,8 +56,9 @@ public class RegisterModel : BasePageModel
             return Page();
         }
 
-        HttpContext.Session.SetString("JWTToken", result.Token);
-        HttpContext.Session.SetString("UserNickname", result.Nickname);
+        // Pøihlášení uživatele pomocí cookie
+        await Login(result.Token, result.Nickname);
+
         StatusMessage = "Registrace probìhla úspìšnì";
         if (!string.IsNullOrEmpty(ReturnUrl))
             return LocalRedirect(ReturnUrl);

@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 using Zodpovedne.Logging;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using Zodpovedne.Contracts.DTO;
 
 namespace Zodpovedne.Web.Models.Base;
 
@@ -71,11 +73,48 @@ public abstract class BasePageModel : PageModel
     /// </summary>
     public bool HasNextPage { get; protected set; }
 
+    /// <summary>
+    /// Provede session přihlášení uživatele pomocí JWT tokenu a přezdívky
+    /// </summary>
+    /// <param name="token"></param>
+    /// <param name="nickname"></param>
+    /// <returns></returns>
+    public async Task Login(string token, string nickname)
+    {
 
+        // Uložení JWT do session pro pozdější API volání
+        HttpContext.Session.SetString("JWTToken", token);
+        HttpContext.Session.SetString("UserNickname", nickname);
 
+        // Vytvoření cookie autentizace z JWT tokenu
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
 
+        // Extrakce claimů z JWT tokenu pro cookie autentizaci
+        var claims = new List<Claim>();
+        claims.AddRange(jwtToken.Claims);
 
+        // Vytvoření identity pro cookie autentizaci
+        var claimsIdentity = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme
+        );
 
+        // Nastavení vlastností cookie
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = true, // Cookie přežije zavření prohlížeče
+            ExpiresUtc = DateTime.UtcNow.AddHours(12) // Stejná doba jako u JWT
+        };
+
+        // Přihlášení uživatele pomocí cookie
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity),
+            authProperties
+        );
+
+    }
 
     /// <summary>
     /// Handler se volá těsně před zpracováním požadavku na stránku (třeba OnGet, OnPost...) a umožňuje provést akce před zpracováním požadavku

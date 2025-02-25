@@ -11,6 +11,7 @@ using System.Text;
 using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Logging;
+using System.Text.RegularExpressions;
 
 namespace Zodpovedne.Controllers;
 
@@ -120,11 +121,13 @@ public class UsersController : ControllerBase
     {
         try
         {
-            // Kontrola existence stejného emailu a stejného nickname
+            // Kontrola existence stejného emailu a stejného nickname a nepovolených znaků
             if (await userManager.FindByEmailAsync(model.Email) != null)
-                return BadRequest(new { error = $"Email {model.Email} je již používán." });
+                return BadRequest($"Email {model.Email} je již používán.");
+            if (Regex.IsMatch(model.Nickname, @"[<>&]"))
+                return BadRequest(@"Přezdívka obsahuje některý z nepovolených znaků [<>&]");
             if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
-                return BadRequest(new { error = $"Přezdívka {model.Nickname} je již používána." });
+                return BadRequest($"Přezdívka {model.Nickname} je již používána.");
 
             var user = new ApplicationUser
             {
@@ -147,7 +150,7 @@ public class UsersController : ControllerBase
                 return Ok();
             }
 
-            return BadRequest(new { errors = result.Errors });
+            return BadRequest(result.Errors);
         }
         catch (Exception e)
         {
@@ -167,11 +170,14 @@ public class UsersController : ControllerBase
     {
         try
         {
-            // Kontrola existence stejného emailu a stejného nickname
+            // Kontrola existence stejného emailu a stejného nickname a nepovolených znaků
             if (await userManager.FindByEmailAsync(model.Email) != null)
                 return BadRequest(new { error = $"Email {model.Email} je již používán." });
+            if (Regex.IsMatch(model.Nickname, @"[<>&]"))
+                return BadRequest(@"Přezdívka obsahuje některý z nepovolených znaků [<>&]");
             if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
                 return BadRequest(new { error = $"Přezdívka {model.Nickname} je již používána." });
+
 
             var user = new ApplicationUser
             {
@@ -217,7 +223,9 @@ public class UsersController : ControllerBase
             var user = await GetCurrentUserAsync();
             if (user == null) return NotFound();
 
-            // Kontrola existence stejného nickname
+            // Kontrola znaků v nickname a existence stejného nickname
+            if (Regex.IsMatch(model.Nickname, @"[<>&]"))
+                return BadRequest(@"Přezdívka obsahuje některý z nepovolených znaků [<>&]");
             if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
                 return BadRequest("Tato přezdívka je již používána.");
 

@@ -67,39 +67,10 @@ public class LoginModel : BasePageModel
             ErrorMessage = "Omlouváme se, momentálnì se nelze pøihlásit.";
             _logger.Log($"Nepodaøilo se naèíst pro {Input.Email} token z API");
             return Page();
-
         }
-        // Uložení JWT do session pro pozdìjší API volání
-        HttpContext.Session.SetString("JWTToken", result.Token);
-        HttpContext.Session.SetString("UserNickname", result.Nickname);
-
-        // Vytvoøení cookie autentizace z JWT tokenu
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(result.Token);
-
-        // Extrakce claimù z JWT tokenu pro cookie autentizaci
-        var claims = new List<Claim>();
-        claims.AddRange(jwtToken.Claims);
-
-        // Vytvoøení identity pro cookie autentizaci
-        var claimsIdentity = new ClaimsIdentity(
-            claims,
-            CookieAuthenticationDefaults.AuthenticationScheme
-        );
-
-        // Nastavení vlastností cookie
-        var authProperties = new AuthenticationProperties
-        {
-            IsPersistent = true, // Cookie pøežije zavøení prohlížeèe
-            ExpiresUtc = DateTime.UtcNow.AddHours(12) // Stejná doba jako u JWT
-        };
 
         // Pøihlášení uživatele pomocí cookie
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(claimsIdentity),
-            authProperties
-        );
+        await Login(result.Token, result.Nickname);
 
         // Pøesmìrování na pùvodní stránku nebo na hlavní stránku
         if ((string.IsNullOrEmpty(ReturnUrl)) || (ReturnUrl == "/Account/Logout") || (ReturnUrl == "/Account/login"))
