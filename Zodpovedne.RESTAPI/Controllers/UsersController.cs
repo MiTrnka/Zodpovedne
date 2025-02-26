@@ -12,6 +12,7 @@ using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Logging;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Zodpovedne.Controllers;
 
@@ -452,7 +453,7 @@ public class UsersController : ControllerBase
     /// <param name="model"></param>
     /// <returns></returns>
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    [HttpPost("token")]
+    [HttpPost("login")]
     public async Task<IActionResult> CreateToken(LoginModelDto model)
     {
         try
@@ -494,6 +495,50 @@ public class UsersController : ControllerBase
         catch (Exception e)
         {
             _logger.Log("Chyba při vykonávání akce CreateToken endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Zpracovává odhlášení uživatele, aktualizuje LastLogin na aktuální čas
+    /// </summary>
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.Log("Při odhlašování nebyl nalezen userId aktuálního uživatel");
+                return Unauthorized("Při odhlašování nebyl nalezen userId aktuálního uživatel");
+            }
+
+            // Vyhledání uživatele
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                _logger.Log("Při odhlašování nebyl nalezen aktuální uživatel v databázi");
+                return NotFound("Při odhlašování nebyl nalezen aktuální uživatel v databázi");
+            }
+
+            // Aktualizace LastLogin na aktuální čas
+            user.LastLogin = DateTime.UtcNow;
+            var result = await userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                _logger.Log($"Při odhlašování uživatele {user.Id} se nepodařilo aktualizovat je lastLogin");
+                return BadRequest($"Při odhlašování uživatele {user.Id} se nepodařilo aktualizovat je lastLogin");
+            }
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce Logout endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

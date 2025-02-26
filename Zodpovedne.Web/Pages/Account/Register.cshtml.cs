@@ -38,7 +38,7 @@ public class RegisterModel : BasePageModel
 
         // Pøihlášení nového uživatele
         var loginResponse = await client.PostAsJsonAsync(
-            $"{ApiBaseUrl}/users/token",
+            $"{ApiBaseUrl}/users/login",
             new { Email = Input.Email, Password = Input.Password }
         );
         if (!loginResponse.IsSuccessStatusCode)

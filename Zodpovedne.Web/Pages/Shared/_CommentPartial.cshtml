@@ -21,7 +21,7 @@
             @* Má tento rootový komentář nějakou novou reakci a zároveň se na to dívá autor rootového komentáře? *@
             @if (Model.HasNewReplies && Model.AuthorNickname == Context.Session.GetString("UserNickname"))
             {
-                <span class="badge bg-primary ms-2" title="Nové odpovědi od vašeho posledního přihlášení">
+                <span class="badge bg-primary ms-2" title="Nové odpovědi">
                     <i class="bi bi-chat-dots-fill"></i> Nové
                 </span>
             }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
+using Zodpovedne.Web.Extensions;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -13,7 +14,29 @@ public class LogoutModel : BasePageModel
     }
     public async Task<IActionResult> OnGetAsync()
     {
-        await SignedOutIsOK();
-        return Page();
+        try
+        {
+            // Volání API pro aktualizaci LastLogin, pokud je uživatel pøihlášen
+            if (IsUserLoggedIn)
+            {
+                var client = _clientFactory.CreateBearerClient(HttpContext);
+                var result = await client.PostAsync($"{ApiBaseUrl}/users/logout", null);
+                if (!result.IsSuccessStatusCode)
+                {
+                    ErrorMessage = $"Pøi odhlašování nastala chyba: {await result.Content.ReadAsStringAsync()}";
+                    return Page();
+                }
+            }
+
+            // Standardní odhlášení
+            await SignedOutIsOK();
+            return Page();
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Chyba pøi odhlašování", ex);
+            ErrorMessage = "Pøi odhlašování nastala chyba.";
+            return Page();
+        }
     }
 }
