@@ -775,11 +775,11 @@ public class UsersController : ControllerBase
                     Comment = rootComment,
                     // Pro každý rootový komentář najít nejnovější odpověď po předchozím přihlášení
                     LatestReply = rootComment.Replies
-                        .Where(r => r.CreatedAt > fromTime && r.UserId != userId) // Jen nové odpovědi od jiných uživatelů
+                        .Where(r => r.CreatedAt > fromTime && r.UserId != userId && r.Type != CommentType.Deleted) // Jen nové odpovědi od jiných uživatelů
                         .OrderByDescending(r => r.CreatedAt)
                         .FirstOrDefault(),
-                    // Příznak, zda komentář má nějakou novou odpověď
-                    HasNewReply = rootComment.Replies.Any(r => r.CreatedAt > fromTime && r.UserId != userId)
+                    // Příznak, zda komentář má nějakou novou odpověď, která není smazána
+                    HasNewReply = rootComment.Replies.Any(r => r.CreatedAt > fromTime && r.UserId != userId && r.Type != CommentType.Deleted)
                 })
                 .Where(x => x.HasNewReply) // Filtrovat jen komentáře s novými odpověďmi
                 .Select(x => new
