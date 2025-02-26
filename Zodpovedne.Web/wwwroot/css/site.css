@@ -59,6 +59,78 @@ a {
     padding: 0.2rem; /* Nebo jiná hodnota dle potřeby */
 }
 
+/* Styly pro zvoneček */
+#notification-bell {
+    font-size: 1.2rem;
+    transition: color 0.3s;
+}
+
+.notification-active {
+    color: var(--primary-pink);
+    animation: bell-ring 1s;
+}
+
+@keyframes bell-ring {
+    0% {
+        transform: rotate(0);
+    }
+
+    20% {
+        transform: rotate(15deg);
+    }
+
+    40% {
+        transform: rotate(-15deg);
+    }
+
+    60% {
+        transform: rotate(7deg);
+    }
+
+    80% {
+        transform: rotate(-7deg);
+    }
+
+    100% {
+        transform: rotate(0);
+    }
+}
+
+/* Úprava pozice badge - přímo u zvonečku */
+#notification-badge {
+    transform: translate(-50%, -50%);
+    margin-left: 0;
+}
+
+#notifications-dropdown {
+    width: 350px;
+    padding: 0;
+}
+
+.notification-item {
+    transition: background-color 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.notification-item:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-left: 3px solid var(--primary-pink);
+}
+
+.notification-item .notification-time {
+    font-size: 0.8rem;
+    color: #999;
+}
+
+
+
+/* Opravit pozici badge na mobilních zařízeních */
+#notification-badge {
+    transform: translate(-50%, -50%) !important;
+    right: auto !important;
+}
+
+
 /* Navigace - mobilní verze */
 .navbar {
     padding: 0.5rem;

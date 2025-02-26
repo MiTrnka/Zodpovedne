@@ -32,7 +32,7 @@
     <nav class="navbar navbar-expand-md navbar-light">
         <div class="site-header">
             <div class="logo-container">
-                <a href="@Configuration["BaseUrl"]"><img src="/images/logo.png" alt="logo Mámou zodpovědně" style="width: 200px; height: auto;"></a>
+                <a asp-page="/Index"><img src="/images/logo.png" alt="logo Mámou zodpovědně" style="width: 200px; height: auto;"></a>
             </div>
         </div>
         <div class="container">
@@ -78,10 +78,34 @@
                                    asp-route-returnUrl="@Context.Request.Path">Registrovat dalšího admina</a>
                             </li>
                         }
+                        <!-- Notifikační zvoneček s dropdown menu -->
+                        <li class="nav-item dropdown" id="notifications-container">
+                            <a class="nav-link position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell" id="notification-bell"></i>
+                                <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger d-none" id="notification-badge">
+                                    <span id="notifications-count">0</span>
+                                </span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" id="notifications-dropdown">
+                                <div class="p-2" id="notifications-header">
+                                    <h6 class="dropdown-header">Nové odpovědi</h6>
+                                </div>
+                                <div id="notifications-list" style="max-height: 300px; overflow-y: auto;">
+                                    <!-- Seznam notifikací se načte dynamicky -->
+                                    <div class="text-center p-2">
+                                        <div class="spinner-border spinner-border-sm" role="status">
+                                            <span class="visually-hidden">Načítání...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <!-- Profil -->
                         <li class="nav-item">
                             <a class="nav-link @(IsMenuItemActive("/Account/Profile") ? "active" : "")"
                                asp-page="/Account/Profile">@Context.Session.GetString("UserNickname")</a>
                         </li>
+                        <!-- Odhlásit -->
                         <li class="nav-item">
                             <a class="nav-link" asp-page="/Account/Logout">Odhlásit se</a>
                         </li>
@@ -120,5 +144,19 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    @if (Context.Session.GetString("JWTToken") != null)
+    {
+        <!-- Skrytý input pro API URL potřebný pro JS -->
+        <input type="hidden" id="apiBaseUrl" value="@Configuration["ApiBaseUrl"]">
+        <!-- Import Bootstrap ikon -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <!-- Import notifikačního skriptu -->
+        <script src="~/js/notifications.js" asp-append-version="true"></script>
+        <script>
+            // Uložení JWT tokenu do sessionStorage pro použití v JS
+            sessionStorage.setItem('JWTToken', '@Context.Session.GetString("JWTToken")');
+        </script>
+    }
 </body>
 </html>
