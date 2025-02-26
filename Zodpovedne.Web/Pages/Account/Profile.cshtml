@@ -134,6 +134,47 @@
             </div>
         </div>
 
+        <!-- Sekce s notifikacemi o nových odpovědích -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" type="button" id="toggle-notifications">
+                        Nové odpovědi <i class="bi bi-chevron-down" id="notifications-chevron"></i>
+                        @if (Model.NewRepliesNotifications.Any())
+                        {
+                            <span class="badge bg-primary">@Model.NewRepliesNotifications.Count</span>
+                        }
+                    </button>
+                </h5>
+            </div>
+            <div class="card-body" id="new-replies-notifications" style="display: none;">
+                @if (Model.NewRepliesNotifications.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var notification in Model.NewRepliesNotifications)
+                        {
+                            <a href="@notification.DiscussionUrl" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">@notification.Title</h6>
+                                    <small>@notification.LatestReplyTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                                </div>
+                                <p class="mb-1">
+                                    Kategorie: @notification.CategoryName
+                                    <span class="badge bg-info ms-2" title="Počet vašich komentářů s novými odpověďmi">
+                                        <i class="bi bi-chat-dots-fill"></i> @notification.CommentsWithNewRepliesCount
+                                    </span>
+                                </p>
+                            </a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Nemáte žádné nové odpovědi.</p>
+                }
+            </div>
+        </div>
+
         <!-- Sekce pro změnu emailu -->
         <div class="card mb-4">
             <div class="card-header">
@@ -219,6 +260,23 @@
                     discussionsContainer.style.display = 'none';
                     chevronIcon.classList.remove('bi-chevron-up');
                     chevronIcon.classList.add('bi-chevron-down');
+                }
+            });
+
+            // Rozbalení a zabalení seznamu diskuzí, kde přihlášený uživatel má nějakou reakci na svůj komentář
+            const toggleNotificationsButton = document.getElementById('toggle-notifications');
+            const notificationsContainer = document.getElementById('new-replies-notifications');
+            const notificationsChevronIcon = document.getElementById('notifications-chevron');
+
+            toggleNotificationsButton.addEventListener('click', function () {
+                if (notificationsContainer.style.display === 'none') {
+                    notificationsContainer.style.display = 'block';
+                    notificationsChevronIcon.classList.remove('bi-chevron-down');
+                    notificationsChevronIcon.classList.add('bi-chevron-up');
+                } else {
+                    notificationsContainer.style.display = 'none';
+                    notificationsChevronIcon.classList.remove('bi-chevron-up');
+                    notificationsChevronIcon.classList.add('bi-chevron-down');
                 }
             });
         });

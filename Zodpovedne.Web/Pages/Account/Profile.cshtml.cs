@@ -23,6 +23,9 @@ public class ProfileModel : BasePageModel
     [BindProperty]
     public string? NewPassword { get; set; }
 
+    // Seznam diskuzí, ve kterých dostal pøihlášený uživatel nové odpovìdi na své komentáøe
+    public List<DiscussionWithNewRepliesDto> NewRepliesNotifications { get; set; } = new();
+
     public UserProfileDto? UserProfile { get; set; }
     public string? NicknameErrorMessage { get; set; }
     public string? EmailErrorMessage { get; set; }
@@ -84,6 +87,22 @@ public class ProfileModel : BasePageModel
         {
             _logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
             // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst diskuze
+        }
+
+        // Naètení seznamu diskuzí, kde pøihlášený uživatel dostal nové odpovìdi ke svým komentáøùm
+        try
+        {
+            var notificationsResponse = await client.GetAsync($"{ApiBaseUrl}/users/discussions-with-new-replies");
+            if (notificationsResponse.IsSuccessStatusCode)
+            {
+                NewRepliesNotifications = await notificationsResponse.Content
+                    .ReadFromJsonAsync<List<DiscussionWithNewRepliesDto>>() ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Nepodaøilo se naèíst notifikace o nových odpovìdích", ex);
+            // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst notifikace
         }
 
         return Page();

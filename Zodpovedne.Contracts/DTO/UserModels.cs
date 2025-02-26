@@ -99,3 +99,14 @@ public class PagedResultDto<T>
     // Indikátor, zda je toto první stránka
     public bool IsFirstPage => CurrentPage == 1;
 }
+
+// Položka pro seznam diskuzí přihlášeného uživatele, které mají novou odpověď na uživatelův komentář
+public class DiscussionWithNewRepliesDto
+{
+    public int DiscussionId { get; set; }
+    public string Title { get; set; } = "";
+    public string DiscussionUrl { get; set; } = "";
+    public string CategoryName { get; set; } = "";
+    public DateTime LatestReplyTime { get; set; }
+    public int CommentsWithNewRepliesCount { get; set; }
+}

@@ -744,6 +744,101 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
+    /// Vrátí seznam diskuzí, kde má přihlášený uživatel nové odpovědi na své komentáře od posledního přihlášení
+    /// </summary>
+    /// <returns>Seznam diskuzí s informacemi o nových odpovědích</returns>
+    [Authorize]
+    [HttpGet("discussions-with-new-replies")]
+    public async Task<ActionResult<IEnumerable<DiscussionWithNewRepliesDto>>> GetDiscussionsWithNewReplies()
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            // Vyhledání uživatele pro zjištění času předchozího přihlášení
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null || user.PreviousLastLogin == null)
+                return Ok(new List<DiscussionWithNewRepliesDto>());
+
+            // Čas, od kterého hledáme nové odpovědi
+            var fromTime = user.PreviousLastLogin.Value;
+
+            // Vyhledání komentářů uživatele, které mají nové odpovědi
+            var discussionsWithNewReplies = await dbContext.Comments
+                .AsNoTracking()
+                .Where(c => c.UserId == userId && c.ParentCommentId == null) // Jen rootové komentáře uživatele
+                .Select(rootComment => new
+                {
+                    Comment = rootComment,
+                    // Pro každý rootový komentář najít nejnovější odpověď po předchozím přihlášení
+                    LatestReply = rootComment.Replies
+                        .Where(r => r.CreatedAt > fromTime && r.UserId != userId) // Jen nové odpovědi od jiných uživatelů
+                        .OrderByDescending(r => r.CreatedAt)
+                        .FirstOrDefault(),
+                    // Příznak, zda komentář má nějakou novou odpověď
+                    HasNewReply = rootComment.Replies.Any(r => r.CreatedAt > fromTime && r.UserId != userId)
+                })
+                .Where(x => x.HasNewReply) // Filtrovat jen komentáře s novými odpověďmi
+                .Select(x => new
+                {
+                    DiscussionId = x.Comment.DiscussionId,
+                    LatestReplyTime = x.LatestReply.CreatedAt,
+                    CommentId = x.Comment.Id
+                })
+                .ToListAsync();
+
+            // Seskupit podle diskuze
+            var discussionGroups = discussionsWithNewReplies
+                .GroupBy(d => d.DiscussionId)
+                .Select(g => new
+                {
+                    DiscussionId = g.Key,
+                    LatestReplyTime = g.Max(d => d.LatestReplyTime),
+                    CommentsCount = g.Count() // Počet komentářů s novými odpověďmi
+                })
+                .OrderByDescending(d => d.LatestReplyTime)
+                .ToList();
+
+            // Získat detaily diskuzí
+            var result = new List<DiscussionWithNewRepliesDto>();
+
+            foreach (var discussion in discussionGroups)
+            {
+                // Načtení detailů diskuze včetně kategorie
+                var discussionDetails = await dbContext.Discussions
+                    .AsNoTracking()
+                    .Include(d => d.Category)
+                    .Where(d => d.Id == discussion.DiscussionId)
+                    .Select(d => new DiscussionWithNewRepliesDto
+                    {
+                        DiscussionId = d.Id,
+                        Title = d.Title,
+                        DiscussionUrl = $"/categories/{d.Category.Code}/{d.Code}",
+                        CategoryName = d.Category.Name,
+                        LatestReplyTime = discussion.LatestReplyTime,
+                        CommentsWithNewRepliesCount = discussion.CommentsCount
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (discussionDetails != null)
+                {
+                    result.Add(discussionDetails);
+                }
+            }
+
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetDiscussionsWithNewReplies endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
     /// Generuje JWT token pro uživatele
     /// </summary>
     /// <param name="user"></param>
