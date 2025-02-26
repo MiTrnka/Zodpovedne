@@ -158,6 +158,9 @@ namespace Zodpovedne.RESTAPI
                 ));
             });
 
+            // Pøidání pamìové cache napøíklad pro cachování dat z databáze (seznam diskuzí, kde nìkdo reagoval na mùj komentáø)
+            builder.Services.AddMemoryCache();
+
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())

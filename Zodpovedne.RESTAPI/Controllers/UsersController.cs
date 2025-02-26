@@ -13,6 +13,7 @@ using Zodpovedne.Data.Data;
 using Zodpovedne.Logging;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Zodpovedne.Controllers;
 
@@ -24,16 +25,17 @@ public class UsersController : ControllerBase
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
     private readonly FileLogger _logger;
-
     private readonly IConfiguration configuration;
+    private readonly IMemoryCache _cache;
 
-    public UsersController(IDataContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger)
+    public UsersController(IDataContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger, IMemoryCache memoryCache)
     {
         this.userManager = userManager;
         this.signInManager = signInManager;
         this.configuration = configuration;
         this.dbContext = dbContext;
         _logger = logger;
+        _cache = memoryCache;
     }
 
     /// <summary>
@@ -744,7 +746,8 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Vrátí seznam diskuzí, kde má přihlášený uživatel nové odpovědi na své komentáře od posledního přihlášení
+    /// Vrátí seznam diskuzí, kde má přihlášený uživatel nové odpovědi na své komentáře od posledního přihlášení.
+    /// Implementuje memory caching pro zlepšení výkonu s invalidací při přihlášení nebo po 60 sekundách.
     /// </summary>
     /// <returns>Seznam diskuzí s informacemi o nových odpovědích</returns>
     [Authorize]
@@ -753,33 +756,50 @@ public class UsersController : ControllerBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
+            // Získání ID přihlášeného uživatele z JWT tokenu
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            // Vyhledání uživatele pro zjištění času předchozího přihlášení
+            // Vyhledání uživatele v databázi
             var user = await userManager.FindByIdAsync(userId);
             if (user == null || user.PreviousLastLogin == null)
                 return Ok(new List<DiscussionWithNewRepliesDto>());
 
-            // Čas, od kterého hledáme nové odpovědi
+            // Vytvoření klíče pro keš, který obsahuje:
+            // - ID uživatele (každý uživatel má vlastní keš)
+            // - Časové razítko posledního přihlášení (invaliduje keš při novém přihlášení)
+            var cacheKey = $"NewReplies_{userId}_{user.LastLogin?.Ticks}";
+
+            // Pokus o získání dat z keše
+            // TryGetValue vrací true, pokud klíč existuje a hodnota je uložena do cachedResult
+            if (_cache.TryGetValue(cacheKey, out List<DiscussionWithNewRepliesDto> cachedResult))
+            {
+                return Ok(cachedResult);
+            }
+
+            // Čas, od kterého hledáme nové odpovědi (předchozí přihlášení)
             var fromTime = user.PreviousLastLogin.Value;
 
             // Vyhledání komentářů uživatele, které mají nové odpovědi
             var discussionsWithNewReplies = await dbContext.Comments
-                .AsNoTracking()
+                .AsNoTracking()  // Pro lepší výkon - EF Core nebude sledovat entity
                 .Where(c => c.UserId == userId && c.ParentCommentId == null) // Jen rootové komentáře uživatele
                 .Select(rootComment => new
                 {
                     Comment = rootComment,
                     // Pro každý rootový komentář najít nejnovější odpověď po předchozím přihlášení
+                    // Filtrujeme jen neodstraněné odpovědi od jiných uživatelů
                     LatestReply = rootComment.Replies
-                        .Where(r => r.CreatedAt > fromTime && r.UserId != userId && r.Type != CommentType.Deleted) // Jen nové odpovědi od jiných uživatelů
+                        .Where(r => r.CreatedAt > fromTime &&
+                               r.UserId != userId &&
+                               r.Type != CommentType.Deleted)
                         .OrderByDescending(r => r.CreatedAt)
                         .FirstOrDefault(),
-                    // Příznak, zda komentář má nějakou novou odpověď, která není smazána
-                    HasNewReply = rootComment.Replies.Any(r => r.CreatedAt > fromTime && r.UserId != userId && r.Type != CommentType.Deleted)
+                    // Příznak, zda komentář má nějakou novou odpověď
+                    HasNewReply = rootComment.Replies.Any(r => r.CreatedAt > fromTime &&
+                                                        r.UserId != userId &&
+                                                        r.Type != CommentType.Deleted)
                 })
                 .Where(x => x.HasNewReply) // Filtrovat jen komentáře s novými odpověďmi
                 .Select(x => new
@@ -790,19 +810,20 @@ public class UsersController : ControllerBase
                 })
                 .ToListAsync();
 
-            // Seskupit podle diskuze
+            // Seskupit podle diskuze pro zobrazení každé diskuze pouze jednou,
+            // počítat počet komentářů s novými odpověďmi pro každou diskuzi
             var discussionGroups = discussionsWithNewReplies
                 .GroupBy(d => d.DiscussionId)
                 .Select(g => new
                 {
                     DiscussionId = g.Key,
-                    LatestReplyTime = g.Max(d => d.LatestReplyTime),
-                    CommentsCount = g.Count() // Počet komentářů s novými odpověďmi
+                    LatestReplyTime = g.Max(d => d.LatestReplyTime),  // Nejnovější odpověď v diskuzi
+                    CommentsCount = g.Count() // Počet komentářů uživatele s novými odpověďmi
                 })
-                .OrderByDescending(d => d.LatestReplyTime)
+                .OrderByDescending(d => d.LatestReplyTime)  // Seřadit podle času nejnovější odpovědi
                 .ToList();
 
-            // Získat detaily diskuzí
+            // Získat detaily diskuzí pro zobrazení
             var result = new List<DiscussionWithNewRepliesDto>();
 
             foreach (var discussion in discussionGroups)
@@ -828,6 +849,17 @@ public class UsersController : ControllerBase
                     result.Add(discussionDetails);
                 }
             }
+
+            // Nastavení možností kešování
+            var cacheOptions = new MemoryCacheEntryOptions()
+            // Absolutní expirace - data v keši vydrží maximálně 60 sekund
+            // Zajišťuje, že i během session uživatel uvidí nová data nejpozději po minutě
+            .SetAbsoluteExpiration(TimeSpan.FromSeconds(60))
+            // Nastavení velikosti položky pro případnou správu paměti
+            .SetSize(1);
+
+            // Uložení výsledku do keše
+            _cache.Set(cacheKey, result, cacheOptions);
 
             return Ok(result);
         }
