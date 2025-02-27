@@ -17,6 +17,7 @@ using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -334,7 +335,7 @@ public class DiscussionModel : BasePageModel
     /// Handler pro AJAX požadavek na vykreslení partial view pro jeden komentáø
     /// </summary>
     /// <param name="comment">Data komentáøe</param>
-    public IActionResult OnPostCommentPartialAsync([FromBody] CommentDto comment, int discussionId)
+    public IActionResult OnPostCommentPartialAsync([FromBody] CommentDto comment)
     {
         return Partial("_CommentPartial", comment);
     }

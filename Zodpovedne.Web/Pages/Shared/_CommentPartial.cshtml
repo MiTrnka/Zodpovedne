@@ -1,10 +1,5 @@
 ﻿@model Zodpovedne.Contracts.DTO.CommentDto
 
-@{
-    // Donačtu si ještě id diskuze, který není součástí CommentDto a posílám si ho zvenčí, když volám toto partial view
-    var discussionId = (int)ViewData["DiscussionId"];
-}
-
 <div class="card mb-2">
     @* Hlavička komentáře s metadaty a tlačítky *@
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -33,7 +28,7 @@
             @if (Model.Likes.CanUserLike)
             {
                 <button class="btn btn-sm btn-outline-primary"
-                        onclick="likeComment(@discussionId, @Model.Id)">
+                        onclick="likeComment(@Model.DiscussionId, @Model.Id)">
                     <i class="bi bi-heart-fill"></i>
                     <span id="comment-@Model.Id-likes-count">@Model.Likes.LikeCount</span>
                 </button>
@@ -50,7 +45,7 @@
             @if (User.IsInRole("Admin"))
             {
                 <button class="btn btn-sm @(Model.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "btn-warning" : "btn-outline-warning")"
-                        onclick="toggleCommentVisibility(@discussionId, @Model.Id)">
+                        onclick="toggleCommentVisibility(@Model.DiscussionId, @Model.Id)">
                     <i class="bi bi-eye@(Model.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "" : "-slash")"></i>
                     @(Model.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "Odkryj" : "Skryj")
                 </button>
@@ -60,7 +55,7 @@
             @if (User.IsInRole("Admin") || Model.AuthorNickname == Context.Session.GetString("UserNickname"))
             {
                 <button class="btn btn-sm btn-outline-danger"
-                        onclick="deleteComment(@discussionId, @Model.Id)">
+                        onclick="deleteComment(@Model.DiscussionId, @Model.Id)">
                     <i class="bi bi-trash"></i>@* Smazat *@
                 </button>
             }
@@ -113,7 +108,7 @@
                     @if (reply.Likes.CanUserLike)
                     {
                         <button class="btn btn-sm btn-outline-primary"
-                                onclick="likeComment(@discussionId, @reply.Id)">
+                                onclick="likeComment(@Model.DiscussionId, @reply.Id)">
                             <i class="bi bi-heart-fill"></i>
                             <span id="comment-@reply.Id-likes-count">@reply.Likes.LikeCount</span>
                         </button>
@@ -130,7 +125,7 @@
                     @if (User.IsInRole("Admin"))
                     {
                         <button class="btn btn-sm @(reply.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "btn-warning" : "btn-outline-warning")"
-                                onclick="toggleCommentVisibility(@discussionId, @reply.Id)">
+                                onclick="toggleCommentVisibility(@Model.DiscussionId, @reply.Id)">
                             <i class="bi bi-eye@(reply.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "" : "-slash")"></i>
                             @(reply.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden ? "Odkryj" : "Skryj")
                         </button>
@@ -140,7 +135,7 @@
                     @if (User.IsInRole("Admin") || reply.AuthorNickname == Context.Session.GetString("UserNickname"))
                     {
                         <button class="btn btn-sm btn-outline-danger"
-                                onclick="deleteComment(@discussionId, @reply.Id)">
+                                onclick="deleteComment(@Model.DiscussionId, @reply.Id)">
                             <i class="bi bi-trash"></i>
                         </button>
                     }

@@ -206,8 +206,8 @@
                                 @* Iterace přes root komentáře *@
                                 @foreach (var comment in Model.Discussion.Comments)
                                 {
-                                    @* Vypsání jednoho root komentáře s případnými reakčními komentáři a všemi tlačítky (navíc do Partial do jeho modelu kromě CommentDto přidávám ještě id diskuze)... *@
-                                    @await Html.PartialAsync("_CommentPartial", comment, new ViewDataDictionary(ViewData) { { "DiscussionId", Model.Discussion.Id} });
+                                    @* Vypsání jednoho root komentáře s případnými reakčními komentáři a všemi tlačítky *@
+                                    @await Html.PartialAsync("_CommentPartial", comment);
                                 }
                             </div>
 

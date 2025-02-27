@@ -102,6 +102,7 @@ public class BasicDiscussionInfoDto
 public class CommentDto
 {
     public int Id { get; set; }
+    public int DiscussionId { get; set; }
     public string Content { get; set; } = "";
     public string AuthorNickname { get; set; } = "";
     public DateTime CreatedAt { get; set; }

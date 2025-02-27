@@ -1018,6 +1018,7 @@ public class DiscussionsController : ControllerBase
         return new CommentDto
         {
             Id = comment.Id,
+            DiscussionId = comment.DiscussionId,
             Content = comment.Content,
             AuthorNickname = comment.User.Nickname,
             CreatedAt = comment.CreatedAt,
