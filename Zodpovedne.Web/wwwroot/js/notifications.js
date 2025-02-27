@@ -1,63 +1,85 @@
 ﻿/**
- * Obsluhuje notifikační systém v hlavním menu
+ * Notifikační systém pro zvoneček v hlavičce
  * slovník:
  *  badge je číslo v bublině, které zobrazuje počet nových notifikací
  *  bellIcon je ikona zvonku, která zobrazuje badge
  *
- * Skript načte notifikace o nových odpovědích z API a porovnává jejich časová razítka. Pro sledování, 
- * zda uživatel už notifikace viděl, používá příznak hasSeenNotifications uložený v localStorage prohlížeče. 
- * Když uživatel klikne na zvoneček, nastaví se tento příznak na true, což skryje červenou bublinku (badge) s počtem notifikací. 
- * Tento příznak zůstává aktivní i při navigaci na jiné stránky v rámci aplikace. Během pravidelné kontroly nových notifikací skript porovnává časová razítka 
- * odpovědí s posledním známým časem - pokud najde novější odpověď, resetuje příznak na false, což způsobí, že se červená bublinka opět zobrazí. 
- * Tento mechanismus zajišťuje, že počet notifikací u zvonečku zmizí při zobrazení a znovu se objeví jen když přibudou skutečně nové odpovědi.
+ * Tento skript:
+ * 1. Načítá notifikace o nových odpovědích z API
+ * 2. Zobrazuje počet nových notifikací v badge
+ * 3. Zobrazuje seznam notifikací v dropdown menu po kliknutí na zvoneček
+ * 4. Sleduje dva typy časových značek:
+ *    - lastNotificationTimestamp: Používá se pro sledování celkově nejnovějších notifikací (od předposledního přihlášení)
+ *    - lastBadgeClickTimestamp: Používá se pouze pro počítání nových notifikací v badge (od posledního kliknutí)
  */
 document.addEventListener('DOMContentLoaded', function () {
-    // Elementy
+    // Hlavní elementy
     const bellIcon = document.getElementById('notification-bell');
     const badge = document.getElementById('notification-badge');
     const notificationsList = document.getElementById('notifications-list');
 
+    // Pokud chybí základní elementy, notifikační systém nemůže fungovat
+    if (!bellIcon || !badge || !notificationsList) return;
+
     // Konfigurace
-    const refreshInterval = 60000; // 60 sekund
-    let notificationsData = [];
+    const REFRESH_INTERVAL = 60000; // 60 sekund
+    const ANIMATION_CLASS = 'notification-active';
+    const BADGE_HIDE_CLASS = 'd-none';
 
-    // Uložené časové razítko notifikací (pro porovnání nových)
-    let lastNotificationTimestamp = localStorage.getItem('lastNotificationTimestamp') || 0;
+    // Datový objekt pro lokální stav
+    const notificationState = {
+        // Data notifikací
+        items: [],
 
-    // Příznak, jestli uživatel viděl notifikace
-    let hasSeenNotifications = localStorage.getItem('hasSeenNotifications') === 'true';
+        // Časové značky
+        lastNotificationTimestamp: parseInt(localStorage.getItem('lastNotificationTimestamp') || '0'),
+        lastBadgeClickTimestamp: parseInt(localStorage.getItem('lastBadgeClickTimestamp') || '0'),
 
-    // Načtení notifikací při načtení stránky
+        // Příznak "viděno" pro celý notifikační systém (pro animaci zvonečku)
+        hasSeenNotifications: localStorage.getItem('hasSeenNotifications') === 'true'
+    };
+
+    // Inicializace
+    setupEventListeners();
     loadNotifications();
 
-    // Automatické obnovení notifikací
-    setInterval(loadNotifications, refreshInterval);
+    // Automatické obnovení notifikací v pravidelném intervalu
+    setInterval(loadNotifications, REFRESH_INTERVAL);
 
-    // Události
-    if (bellIcon) {
-        // Když se otevře dropdown, nastavit příznak "viděno"
+    /**
+     * Nastaví posluchače událostí pro interakci s notifikačním systémem
+     */
+    function setupEventListeners() {
+        // Posluchač události pro kliknutí na zvoneček (otevření dropdown menu)
         document.getElementById('notificationsDropdown').addEventListener('show.bs.dropdown', function () {
-            // Uživatel viděl notifikace
-            hasSeenNotifications = true;
+            // Aktualizace stavu "viděno" pro celkové notifikace
+            notificationState.hasSeenNotifications = true;
             localStorage.setItem('hasSeenNotifications', 'true');
 
+            // Uložit aktuální čas kliknutí na zvoneček pro počítání nových notifikací v badge
+            notificationState.lastBadgeClickTimestamp = Date.now();
+            localStorage.setItem('lastBadgeClickTimestamp', notificationState.lastBadgeClickTimestamp.toString());
+
             // Deaktivace zvýraznění a skrytí badge
-            bellIcon.classList.remove('notification-active');
-            badge.classList.add('d-none');
+            bellIcon.classList.remove(ANIMATION_CLASS);
+            badge.classList.add(BADGE_HIDE_CLASS);
         });
     }
 
     /**
      * Načte notifikace z API
+     * Volá se při inicializaci a poté pravidelně v intervalu
      */
     function loadNotifications() {
         // Zkontrolujeme, zda je uživatel přihlášen
         const token = sessionStorage.getItem('JWTToken');
         if (!token) return;
 
+        // Zkontrolujeme, zda máme URL pro API
         const apiBaseUrl = document.getElementById('apiBaseUrl')?.value;
         if (!apiBaseUrl) return;
 
+        // Načtení notifikací z API
         fetch(`${apiBaseUrl}/users/discussions-with-new-replies`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -68,10 +90,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
-                notificationsData = data;
+                // Uložení dat notifikací
+                notificationState.items = data;
 
-                // Zjistit nejnovější časové razítko
+                // Zjištění nejnovějšího časového razítka mezi všemi notifikacemi
                 let newestTimestamp = 0;
+
                 data.forEach(notification => {
                     const notificationTime = new Date(notification.latestReplyTime).getTime();
                     if (notificationTime > newestTimestamp) {
@@ -79,17 +103,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 });
 
-                // Zkontrolovat, zda jsou opravdu nové notifikace
-                const hasNewNotifications = newestTimestamp > lastNotificationTimestamp;
+                // Zjištění, zda přibyly nové notifikace od posledního načtení
+                const hasNewGlobalNotifications = newestTimestamp > notificationState.lastNotificationTimestamp;
 
-                // Pokud jsou nové notifikace, resetovat příznak "viděno"
-                if (hasNewNotifications) {
-                    hasSeenNotifications = false;
+                // Pokud jsou nové notifikace v globálním kontextu (od předposledního přihlášení),
+                // resetovat příznak "viděno" a aktualizovat časovou značku
+                if (hasNewGlobalNotifications) {
+                    notificationState.hasSeenNotifications = false;
                     localStorage.setItem('hasSeenNotifications', 'false');
-                    lastNotificationTimestamp = newestTimestamp;
-                    localStorage.setItem('lastNotificationTimestamp', newestTimestamp);
+                    notificationState.lastNotificationTimestamp = newestTimestamp;
+                    localStorage.setItem('lastNotificationTimestamp', newestTimestamp.toString());
                 }
 
+                // Aktualizace UI na základě nových dat
                 updateNotificationsUI();
             })
             .catch(error => {
@@ -99,59 +125,110 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /**
      * Aktualizuje UI na základě načtených notifikací
+     * Odděluje logiku pro badge a pro obsah dropdown menu
      */
     function updateNotificationsUI() {
-        if (!bellIcon || !badge || !notificationsList) return;
+        // Aktualizace seznamu notifikací v dropdown menu
+        updateNotificationsList();
 
         // Aktualizace počtu a viditelnosti badge
-        if (notificationsData.length > 0) {
-            document.getElementById('notifications-count').textContent = notificationsData.length;
+        updateNotificationBadge();
+    }
 
-            // Zobrazit badge pouze pokud uživatel ještě neviděl notifikace
-            if (!hasSeenNotifications) {
-                badge.classList.remove('d-none');
-                bellIcon.classList.add('notification-active');
-            } else {
-                badge.classList.add('d-none');
-                bellIcon.classList.remove('notification-active');
-            }
-        } else {
-            badge.classList.add('d-none');
-            bellIcon.classList.remove('notification-active');
-        }
-
-        // Aktualizace seznamu notifikací
+    /**
+     * Aktualizuje seznam notifikací v dropdown menu
+     * Používá kompletní seznam notifikací
+     */
+    function updateNotificationsList() {
         notificationsList.innerHTML = '';
 
-        if (notificationsData.length === 0) {
+        // Pokud nejsou žádné notifikace, zobrazíme informační zprávu
+        if (notificationState.items.length === 0) {
             notificationsList.innerHTML = '<div class="dropdown-item text-muted text-center py-2">Žádné nové odpovědi</div>';
             return;
         }
 
-        notificationsData.forEach(notification => {
+        // Vytvoření položek pro každou notifikaci
+        notificationState.items.forEach(notification => {
+            // Formátování času
             const notificationTime = new Date(notification.latestReplyTime);
-            const formattedTime = notificationTime.toLocaleDateString('cs-CZ') + ' ' +
-                notificationTime.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+            const formattedTime = formatDateTime(notificationTime);
 
-            const item = document.createElement('a');
-            item.href = notification.discussionUrl;
-            item.className = 'dropdown-item py-2 notification-item';
-            item.innerHTML = `
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-truncate">
-                        <div class="fw-medium text-truncate">${notification.title}</div>
-                        <div class="small text-muted">
-                            ${notification.categoryName}
-                            <span class="badge bg-info ms-1" title="Počet vašich komentářů s novými odpověďmi">
-                                <i class="bi bi-chat-dots-fill"></i> ${notification.commentsWithNewRepliesCount}
-                            </span>
-                        </div>
-                    </div>
-                    <span class="notification-time ms-2">${formattedTime}</span>
-                </div>
-            `;
+            // Vytvoření položky notifikace
+            const item = createNotificationItem(notification, formattedTime);
 
+            // Přidání do seznamu
             notificationsList.appendChild(item);
         });
+    }
+
+    /**
+     * Formátuje datum a čas pro zobrazení v notifikaci
+     * @param {Date} date - datum k formátování
+     * @returns {string} formátovaný řetězec
+     */
+    function formatDateTime(date) {
+        return date.toLocaleDateString('cs-CZ') + ' ' +
+            date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    /**
+     * Vytvoří DOM element pro jednu položku notifikace
+     * @param {Object} notification - data notifikace
+     * @param {string} formattedTime - formátovaný čas
+     * @returns {HTMLElement} vytvořený DOM element
+     */
+    function createNotificationItem(notification, formattedTime) {
+        const item = document.createElement('a');
+        item.href = notification.discussionUrl;
+        item.className = 'dropdown-item py-2 notification-item';
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="text-truncate">
+                    <div class="fw-medium text-truncate">${notification.title}</div>
+                    <div class="small text-muted">
+                        ${notification.categoryName}
+                        <span class="badge bg-info ms-1" title="Počet vašich komentářů s novými odpověďmi">
+                            <i class="bi bi-chat-dots-fill"></i> ${notification.commentsWithNewRepliesCount}
+                        </span>
+                    </div>
+                </div>
+                <span class="notification-time ms-2">${formattedTime}</span>
+            </div>
+        `;
+
+        return item;
+    }
+
+    /**
+     * Aktualizuje počet a viditelnost badge
+     *
+     * Počet nových notifikací pro badge se počítá od posledního kliknutí na zvoneček
+     * (nikoliv od předposledního přihlášení jako seznam notifikací)
+     */
+    function updateNotificationBadge() {
+        // Počet notifikací pro badge - od posledního kliknutí na zvoneček
+        const badgeNotificationsCount = notificationState.items.filter(notification => {
+            const notificationTime = new Date(notification.latestReplyTime).getTime();
+            return notificationTime > notificationState.lastBadgeClickTimestamp;
+        }).length;
+
+        // Nastavení počtu v badge
+        document.getElementById('notifications-count').textContent =
+            badgeNotificationsCount > 0 ? badgeNotificationsCount : notificationState.items.length;
+
+        // Zobrazení/skrytí badge na základě počtu nových notifikací a stavu "viděno"
+        if (badgeNotificationsCount > 0 && !notificationState.hasSeenNotifications) {
+            badge.classList.remove(BADGE_HIDE_CLASS);
+            bellIcon.classList.add(ANIMATION_CLASS);
+        } else if (notificationState.items.length > 0 && !notificationState.hasSeenNotifications) {
+            // Pokud nejsou nové notifikace od posledního kliknutí, ale jsou od předposledního přihlášení
+            // a uživatel je ještě neviděl, zobrazíme celkový počet
+            badge.classList.remove(BADGE_HIDE_CLASS);
+            bellIcon.classList.add(ANIMATION_CLASS);
+        } else {
+            badge.classList.add(BADGE_HIDE_CLASS);
+            bellIcon.classList.remove(ANIMATION_CLASS);
+        }
     }
 });
