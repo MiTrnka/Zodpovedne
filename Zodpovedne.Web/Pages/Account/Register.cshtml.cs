@@ -59,9 +59,11 @@ public class RegisterModel : BasePageModel
         // Pøihlášení uživatele pomocí cookie
         await Login(result.Token, result.Nickname);
 
-        StatusMessage = "Registrace probìhla úspìšnì";
-        if (!string.IsNullOrEmpty(ReturnUrl))
-            return LocalRedirect(ReturnUrl);
-        return Page();
+        // Pøesmìrování na pùvodní stránku nebo na hlavní stránku
+        if ((string.IsNullOrEmpty(ReturnUrl)) || (ReturnUrl == "/Account/Logout") || (ReturnUrl == "/Account/login"))
+            return RedirectToPage("/Index");
+
+        return RedirectToPage(ReturnUrl);
+
     }
 }
