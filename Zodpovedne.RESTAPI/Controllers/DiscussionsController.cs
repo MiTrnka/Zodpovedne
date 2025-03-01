@@ -81,13 +81,13 @@ public class DiscussionsController : ControllerBase
     /// <param name="page">Číslo stránky (číslováno od 1)</param>
     /// <returns>Stránkovaný seznam diskuzí dle oprávnění přihlášeného uživatele</returns>
     [HttpGet]
-    public async Task<ActionResult<PagedResultDto<DiscussionListDto>>> GetDiscussions(int? categoryId = null, int pageSize = 10, int page = 1)
+    public async Task<ActionResult<PagedResultDto<DiscussionListDto>>> GetDiscussions(int? categoryId = null, int page = 1, int pageSize = 10)
     {
         try
         {
             // Validace vstupních parametrů
             if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 10;
+            if (pageSize < 1) pageSize = 1;
             if (pageSize > 100) pageSize = 100; // Omezení maximální velikosti stránky
 
             // Identifikace uživatele pro správné filtrování obsahu
