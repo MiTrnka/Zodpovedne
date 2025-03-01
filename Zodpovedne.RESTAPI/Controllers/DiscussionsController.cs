@@ -227,80 +227,128 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Načte netrackovaný kompletní detail diskuze podle jejího ID včetně všech souvisejících dat jako jsou komentáře, odpovědi, lajky a informace o autorech.
-    /// Endpoint lze použít pro zobrazení diskuze, komentářů a lajků s respektováním oprávnění přihlášeného uživatele.
+    /// Načte detail diskuze včetně stránkovaných komentářů.
+    /// Optimalizovaná verze používající Split Queries a přímé stránkování v SQL dotazu.
     /// </summary>
     /// <param name="discussionId">ID diskuze</param>
+    /// <param name="page">Číslo stránky (číslováno od 1)</param>
+    /// <param name="pageSize">Počet komentářů na stránku</param>
     /// <returns>Detail diskuze nebo NotFound, pokud diskuze neexistuje nebo není přístupná</returns>
     [HttpGet("{discussionId}")]
-    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussion(int discussionId, int page, int pageSize)
+    public async Task<ActionResult<DiscussionDetailDto>> GetDiscussion(int discussionId, int page = 1, int pageSize = 10)
     {
         try
         {
-            // Pro přihlášené uživatele získání ID a role přihlášeného uživatele pro případné dodání skrytého obsahu (pokud na to bude mít práva)
+            // Získání ID a role přihlášeného uživatele pro filtrování obsahu dle oprávnění
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
 
-            // Načtení diskuze včetně všech souvisejících komentářů a dalších dat pomocí eager loading
-            // Museli jsme opakovat Include(d => d.Comments) protože,EF Core neumožňuje řetězit více ThenInclude rozvětveních na jeden Include (více ThenInclude za sebou jde, ale jen pro jednu cestu)
+            // Načtení aktuálního uživatele pro kontrolu nových odpovědí - děláme to pouze jednou
+            // pro celý request, abychom nemuseli volat userManager pro každý komentář zvlášť
+            ApplicationUser? currentUser = null;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                currentUser = await userManager.FindByIdAsync(userId);
+            }
+
+            // 1. KROK: Načtení základních dat diskuze
+            // -------------------------------------------
+            // Načítáme pouze diskuzi a její přímo související entity (kategorie, autor, lajky)
+            // Komentáře načteme samostatným dotazem
             var discussion = await dbContext.Discussions
-               // Načtení netrackovaných základních souvisejících dat pro diskuzi
-               .AsNoTracking()
-               .Include(d => d.Category)                    // Kategorie pro zobrazení názvu kategorie
-               .Include(d => d.User)                        // Autor diskuze pro zobrazení jeho nicknamu
-               .Include(d => d.Likes)                       // Lajky diskuze pro zobrazení počtu a kontrolu, zda už uživatel lajkoval
+                .AsNoTracking() // Netrackujeme změny - zvýšení výkonu
+                .Include(d => d.Category) // Kategorie pro zobrazení názvu
+                .Include(d => d.User)     // Autor pro zobrazení nicknamu
+                .Include(d => d.Likes)    // Lajky pro zobrazení počtu a kontrolu uživatelových lajků
+                                          // Filtrování diskuzí dle oprávnění uživatele
+                .FirstOrDefaultAsync(d => d.Id == discussionId &&
+                    d.Type != DiscussionType.Deleted &&     // Nikdy nezobrazujeme smazané diskuze
+                    (d.Type != DiscussionType.Hidden ||     // Pro skryté diskuze kontrolujeme:
+                        isAdmin ||                          // - buď je uživatel admin (vidí vše)
+                        d.UserId == userId));               // - nebo je autorem této diskuze
 
-               // Načtení dat pro root komentáře
-               .Include(d => d.Comments)                    // Všechny komentáře k diskuzi
-                   .ThenInclude(c => c.User)                // Autoři těchto komentářů
-               .Include(d => d.Comments)                    // Znovu komentáře (potřeba pro další ThenInclude)
-                   .ThenInclude(c => c.Likes)               // Lajky u komentářů
-
-               // Načtení dat pro odpovědi na komentáře (druhá úroveň komentářů)
-               .Include(d => d.Comments)                    // Znovu komentáře (potřeba pro načtení replies)
-                   .ThenInclude(c => c.Replies)             // Odpovědi na komentáře
-                       .ThenInclude(r => r.User)            // Autoři odpovědí
-               .Include(d => d.Comments)                    // Znovu komentáře (potřeba pro další větev replies)
-                   .ThenInclude(c => c.Replies)             // Znovu odpovědi
-                       .ThenInclude(r => r.Likes)           // Lajky u odpovědí
-
-               // Filtrování diskuze podle oprávnění:
-               .FirstOrDefaultAsync(d => d.Id == discussionId &&   // Hledáme konkrétní diskuzi podle ID
-                   d.Type != DiscussionType.Deleted &&      // Nikdy nezobrazujeme smazané diskuze
-                   (d.Type != DiscussionType.Hidden ||      // Pro skryté diskuze kontrolujeme:
-                       isAdmin ||                           // - buď je uživatel admin (vidí vše)
-                       d.UserId == userId));                // - nebo je autorem této diskuze
-
-
+            // Kontrola existence diskuze
             if (discussion == null)
                 return NotFound();
 
-            // Filtrování komentářů podle viditelnosti
-            var filteredComments = discussion.Comments
-                .Where(c => c.Type != CommentType.Deleted && // Odstranění smazaných
-                    (c.Type != CommentType.Hidden ||         // Skryté zobrazit jen pro:
-                        isAdmin ||                           // - adminy
-                        c.UserId == userId))                 // - autory komentáře
-                .Where(c => c.ParentCommentId == null) // Jen root komentáře
-                .OrderByDescending(c => c.UpdatedAt)
-                .Skip((page - 1) * pageSize)  // Stránkování
-                .Take(pageSize)
-                .ToList();
+            // 2. KROK: Načtení počtu root komentářů pro stránkování
+            // -----------------------------------------------------
+            // Zjistíme celkový počet viditelných root komentářů pro výpočet stránkování
+            var totalRootComments = await dbContext.Comments
+                .AsNoTracking()
+                .Where(c => c.DiscussionId == discussionId)        // Komentáře patřící k této diskuzi
+                .Where(c => c.ParentCommentId == null)             // Pouze root komentáře (ne odpovědi)
+                .Where(c => c.Type != CommentType.Deleted &&       // Nekompletně smazané
+                    (c.Type != CommentType.Hidden ||               // Skryté zobrazit jen pro:
+                        isAdmin ||                                 // - adminy
+                        c.UserId == userId))                       // - autory komentáře
+                .CountAsync();
 
-            // Filtrování odpovědí na komentáře podle viditelnosti
-            foreach (var comment in filteredComments)
+            // 3. KROK: Načtení stránkovaných root komentářů
+            // ---------------------------------------------
+            // Načteme pouze root komentáře pro aktuální stránku (efektivní stránkování v SQL)
+            var rootComments = await dbContext.Comments
+                .AsNoTracking()
+                .Where(c => c.DiscussionId == discussionId)        // Komentáře patřící k této diskuzi
+                .Where(c => c.ParentCommentId == null)             // Pouze root komentáře (ne odpovědi)
+                .Where(c => c.Type != CommentType.Deleted &&       // Nekompletně smazané
+                    (c.Type != CommentType.Hidden ||               // Skryté zobrazit jen pro:
+                        isAdmin ||                                 // - adminy
+                        c.UserId == userId))                       // - autory komentáře
+                .OrderByDescending(c => c.UpdatedAt)               // Seřadit dle data aktualizace
+                .Skip((page - 1) * pageSize)                       // Stránkování - přeskočit předchozí stránky
+                .Take(pageSize)                                    // Stránkování - vzít pouze pageSize záznamů
+                                                                   // Načtení dat potřebných pro každý root komentář
+                .Include(c => c.User)                              // Autor komentáře
+                .Include(c => c.Likes)                             // Lajky komentáře
+                .AsSplitQuery()                                    // Rozdělení na více SQL dotazů pro vyšší výkon
+                .ToListAsync();
+
+            // 4. KROK: Načtení odpovědí na root komentáře
+            // -------------------------------------------
+            // Získáme pole ID root komentářů pro efektivní filtrování
+            var rootCommentIds = rootComments.Select(c => c.Id).ToArray();
+
+            // Načteme odpovědi pouze pro root komentáře na aktuální stránce
+            var replies = await dbContext.Comments
+                .AsNoTracking()
+                .Where(c => c.DiscussionId == discussionId)        // Komentáře patřící k této diskuzi
+                .Where(c => c.ParentCommentId != null)             // Pouze odpovědi (ne root komentáře)
+                .Where(c => rootCommentIds.Contains(c.ParentCommentId.Value)) // Pouze odpovědi na načtené root komentáře
+                .Where(c => c.Type != CommentType.Deleted &&       // Nekompletně smazané
+                    (c.Type != CommentType.Hidden ||               // Skryté zobrazit jen pro:
+                        isAdmin ||                                 // - adminy
+                        c.UserId == userId))                       // - autory komentáře
+                                                                   // Načtení dat potřebných pro každou odpověď
+                .Include(c => c.User)                              // Autor odpovědi
+                .Include(c => c.Likes)                             // Lajky odpovědi
+                .AsSplitQuery()                                    // Rozdělení na více SQL dotazů pro vyšší výkon
+                .ToListAsync();
+
+            // 5. KROK: Přiřazení odpovědí k root komentářům
+            // ---------------------------------------------
+            // Pro každý root komentář přiřadíme jeho odpovědi
+            // Vytvoříme slovník s odpověďmi seskupenými podle ID rodičovského komentáře
+            Dictionary<int, List<Comment>> repliesByParentId = replies
+                .GroupBy(r => r.ParentCommentId!.Value)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Přiřadíme odpovědi k jejich root komentářům
+            foreach (var rootComment in rootComments)
             {
-                comment.Replies = comment.Replies
-                    .Where(r => r.Type != CommentType.Deleted && // Odstranění smazaných
-                        (r.Type != CommentType.Hidden ||         // Skryté zobrazit jen pro:
-                            isAdmin ||                           // - adminy
-                            r.UserId == userId))                 // - autory odpovědi
-                    .ToList();
+                // Efektivní vyhledání odpovědí pomocí slovníku
+                if (repliesByParentId.TryGetValue(rootComment.Id, out var commentReplies))
+                {
+                    rootComment.Replies = commentReplies;
+                }
             }
 
-            // Mapování na DTO s respektováním oprávnění
+            // 6. KROK: Mapování dat do DTO objektu
+            // -----------------------------------
+            // Vytvoříme výsledné DTO s daty, která pošleme klientovi
             var result = new DiscussionDetailDto
             {
+                // Základní údaje o diskuzi
                 Id = discussion.Id,
                 Title = discussion.Title,
                 Content = discussion.Content,
@@ -315,11 +363,12 @@ public class DiscussionsController : ControllerBase
                 UpdatedAt = discussion.UpdatedAt,
                 ViewCount = discussion.ViewCount,
                 Type = discussion.Type,
-                // Konfigurace lajků
+
+                // Informace o lajcích
                 Likes = new LikeInfoDto
                 {
                     LikeCount = discussion.Likes.Count,            // Celkový počet lajků
-                    HasUserLiked = discussion.Likes                // Informace zda uživatel již lajkoval
+                    HasUserLiked = discussion.Likes                // Informace, zda uživatel již lajkoval
                         .Any(l => l.UserId == userId),
                     CanUserLike = isAdmin ||                       // Může lajkovat pokud:
                         (!string.IsNullOrEmpty(userId) &&          // - je přihlášen
@@ -327,12 +376,14 @@ public class DiscussionsController : ControllerBase
                          !discussion.Likes                         // - ještě nelajkoval
                             .Any(l => l.UserId == userId))
                 },
-                // Mapování komentářů - pouze root komentáře (bez rodičovského komentáře)
-                Comments = filteredComments
-                    .Select(c => MapCommentToDto(c, userId, isAdmin))
+
+                // Komentáře - předáváme načteného uživatele do mapování pro kontrolu nových odpovědí
+                Comments = rootComments
+                    .Select(c => MapCommentToDto(c, userId, isAdmin, currentUser))
                     .ToList(),
-                HasMoreComments = discussion.Comments
-                    .Count(c => c.ParentCommentId == null) > (page * pageSize)
+
+                // Informace o stránkování - máme další komentáře?
+                HasMoreComments = totalRootComments > (page * pageSize)
             };
 
             return Ok(result);
@@ -980,14 +1031,14 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Tato pomocná metoda převádí entitu Comment na DTO objekt, který bude odeslán klientovi.
-    /// Rekurzivně zpracovává i všechny reakce na tento komentář.
+    /// Mapuje entitu Comment na DTO objekt CommentDto, včetně všech souvisejících dat
     /// </summary>
-    /// <param name="comment">Entita komentáře s načtenými souvisejícími daty (User, Replies, Likes)</param>
-    /// <param name="userId">ID aktuálně přihlášeného uživatele, nebo null pokud není nikdo přihlášen</param>
-    /// <param name="isAdmin">True pokud je přihlášený uživatel v roli Admin</param>
-    /// <returns>DTO objekt obsahující všechny potřebné informace pro zobrazení komentáře</returns>
-    private CommentDto MapCommentToDto(Comment comment, string? userId, bool isAdmin)
+    /// <param name="comment">Entita komentáře s načtenými souvisejícími daty</param>
+    /// <param name="userId">ID aktuálně přihlášeného uživatele (null pokud není přihlášen)</param>
+    /// <param name="isAdmin">True pokud je přihlášený uživatel admin</param>
+    /// <param name="currentUser">Již načtená entita přihlášeného uživatele (pro optimalizaci)</param>
+    /// <returns>DTO objekt reprezentující komentář včetně oprávnění a vztahů</returns>
+    private CommentDto MapCommentToDto(Comment comment, string? userId, bool isAdmin, ApplicationUser? currentUser = null)
     {
         // Zjistíme, zda aktuální uživatel už dal like tomuto komentáři
         var userLikes = comment.Likes.Any(l => l.UserId == userId);
@@ -1002,17 +1053,11 @@ public class DiscussionsController : ControllerBase
         bool hasNewReplies = false;
 
         // Pouze pro rootové komentáře, kde je přihlášen autor komentáře
-        if (comment.ParentCommentId == null && comment.UserId == userId)
+        if (comment.ParentCommentId == null && comment.UserId == userId && currentUser?.PreviousLastLogin != null)
         {
-            // Získání informací o přihlášeném uživateli
-            var user = userManager.FindByIdAsync(userId).Result;
-
-            // Kontrola, zda existují nějaké odpovědi novější než předchozí přihlášení
-            if (user?.PreviousLastLogin != null)
-            {
-                hasNewReplies = comment.Replies
-                    .Any(r => r.CreatedAt > user.PreviousLastLogin && r.UserId != userId);
-            }
+            // Kontrola nových odpovědí s již načteným uživatelem (optimalizace)
+            hasNewReplies = comment.Replies
+                .Any(r => r.CreatedAt > currentUser.PreviousLastLogin && r.UserId != userId);
         }
 
         return new CommentDto
@@ -1039,7 +1084,7 @@ public class DiscussionsController : ControllerBase
             Replies = comment.Replies
                 .Where(r => r.Type != CommentType.Deleted &&
                     (r.Type != CommentType.Hidden || isAdmin || r.UserId == userId))
-                .Select(r => MapCommentToDto(r, userId, isAdmin))
+                .Select(r => MapCommentToDto(r, userId, isAdmin, currentUser))
                 .ToList()
         };
     }

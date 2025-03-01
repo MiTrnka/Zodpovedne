@@ -752,6 +752,7 @@ public class UsersController : ControllerBase
     /// <returns>Seznam diskuzí s informacemi o nových odpovědích</returns>
     [Authorize]
     [HttpGet("discussions-with-new-replies")]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public async Task<ActionResult<IEnumerable<DiscussionWithNewRepliesDto>>> GetDiscussionsWithNewReplies()
     {
         try
