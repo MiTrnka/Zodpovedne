@@ -170,7 +170,7 @@ public class DiscussionModel : BasePageModel
                 CategoryName = category.Name;
         }
 
-        // Pokud je uživatel admin, naèteme seznam všech kategorií
+        // Pokud je uživatel admin, naèteme seznam všech kategorií, aby mohl admin mezi nimi pøesouvat diskuze
         if (IsAdmin)
         {
             var categoriesResponse = await client.GetAsync($"{ApiBaseUrl}/categories");
