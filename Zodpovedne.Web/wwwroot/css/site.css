@@ -3,7 +3,9 @@
     --primary-pink: #e06f70;
     --primary-pink-hover: #d15657;
     --secondary-pink: #FFB5B5;
+    --secondary-pink-ultra-light: #FFF9F9; /* bila barva s nadechem ruzove */
     --text-gray: #666666;
+    --light-gray: #F2EFF0;
 }
 
 /* Reset a základní nastavení (platí pro všechny velikosti) */
@@ -15,6 +17,38 @@ html {
 
 body {
     margin-bottom: 100px; /* Větší margin pro patičku na mobilu */
+    background-color: var(--secondary-pink-ultra-light);
+}
+
+.mainBanner {
+    width: 100%;
+    height: 120px;
+    margin-top: -20px;  
+}
+.mainBannerPicture {
+    width: 100%;
+    height: 70px;
+    background-image: url("../images/dudlik_a_lahvicka_samostatne.webp");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: right center;
+}
+.checkmark{
+    color: var(--primary-pink);
+}
+.underlineGraphic {
+    position: relative;
+}
+.underlineGraphic::after {
+    content: "";
+    width: 100%;
+    height: 0.2rem;
+    background-color: var(--primary-pink);
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+
 }
 
 /* Základní container */
@@ -68,7 +102,7 @@ a {
 .notification-active {
     color: var(--primary-pink);
     animation: bell-ring 1s;
-}
+}   
 
 @keyframes bell-ring {
     0% {
@@ -310,7 +344,7 @@ h1 {
 /* Styly pro velké desktopy (≥1200px) */
 @media (min-width: 1200px) {
     .container {
-        max-width: 1140px;
+        max-width: 1550px;
         margin: 0 auto;
     }
 }
