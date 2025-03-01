@@ -747,12 +747,11 @@ public class UsersController : ControllerBase
 
     /// <summary>
     /// Vrátí seznam diskuzí, kde má přihlášený uživatel nové odpovědi na své komentáře od posledního přihlášení.
-    /// Implementuje memory caching pro zlepšení výkonu s invalidací při přihlášení nebo po 60 sekundách.
     /// </summary>
     /// <returns>Seznam diskuzí s informacemi o nových odpovědích</returns>
     [Authorize]
     [HttpGet("discussions-with-new-replies")]
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)] // Zakázání kešování pro vždy aktuální data
     public async Task<ActionResult<IEnumerable<DiscussionWithNewRepliesDto>>> GetDiscussionsWithNewReplies()
     {
         try
@@ -762,16 +761,16 @@ public class UsersController : ControllerBase
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            // Vyhledání uživatele v databázi
+            // Vyhledání uživatele v databázi pro získání času předchozího přihlášení
             var user = await userManager.FindByIdAsync(userId);
             if (user == null || user.PreviousLastLogin == null)
-                return Ok(new List<DiscussionWithNewRepliesDto>());
+                return Ok(new List<DiscussionWithNewRepliesDto>()); // Pokud nemáme předchozí přihlášení, nemůžeme zjistit nové odpovědi
 
+            //Pokus o načtení dat z keše. Pokud se načtou, tak se vrátí a metoda skončí, pokud se nenajdou, tak se musí zjistit z databáze a uložit do keše
             // Vytvoření klíče pro keš, který obsahuje:
             // - ID uživatele (každý uživatel má vlastní keš)
             // - Časové razítko posledního přihlášení (invaliduje keš při novém přihlášení)
             var cacheKey = $"NewReplies_{userId}_{user.LastLogin?.Ticks}";
-
             // Pokus o získání dat z keše
             // TryGetValue vrací true, pokud klíč existuje a hodnota je uložena do cachedResult
             if (_cache.TryGetValue(cacheKey, out List<DiscussionWithNewRepliesDto> cachedResult))
@@ -779,77 +778,93 @@ public class UsersController : ControllerBase
                 return Ok(cachedResult);
             }
 
+            //V keši nebyl seznam nalezen, takže se musí získat z databáze (pak uložit do keše) viz kód níže
+
             // Čas, od kterého hledáme nové odpovědi (předchozí přihlášení)
             var fromTime = user.PreviousLastLogin.Value;
 
-            // Vyhledání komentářů uživatele, které mají nové odpovědi
-            var discussionsWithNewReplies = await dbContext.Comments
-                .AsNoTracking()  // Pro lepší výkon - EF Core nebude sledovat entity
+            // 1. KROK: Efektivně najít ID root komentářů uživatele, které mají nové odpovědi. K tomu ještě čas nejnovější odpovědi.
+            var rootCommentsWithNewReplies = await dbContext.Comments
+                .AsNoTracking() // Pro lepší výkon - nesledujeme změny entit
                 .Where(c => c.UserId == userId && c.ParentCommentId == null) // Jen rootové komentáře uživatele
-                .Select(rootComment => new
+                .Where(c => c.Replies.Any(r =>
+                    r.CreatedAt > fromTime && // Odpověď je novější než předchozí přihlášení
+                    r.UserId != userId &&     // Odpověď není od samotného uživatele
+                    r.Type != CommentType.Deleted)) // Odpověď není smazaná
+                .Select(c => new
                 {
-                    Comment = rootComment,
-                    // Pro každý rootový komentář najít nejnovější odpověď po předchozím přihlášení
-                    // Filtrujeme jen neodstraněné odpovědi od jiných uživatelů
-                    LatestReply = rootComment.Replies
-                        .Where(r => r.CreatedAt > fromTime &&
-                               r.UserId != userId &&
-                               r.Type != CommentType.Deleted)
-                        .OrderByDescending(r => r.CreatedAt)
-                        .FirstOrDefault(),
-                    // Příznak, zda komentář má nějakou novou odpověď
-                    HasNewReply = rootComment.Replies.Any(r => r.CreatedAt > fromTime &&
-                                                        r.UserId != userId &&
-                                                        r.Type != CommentType.Deleted)
-                })
-                .Where(x => x.HasNewReply) // Filtrovat jen komentáře s novými odpověďmi
-                .Select(x => new
-                {
-                    DiscussionId = x.Comment.DiscussionId,
-                    LatestReplyTime = x.LatestReply.CreatedAt,
-                    CommentId = x.Comment.Id
+                    CommentId = c.Id,
+                    DiscussionId = c.DiscussionId,
+                    // Pro každý komentář najdeme nejnovější odpověď a pouze čas této odpovědi
+                    LatestReplyTime = c.Replies
+                        .Where(r => r.CreatedAt > fromTime && r.UserId != userId && r.Type != CommentType.Deleted)
+                        .Max(r => r.CreatedAt)
                 })
                 .ToListAsync();
 
-            // Seskupit podle diskuze pro zobrazení každé diskuze pouze jednou,
-            // počítat počet komentářů s novými odpověďmi pro každou diskuzi
-            var discussionGroups = discussionsWithNewReplies
-                .GroupBy(d => d.DiscussionId)
-                .Select(g => new
-                {
-                    DiscussionId = g.Key,
-                    LatestReplyTime = g.Max(d => d.LatestReplyTime),  // Nejnovější odpověď v diskuzi
-                    CommentsCount = g.Count() // Počet komentářů uživatele s novými odpověďmi
-                })
-                .OrderByDescending(d => d.LatestReplyTime)  // Seřadit podle času nejnovější odpovědi
-                .ToList();
-
-            // Získat detaily diskuzí pro zobrazení
+            // Výsledný seznam diskuzí s informacemi o nových odpovědích, zatím je prázdný
             var result = new List<DiscussionWithNewRepliesDto>();
 
-            foreach (var discussion in discussionGroups)
+            // Pokud uživatel má nějaké komentáře s novými odpověďmi, zjistíme o nich další informace
+            if (rootCommentsWithNewReplies.Any())
             {
-                // Načtení detailů diskuze včetně kategorie
-                var discussionDetails = await dbContext.Discussions
-                    .AsNoTracking()
-                    .Include(d => d.Category)
-                    .Where(d => d.Id == discussion.DiscussionId)
-                    .Select(d => new DiscussionWithNewRepliesDto
+                // 2. KROK: Seskupit komentáře podle diskuzí
+                // ----------------------------------------
+                // Efektivní způsob seskupení bez další databázové operace
+                var discussionGroups = rootCommentsWithNewReplies
+                    .GroupBy(c => c.DiscussionId)
+                    .Select(g => new
                     {
-                        DiscussionId = d.Id,
-                        Title = d.Title,
-                        DiscussionUrl = $"/categories/{d.Category.Code}/{d.Code}",
-                        CategoryName = d.Category.Name,
-                        LatestReplyTime = discussion.LatestReplyTime,
-                        CommentsWithNewRepliesCount = discussion.CommentsCount
+                        DiscussionId = g.Key,
+                        LatestReplyTime = g.Max(c => c.LatestReplyTime), // Nejnovější odpověď v diskuzi
+                        CommentsCount = g.Count() // Počet komentářů uživatele s novými odpověďmi
                     })
-                    .FirstOrDefaultAsync();
+                    .OrderByDescending(g => g.LatestReplyTime) // Seřazení podle času nejnovější odpovědi
+                    .ToList();
 
-                if (discussionDetails != null)
+                // 3. KROK: Získat seznam ID diskuzí, které potřebujeme načíst
+                // ---------------------------------------------------------
+                var discussionIds = discussionGroups.Select(g => g.DiscussionId).ToArray();
+
+                // 4. KROK: Efektivně načíst pouze potřebné informace o diskuzích
+                // ------------------------------------------------------------
+                // Načteme pouze potřebné informace o diskuzích v jednom dotazu
+                var discussions = await dbContext.Discussions
+                    .AsNoTracking()
+                    .Where(d => discussionIds.Contains(d.Id))
+                    .Include(d => d.Category) // Potřebujeme kategorii pro URL a název kategorie
+                    .Select(d => new
+                    {
+                        d.Id,
+                        d.Title,
+                        DiscussionCode = d.Code,
+                        d.Category.Name,
+                        CategoryCode = d.Category.Code
+                    })
+                    .ToDictionaryAsync(d => d.Id); // Pro rychlý přístup podle ID diskuze
+
+                // 5. KROK: Sestavení výsledku
+                // --------------------------
+                // Sestavíme výsledné DTO objekty s informacemi o diskuzích a nových odpovědích
+                foreach (var group in discussionGroups)
                 {
-                    result.Add(discussionDetails);
+                    // Kontrola, zda máme informace o diskuzi (pro případ nesouladu dat)
+                    if (discussions.TryGetValue(group.DiscussionId, out var discussion))
+                    {
+                        result.Add(new DiscussionWithNewRepliesDto
+                        {
+                            DiscussionId = group.DiscussionId,
+                            Title = discussion.Title,
+                            DiscussionUrl = $"/categories/{discussion.CategoryCode}/{discussion.DiscussionCode}",
+                            CategoryName = discussion.Name,
+                            LatestReplyTime = group.LatestReplyTime,
+                            CommentsWithNewRepliesCount = group.CommentsCount
+                        });
+                    }
                 }
             }
+
+            // Uložení výsledku do keše a vrácení výsledku
 
             // Nastavení možností kešování
             var cacheOptions = new MemoryCacheEntryOptions()
@@ -858,7 +873,6 @@ public class UsersController : ControllerBase
             .SetAbsoluteExpiration(TimeSpan.FromSeconds(60))
             // Nastavení velikosti položky pro případnou správu paměti
             .SetSize(1);
-
             // Uložení výsledku do keše
             _cache.Set(cacheKey, result, cacheOptions);
 
