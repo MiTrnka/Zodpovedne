@@ -81,27 +81,23 @@ public class DiscussionsController : ControllerBase
     /// <param name="page">Číslo stránky (číslováno od 1)</param>
     /// <returns>Stránkovaný seznam diskuzí dle oprávnění přihlášeného uživatele</returns>
     [HttpGet]
-    public async Task<ActionResult<PagedResultDto<DiscussionListDto>>> GetDiscussions(int? categoryId = null, int pageSize = 1, int page = 1)
+    public async Task<ActionResult<PagedResultDto<DiscussionListDto>>> GetDiscussions(int? categoryId = null, int pageSize = 10, int page = 1)
     {
         try
         {
             // Validace vstupních parametrů
             if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 1;
-            if (pageSize > 50) pageSize = 50; // Omezení maximální velikosti stránky
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100; // Omezení maximální velikosti stránky
 
             // Identifikace uživatele pro správné filtrování obsahu
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
 
-            // Základní dotaz s eager loadingem souvisejících dat
-            var query = dbContext.Discussions
-                .AsNoTracking()                  // Netrackovaný dotaz pro lepší výkon
-                .Include(d => d.Category)        // Pro zobrazení názvu kategorie
-                .Include(d => d.User)            // Pro zobrazení autora
-                .Include(d => d.Comments)        // Pro počítání relevantních komentářů
-                .Include(d => d.Likes)           // Pro informace o lajcích
-                                                 // Bezpečnostní filtry
+            // 1. KROK: Vytvoření základního dotazu pro počet a filtrování diskuzí
+            // ----------------------------------------------------------------
+            var baseQuery = dbContext.Discussions
+                .AsNoTracking()
                 .Where(d => d.Type != DiscussionType.Deleted)  // Smazané diskuze nikdo nevidí
                 .Where(d => d.Type != DiscussionType.Hidden || // Hidden diskuze vidí jen:
                     isAdmin ||                                  // - admin
@@ -110,21 +106,77 @@ public class DiscussionsController : ControllerBase
             // Aplikace filtru podle kategorie, pokud je zadána
             if (categoryId.HasValue)
             {
-                query = query.Where(d => d.CategoryId == categoryId.Value);
+                baseQuery = baseQuery.Where(d => d.CategoryId == categoryId.Value);
             }
 
-            // Získání celkového počtu položek pro stránkování
-            var totalCount = await query.CountAsync();
+            // 2. KROK: Zjištění celkového počtu diskuzí pro stránkování
+            // -------------------------------------------------------
+            var totalCount = await baseQuery.CountAsync();
 
-            // Aplikace stránkování a načtení dat s projekcí do DTO
-            var discussions = await query
-                // Řazení
+            // 3. KROK: Získání seznamu diskuzí pro aktuální stránku
+            // ---------------------------------------------------
+            // Nejprve vybereme ID diskuzí pro aktuální stránku
+            var discussionIds = await baseQuery
                 .OrderByDescending(d => d.Type == DiscussionType.Top)  // 1. TOP diskuze
                 .ThenByDescending(d => d.UpdatedAt)                    // 2. Nejnovější první
-                                                                       // Stránkování
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                // Mapování na DTO přímo v databázovém dotazu
+                .Select(d => d.Id)
+                .ToArrayAsync();
+
+            // 4. KROK: Efektivní načtení dat pro vybrané diskuze
+            // ------------------------------------------------
+            // Pro vybrané diskuze efektivně načteme jen potřebná data
+            var discussions = await dbContext.Discussions
+                .AsNoTracking()
+                .Where(d => discussionIds.Contains(d.Id))
+                .Include(d => d.Category)       // Pro zobrazení názvu kategorie
+                .Include(d => d.User)           // Pro zobrazení autora
+                .ToListAsync();
+
+            // 5. KROK: Načtení počtu relevantních komentářů pro každou diskuzi
+            // --------------------------------------------------------------
+            var commentCounts = await dbContext.Comments
+                .AsNoTracking()
+                .Where(c => discussionIds.Contains(c.DiscussionId))
+                .Where(c => c.Type != CommentType.Deleted &&     // Ignorujeme smazané
+                    (c.Type != CommentType.Hidden ||            // Hidden komentáře počítáme pro:
+                        isAdmin ||                              // - adminy
+                        c.UserId == userId))                    // - autory komentářů
+                .GroupBy(c => c.DiscussionId)
+                .Select(g => new { DiscussionId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            // Vytvoříme slovník pro rychlý přístup k počtu komentářů podle ID diskuze
+            var commentCountByDiscussionId = commentCounts.ToDictionary(x => x.DiscussionId, x => x.Count);
+
+            // 6. KROK: Načtení informací o lajcích pro každou diskuzi
+            // -----------------------------------------------------
+            // Získáme počet lajků pro každou diskuzi
+            var likeCounts = await dbContext.DiscussionLikes
+                .AsNoTracking()
+                .Where(l => discussionIds.Contains(l.DiscussionId))
+                .GroupBy(l => l.DiscussionId)
+                .Select(g => new { DiscussionId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            // Vytvoříme slovník pro rychlý přístup k počtu lajků podle ID diskuze
+            var likeCountByDiscussionId = likeCounts.ToDictionary(x => x.DiscussionId, x => x.Count);
+
+            // Zjistíme, zda aktuální uživatel dal lajk daným diskuzím
+            var userLikes = string.IsNullOrEmpty(userId)
+                ? new Dictionary<int, bool>()
+                : await dbContext.DiscussionLikes
+                    .AsNoTracking()
+                    .Where(l => discussionIds.Contains(l.DiscussionId) && l.UserId == userId)
+                    .Select(l => l.DiscussionId)
+                    .ToDictionaryAsync(id => id, id => true);
+
+            // 7. KROK: Mapování diskuzí na DTO objekty
+            // --------------------------------------
+            var discussionDtos = discussions
+                .OrderByDescending(d => d.Type == DiscussionType.Top)  // Znovu řazení pro konzistenci
+                .ThenByDescending(d => d.UpdatedAt)
                 .Select(d => new DiscussionListDto
                 {
                     Id = d.Id,
@@ -134,34 +186,29 @@ public class DiscussionsController : ControllerBase
                     AuthorNickname = d.User.Nickname,
                     CreatedAt = d.CreatedAt,
                     UpdatedAt = d.UpdatedAt,
-                    // Počítání relevantních komentářů s respektováním viditelnosti
-                    CommentsCount = d.Comments.Count(c =>
-                        c.Type != CommentType.Deleted &&       // Ignorujeme smazané
-                        (c.Type != CommentType.Hidden ||      // Hidden komentáře počítáme pro:
-                            isAdmin ||                        // - adminy
-                            c.UserId == userId)),            // - autory komentářů
+                    // Efektivní přístup k počtu komentářů
+                    CommentsCount = commentCountByDiscussionId.TryGetValue(d.Id, out var count) ? count : 0,
                     ViewCount = d.ViewCount,
                     Type = d.Type,
                     Code = d.Code,
                     // Informace o lajcích
                     Likes = new LikeInfoDto
                     {
-                        LikeCount = d.Likes.Count,           // Celkový počet lajků
-                        HasUserLiked = d.Likes               // Zda přihlášený uživatel lajkoval
-                            .Any(l => l.UserId == userId),
-                        CanUserLike = isAdmin ||             // Může lajkovat pokud:
-                            (!string.IsNullOrEmpty(userId) && // - je přihlášen
-                             d.UserId != userId &&           // - není autor
-                             !d.Likes                        // - ještě nelajkoval
-                                .Any(l => l.UserId == userId))
+                        LikeCount = likeCountByDiscussionId.TryGetValue(d.Id, out var likeCount) ? likeCount : 0,
+                        HasUserLiked = userLikes.ContainsKey(d.Id),
+                        CanUserLike = isAdmin ||
+                            (!string.IsNullOrEmpty(userId) &&
+                            d.UserId != userId &&
+                            !userLikes.ContainsKey(d.Id))
                     }
                 })
-                .ToListAsync();
+                .ToList();
 
-            // Vytvoření odpovědi se stránkováním
+            // 8. KROK: Vytvoření a vrácení výsledku
+            // -----------------------------------
             var result = new PagedResultDto<DiscussionListDto>
             {
-                Items = discussions,
+                Items = discussionDtos,
                 TotalCount = totalCount,
                 PageSize = pageSize,
                 CurrentPage = page
@@ -239,6 +286,11 @@ public class DiscussionsController : ControllerBase
     {
         try
         {
+            // Validace vstupních parametrů
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 1;
+            if (pageSize > 100) pageSize = 100; // Omezení maximální velikosti stránky
+
             // Získání ID a role přihlášeného uživatele pro filtrování obsahu dle oprávnění
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
