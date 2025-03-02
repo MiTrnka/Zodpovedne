@@ -1,5 +1,6 @@
 ﻿@page "/katalog/hracky"
-@model Zodpovedne.Web.Pages.Katalog.HrackyModel
+@using Zodpovedne.Contracts.DTO;
+@model KatalogDetailDto;
 @{
     ViewData["Title"] = "Hračky";
 }
@@ -16,7 +17,11 @@
 <div class="container col-12" style="bg-transparent">
     <h1 class="mb-4 mt-4" style="color: var(--text-gray);">Hračky pro děti</h1>
     <div class="row">
-        <div class="card h-100 col-lg-3 col-md-6 col-sm-12 mb-4 p-4 border rounded-0 bg-transparent" 
+        @{
+            await Html.RenderPartialAsync("_HrackaPartial", new KatalogDetailDto("Kladivko", "Pro zatloukani hracek", "url obrazku", 20, "url do obchodu"));
+        }
+
+        <div class="card h-100 col-lg-3 col-md-6 col-sm-12 mb-4 p-4 border rounded-0 bg-transparent"
              onmouseover="this.classList.add('shadow'); this.classList.add('bg-white');"
              onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
             <div class="card-header rounded-0 bg-transparent">
