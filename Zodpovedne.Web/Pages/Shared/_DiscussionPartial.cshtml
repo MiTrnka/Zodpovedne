@@ -25,11 +25,11 @@
         <span class="mx-2">•</span>
         @* Datum vytvoření - převedené na lokální čas *@
         <span title="Datum vytvoření">
-            <i class="bi bi-calendar"></i> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+            <i class="bi bi-calendar"></i> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
         </span>
         @* Datum aktualizace - převedené na lokální čas *@
         <span title="Datum aktualizace">
-            (<i class="bi bi-calendar"></i> @Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
+            @(Model.UpdatedAt != Model.CreatedAt ? "<i class=\"bi bi - calendar\"></i> (" + Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy") + ")" : "")
         </span>
         <span class="mx-2">•</span>
         @* Počet komentářů *@
