@@ -8,9 +8,13 @@
 
   <ItemGroup>
     <Compile Remove="Logs\**" />
+    <Compile Remove="Pages\Shared\NewFolder\**" />
     <Content Remove="Logs\**" />
+    <Content Remove="Pages\Shared\NewFolder\**" />
     <EmbeddedResource Remove="Logs\**" />
+    <EmbeddedResource Remove="Pages\Shared\NewFolder\**" />
     <None Remove="Logs\**" />
+    <None Remove="Pages\Shared\NewFolder\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,10 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Zodpovedne.Contracts\Zodpovedne.Contracts.csproj" />
     <ProjectReference Include="..\Zodpovedne.Logging\Zodpovedne.Logging.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Pages\Shared\NewFolder\" />
   </ItemGroup>
 
   <ItemGroup>
