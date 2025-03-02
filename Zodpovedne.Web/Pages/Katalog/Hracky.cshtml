@@ -18,7 +18,7 @@
     <h1 class="mb-4 mt-4" style="color: var(--text-gray);">Hračky pro děti</h1>
     <div class="row">
         @{
-            await Html.RenderPartialAsync("_HrackaPartial", new KatalogDetailDto("Kladivko", "Pro zatloukani hracek", "url obrazku", 20, "url do obchodu"));
+            await Html.RenderPartialAsync("_KatalogPartial", new KatalogDetailDto("Kladivko", "Pro zatloukani hracek", "url obrazku", 20, "url do obchodu"));
         }
 
         <div class="card h-100 col-lg-3 col-md-6 col-sm-12 mb-4 p-4 border rounded-0 bg-transparent"
