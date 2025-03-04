@@ -1242,6 +1242,29 @@ public class DiscussionsController : ControllerBase
         }
     }
 
+    /* Pro správné fungování endpointu viz níže muselo být nad databází spuštěn script:
+     -- Vytvoření slovníku
+    CREATE TEXT SEARCH DICTIONARY czech_spell (
+        TEMPLATE = ispell,
+        DictFile = czech,
+        AffFile = czech,
+        StopWords = czech);
+    CREATE TEXT SEARCH CONFIGURATION czech (COPY = pg_catalog.simple);
+    ALTER TEXT SEARCH CONFIGURATION czech
+        ALTER MAPPING FOR hword, hword_part, word
+        WITH czech_ispell, simple;
+
+    -- Přidáme generovaný sloupec pro fulltextový vektor (A a B jsou váhy pro relevanci vyhledávání)
+    ALTER TABLE "Discussions" ADD COLUMN "SearchVector" tsvector
+        GENERATED ALWAYS AS (
+            setweight(to_tsvector('czech', coalesce("Title",'')), 'A') ||
+            setweight(to_tsvector('czech', coalesce("Content",'')), 'B')
+        ) STORED;
+
+    -- Vytvoříme GIN index pro rychlé vyhledávání
+    CREATE INDEX IX_Discussions_SearchVector ON "Discussions" USING GIN ("SearchVector");
+    */
+
     /// <summary>
     /// Vyhledává diskuze podle zadaných klíčových slov s podporou českého fulltextového vyhledávání
     /// </summary>
@@ -1258,7 +1281,6 @@ public class DiscussionsController : ControllerBase
                 return BadRequest("Vyhledávací dotaz je povinný");
 
             // Rozdělení dotazu na jednotlivá slova a odstranění příliš krátkých slov
-            // Ignorujeme slova kratší než 2 znaky, protože jsou obvykle nerelevantní nebo příliš obecná
             var searchTerms = query.Split(new[] { ' ', ',', ';', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries)
                 .Where(term => term.Length >= 2)
                 .ToList();
@@ -1267,67 +1289,145 @@ public class DiscussionsController : ControllerBase
             if (!searchTerms.Any())
                 return BadRequest("Vyhledávací dotaz musí obsahovat alespoň jedno slovo delší než 1 znak");
 
-            // Formátování dotazu pro tsquery
-            // Použití operátoru | (OR) znamená, že stačí najít alespoň jedno z hledaných slov
-            // Pro přísnější vyhledávání (musí obsahovat všechna slova) změňte | na &
+            // Formátování dotazu pro tsquery - použití OR operátoru
             string formattedQuery = string.Join(" | ", searchTerms);
 
             // Získání ID přihlášeného uživatele a informace, zda je admin
-            // Tyto informace jsou potřebné pro filtrování skrytých diskuzí
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
 
-            // Vyhledání diskuzí pomocí SQL dotazu
-            // Používáme FromSqlRaw pro plnou kontrolu nad SQL dotazem, což nám umožňuje:
-            // 1. Použít to_tsquery s českým slovníkem
-            // 2. Řadit výsledky podle relevance pomocí ts_rank
-            // 3. Filtrovat podle oprávnění uživatele
-            var discussions = await dbContext.Discussions
-                .FromSqlRaw(@"
-                -- Výběr všech sloupců z tabulky Discussions
-                SELECT d.*
+            // Seznam pro uložení výsledků prvního dotazu (ID a relevance)
+            var relevantDiscussionsIds = new List<(int Id, float Score)>();
+
+            // Krok 1: Nejprve získáme ID diskuzí s jejich skóre relevance ve správném pořadí
+            // Použijeme přímý ADO.NET přístup k databázi
+            var connection = dbContext.Database.GetDbConnection();
+            try
+            {
+                await connection.OpenAsync();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = @"
+                SELECT 
+                    d.""Id"",
+                    ts_rank(d.""SearchVector"", to_tsquery('czech', @query), 32) as relevance_score
                 FROM ""Discussions"" d
                 WHERE
-                    d.""Type"" != {0} -- Nikdy nezobrazujeme smazané diskuze
-                    AND (d.""Type"" != {1} OR {2} = TRUE OR d.""UserId"" = {3}) -- Skryté diskuze zobrazujeme jen adminům nebo autorům
-                    AND d.""SearchVector"" @@ to_tsquery('czech', {4}) -- Operátor @@ testuje, zda tsvector odpovídá tsquery
-                ORDER BY ts_rank(d.""SearchVector"", to_tsquery('czech', {4}), 32) DESC -- Řazení podle relevance ts_rank (četnost, váhy A - v titulku a B - v obsahu diskuze, pozice slov...)
-                -- Omezení počtu výsledků
-                LIMIT {5}",
-                    (int)DiscussionType.Deleted,    // {0}: Hodnota pro Type=Deleted
-                    (int)DiscussionType.Hidden,     // {1}: Hodnota pro Type=Hidden
-                    isAdmin,                        // {2}: Boolean, zda je uživatel admin
-                    userId ?? string.Empty,         // {3}: ID přihlášeného uživatele nebo prázdný řetězec
-                    formattedQuery,                 // {4}: Formátovaný vyhledávací dotaz (např. "slovo1 | slovo2")
-                    limit)                          // {5}: Maximální počet vrácených výsledků
-                .AsNoTracking()                     // Nesledovat změny entit (optimalizace výkonu)
+                    d.""Type"" != @deletedType
+                    AND (d.""Type"" != @hiddenType OR @isAdmin = TRUE OR d.""UserId"" = @userId)
+                    AND d.""SearchVector"" @@ to_tsquery('czech', @query) -- Operátor @@ testuje, zda tsvector z indexu nad sloupci Title a Content odpovídá tsquery
+                ORDER BY relevance_score DESC
+                LIMIT @limit";
 
-                // Načtení souvisejících dat pro každou diskuzi
-                .Include(d => d.Category)           // Načtení kategorie
-                .Include(d => d.User)               // Načtení autora
+                // Přidání parametrů pro zabezpečení proti SQL injection
+                var queryParam = command.CreateParameter();
+                queryParam.ParameterName = "@query";
+                queryParam.Value = formattedQuery;
+                command.Parameters.Add(queryParam);
 
-                // Mapování diskuzí na DTO objekty, které budou vráceny klientovi
-                .Select(d => new BasicDiscussionInfoDto
+                var deletedParam = command.CreateParameter();
+                deletedParam.ParameterName = "@deletedType";
+                deletedParam.Value = (int)DiscussionType.Deleted;
+                command.Parameters.Add(deletedParam);
+
+                var hiddenParam = command.CreateParameter();
+                hiddenParam.ParameterName = "@hiddenType";
+                hiddenParam.Value = (int)DiscussionType.Hidden;
+                command.Parameters.Add(hiddenParam);
+
+                var isAdminParam = command.CreateParameter();
+                isAdminParam.ParameterName = "@isAdmin";
+                isAdminParam.Value = isAdmin;
+                command.Parameters.Add(isAdminParam);
+
+                var userIdParam = command.CreateParameter();
+                userIdParam.ParameterName = "@userId";
+                userIdParam.Value = userId ?? string.Empty;
+                command.Parameters.Add(userIdParam);
+
+                var limitParam = command.CreateParameter();
+                limitParam.ParameterName = "@limit";
+                limitParam.Value = limit;
+                command.Parameters.Add(limitParam);
+
+                // Spuštění dotazu a zpracování výsledků
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
-                    Id = d.Id,
-                    Title = d.Title,
-                    // Oříznutí obsahu pro přehlednější zobrazení
-                    Content = d.Content.Length > 300 ? d.Content.Substring(0, 300) + "..." : d.Content,
+                    var id = reader.GetInt32(0);
+                    var score = reader.GetFloat(1);
+                    relevantDiscussionsIds.Add((id, score));
+                }
+            }
+            finally
+            {
+                // Ujistíme se, že spojení je uzavřeno
+                if (connection.State == System.Data.ConnectionState.Open)
+                    await connection.CloseAsync();
+            }
+
+            // Kontrola, zda byly nalezeny nějaké výsledky
+            if (!relevantDiscussionsIds.Any())
+                return Ok(new List<BasicDiscussionInfoDto>());
+
+            // Krok 2: Získáme ID diskuzí jako seznam pro použití v dotazu IN
+            var discussionIds = relevantDiscussionsIds.Select(x => x.Id).ToList();
+
+            // Krok 3: Načteme kompletní data pro nalezené diskuze
+            var discussions = await dbContext.Discussions
+                .AsNoTracking()
+                .Where(d => discussionIds.Contains(d.Id))
+                .Select(d => new
+                {
+                    d.Id,
+                    d.Title,
+                    d.Content,
+                    d.CategoryId,
+                    d.CreatedAt,
+                    d.UpdatedAt,
+                    d.ViewCount,
+                    d.Type,
+                    d.Code,
+                    d.UserId,
                     CategoryName = d.Category.Name,
-                    CategoryId = d.CategoryId,
                     CategoryCode = d.Category.Code,
-                    DiscussionCode = d.Code,
-                    AuthorNickname = d.User.Nickname,
-                    AuthorId = d.UserId,
-                    CreatedAt = d.CreatedAt,
-                    UpdatedAt = d.UpdatedAt,
-                    ViewCount = d.ViewCount,
-                    Type = d.Type
+                    AuthorNickname = d.User.Nickname
                 })
                 .ToListAsync();
 
-            // Vrácení výsledků
-            return Ok(discussions);
+            // Krok 4: Seřadíme podle původního pořadí z kroku 1
+            var orderedResults = new List<BasicDiscussionInfoDto>();
+
+            // Sestavení výsledků ve správném pořadí podle skóre relevance
+            foreach (var (id, score) in relevantDiscussionsIds)
+            {
+                var discussion = discussions.FirstOrDefault(d => d.Id == id);
+                if (discussion != null)
+                {
+                    orderedResults.Add(new BasicDiscussionInfoDto
+                    {
+                        Id = discussion.Id,
+                        Title = discussion.Title,
+                        // Oříznutí obsahu pro přehlednější zobrazení
+                        Content = discussion.Content.Length > 300
+                            ? discussion.Content.Substring(0, 300) + "..."
+                            : discussion.Content,
+                        CategoryName = discussion.CategoryName,
+                        CategoryId = discussion.CategoryId,
+                        CategoryCode = discussion.CategoryCode,
+                        DiscussionCode = discussion.Code,
+                        AuthorNickname = discussion.AuthorNickname,
+                        AuthorId = discussion.UserId,
+                        CreatedAt = discussion.CreatedAt,
+                        UpdatedAt = discussion.UpdatedAt,
+                        ViewCount = discussion.ViewCount,
+                        Type = discussion.Type
+                    });
+                }
+            }
+
+            // Vrácení seřazených výsledků
+            return Ok(orderedResults);
         }
         catch (Exception e)
         {
