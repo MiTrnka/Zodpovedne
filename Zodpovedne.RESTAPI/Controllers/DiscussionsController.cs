@@ -1243,7 +1243,7 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Vyhledává diskuze podle zadaných klíčových slov
+    /// Vyhledává diskuze podle zadaných klíčových slov s podporou českého fulltextového vyhledávání
     /// </summary>
     /// <param name="query">Vyhledávací dotaz (jednotlivá slova oddělená mezerami)</param>
     /// <param name="limit">Maximální počet vrácených výsledků</param>
@@ -1253,47 +1253,65 @@ public class DiscussionsController : ControllerBase
     {
         try
         {
+            // Kontrola, zda byl zadán vyhledávací dotaz
             if (string.IsNullOrWhiteSpace(query))
                 return BadRequest("Vyhledávací dotaz je povinný");
 
-            // Ignorujeme příliš krátká slova a normalizujeme dotaz
+            // Rozdělení dotazu na jednotlivá slova a odstranění příliš krátkých slov
+            // Ignorujeme slova kratší než 2 znaky, protože jsou obvykle nerelevantní nebo příliš obecná
             var searchTerms = query.Split(new[] { ' ', ',', ';', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries)
                 .Where(term => term.Length >= 2)
                 .ToList();
 
+            // Kontrola, zda zbyla nějaká slova po filtraci
             if (!searchTerms.Any())
                 return BadRequest("Vyhledávací dotaz musí obsahovat alespoň jedno slovo delší než 1 znak");
 
-            // Formátování dotazu pro tsquery - spojení slov pomocí operátoru &
-            string formattedQuery = string.Join(" & ", searchTerms);
+            // Formátování dotazu pro tsquery
+            // Použití operátoru | (OR) znamená, že stačí najít alespoň jedno z hledaných slov
+            // Pro přísnější vyhledávání (musí obsahovat všechna slova) změňte | na &
+            string formattedQuery = string.Join(" | ", searchTerms);
 
-            // Získání ID uživatele a informace, zda je admin
+            // Získání ID přihlášeného uživatele a informace, zda je admin
+            // Tyto informace jsou potřebné pro filtrování skrytých diskuzí
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
 
-            // Použití SQL dotazu přímo s modelem Discussion
+            // Vyhledání diskuzí pomocí SQL dotazu
+            // Používáme FromSqlRaw pro plnou kontrolu nad SQL dotazem, což nám umožňuje:
+            // 1. Použít to_tsquery s českým slovníkem
+            // 2. Řadit výsledky podle relevance pomocí ts_rank
+            // 3. Filtrovat podle oprávnění uživatele
             var discussions = await dbContext.Discussions
                 .FromSqlRaw(@"
+                -- Výběr všech sloupců z tabulky Discussions
                 SELECT d.*
                 FROM ""Discussions"" d
-                WHERE d.""Type"" != {0}
-                AND (d.""Type"" != {1} OR {2} = TRUE OR d.""UserId"" = {3})
-                AND d.""SearchVector"" @@ to_tsquery('czech', {4})
-                ORDER BY ts_rank(d.""SearchVector"", to_tsquery('czech', {4})) DESC
+                WHERE
+                    d.""Type"" != {0} -- Nikdy nezobrazujeme smazané diskuze
+                    AND (d.""Type"" != {1} OR {2} = TRUE OR d.""UserId"" = {3}) -- Skryté diskuze zobrazujeme jen adminům nebo autorům
+                    AND d.""SearchVector"" @@ to_tsquery('czech', {4}) -- Operátor @@ testuje, zda tsvector odpovídá tsquery
+                ORDER BY ts_rank(d.""SearchVector"", to_tsquery('czech', {4}), 32) DESC -- Řazení podle relevance ts_rank (četnost, váhy A - v titulku a B - v obsahu diskuze, pozice slov...)
+                -- Omezení počtu výsledků
                 LIMIT {5}",
-                    (int)DiscussionType.Deleted,
-                    (int)DiscussionType.Hidden,
-                    isAdmin,
-                    userId ?? string.Empty,
-                    formattedQuery,
-                    limit)
-                .AsNoTracking()
-                .Include(d => d.Category)
-                .Include(d => d.User)
+                    (int)DiscussionType.Deleted,    // {0}: Hodnota pro Type=Deleted
+                    (int)DiscussionType.Hidden,     // {1}: Hodnota pro Type=Hidden
+                    isAdmin,                        // {2}: Boolean, zda je uživatel admin
+                    userId ?? string.Empty,         // {3}: ID přihlášeného uživatele nebo prázdný řetězec
+                    formattedQuery,                 // {4}: Formátovaný vyhledávací dotaz (např. "slovo1 | slovo2")
+                    limit)                          // {5}: Maximální počet vrácených výsledků
+                .AsNoTracking()                     // Nesledovat změny entit (optimalizace výkonu)
+
+                // Načtení souvisejících dat pro každou diskuzi
+                .Include(d => d.Category)           // Načtení kategorie
+                .Include(d => d.User)               // Načtení autora
+
+                // Mapování diskuzí na DTO objekty, které budou vráceny klientovi
                 .Select(d => new BasicDiscussionInfoDto
                 {
                     Id = d.Id,
                     Title = d.Title,
+                    // Oříznutí obsahu pro přehlednější zobrazení
                     Content = d.Content.Length > 300 ? d.Content.Substring(0, 300) + "..." : d.Content,
                     CategoryName = d.Category.Name,
                     CategoryId = d.CategoryId,
@@ -1308,11 +1326,15 @@ public class DiscussionsController : ControllerBase
                 })
                 .ToListAsync();
 
+            // Vrácení výsledků
             return Ok(discussions);
         }
         catch (Exception e)
         {
+            // Logování chyby
             _logger.Log("Chyba při vyhledávání diskuzí", e);
+
+            // Vrácení chybové odpovědi
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
