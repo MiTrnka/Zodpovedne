@@ -1241,4 +1241,79 @@ public class DiscussionsController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Vyhledává diskuze podle zadaných klíčových slov
+    /// </summary>
+    /// <param name="query">Vyhledávací dotaz (jednotlivá slova oddělená mezerami)</param>
+    /// <param name="limit">Maximální počet vrácených výsledků</param>
+    /// <returns>Seznam diskuzí seřazených podle relevance</returns>
+    [HttpGet("search")]
+    public async Task<ActionResult<List<BasicDiscussionInfoDto>>> SearchDiscussions(string query, int limit = 10)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return BadRequest("Vyhledávací dotaz je povinný");
+
+            // Ignorujeme příliš krátká slova a normalizujeme dotaz
+            var searchTerms = query.Split(new[] { ' ', ',', ';', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(term => term.Length >= 2)
+                .ToList();
+
+            if (!searchTerms.Any())
+                return BadRequest("Vyhledávací dotaz musí obsahovat alespoň jedno slovo delší než 1 znak");
+
+            // Formátování dotazu pro tsquery - spojení slov pomocí operátoru &
+            string formattedQuery = string.Join(" & ", searchTerms);
+
+            // Získání ID uživatele a informace, zda je admin
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            // Použití SQL dotazu přímo s modelem Discussion
+            var discussions = await dbContext.Discussions
+                .FromSqlRaw(@"
+                SELECT d.*
+                FROM ""Discussions"" d
+                WHERE d.""Type"" != {0}
+                AND (d.""Type"" != {1} OR {2} = TRUE OR d.""UserId"" = {3})
+                AND d.""SearchVector"" @@ to_tsquery('czech', {4})
+                ORDER BY ts_rank(d.""SearchVector"", to_tsquery('czech', {4})) DESC
+                LIMIT {5}",
+                    (int)DiscussionType.Deleted,
+                    (int)DiscussionType.Hidden,
+                    isAdmin,
+                    userId ?? string.Empty,
+                    formattedQuery,
+                    limit)
+                .AsNoTracking()
+                .Include(d => d.Category)
+                .Include(d => d.User)
+                .Select(d => new BasicDiscussionInfoDto
+                {
+                    Id = d.Id,
+                    Title = d.Title,
+                    Content = d.Content.Length > 300 ? d.Content.Substring(0, 300) + "..." : d.Content,
+                    CategoryName = d.Category.Name,
+                    CategoryId = d.CategoryId,
+                    CategoryCode = d.Category.Code,
+                    DiscussionCode = d.Code,
+                    AuthorNickname = d.User.Nickname,
+                    AuthorId = d.UserId,
+                    CreatedAt = d.CreatedAt,
+                    UpdatedAt = d.UpdatedAt,
+                    ViewCount = d.ViewCount,
+                    Type = d.Type
+                })
+                .ToListAsync();
+
+            return Ok(discussions);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vyhledávání diskuzí", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }

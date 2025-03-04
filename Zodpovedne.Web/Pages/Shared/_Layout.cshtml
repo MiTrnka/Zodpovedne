@@ -63,6 +63,12 @@
                     </li>
                 </ul>
 
+                <!-- Fulltext search -->
+                <form class="d-flex" action="/Search" method="get">
+                    <input class="form-control me-2" type="search" name="query" placeholder="Vyhledat..." aria-label="Vyhledat">
+                    <button class="btn btn-outline-primary" type="submit">Hledat</button>
+                </form>
+
                 <!-- Pravá část menu -->
                 <ul class="navbar-nav">
                     @if (Context.Session.GetString("JWTToken") != null)

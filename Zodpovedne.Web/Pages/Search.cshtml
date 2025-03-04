@@ -1,0 +1,52 @@
+﻿@page
+@model SearchModel
+@{
+    ViewData["Title"] = "Vyhledávání diskuzí";
+}
+
+<div class="container">
+    <h1>Vyhledávání diskuzí</h1>
+
+    <form method="get" class="mb-4">
+        <div class="input-group">
+            <input type="text" class="form-control" name="query" value="@Model.Query"
+                   placeholder="Zadejte hledaná slova..." required>
+            <button type="submit" class="btn btn-primary">Vyhledat</button>
+        </div>
+    </form>
+
+    @if (!string.IsNullOrEmpty(Model.Query))
+    {
+        <h2>Výsledky vyhledávání pro: @Model.Query</h2>
+
+        @if (Model.SearchResults.Any())
+        {
+            <div class="list-group">
+                @foreach (var discussion in Model.SearchResults)
+                {
+                    <a href="/categories/@discussion.CategoryCode/@discussion.DiscussionCode"
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">@discussion.Title</h5>
+                            <small>@discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                        </div>
+                        <p class="mb-1">@Html.Raw(Model.GetHighlightedContent(discussion.Content))</p>
+                        <small>
+                            <i class="bi bi-folder"></i> @discussion.CategoryName
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-person"></i> @discussion.AuthorNickname
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-eye"></i> @discussion.ViewCount zobrazení
+                        </small>
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                Pro váš dotaz nebyly nalezeny žádné výsledky.
+            </div>
+        }
+    }
+</div>
