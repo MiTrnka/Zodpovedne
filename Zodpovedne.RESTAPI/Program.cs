@@ -9,6 +9,7 @@ using System.Security.Claims;
 using Zodpovedne.Data.Extensions;
 using Microsoft.OpenApi.Models;
 using Zodpovedne.Logging;
+using Zodpovedne.RESTAPI.Services;
 
 namespace Zodpovedne.RESTAPI
 {
@@ -108,6 +109,9 @@ namespace Zodpovedne.RESTAPI
                             .AllowCredentials();
                     });
             });
+
+            // Registrace služby pro odesílání e-mailù
+            builder.Services.AddScoped<IEmailService, EmailService>();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();

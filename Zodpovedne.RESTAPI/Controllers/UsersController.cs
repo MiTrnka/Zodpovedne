@@ -14,6 +14,8 @@ using Zodpovedne.Logging;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Caching.Memory;
+using System.Net;
+using Zodpovedne.RESTAPI.Services;
 
 namespace Zodpovedne.Controllers;
 
@@ -27,8 +29,9 @@ public class UsersController : ControllerBase
     private readonly FileLogger _logger;
     private readonly IConfiguration configuration;
     private readonly IMemoryCache _cache;
+    private readonly IEmailService _emailService;
 
-    public UsersController(IDataContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger, IMemoryCache memoryCache)
+    public UsersController(IDataContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger, IMemoryCache memoryCache, IEmailService emailService)
     {
         this.userManager = userManager;
         this.signInManager = signInManager;
@@ -36,6 +39,7 @@ public class UsersController : ControllerBase
         this.dbContext = dbContext;
         _logger = logger;
         _cache = memoryCache;
+        _emailService = emailService;
     }
 
     /// <summary>
@@ -881,6 +885,82 @@ public class UsersController : ControllerBase
         catch (Exception e)
         {
             _logger.Log("Chyba při vykonávání akce GetDiscussionsWithNewReplies endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    // Endpoint pro žádost o obnovení hesla
+    [HttpPost("forgot-password")]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto model)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Neindikujeme, že uživatel neexistuje, z bezpečnostních důvodů
+                return Ok();
+            }
+
+            // Vygenerování tokenu pro reset hesla
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Zakódování tokenu pro bezpečný přenos v URL
+            var encodedToken = WebUtility.UrlEncode(token);
+
+            // Vytvoření odkazu pro reset hesla
+            var resetLink = $"{model.ResetPageUrl}?email={WebUtility.UrlEncode(user.Email)}&token={encodedToken}";
+
+            // Odeslání e-mailu s odkazem
+            await _emailService.SendPasswordResetEmailAsync(user.Email, user.Nickname, resetLink);
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce ForgotPassword.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    // Endpoint pro resetování hesla pomocí tokenu
+    [HttpPost("reset-password")]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public async Task<IActionResult> ResetPassword(ResetPasswordDto model)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                // Neindikujeme, že uživatel neexistuje, z bezpečnostních důvodů
+                return BadRequest(new { error = "Neplatný požadavek" });
+            }
+
+            // Reset hesla pomocí tokenu
+            var result = await userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+
+            return BadRequest(new { error = "Neplatný token nebo heslo nesplňuje požadavky" });
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce ResetPassword.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
