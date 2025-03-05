@@ -1244,22 +1244,22 @@ public class DiscussionsController : ControllerBase
 
     /* Pro správné fungování endpointu viz níže muselo být nad databází spuštěn script:
      -- Vytvoření slovníku
-    CREATE TEXT SEARCH DICTIONARY czech_spell (
-        TEMPLATE = ispell,
-        DictFile = czech,
-        AffFile = czech,
-        StopWords = czech);
-    CREATE TEXT SEARCH CONFIGURATION czech (COPY = pg_catalog.simple);
+    CREATE text SEARCH DICTIONARY czech_spell (
+	TEMPLATE=ispell,
+	dictfile=czech,
+	afffile=czech,
+	stopwords=czech
+    );
+    CREATE TEXT SEARCH CONFIGURATION czech (COPY=english);
     ALTER TEXT SEARCH CONFIGURATION czech
-        ALTER MAPPING FOR hword, hword_part, word
-        WITH czech_ispell, simple;
+	    ALTER MAPPING FOR word, asciiword WITH czech_spell, SIMPLE;
 
     -- Přidáme generovaný sloupec pro fulltextový vektor (A a B jsou váhy pro relevanci vyhledávání)
     ALTER TABLE "Discussions" ADD COLUMN "SearchVector" tsvector
-        GENERATED ALWAYS AS (
-            setweight(to_tsvector('czech', coalesce("Title",'')), 'A') ||
-            setweight(to_tsvector('czech', coalesce("Content",'')), 'B')
-        ) STORED;
+       GENERATED ALWAYS AS (
+	       setweight(to_tsvector('czech', coalesce("Title",'')), 'A') ||
+	       setweight(to_tsvector('czech', coalesce("Content",'')), 'B')
+       ) STORED;
 
     -- Vytvoříme GIN index pro rychlé vyhledávání
     CREATE INDEX IX_Discussions_SearchVector ON "Discussions" USING GIN ("SearchVector");
