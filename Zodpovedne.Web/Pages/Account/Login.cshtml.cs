@@ -76,6 +76,6 @@ public class LoginModel : BasePageModel
         if ((string.IsNullOrEmpty(ReturnUrl)) || (ReturnUrl == "/Account/Logout") || (ReturnUrl == "/Account/login"))
             return RedirectToPage("/Index");
 
-        return RedirectToPage(ReturnUrl);
+        return LocalRedirect(ReturnUrl);
     }
 }
