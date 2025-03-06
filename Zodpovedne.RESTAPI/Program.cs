@@ -19,6 +19,24 @@ namespace Zodpovedne.RESTAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Podmíneèná konfigurace podle prostøedí
+            if (builder.Environment.IsDevelopment())
+            {
+                // Vývojové prostøedí
+                builder.WebHost.ConfigureKestrel(options =>
+                {
+                    options.ListenAnyIP(5555); // Lokální vývojový port pro API
+                });
+            }
+            else
+            {
+                // Produkèní prostøedí - nastavení pro Nginx
+                builder.WebHost.ConfigureKestrel(options =>
+                {
+                    options.ListenAnyIP(5001); // Port, na kterém bude API poslouchat
+                });
+            }
+
             // Kontrola existence konfiguraèního souboru a jeho položek
             if (builder.Configuration == null)
             {

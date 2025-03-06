@@ -15,39 +15,52 @@ public static class DataLayerConfiguration
 {
     // Extension metoda pro IServiceCollection
     // Umožňuje jednoduše zaregistrovat datovou vrstvu do DI kontejneru
-    public static IServiceCollection AddDataLayer(this IServiceCollection services)
+    public static IServiceCollection AddDataLayer(this IServiceCollection services, IConfiguration externalConfiguration = null)
     {
-        IConfiguration? configuration = null;
-        string? connectionString = null;
+        string connectionString = null;
 
-        // Zkus načíst z aktuálního adresáře (produkce)
-        try
+        // Pokud byla poskytnuta konfigurace z vnějšku (např. z RESTAPI projektu)
+        if (externalConfiguration != null)
         {
-            configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.Data.json", optional: true)
-                .Build();
-
-            connectionString = configuration.GetConnectionString("DefaultConnection");
+            connectionString = externalConfiguration.GetConnectionString("DefaultConnection");
         }
-        catch { } // Pokud se nepodaří, zkusíme další variantu
 
-        // Pokud se nepodařilo, zkus vývojářskou cestu
+        // Pokud externí konfigurace neobsahuje connection string, načteme vlastní
         if (string.IsNullOrEmpty(connectionString))
         {
+            IConfiguration configuration = null;
+
+            // Nejprve zkusíme načíst konfiguraci z aktuálního adresáře
             try
             {
                 configuration = new ConfigurationBuilder()
-                    .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../Zodpovedne.Data"))
-                    .AddJsonFile("appsettings.Data.json", optional: true)
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json", optional: true)
+                    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
                     .Build();
 
                 connectionString = configuration.GetConnectionString("DefaultConnection");
             }
-            catch { } // Pokud se nepodaří, vyhodíme výjimku níže
+            catch { } // Ignorujeme chyby a zkusíme další způsob
+
+            // Pokud se nepodařilo, zkusíme vývojářskou cestu (relativní cesta k Data projektu)
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                try
+                {
+                    configuration = new ConfigurationBuilder()
+                        .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../Zodpovedne.Data"))
+                        .AddJsonFile("appsettings.json", optional: true)
+                        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
+                        .Build();
+
+                    connectionString = configuration.GetConnectionString("DefaultConnection");
+                }
+                catch { } // Ignorujeme chyby
+            }
         }
 
-        // Pokud se ani jedna cesta nepodařila
+        // Pokud se ani jeden způsob nepodařil, vyhodíme výjimku
         if (string.IsNullOrEmpty(connectionString))
         {
             throw new InvalidOperationException(

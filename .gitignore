@@ -367,8 +367,14 @@ FodyWeavers.xsd
 # appSettings.json
 /Zodpovedne.Data/appsettings.json
 /Zodpovedne.Data/appsettings.data.json
+/Zodpovedne.Data/appsettings.Development.json
+/Zodpovedne.Data/appsettings.Production.json
 /Zodpovedne.RESTAPI/appsettings.json
+/Zodpovedne.RESTAPI/appsettings.Development.json
+/Zodpovedne.RESTAPI/appsettings.Production.json
 /Zodpovedne.Web/appsettings.json
+/Zodpovedne.Web/appsettings.Development.json
+/Zodpovedne.Web/appsettings.Production.json
 
 # louncheSettings.json
 /Zodpovedne.RESTAPI/Properties/launchSettings.json

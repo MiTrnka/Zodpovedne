@@ -11,11 +11,24 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.WebHost.ConfigureKestrel(options =>
+        // Podmíneèná konfigurace podle prostøedí
+        if (builder.Environment.IsDevelopment())
         {
-            options.ListenAnyIP(5214); // Naslouchá na všech IP adresách, abych mohl pøistupovat z jiných zaøízení (ne jen z Localhost)
-            //options.Listen(System.Net.IPAddress.Parse("192.168.0.213"), 5214); // Naslouchá na konkrétní IP adrese
-        });
+            // Vývojové prostøedí - nastavení portù pro lokální vývoj
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.ListenAnyIP(5214); // Lokální vývojový port - naslouchá na všech IP adresách, abych mohl pøistupovat z jiných zaøízení (ne jen z Localhost)
+                                           //options.Listen(System.Net.IPAddress.Parse("192.168.0.213"), 5214); // Naslouchá na konkrétní IP adrese
+            });
+        }
+        else
+        {
+            // Produkèní prostøedí - nastavení pro Nginx
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.ListenAnyIP(5000); // Port, na kterém bude Web poslouchat
+            });
+        }
 
         // Nastavení autentizace pro používání cookie autentizace jako výchozího schématu. Toto se muselo pøidat k tokenùm (autentizace/autorizace pro volání RESTAPI) kvùli tomu, aby fungovala autentizace i pro razor pages.
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
