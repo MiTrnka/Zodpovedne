@@ -466,37 +466,44 @@ public class UsersController : ControllerBase
         {
             var user = await this.userManager.FindByEmailAsync(model.Email);
             if (user == null)
+            {
+                _logger.Log($"Při pokusu o přihlášení nebyl uživatel s emailem {model.Email} nalezen.");
                 return Unauthorized();
+            }
 
             if (user.Type == UserType.Deleted)
+            {
+                _logger.Log($"Při pokusu o přihlášení byl uživatel s emailem {model.Email} identifikován se stavem smazaný.");
                 return Unauthorized();
+            }
 
             //Metoda ověří heslo(false zde znamená, že se nezamkne účet při špatném hesle)
             var result = await this.signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: true);
             if (result.IsLockedOut)
             {
+                _logger.Log($"Při pokusu o přihlášení uživatele s emailem {model.Email} bylo identifikováno, že uživatel je dočasně uzamknut pro přihlášení.");
                 return Unauthorized(new { message = "Účet je uzamčen" });
             }
-            if (result.Succeeded)
+            if (!result.Succeeded)
             {
-                // Uložení předchozího posledního přihlášení
-                user.PreviousLastLogin = user.LastLogin;
-                // Aktualizace posledního přihlášení a rovnou uložení do databáze (SaveChanges)
-                user.LastLogin = DateTime.UtcNow;
-                await this.userManager.UpdateAsync(user);
-
-                var token = await GenerateJwtToken(user);
-
-                return Ok(new TokenResponseDto
-                {
-                    Token = token,
-                    ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru"))),
-                    Email = user.Email!,
-                    Nickname = user.Nickname
-                });
+                _logger.Log($"Při pokusu o přihlášení uživatele s emailem {model.Email} bylo identifikováno špatně zadané heslo.");
+                return Unauthorized();
             }
+            // Uložení předchozího posledního přihlášení
+            user.PreviousLastLogin = user.LastLogin;
+            // Aktualizace posledního přihlášení a rovnou uložení do databáze (SaveChanges)
+            user.LastLogin = DateTime.UtcNow;
+            await this.userManager.UpdateAsync(user);
 
-            return Unauthorized();
+            var token = await GenerateJwtToken(user);
+
+            return Ok(new TokenResponseDto
+            {
+                Token = token,
+                ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(this.configuration["Jwt:ExpirationInHours"] ?? throw new ArgumentNullException("JWT ExpirationInHours není vyplněn v konfiguračním souboru"))),
+                Email = user.Email!,
+                Nickname = user.Nickname
+            });
         }
         catch (Exception e)
         {
