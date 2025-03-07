@@ -39,6 +39,11 @@ public abstract class BasePageModel : PageModel
     public string ApiBaseUrl => _configuration["ApiBaseUrl"] ?? "";
 
     /// <summary>
+    /// Base URL pro API endpointy z konfigurace - pro veřejné použití v JavaScriptu
+    /// </summary>
+    public string PublicApiBaseUrl => _configuration["PublicApiBaseUrl"] ?? "";
+
+    /// <summary>
     /// Base URL pro API endpointy z konfigurace
     /// </summary>
     public string BaseUrl => _configuration["BaseUrl"] ?? "";

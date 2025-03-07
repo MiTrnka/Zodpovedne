@@ -170,6 +170,7 @@ public class DiscussionsController : ControllerBase
                     .AsNoTracking()
                     .Where(l => discussionIds.Contains(l.DiscussionId) && l.UserId == userId)
                     .Select(l => l.DiscussionId)
+                    .Distinct()
                     .ToDictionaryAsync(id => id, id => true);
 
             // 7. KROK: Mapování diskuzí na DTO objekty
