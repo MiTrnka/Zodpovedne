@@ -1,5 +1,6 @@
 // NuGet HtmlSanitizer   //pro bezpeèné èištìní HTML vstupu
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using System.Security.Claims;
 using Zodpovedne.Logging;
 
@@ -28,6 +29,11 @@ public class Program
             {
                 options.ListenAnyIP(5000); // Port, na kterém bude Web poslouchat
             });
+            // nastavuje, kam se budou ukládat šifrovací klíèe pro ASP.NET Core DataProtection
+            //zajišuje šifrování a dešifrování dùleitıch dat, jako jsou: Session cookies, Anti - forgery tokeny... 
+            // Normálnì jsou ukládány do pamìti, øádek viz níe zajistí persistentní uloení, take i po restartu data ze Session... budou èitelná a platná
+            builder.Services.AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo("/var/www/zodpovedne/keys"));
         }
 
         // Nastavení autentizace pro pouívání cookie autentizace jako vıchozího schématu. Toto se muselo pøidat k tokenùm (autentizace/autorizace pro volání RESTAPI) kvùli tomu, aby fungovala autentizace i pro razor pages.
