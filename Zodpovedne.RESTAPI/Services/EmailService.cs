@@ -1,5 +1,6 @@
 ﻿// NuGet balíček MailKit
 using MailKit.Net.Smtp;  // Tohle specifikuje MailKit SmtpClient
+using MailKit.Security;
 using MimeKit;
 using System.Net;  // Pro WebUtility.UrlEncode
 
@@ -27,10 +28,10 @@ public class EmailService : IEmailService
         try
         {
             var smtpServer = _configuration["Email:SmtpServer"];
-            var smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? "587");
+            var smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? "25");
             var smtpUsername = _configuration["Email:Username"];
             var smtpPassword = _configuration["Email:Password"];
-            var useSsl = bool.Parse(_configuration["Email:UseSSL"] ?? "true");
+            var useSsl = bool.Parse(_configuration["Email:UseSSL"] ?? "false");
             var fromEmail = _configuration["Email:FromAddress"];
             var fromName = _configuration["Email:FromName"];
 
@@ -68,12 +69,24 @@ public class EmailService : IEmailService
 
             // Zde používáme MailKit.Net.Smtp.SmtpClient, ne System.Net.Mail.SmtpClient
             using var client = new MailKit.Net.Smtp.SmtpClient();
-            await client.ConnectAsync(smtpServer, smtpPort, useSsl);
+
+            // Důležité: přidat callback pro validaci certifikátu při lokálním spojení
+            if (smtpServer == "localhost" || smtpServer == "127.0.0.1")
+            {
+                client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+            }
+
+            // Nastavení delšího timeoutu
+            client.Timeout = 60000; // 60 sekund
+
+            await client.ConnectAsync(smtpServer, smtpPort, useSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
+
             // Autentizace pouze pokud jsou zadány přihlašovací údaje
             if (!string.IsNullOrEmpty(smtpUsername) && !string.IsNullOrEmpty(smtpPassword))
             {
                 await client.AuthenticateAsync(smtpUsername, smtpPassword);
             }
+
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
         }
