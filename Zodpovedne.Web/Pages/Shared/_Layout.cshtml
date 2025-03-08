@@ -30,19 +30,19 @@
     <link rel="stylesheet" href="~/css/catalogs.css" asp-append-version="true" />
 </head>
 <body>
-    <nav class="navbar navbar-expand-md navbar-light">
+    <nav class="navbar navbar-expand-xl navbar-light">
         <div class="site-header">
             <div class="logo-container">
                 <a asp-page="/Index"><img src="/images/logo.png" alt="logo Mámou zodpovědně" style="width: 200px; height: auto;"></a>
             </div>
         </div>
-        <div class="container">
+        <div class="container flex">
             <!-- Toggle button pro mobilní menu -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
                     aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="navbar-collapse collapse d-md-inline-flex justify-content-between" id="navbarContent">
+            <div class="navbar-collapse collapse d-xl-inline-flex justify-content-between" id="navbarContent">
                 <!-- Levá část menu -->
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
@@ -64,9 +64,9 @@
                 </ul>
 
                 <!-- Fulltext search -->
-                <form class="d-flex" action="/Search" method="get">
-                    <input class="form-control me-2" type="search" name="query" placeholder="Vyhledat..." aria-label="Vyhledat">
-                    <button class="btn btn-outline-primary" type="submit">Hledat</button>
+                <form class="d-flex fulltextForm" action="/Search" method="get">
+                    <input class="form-control fulltextFormInput" type="search" name="query" placeholder="Vyhledat..." aria-label="Vyhledat">
+                    <button class="btn btn-primary fulltextFormBtn" type="submit">Hledat</button>
                 </form>
 
                 <!-- Pravá část menu -->

@@ -6,36 +6,46 @@
 *@
 @model Zodpovedne.Contracts.DTO.DiscussionListDto
 
-<div class="card col-12 mb-2">
-    <h5 class="card-title">
-        @* Zobrazení TOP badgu pro prioritní diskuze *@
-        @if (Model.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
-        {
-            <span class="bi-star-fill me-1 text-primary">@*TOP*@</span>
-        }
-        @* Odkaz na detail diskuze *@
-        <a href="/categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none">@Model.Title</a>
-    </h5>
+<div class="card col-sm-12 mb-1 me-2 kategorie-wrapper">
+    <div class="d-flex flex-wrap gap-2">
+        <div>
+            <h5 class="card-title title-wrapper">
+                @* Zobrazení TOP badgu pro prioritní diskuze *@
+                @if (Model.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
+                {
+                    <span class="bi-star-fill me-1 text-primary">@*TOP*@</span>
+                }
+                @* Odkaz na detail diskuze *@
+                <a href="/categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none">@Model.Title</a>
+            </h5>
+        </div>
+        <div class="popisky">
+            @* Autor *@
+            <span title="Autor">
+                <i class="bi bi-person"></i> @Model.AuthorNickname
+            </span>
+           
+        </div>
+    </div>
+    
+
     @* Metadata diskuze *@
-    <div class="card-text small text-muted">
-        @* Autor *@
-        <span title="Autor">
-            <i class="bi bi-person"></i> @Model.AuthorNickname
-        </span>
-        <span class="mx-2">•</span>
+    <div class="card-text text-muted popisky">
+
         @* Datum vytvoření - převedené na lokální čas *@
         <span title="Datum vytvoření">
-            <i class="bi bi-calendar"></i> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+            <i class="bi bi-calendar-plus"></i> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
         </span>
         @* Datum aktualizace - převedené na lokální čas *@
         <span title="Datum aktualizace">
             @if (Model.UpdatedAt.Date != Model.CreatedAt.Date)
             {
-                <i class="bi bi-calendar"></i>
+                @Html.Raw("&nbsp; | &nbsp;<i class=\"bi bi-pencil\"></i>")
             }
-            @(Model.UpdatedAt.Date != Model.CreatedAt.Date ? "(" + Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy") + ")" : "")
+            @(Model.UpdatedAt.Date != Model.CreatedAt.Date ? Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy") : "")
         </span>
         <span class="mx-2">•</span>
+    
         @* Počet komentářů *@
         <span title="Počet komentářů">
             <i class="bi bi-chat"></i> @Model.CommentsCount
