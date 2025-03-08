@@ -4,6 +4,8 @@
 @model DiscussionModel
 @{
     ViewData["Title"] = Model.Discussion?.Title ?? "Diskuze";
+    /* Detail Konretni diskuse */
+
 
     //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
     if (!string.IsNullOrEmpty(Model.ErrorMessage))

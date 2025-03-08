@@ -2,6 +2,7 @@
 @model CategoriesModel
 @{
     ViewData["Title"] = "Témata diskuzí";
+    /* Seznam kategorii */
 
     //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
     if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -21,8 +22,8 @@
 }
 
 <div class="container">
-    <div class="row mb-4">
-        <h1 class="mb-4" style="color: var(--text-gray);">Témata diskuzí</h1>
+    <div class="row mt-1">
+        <h1 class="mb-4 text-center" style="color: var(--text-gray);">Kategorie diskuzí</h1>
     </div>
 
     @if (Model.Categories.Any())
@@ -30,8 +31,10 @@
         <div class="row">
             @foreach (var category in Model.Categories.OrderBy(c => c.DisplayOrder))
             {
-                <div class="col-12 mb-2">
-                    <div class="card">
+                <div class="col-sm-12 col-xl-6">
+                    <div class="card-kategorie" 
+                         onmouseover="this.classList.add('shadow'); this.classList.add('bg-white');"
+                         onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
                         <div class="card-body">
                             <h5 class="card-title">
                                 <a href="/categories/@category.Code" class="text-decoration-none">@category.Name</a>

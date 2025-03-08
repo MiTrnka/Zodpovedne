@@ -55,6 +55,7 @@ body {
 .container {
     padding-left: 15px;
     padding-right: 15px;
+    min-width: 320px;
 }
 
 /* Základní styly pro odkazy */
@@ -370,7 +371,7 @@ h1 {
 
 .kategorie-wrapper {
     display: flex;
-    width: 200px;
+    /* max-width: 700px; */
     flex-wrap: wrap;
 }
 .title-wrapper {
@@ -386,7 +387,25 @@ h1 {
     align-items:baseline;
     width: auto;
 }
+.card-kategorie, .card-diskuse{ /* iii */
+    background-color: var(--secondary-pink-ultra-light);
+    padding: 10px;
+    border: 1px solid var(--light-gray);
+}
+    .card-kategorie:hover, .card-diskuse:hover{
+    }
 
+#discussions-list {
+    display: grid;
+    grid-template-columns: 1fr; /* Jeden sloupec */
+}
+
+.card-diskuse {
+    width: 100%;
+    max-width: 100%;
+}
+
+}
 /* Grid pro seznam uživatelů - mobilní verze */
 .user-list {
     display: flex;
@@ -534,6 +553,17 @@ h1 {
     .navbar-nav:last-child {
         order: 3; /* Pravé menu zůstává třetí */
     }
+    .card-diskuse {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #discussions-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Dva sloupce stejné velikosti */
+        gap: 0px 10px; /* Vertikální mezera 15px, horizontální 30px */
+    }
+    
 }
 
 /* Speciální media query pro výšku editoru */

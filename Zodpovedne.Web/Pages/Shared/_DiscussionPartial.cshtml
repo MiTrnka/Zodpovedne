@@ -6,10 +6,12 @@
 *@
 @model Zodpovedne.Contracts.DTO.DiscussionListDto
 
-<div class="card col-sm-12 mb-1 me-2 kategorie-wrapper">
-    <div class="d-flex flex-wrap gap-2">
+<div class="card-diskuse me-2 kategorie-wrapper col-sm-12 col-xl-6"
+     onmouseover="this.classList.add('shadow'); this.classList.add('bg-white');"
+     onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
+    <div class="d-flex flex-wrap ">
         <div>
-            <h5 class="card-title title-wrapper">
+            <h5 class="card-title title-wrapper ">
                 @* Zobrazení TOP badgu pro prioritní diskuze *@
                 @if (Model.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
                 {
@@ -17,12 +19,14 @@
                 }
                 @* Odkaz na detail diskuze *@
                 <a href="/categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none">@Model.Title</a>
+                @Html.Raw("&nbsp;")
             </h5>
         </div>
         <div class="popisky">
             @* Autor *@
             <span title="Autor">
                 <i class="bi bi-person"></i> @Model.AuthorNickname
+                @Html.Raw("&nbsp;")
             </span>
            
         </div>
