@@ -24,7 +24,7 @@
     @* Záhlaví kategorie *@
     <div class="row mb-4">
         <div class="col">
-            <h1>@Model.CategoryName</h1>
+            <h1 class="long-word-break">@Model.CategoryName</h1>
             @if (!string.IsNullOrEmpty(Model.CategoryDescription))
             {
                 <p class="lead">@Model.CategoryDescription</p>

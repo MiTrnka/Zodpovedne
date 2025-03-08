@@ -459,6 +459,26 @@ h1 {
     line-height: 1.5;
     background-color: #f8f9fa;
 }
+/* Zalomení nazvu kategorie v seznamu kategorii a obsahu i pro extra dlouha slova
+ * Zalomeni nazvu diskuse v seznamu diskusi a obsahu i pro extra dlouha slova
+ * Zalomeni nazbu detailu diskuse a obsahu
+*/
+.long-word-break a, .card-body p, .long-word-break, .lead {
+    /* Základní vlastnosti zalamování */
+    word-wrap: break-word !important;
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
+    -ms-word-break: break-all !important;
+    /* Vlastnost hyphens rozděluje slova s pomlčkami */
+    -webkit-hyphens: auto !important;
+    -moz-hyphens: auto !important;
+    -ms-hyphens: auto !important;
+    hyphens: auto !important;
+    /* Vynucení zalomení při přetečení */
+    overflow: hidden !important;
+    /* Vynucení maximální šířky */
+    max-width: 100% !important;
+}
 
 /* Styly pro tablet a větší obrazovky (≥576px) */
 @media (min-width: 576px) {
