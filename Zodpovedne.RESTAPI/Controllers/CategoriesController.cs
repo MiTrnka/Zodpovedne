@@ -40,7 +40,8 @@ public class CategoriesController : ControllerBase
                     Name = c.Name,
                     Code = c.Code,
                     Description = c.Description,
-                    DisplayOrder = c.DisplayOrder
+                    DisplayOrder = c.DisplayOrder,
+                    ImagePath = c.ImagePath
                 })
                 .ToListAsync();
 
@@ -76,7 +77,8 @@ public class CategoriesController : ControllerBase
                 Name = category.Name,
                 Code = category.Code,
                 Description = category.Description,
-                DisplayOrder = category.DisplayOrder
+                DisplayOrder = category.DisplayOrder,
+                ImagePath = category.ImagePath
             };
 
             return Ok(categoryDto);

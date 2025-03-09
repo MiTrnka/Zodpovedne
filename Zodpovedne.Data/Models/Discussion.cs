@@ -12,7 +12,7 @@ public class Discussion
     public string UserId { get; set; } = "";
 
     [Required(ErrorMessage = "Nadpis diskuze je povinný")]
-    [MaxLength(200)]
+    [MaxLength(100, ErrorMessage = "Nadpis diskuze nesmí být delší než 100 znaků.")]
     public string Title { get; set; } = "";
 
     [Required(ErrorMessage = "Obsah diskuze je povinný")]

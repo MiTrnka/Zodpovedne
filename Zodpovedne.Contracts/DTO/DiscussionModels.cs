@@ -10,8 +10,8 @@ public class CreateDiscussionDto
     [Required(ErrorMessage = "Kategorie je povinná")]
     public int CategoryId { get; set; }
 
-    [Required(ErrorMessage = "Nadpis je povinný")]
-    [StringLength(200)]
+    [Required(ErrorMessage = "Nadpis diskuze je povinný")]
+    [MaxLength(100, ErrorMessage = "Nadpis diskuze nesmí být delší než 100 znaků.")]
     public string Title { get; set; } = "";
 
     [Required(ErrorMessage = "Obsah diskuze je povinný")]
@@ -28,8 +28,8 @@ public class CreateDiscussionDto
 // Pro editaci diskuze
 public class UpdateDiscussionDto
 {
-    [Required(ErrorMessage = "Nadpis je povinný")]
-    [StringLength(200)]
+    [Required(ErrorMessage = "Nadpis diskuze je povinný")]
+    [MaxLength(100, ErrorMessage = "Nadpis diskuze nesmí být delší než 100 znaků.")]
     public string Title { get; set; } = "";
 
     [Required(ErrorMessage = "Obsah diskuze je povinný")]
@@ -117,6 +117,7 @@ public class CommentDto
 public class CreateCommentDto
 {
     [Required(ErrorMessage = "Obsah komentáře je povinný")]
+    [MaxLength(200, ErrorMessage = "Obsah komentáře nesmí být delší než 200 znaků.")]
     public string Content { get; set; } = "";
     public CommentType Type { get; set; } = CommentType.Normal;
 }
@@ -125,6 +126,7 @@ public class CreateCommentDto
 public class UpdateCommentDto
 {
     [Required(ErrorMessage = "Obsah komentáře je povinný")]
+    [MaxLength(200, ErrorMessage = "Obsah komentáře nesmí být delší než 200 znaků.")]
     public string Content { get; set; } = "";
     public CommentType Type { get; set; } = CommentType.Normal;
 }
