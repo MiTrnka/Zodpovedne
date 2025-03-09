@@ -182,8 +182,13 @@ public abstract class BasePageModel : PageModel
             _sanitizer.AllowedAttributes.Add("src");
             _sanitizer.AllowedAttributes.Add("alt");
 
+            _sanitizer.KeepChildNodes = true;
+
             // Povolené CSS styly (žádné)
             _sanitizer.AllowedCssProperties.Clear();
+            _sanitizer.AllowedCssProperties.Add("color");
+            _sanitizer.AllowedCssProperties.Add("font-weight");
+            _sanitizer.AllowedCssProperties.Add("text-align");
         }
         catch (Exception e)
         {

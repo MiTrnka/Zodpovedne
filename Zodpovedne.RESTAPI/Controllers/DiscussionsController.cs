@@ -38,10 +38,10 @@ public class DiscussionsController : ControllerBase
         try
         {
 
-            // Inicializace a konfigurace sanitizeru pro bezpečné čištění HTML vstupu
+            // Inicializace a konfigurace HTML sanitizeru pro bezpečné čištění HTML vstupu
             _sanitizer = new HtmlSanitizer();
 
-            // Stejná konfigurace jako jsme měli v CreateDiscussion
+            // Povolené HTML tagy
             _sanitizer.AllowedTags.Clear();
             _sanitizer.AllowedTags.Add("p");
             _sanitizer.AllowedTags.Add("br");
@@ -58,12 +58,19 @@ public class DiscussionsController : ControllerBase
             _sanitizer.AllowedTags.Add("a");
             _sanitizer.AllowedTags.Add("img");
 
+            // Povolené HTML atributy
             _sanitizer.AllowedAttributes.Clear();
             _sanitizer.AllowedAttributes.Add("href");
             _sanitizer.AllowedAttributes.Add("src");
             _sanitizer.AllowedAttributes.Add("alt");
 
+            _sanitizer.KeepChildNodes = true;
+
+            // Povolené CSS styly (žádné)
             _sanitizer.AllowedCssProperties.Clear();
+            _sanitizer.AllowedCssProperties.Add("color");
+            _sanitizer.AllowedCssProperties.Add("font-weight");
+            _sanitizer.AllowedCssProperties.Add("text-align");
         }
         catch (Exception e)
         {
