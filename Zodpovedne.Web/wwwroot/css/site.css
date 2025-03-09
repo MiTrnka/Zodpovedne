@@ -6,6 +6,7 @@
     --secondary-pink-ultra-light: #FFF9F9; /* bila barva s nadechem ruzove */
     --text-gray: #666666;
     --light-gray: #F2EFF0;
+    --light-purple: #D8B2D8;
 }
 
 /* Reset a základní nastavení (platí pro všechny velikosti) */
@@ -53,8 +54,8 @@ body {
 
 /* Základní container */
 .container {
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 5px;
+    padding-right: 5px;
     min-width: 320px;
 }
 
@@ -302,6 +303,10 @@ a {
 .navbar-collapse {
     display: flex;
     flex-direction: column; /* Na mobilních zařízení řadí položky pod sebe */
+    background-color: white;
+    border-radius: 10px;
+    padding-top:1rem;
+    width: 100%;
 }
 
 .fulltextForm {
@@ -352,6 +357,9 @@ input[type="search"]::-ms-clear {
 
 
 /* Logo na mobilu */
+.logo-container{
+    width: 50vw;
+}
 .logo-container img {
     width: 150px;
 }
@@ -371,38 +379,112 @@ h1 {
 
 .kategorie-wrapper {
     display: flex;
-    /* max-width: 700px; */
     flex-wrap: wrap;
 }
 .title-wrapper {
     display: flex;
-    align-items: baseline;
-    margin-bottom: -1px;
+    align-items: center;
     font-size: 16px;
     flex-wrap: wrap;
+    justify-content:flex-start;
 }
-.popisky{
+
+.popisky {
     font-size: 12px;
     display: flex;
-    align-items:baseline;
+    align-items:center;
+    justify-content: flex-end;
     width: auto;
+    line-height:1.2;
+    color: var(--text-gray);
+    margin-top: 2px;
 }
+    .popisky .autor {
+        margin-bottom: 1rem;
+        position: absolute;
+        top: -5px;
+        right: -10px;
+        background-color: var(--primary-pink);
+        padding: 2px;
+        border-radius: 2px;
+        color: white;
+    }
+.title-autor-wrapper{
+    justify-content: space-between;
+    gap: 5px;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    flex-wrap:wrap;
+    position: relative;
+}
+.card-title {
+    max-width: 83%;
+    flex-wrap: wrap;
+    line-height: 1;
+}
+
+/*.autor i{
+    width: 100%;
+    text-align: center;
+}*/
 .card-kategorie, .card-diskuse{ /* iii */
     background-color: var(--secondary-pink-ultra-light);
     padding: 10px;
-    border: 1px solid var(--light-gray);
+    border: 1px solid white;
 }
-    .card-kategorie:hover, .card-diskuse:hover{
-    }
+.card-text{
+    color: var(--text-gray);
+}
+.card-body-icon-wrapper, .title-with-icon img{
+    max-width: 180px;
+    height: 50px;
+    margin-right: 10px;
+}
+.title-with-icon img {
+    height: 30px;
+}
+.title-with-icon{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
+.card-body-icon-wrapper img {
+    height: 100%;
+}
 #discussions-list {
     display: grid;
     grid-template-columns: 1fr; /* Jeden sloupec */
 }
 
+.category-list .card-kategorie {
+    background-color: #ffffffda;
+    height: 80px;
+    border: 1px solid var(--light-gray);
+    display: flex;  
+    align-items: center;
+    overflow: hidden;
+}
+
 .card-diskuse {
     width: 100%;
     max-width: 100%;
+    background-color: #ffffffda;
+    border: 1px solid var(--light-gray);
+    display: flex;
+    align-items: center;
+    height:100%;
+}
+
+.title-detail-category{
+    color:var(--text-gray);
+    text-align:center;
+}
+.lead {
+    margin-bottom: -10px;
+    margin-top: 5px;
+    text-align: center;
 }
 
 }
@@ -463,7 +545,7 @@ h1 {
  * Zalomeni nazvu diskuse v seznamu diskusi a obsahu i pro extra dlouha slova
  * Zalomeni nazbu detailu diskuse a obsahu
 */
-.long-word-break a, .card-body p, .long-word-break, .lead {
+.long-word-break a, .card-body p, .long-word-break{
     /* Základní vlastnosti zalamování */
     word-wrap: break-word !important;
     word-break: break-all !important;
@@ -549,9 +631,12 @@ h1 {
         max-width: 1550px;
         margin: 0 auto;
     }
-
+    .logo-container {
+        width: auto;
+    }
     .navbar-collapse {
         flex-direction: row; /* Na desktopu řadí položky vedle sebe */
+        background-color: transparent;
     }
 
     .navbar-nav.flex-grow-1 {

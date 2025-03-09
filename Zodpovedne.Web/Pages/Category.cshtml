@@ -24,7 +24,11 @@
     @* Záhlaví kategorie *@
     <div class="row mb-4">
         <div class="col">
-            <h1 class="long-word-break">@Model.CategoryName</h1>
+            <div class="title-with-icon">
+                <img src="~/images/category/kolecko12.webp" alt="Alternate Text" />
+                <h1 class="long-word-break title-detail-category mb-0">@Model.CategoryName</h1>
+            </div>
+           
             @if (!string.IsNullOrEmpty(Model.CategoryDescription))
             {
                 <p class="lead">@Model.CategoryDescription</p>
@@ -76,7 +80,7 @@
     @if (HttpContext.Session.GetString("JWTToken") != null)
     {
         <div class="row mt-4">
-            <div class="col">
+            <div class="col d-flex justify-content-center">
                 <a href="/discussion/create/@Model.CategoryCode" class="btn btn-primary">
                     <i class="bi bi-plus-circle"></i> Nová diskuze
                 </a>

@@ -22,13 +22,13 @@
 }
 
 <div class="container">
-    <div class="row mt-1">
+    <div class="row">
         <h1 class="mb-4 text-center" style="color: var(--text-gray);">Kategorie diskuzí</h1>
     </div>
 
     @if (Model.Categories.Any())
     {
-        <div class="row">
+        <div class="row category-list">
             @foreach (var category in Model.Categories.OrderBy(c => c.DisplayOrder))
             {
                 <div class="col-sm-12 col-xl-6">
@@ -36,13 +36,21 @@
                          onmouseover="this.classList.add('shadow'); this.classList.add('bg-white');"
                          onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
                         <div class="card-body">
-                            <h5 class="card-title long-word-break">
-                                <a href="/categories/@category.Code" class="text-decoration-none">@category.Name</a>
-                            </h5>
-                            @if (!string.IsNullOrEmpty(category.Description))
-                            {
-                                <p class="card-text">@category.Description</p>
-                            }
+                            <a href="/categories/@category.Code" class="text-decoration-none d-flex">
+                                <div class="card-body-icon-wrapper">
+                                    <img src="~/images/category/@category.ImagePath" alt="Alternate Text" />
+                                </div>
+                                <div class="card-body-content-wrapper ">
+                                    <h5 class="card-title long-word-break">
+                                        @category.Name
+                                    </h5>
+                                    @if (!string.IsNullOrEmpty(category.Description))
+                                    {
+                                        <p class="card-text">@category.Description</p>
+                                    }
+                                </div>
+
+                            </a>
                         </div>
                     </div>
                 </div>

@@ -31,8 +31,4 @@
     <None Include="wwwroot\js\discussion.js" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="wwwroot\images\category\" />
-  </ItemGroup>
-
 </Project>

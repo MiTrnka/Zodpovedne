@@ -5,59 +5,64 @@
     Model: Instance DiscussionListDto obsahující data o diskuzi
 *@
 @model Zodpovedne.Contracts.DTO.DiscussionListDto
-
+<a href="/categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none">
 <div class="card-diskuse me-2 kategorie-wrapper col-sm-12 col-xl-6"
      onmouseover="this.classList.add('shadow'); this.classList.add('bg-white');"
      onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
-    <div class="d-flex flex-wrap ">
-        <div>
-            <h5 class="card-title title-wrapper">
-                @* Zobrazení TOP badgu pro prioritní diskuze *@
-                @if (Model.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
-                {
-                    <span class="bi-star-fill me-1 text-primary">@*TOP*@</span>
-                }
-                @* Odkaz na detail diskuze *@
-                <a href="/categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none">@Model.Title</a>
-                @Html.Raw("&nbsp;")
-            </h5>
-        </div>
-        <div class="popisky">
-            @* Autor *@
-            <span title="Autor">
-                <i class="bi bi-person"></i> @Model.AuthorNickname
-                @Html.Raw("&nbsp;")
-            </span>
+        <div class="title-autor-wrapper">
+            <div class="title-wrapper">
+                <h5 class="card-title ">
+                    @* Zobrazení TOP badgu pro prioritní diskuze *@
+                    @if (Model.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
+                    {
+                        <span class="bi-star-fill me-1 text-primary">@*TOP*@</span>
+                    }
+                    @* Odkaz na detail diskuze *@
+                    @Model.Title
+                </h5>
+             </div>
+                <div class="popisky">
+                    @* Autor *@
+                    <div class="autor">
+                        <span title="Autor">
+                            @Html.Raw("&nbsp;")
+                            <i class="bi bi-person"></i> @Model.AuthorNickname
+                            @Html.Raw("&nbsp;")
+                        </span>
+                    </div>
+  
+
+                </div>
            
         </div>
-    </div>
-    
 
-    @* Metadata diskuze *@
-    <div class="card-text text-muted popisky">
+        @* Metadata diskuze *@
+        <div class="card-text text-muted popisky">
 
-        @* Datum vytvoření - převedené na lokální čas *@
-        <span title="Datum vytvoření">
-            <i class="bi bi-calendar-plus"></i> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
-        </span>
-        @* Datum aktualizace - převedené na lokální čas *@
-        <span title="Datum aktualizace">
-            @if (Model.UpdatedAt.Date != Model.CreatedAt.Date)
-            {
-                @Html.Raw("&nbsp; | &nbsp;<i class=\"bi bi-pencil\"></i>")
-            }
-            @(Model.UpdatedAt.Date != Model.CreatedAt.Date ? Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy") : "")
-        </span>
-        <span class="mx-2">•</span>
-    
-        @* Počet komentářů *@
-        <span title="Počet komentářů">
-            <i class="bi bi-chat"></i> @Model.CommentsCount
-        </span>
-        <span class="mx-2">•</span>
-        @* Počet zobrazení *@
-        <span title="Počet zobrazení">
-            <i class="bi bi-eye"></i> @Model.ViewCount
-        </span>
-    </div>
+            @* Datum vytvoření - převedené na lokální čas *@
+            <span title="Datum vytvoření">
+                <i class="bi bi-calendar-plus"></i> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+            </span>
+            @* Datum aktualizace - převedené na lokální čas *@
+            <span title="Datum aktualizace">
+                @if (Model.UpdatedAt.Date != Model.CreatedAt.Date)
+                {
+                    @Html.Raw("&nbsp; | &nbsp;<i class=\"bi bi-pencil\"></i>")
+                }
+                @(Model.UpdatedAt.Date != Model.CreatedAt.Date ? Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy") : "")
+            </span>
+            <span class="mx-2">•</span>
+
+            @* Počet komentářů *@
+            <span title="Počet komentářů">
+                <i class="bi bi-chat"></i> @Model.CommentsCount
+            </span>
+            <span class="mx-2">•</span>
+            @* Počet zobrazení *@
+            <span title="Počet zobrazení">
+                <i class="bi bi-eye"></i> @Model.ViewCount
+            </span>
+        </div>
+  
 </div>
+</a>
