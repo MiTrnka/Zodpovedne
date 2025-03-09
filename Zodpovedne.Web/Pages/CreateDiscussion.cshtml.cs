@@ -56,8 +56,23 @@ public class CreateDiscussionModel : BasePageModel
     {
         if (!ModelState.IsValid)
         {
-            _logger.Log("Neplatný model pøi vytváøení  diskuze");
-            ErrorMessage = "Omlouváme se, ale diskuzi se nepodaøilo založit.";
+            var errors = ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .ToList();
+
+            if (errors.Any())
+            {
+                // Zobrazíme první chybovou hlášku, typicky to bude hláška ohlednì pøekroèení maximální délky
+                ErrorMessage = errors.First();
+            }
+            else
+            {
+                ErrorMessage = "Omlouváme se, ale diskuzi se nepodaøilo založit.";
+            }
+
+            // Znovu naèteme kategorii pro zobrazení
+            await OnGetAsync();
             return Page();
         }
 

@@ -7,14 +7,14 @@ public class Category
     public int Id { get; set; }
 
     [Required(ErrorMessage = "Název kategorie je povinný")]
-    [MaxLength(100, ErrorMessage = "Název kategorie nesmí být delší než 100 znaků.")]
+    [MaxLength(25, ErrorMessage = "Název kategorie nesmí být delší než 25 znaků.")]
     public string Name { get; set; } = "";
 
     [Required(ErrorMessage = "Kód kategorie je povinný")]
     [MaxLength(50, ErrorMessage = "Kód kategorie nesmí být delší než 50 znaků.")]
     public string Code { get; set; } = "";
 
-    [MaxLength(200, ErrorMessage = "Popis kategorie nesmí být delší než 200 znaků.")]
+    [MaxLength(70, ErrorMessage = "Popis kategorie nesmí být delší než 70 znaků.")]
     public string Description { get; set; } = "";
 
     public int DisplayOrder { get; set; }

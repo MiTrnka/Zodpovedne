@@ -10,11 +10,12 @@ public class RegisterModelDto
     [EmailAddress]
     public string Email { get; set; } = "";
 
-    [Required]
-    [StringLength(100)]
+    [Required(ErrorMessage = "Heslo je povinné")]
+    [StringLength(100, ErrorMessage = "Heslo může mít maximálně 100 znaků")]
     public string Password { get; set; } = "";
 
-    [Required]
+    [Required(ErrorMessage = "Přezdívka je povinná")]
+    [StringLength(30, ErrorMessage = "Přezdívka může mít maximálně 30 znaků")]
     public string Nickname { get; set; } = "";
 }
 

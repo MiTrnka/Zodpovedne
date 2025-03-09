@@ -11,7 +11,7 @@ public class CreateDiscussionDto
     public int CategoryId { get; set; }
 
     [Required(ErrorMessage = "Nadpis diskuze je povinný")]
-    [MaxLength(100, ErrorMessage = "Nadpis diskuze nesmí být delší než 100 znaků.")]
+    [MaxLength(70, ErrorMessage = "Nadpis diskuze nesmí být delší než 70 znaků.")]
     public string Title { get; set; } = "";
 
     [Required(ErrorMessage = "Obsah diskuze je povinný")]
@@ -29,7 +29,7 @@ public class CreateDiscussionDto
 public class UpdateDiscussionDto
 {
     [Required(ErrorMessage = "Nadpis diskuze je povinný")]
-    [MaxLength(100, ErrorMessage = "Nadpis diskuze nesmí být delší než 100 znaků.")]
+    [MaxLength(70, ErrorMessage = "Nadpis diskuze nesmí být delší než 70 znaků.")]
     public string Title { get; set; } = "";
 
     [Required(ErrorMessage = "Obsah diskuze je povinný")]
