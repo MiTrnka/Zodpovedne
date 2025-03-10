@@ -30,6 +30,23 @@
     <link rel="stylesheet" href="~/css/catalogs.css" asp-append-version="true" />
 </head>
 <body>
+    <!-- Místo pro připadné modální upozornění/chybovou hlášku -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upozornění</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                <div class="modal-body" id="modalMessage">
+                    <!-- Zde se zobrazí chybová zpráva -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <nav class="navbar navbar-expand-xl navbar-light">
         <div class="site-header">
             <div class="logo-container">

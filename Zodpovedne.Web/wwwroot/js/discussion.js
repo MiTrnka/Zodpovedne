@@ -9,6 +9,33 @@
 
 // Inicializace při načtení stránky
 document.addEventListener('DOMContentLoaded', function () {
+
+    // BLOK KÓDU NÍŽE ZAJISTÍ SKRÝVÁNÍ A ODKRÝVÁNÍ TLAČÍTKA ODESLAT U NOVÉHO KOMENTÁŘE, PŘI KLIKNUTÍ A ODKLIKNUTÍ Z TEXTOVÉHO POLE
+    const textarea = document.getElementById('new-comment-textarea');
+    const submitButton = document.getElementById('submit-comment-button');
+    if (textarea && submitButton) {
+        // Zobrazení tlačítka při kliknutí do textové oblasti
+        textarea.addEventListener('focus', function () {
+            submitButton.style.display = 'inline-block';
+        });
+        // Skrytí tlačítka při kliknutí mimo textovou oblast a tlačítko
+        document.addEventListener('click', function (event) {
+            // Nekryjeme tlačítko, pokud je textová oblast prázdná a má focus
+            if (textarea.value.trim() !== '') {
+                return;
+            }
+            // Skryjeme tlačítko, jen když uživatel kliknul mimo textovou oblast a tlačítko
+            if (!textarea.contains(event.target) && !submitButton.contains(event.target)) {
+                submitButton.style.display = 'none';
+            }
+        });
+        // Pro lepší UX: pokud uživatel začne psát, tlačítko zůstane viditelné
+        textarea.addEventListener('input', function () {
+            if (textarea.value.trim() !== '') {
+                submitButton.style.display = 'inline-block';
+            }
+        });
+    }
 });
 
 async function loadMoreComments(discussionId) {

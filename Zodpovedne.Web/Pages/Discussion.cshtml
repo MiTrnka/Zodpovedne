@@ -4,8 +4,6 @@
 @model DiscussionModel
 @{
     ViewData["Title"] = Model.Discussion?.Title ?? "Diskuze";
-    /* Detail Konretni diskuse */
-
 
     //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
     if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -33,23 +31,6 @@
             @if (Model.Discussion != null)
             {
                 <div class="card">
-                    <!-- Místo pro připadné modální upozornění/chybovou hlášku -->
-                    <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Upozornění</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
-                                </div>
-                                <div class="modal-body" id="modalMessage">
-                                    <!-- Zde se zobrazí chybová zpráva -->
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="card-header">
                         @* Nadpis diskuze - editovatelný pro oprávněné uživatele *@
                         @if (Model.CanEditDiscussion)
@@ -208,15 +189,15 @@
                                 <h5>Přidat komentář</h5>
                                 <form method="post" asp-page-handler="AddComment">
                                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                                    <textarea asp-for="NewComment.Content" class="form-control" rows="3"
+                                    <textarea asp-for="NewComment.Content" id="new-comment-textarea" class="form-control" rows="3"
                                               placeholder="Napište komentář..." required></textarea>
-                                    <button type="submit" class="btn btn-primary mt-2">Odeslat</button>
+                                    <button type="submit" id="submit-comment-button" class="btn btn-primary mt-2" style="display: none;">Odeslat</button>
                                 </form>
                             </div>
                         </div>
                     }
 
-                    @* Sekce komentářů *@
+                    @* Sekce seznamu komentářů *@
                     <div id="comments-container">
                         @if (Model.Discussion.Comments.Any())
                         {
