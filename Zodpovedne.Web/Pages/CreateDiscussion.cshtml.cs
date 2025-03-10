@@ -54,25 +54,24 @@ public class CreateDiscussionModel : BasePageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // Kontrola validaèního stavu - toto je klíèové
         if (!ModelState.IsValid)
         {
-            var errors = ModelState.Values
-            .SelectMany(v => v.Errors)
-            .Select(e => e.ErrorMessage)
-            .ToList();
+            // Znovu naèteme kategorii pro zobrazení, ale zachováme vyplnìná data
+            var client = _clientFactory.CreateBearerClient(HttpContext);
+            var response = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
 
-            if (errors.Any())
+            if (response.IsSuccessStatusCode)
             {
-                // Zobrazíme první chybovou hlášku, typicky to bude hláška ohlednì pøekroèení maximální délky
-                ErrorMessage = errors.First();
-            }
-            else
-            {
-                ErrorMessage = "Omlouváme se, ale diskuzi se nepodaøilo založit.";
+                var category = await response.Content.ReadFromJsonAsync<CategoryDto>();
+                if (category != null)
+                {
+                    CategoryName = category.Name;
+                    // Zachováváme ID kategorie, které již bylo nastaveno v Input objektu
+                }
             }
 
-            // Znovu naèteme kategorii pro zobrazení
-            await OnGetAsync();
+            // Vrátíme stránku s chybami validace
             return Page();
         }
 

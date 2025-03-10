@@ -40,7 +40,7 @@
                 <!-- Pole pro nadpis diskuze -->
                 <div class="mb-3">
                     <label asp-for="Input.Title" class="form-label">Nadpis</label>
-                    <input asp-for="Input.Title" class="form-control" maxlength="200" />
+                    <input asp-for="Input.Title" class="form-control"/>
                     <span asp-validation-for="Input.Title" class="text-danger"></span>
                 </div>
 
@@ -66,6 +66,9 @@
 @section Scripts {
     <!-- Načtení CKEditoru z CDN -->
     <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/decoupled-document/ckeditor.js"></script>
+
+    <!-- Přidání validačních skriptů -->
+    @await Html.PartialAsync("_ValidationScriptsPartial")
 
     <script>
         // Globální proměnná pro přístup k editoru
@@ -96,6 +99,11 @@
             .then(newEditor => {
                 // Uložení instance editoru
                 editor = newEditor;
+                 // Naplnění editoru obsahem z modelu (pokud existuje)
+
+                if (document.querySelector('#editor-content').value) {
+                    editor.setData(document.querySelector('#editor-content').value);
+                }
 
                 // Připojení toolbaru do příslušného containeru
                 const toolbarContainer = document.querySelector('#toolbar-container');
