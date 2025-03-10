@@ -33,13 +33,30 @@
             @if (Model.Discussion != null)
             {
                 <div class="card">
+                    <!-- Místo pro připadné modální upozornění/chybovou hlášku -->
+                    <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Upozornění</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                                </div>
+                                <div class="modal-body" id="modalMessage">
+                                    <!-- Zde se zobrazí chybová zpráva -->
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="card-header">
                         @* Nadpis diskuze - editovatelný pro oprávněné uživatele *@
                         @if (Model.CanEditDiscussion)
                         {
                             <div class="editable-title">
                                 <h1 class="h3 mb-0" id="discussion-title-display">@Model.Discussion.Title</h1>
-                                <input type="text" class="form-control d-none" id="discussion-title-edit" value="@Model.Discussion.Title" />
+                                <input type="text" class="form-control d-none" id="discussion-title-edit" value="@Model.Discussion.Title" maxlength="70" />
                             </div>
                         }
                         else

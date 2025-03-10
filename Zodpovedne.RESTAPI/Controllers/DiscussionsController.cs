@@ -643,6 +643,13 @@ public class DiscussionsController : ControllerBase
     {
         try
         {
+            // Automatická validace modelu na základě anotací
+            if (!ModelState.IsValid)
+            {
+                // Vrátíme chyby validace klientovi
+                return BadRequest(ModelState);
+            }
+
             var discussion = await dbContext.Discussions.FindAsync(discussionId);
             if (discussion == null)
                 return NotFound();

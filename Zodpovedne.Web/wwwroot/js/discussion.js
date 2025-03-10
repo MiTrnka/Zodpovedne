@@ -196,6 +196,7 @@ function toggleDiscussionEdit(show) {
         saveBtn.classList.remove('d-none');
         cancelBtn.classList.remove('d-none');
 
+
         // Inicializace editoru při prvním zobrazení
         if (!window.discussionEditor) {
             DecoupledEditor
@@ -205,6 +206,17 @@ function toggleDiscussionEdit(show) {
                 })
                 .then(editor => {
                     window.discussionEditor = editor;
+                    // Přidání kontroly maximální délky
+                    /*const maxContentLength = 3000; // Odpovídá omezení v modelu
+
+                    editor.model.document.on('change:data', () => {
+                        const currentLength = editor.getData().length;
+
+                        if (currentLength > maxContentLength) {
+                            // Zobrazení varování
+                            alert(`Obsah diskuze nesmí být delší než ${maxContentLength} znaků. Aktuální délka: ${currentLength}`);
+                        }
+                    });*/
                     const toolbarContainer = document.querySelector('#toolbar-container');
                     toolbarContainer.appendChild(editor.ui.view.toolbar.element);
                 });
@@ -226,9 +238,17 @@ async function saveDiscussionChanges(discussionId, discussionType) {
     const titleEdit = document.getElementById('discussion-title-edit');
     const contentDisplay = document.getElementById('discussion-content-display');
     const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+    const maxContentLength = 3000;
 
     try {
         const content = window.discussionEditor ? window.discussionEditor.getData() : '';
+        if (content.length > maxContentLength) {
+            document.getElementById("modalMessage").textContent =
+                `Obsah diskuze nesmí být delší než ${maxContentLength} znaků. Aktuální délka: ${content.length}`;
+            new bootstrap.Modal(document.getElementById("errorModal")).show();
+            event.preventDefault(); // Zabrání odeslání formuláře
+            return false; // Zabránit odeslání formuláře
+        }
         const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}`, {
             method: 'PUT',
             headers: {
