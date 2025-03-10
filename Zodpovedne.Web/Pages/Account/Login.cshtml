@@ -1,35 +1,14 @@
 ﻿@page "/Account/Login"
 @model Zodpovedne.Web.Pages.Account.LoginModel
-@{
-    ViewData["Title"] = "Přihlášení";
-
-    //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
-    if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-warning">
-            <h4>@Model.ErrorMessage</h4>
-        </div>
-        return;
-    }
-    //Pokud je jakýkoliv text v StatusMessage, tak se zobrazí úplně nahoře a pokračuje se ve vykreslování stránky
-    if (!string.IsNullOrEmpty(Model.StatusMessage))
-    {
-        <div class="alert alert-info">
-            <h4>@Model.StatusMessage</h4>
-        </div>
-    }
-}
 
 <div class="container">
     <div class="">
         <div class="col-md-4">
             <h2>Přihlášení</h2>
 
-            @if (!string.IsNullOrEmpty(Model.ErrorMessageWrongUser))
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
             {
-                <div class="alert alert-danger" role="alert">
-                    @Model.ErrorMessageWrongUser
-                </div>
+                <div class="alert alert-danger">@Model.ErrorMessage</div>
             }
 
             <form method="post">
