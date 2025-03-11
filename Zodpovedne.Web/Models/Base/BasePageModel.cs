@@ -8,6 +8,8 @@ using Zodpovedne.Logging;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using Zodpovedne.Contracts.DTO;
+using System.Text.Json;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace Zodpovedne.Web.Models.Base;
 
@@ -217,5 +219,47 @@ public abstract class BasePageModel : PageModel
             ErrorMessage = "Omlouváme se, nastala chyba při odhlašování.";
             return false;
         }
+    }
+
+    /// <summary>
+    /// Najde v objektu HttpResponseMessage popis chyby, nebo vrátí text chyby
+    /// </summary>
+    /// <param name="response"></param>
+    /// <param name="defaultMessage"></param>
+    /// <returns></returns>
+    public async Task<string> GetErrorFromHttpResponseMessage(HttpResponseMessage response, string defaultMessage = "Nastala chyba")
+    {
+        string errorMessage = "";
+        string errorContent = "";
+        if ((response == null) || (response.Content == null))
+            return defaultMessage;
+        try
+        {
+            errorContent = await response.Content.ReadAsStringAsync();
+            if (errorContent.Trim() == "")
+                return defaultMessage;
+
+            var problemDetails = JsonSerializer.Deserialize<ValidationProblemDetails>(errorContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (problemDetails?.Errors != null)
+            {
+                foreach (var kvp in problemDetails.Errors)
+                {
+                    foreach (var error in kvp.Value)
+                    {
+                        errorMessage += error + " ";
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Pokud API vrací jen textovou chybu místo JSON, vypíše ji přímo
+            errorMessage = errorContent;
+        }
+        if (errorMessage.Trim()=="")
+            return defaultMessage;
+        else
+            return errorMessage;
     }
 }

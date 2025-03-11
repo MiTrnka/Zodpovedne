@@ -6,6 +6,7 @@ using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
+using System.Text.Json;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -177,7 +178,8 @@ public class ProfileModel : BasePageModel
                 return Page();
         }
 
-        EmailErrorMessage = "Zmìna emailu se nezdaøila. Email je již používán.";
+        EmailErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì emailu.");
+
         await OnGetAsync(); // Znovu naèteme data profilu
         return Page();
     }
@@ -202,7 +204,6 @@ public class ProfileModel : BasePageModel
         if (string.IsNullOrWhiteSpace(NewNickname))
         {
             NicknameErrorMessage = "Pøezdívka nesmí být prázdná.";
-            await OnGetAsync();
             return Page();
         }
 
@@ -218,9 +219,9 @@ public class ProfileModel : BasePageModel
             return Page();
         }
 
-        NicknameErrorMessage = "Pøezdívka je již používána.";
+        NicknameErrorMessage = await GetErrorFromHttpResponseMessage(response,"Nastala chyba pøi zmìnì pøezdívky.");
 
-        await OnGetAsync();
+        await OnGetAsync(); // Znovu naèteme data profilu
         return Page();
     }
 
@@ -256,7 +257,7 @@ public class ProfileModel : BasePageModel
             return Page();
         }
 
-        PasswordErrorMessage = "Nesprávné souèasné heslo.";
+        PasswordErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì hesla.");
         await OnGetAsync();
         return Page();
     }

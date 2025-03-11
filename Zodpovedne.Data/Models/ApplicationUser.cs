@@ -10,7 +10,8 @@ public class ApplicationUser : IdentityUser
 {
     // Rozšíření standardního IdentityUser o vlastní pole
     [Required(ErrorMessage = "Přezdívka je povinná")]
-    [StringLength(30, ErrorMessage = "Přezdívka může mít maximálně 30 znaků")]
+    [MaxLength(30, ErrorMessage = "Přezdívka může mít maximálně 30 znaků")]
+    [StringLength(30, MinimumLength = 2, ErrorMessage = "Přezdívka musí mít 2 až 30 znaků")]
     public string Nickname { get; set; } = "";
     public DateTime Created { get; set; } = DateTime.UtcNow;
     public DateTime? LastLogin { get; set; }
