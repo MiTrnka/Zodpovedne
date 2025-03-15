@@ -231,4 +231,5 @@ document.addEventListener('DOMContentLoaded', function () {
             bellIcon.classList.remove(ANIMATION_CLASS);
         }
     }
+
 });
