@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="HtmlSanitizer" Version="9.0.876" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.6.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.6.1" />
   </ItemGroup>
 
   <ItemGroup>
