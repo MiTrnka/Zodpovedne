@@ -185,6 +185,9 @@ namespace Zodpovedne.RESTAPI
 
             var app = builder.Build();
 
+            // seznam rout, pro které se ihned vrátí 404 a nepokraèuje se v pipeline
+            app.MapShortCircuit(404, "wp-admin", "wp-login");
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
