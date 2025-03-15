@@ -10,15 +10,19 @@
 // Inicializace při načtení stránky
 document.addEventListener('DOMContentLoaded', function () {
 
-    // BLOK KÓDU NÍŽE ZAJISTÍ SKRÝVÁNÍ A ODKRÝVÁNÍ TLAČÍTKA ODESLAT U NOVÉHO KOMENTÁŘE, PŘI KLIKNUTÍ A ODKLIKNUTÍ Z TEXTOVÉHO POLE
-    const textarea = document.getElementById('new-comment-textarea');
-    const submitButton = document.getElementById('submit-comment-button');
+    // BLOK KÓDU NÍŽE ZAJISTÍ SKRÝVÁNÍ A ODKRÝVÁNÍ TLAČÍTKA ODESLAT U NOVÉHO ROOR KOMENTÁŘE
+    // A TLAČÍTKA ODPOVĚDĚT U REAKČNÍHO KOMENTÁŘ,
+    // PŘI KLIKNUTÍ A ODKLIKNUTÍ Z TEXTOVÉHO POLE PRO VYTVIŘENÍ ROOT KOMENTÁŘE A REAKČNÍHO KOMENTÁŘE
+    const textarea = document.getElementById('new-comment-textarea'); // Textového pole pro nový komentář
+    const submitButton = document.getElementById('submit-comment-button'); // Tlačítko pro odeslání root komentáře
+
     if (textarea && submitButton) {
-        // Zobrazení tlačítka při kliknutí do textové oblasti
+        // Zobrazení tlačítka odeslat při kliknutí do textové oblasti pro přidání nového root komentáře
         textarea.addEventListener('focus', function () {
             submitButton.style.display = 'inline-block';
         });
-        // Skrytí tlačítka při kliknutí mimo textovou oblast a tlačítko
+
+        // Skrytí tlačítka odeslat root komentár při kliknutí mimo textovou oblast a tlačítko
         document.addEventListener('click', function (event) {
             // Nekryjeme tlačítko, pokud je textová oblast prázdná a má focus
             if (textarea.value.trim() !== '') {
@@ -29,13 +33,70 @@ document.addEventListener('DOMContentLoaded', function () {
                 submitButton.style.display = 'none';
             }
         });
-        // Pro lepší UX: pokud uživatel začne psát, tlačítko zůstane viditelné
+        // Pro lepší UX nový komentář: pokud uživatel začne psát, tlačítko zůstane viditelné
         textarea.addEventListener('input', function () {
             if (textarea.value.trim() !== '') {
                 submitButton.style.display = 'inline-block';
             }
         });
     }
+    // Funkcionalita pro Reply (odpovědi na komentáře)
+    // Jelikož je tlkačítek pro odpověď více, pracujeme s polem tlačítek a textových polí
+    $('.reply-button').each(function (index) {
+
+        const $replyButton = $(this); // tlačítko odpovědi
+        const $replyArea = $('.new-comment-textarea-reply').eq(index); // Příslušná textová oblast pro odpověď
+        const $submitReplyButton = $('.submit-comment-button-reply').eq(index); // Příslušné tlačítko odeslání odpovědi
+        const $cancelReplyButton = $('.cancel-comment-button-reply').eq(index); // Příslušné tlačítko zrušení odpovědi
+
+        // Při kliknutí na "Odpovědět" se zobrazí textové pole a tlačítka odeslat a zrušit, skryjeme tlačítko Odpovědět
+        $replyButton.on('click', function (event) {
+            event.stopPropagation(); // Zastavíme propagaci události, aby se udalost aktivovala pouze pro tento jeden konkretni element
+
+            // Nejprve skryjeme všechny otevřené reply oblasti a zobrazíme všechna tlačítka odpovědět
+            $('.new-comment-textarea-reply').hide();
+            $('.submit-comment-button-reply').hide();
+            $('.cancel-comment-button-reply').hide();
+            $('.reply-button').show();
+
+            $replyArea.show();
+            $replyArea[0].focus();
+            $submitReplyButton.show();
+            $cancelReplyButton.show();
+            $replyButton.hide();
+        });
+
+        // Tlačítko zrušit vrátí vše do původního stavu a vymaže obsah - zneviditelníé textareu a tlačítka odeslat a zrušit
+        $cancelReplyButton.on('click', function (event) {
+            event.stopPropagation(); // Zastavíme propagaci události,aby se udalost aktivovala pouze pro tento jeden konkretni element
+
+            $replyArea.hide().val(''); // Zde vymažeme obsah, protože uživatel klikl na "zrušit"
+            $submitReplyButton.hide();
+            $cancelReplyButton.hide();
+            $replyButton.show();
+        });
+
+        // Při kliknutí mimo prvky odpovědi skryjeme textové pole a tlačítka
+        $(document).on('click', function (event) {
+            if (
+                $replyArea.is(':visible') &&
+                !$replyArea.is(event.target) &&
+                !$submitReplyButton.is(event.target) &&
+                !$cancelReplyButton.is(event.target) &&
+                !$replyButton.is(event.target) &&
+                !$replyArea.has(event.target).length &&
+                !$submitReplyButton.has(event.target).length &&
+                !$cancelReplyButton.has(event.target).length &&
+                !$replyButton.has(event.target).length
+            ) {
+                // Skryjeme prvky, ale zachováme obsah textového pole
+                $replyArea.hide();
+                $submitReplyButton.hide();
+                $cancelReplyButton.hide();
+                $replyButton.show();
+            }
+        });
+    });
 });
 
 async function loadMoreComments(discussionId) {
