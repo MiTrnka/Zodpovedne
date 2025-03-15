@@ -110,6 +110,9 @@ public class Program
 
         var app = builder.Build();
 
+        // seznam rout, pro které se ihned vrátí 404 a nepokraèuje se v pipeline
+        app.MapShortCircuit(404, "wp-admin","wp-login");
+
         // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())
         {
