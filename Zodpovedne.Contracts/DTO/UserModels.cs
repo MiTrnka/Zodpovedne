@@ -11,11 +11,11 @@ public class RegisterModelDto
     public string Email { get; set; } = "";
 
     [Required(ErrorMessage = "Heslo je povinné")]
-    [StringLength(100, ErrorMessage = "Heslo může mít maximálně 100 znaků")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Heslo může mít maximálně 100 znaků")]
     public string Password { get; set; } = "";
 
     [Required(ErrorMessage = "Přezdívka je povinná")]
-    [StringLength(30, ErrorMessage = "Přezdívka může mít maximálně 30 znaků")]
+    [StringLength(30, MinimumLength = 2, ErrorMessage = "Přezdívka musí mít 2 až 30 znaků")]
     public string Nickname { get; set; } = "";
 }
 
@@ -34,20 +34,22 @@ public class LoginModelDto
     [EmailAddress]
     public string Email { get; set; } = "";
 
-    [Required]
+    [Required(ErrorMessage = "Heslo je povinné")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Heslo může mít maximálně 100 znaků")]
     public string Password { get; set; } = "";
 }
 
 public class UpdateNicknameDto
 {
-    [Required]
+    [Required(ErrorMessage = "Přezdívka je povinná")]
+    [StringLength(30, MinimumLength = 2, ErrorMessage = "Přezdívka může mít maximálně 30 znaků")]
     public string Nickname { get; set; } = "";
 }
 
 public class UpdateEmailDto
 {
-    [Required]
-    [EmailAddress]
+    [Required(ErrorMessage = "Email je povinný.")]
+    [EmailAddress(ErrorMessage = "Zadejte platnou e-mailovou adresu.")]
     public string Email { get; set; } = "";
 }
 
@@ -56,8 +58,8 @@ public class ChangePasswordModelDto
     [Required]
     public string CurrentPassword { get; set; } = "";
 
-    [Required]
-    [StringLength(100)]
+    [Required(ErrorMessage = "Heslo je povinné")]
+    [StringLength(100, MinimumLength = 1, ErrorMessage = "Heslo může mít maximálně 100 znaků")]
     public string NewPassword { get; set; } = "";
 }
 

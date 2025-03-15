@@ -9,6 +9,33 @@
 
 // Inicializace při načtení stránky
 document.addEventListener('DOMContentLoaded', function () {
+
+    // BLOK KÓDU NÍŽE ZAJISTÍ SKRÝVÁNÍ A ODKRÝVÁNÍ TLAČÍTKA ODESLAT U NOVÉHO KOMENTÁŘE, PŘI KLIKNUTÍ A ODKLIKNUTÍ Z TEXTOVÉHO POLE
+    const textarea = document.getElementById('new-comment-textarea');
+    const submitButton = document.getElementById('submit-comment-button');
+    if (textarea && submitButton) {
+        // Zobrazení tlačítka při kliknutí do textové oblasti
+        textarea.addEventListener('focus', function () {
+            submitButton.style.display = 'inline-block';
+        });
+        // Skrytí tlačítka při kliknutí mimo textovou oblast a tlačítko
+        document.addEventListener('click', function (event) {
+            // Nekryjeme tlačítko, pokud je textová oblast prázdná a má focus
+            if (textarea.value.trim() !== '') {
+                return;
+            }
+            // Skryjeme tlačítko, jen když uživatel kliknul mimo textovou oblast a tlačítko
+            if (!textarea.contains(event.target) && !submitButton.contains(event.target)) {
+                submitButton.style.display = 'none';
+            }
+        });
+        // Pro lepší UX: pokud uživatel začne psát, tlačítko zůstane viditelné
+        textarea.addEventListener('input', function () {
+            if (textarea.value.trim() !== '') {
+                submitButton.style.display = 'inline-block';
+            }
+        });
+    }
 });
 
 async function loadMoreComments(discussionId) {
@@ -196,6 +223,7 @@ function toggleDiscussionEdit(show) {
         saveBtn.classList.remove('d-none');
         cancelBtn.classList.remove('d-none');
 
+
         // Inicializace editoru při prvním zobrazení
         if (!window.discussionEditor) {
             DecoupledEditor
@@ -205,6 +233,17 @@ function toggleDiscussionEdit(show) {
                 })
                 .then(editor => {
                     window.discussionEditor = editor;
+                    // Přidání kontroly maximální délky
+                    /*const maxContentLength = 3000; // Odpovídá omezení v modelu
+
+                    editor.model.document.on('change:data', () => {
+                        const currentLength = editor.getData().length;
+
+                        if (currentLength > maxContentLength) {
+                            // Zobrazení varování
+                            alert(`Obsah diskuze nesmí být delší než ${maxContentLength} znaků. Aktuální délka: ${currentLength}`);
+                        }
+                    });*/
                     const toolbarContainer = document.querySelector('#toolbar-container');
                     toolbarContainer.appendChild(editor.ui.view.toolbar.element);
                 });
@@ -226,9 +265,17 @@ async function saveDiscussionChanges(discussionId, discussionType) {
     const titleEdit = document.getElementById('discussion-title-edit');
     const contentDisplay = document.getElementById('discussion-content-display');
     const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+    const maxContentLength = 3000;
 
     try {
         const content = window.discussionEditor ? window.discussionEditor.getData() : '';
+        if (content.length > maxContentLength) {
+            document.getElementById("modalMessage").textContent =
+                `Obsah diskuze nesmí být delší než ${maxContentLength} znaků. Aktuální délka: ${content.length}`;
+            new bootstrap.Modal(document.getElementById("errorModal")).show();
+            event.preventDefault(); // Zabrání odeslání formuláře
+            return false; // Zabránit odeslání formuláře
+        }
         const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}`, {
             method: 'PUT',
             headers: {

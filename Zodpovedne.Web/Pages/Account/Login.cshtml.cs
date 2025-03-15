@@ -57,7 +57,7 @@ public class LoginModel : BasePageModel
         if (!response.IsSuccessStatusCode)
         {
             // uživatel zadal špatné pøihlašovací údaje
-            ErrorMessageWrongUser = "Neplatné pøihlašovací údaje";
+            ErrorMessage = "Neplatné pøihlašovací údaje";
             return Page();
         }
 
