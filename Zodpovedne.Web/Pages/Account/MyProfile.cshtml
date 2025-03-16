@@ -33,6 +33,12 @@
                     <dd>@Model.UserProfile?.Nickname</dd>
                     <dt>Registrován</dt>
                     <dd>@Model.UserProfile?.Created.ToString("dd.MM.yyyy HH:mm")</dd>
+                    @if (@Model.UserProfile?.LastLogin != null)
+                    {
+                        <dt>Poslední přihlášení</dt>
+                        <dd>@Model.UserProfile?.LastLogin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+                    }
+
                 </dl>
 
                 <!-- Sekce pro administrátory -->
