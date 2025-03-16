@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-between align-items-center mb-2">
         @* Levá část - informace o autorovi a času *@
         <div class="text-muted small">
-            <i class="bi bi-person"></i> @Model.AuthorNickname
+            <i class="bi bi-person"></i> <a asp-page="/Account/Profile" asp-route-nickname="@Model.AuthorNickname">@Model.AuthorNickname</a>
             <span class="mx-2">•</span>
             @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
             (@Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
@@ -92,7 +92,7 @@
             @* Hlavička odpovědi *@
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <div class="text-muted small">
-                    <i class="bi bi-person"></i> @reply.AuthorNickname
+                    <i class="bi bi-person"></i> <a asp-page="/Account/Profile" asp-route-nickname="@reply.AuthorNickname">@reply.AuthorNickname</a>
                     <span class="mx-1">•</span>
                     @reply.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
                     (@reply.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))

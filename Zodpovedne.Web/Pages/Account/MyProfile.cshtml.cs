@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace Zodpovedne.Web.Pages.Account;
 
-public class ProfileModel : BasePageModel
+public class MyProfileModel : BasePageModel
 {
     [BindProperty]
     public string? NewNickname { get; set; }
@@ -32,13 +32,13 @@ public class ProfileModel : BasePageModel
     public string? EmailErrorMessage { get; set; }
     public string? PasswordErrorMessage { get; set; }
 
-    // Pøidání seznamu diskuzí uživatele
+    // Seznam diskuzí uživatele
     public List<BasicDiscussionInfoDto> UserDiscussions { get; set; } = new();
 
     // Výsledek èištìní databáze
     public CleanupResultDto? CleanupResult { get; set; }
 
-    public ProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+    public MyProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
 

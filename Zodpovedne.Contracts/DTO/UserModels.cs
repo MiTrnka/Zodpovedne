@@ -25,6 +25,7 @@ public class UserProfileDto
     public string Email { get; set; } = "";
     public string Nickname { get; set; } = "";
     public DateTime Created { get; set; }
+    public DateTime? LastLogin { get; set; }
     public List<string> Roles { get; set; } = new();
 }
 
