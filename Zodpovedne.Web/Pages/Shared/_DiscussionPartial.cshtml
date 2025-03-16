@@ -26,14 +26,11 @@
                     <div class="autor">
                         <span title="Autor">
                             @Html.Raw("&nbsp;")
-                            <i class="bi bi-person"></i> @Model.AuthorNickname
+                        <i class="bi bi-person"></i> <a asp-page="/Account/Profile" asp-route-nickname="@Model.AuthorNickname">@Model.AuthorNickname</a>
                             @Html.Raw("&nbsp;")
                         </span>
                     </div>
-  
-
                 </div>
-           
         </div>
 
         @* Metadata diskuze *@

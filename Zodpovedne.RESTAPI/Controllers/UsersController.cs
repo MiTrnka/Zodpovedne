@@ -109,6 +109,7 @@ public class UsersController : ControllerBase
                 Email = user.Email!,
                 Nickname = user.Nickname,
                 Created = user.Created,
+                LastLogin = user.LastLogin,
                 Roles = roles.ToList()
             });
         }
@@ -118,6 +119,39 @@ public class UsersController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Vrátí informace o přihlášeném uživateli
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("{nickname}")]
+    public async Task<ActionResult<UserProfileDto>> GetUser(string nickname)
+    {
+        try
+        {
+            var user = dbContext.Users.Where(u => u.Nickname == nickname).FirstOrDefault();
+
+            if (user == null) return NotFound();
+
+            var roles = await this.userManager.GetRolesAsync(user);
+
+            return Ok(new UserProfileDto
+            {
+                Id = user.Id,
+                Email = user.Email!,
+                Nickname = user.Nickname,
+                Created = user.Created,
+                LastLogin = user.LastLogin,
+                Roles = roles.ToList()
+            });
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetAuthenticatedUser endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
     /// <summary>
     /// Vytvoří nového uživatele s rolí Member
     /// </summary>

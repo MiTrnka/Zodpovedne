@@ -235,18 +235,26 @@ public class DiscussionsController : ControllerBase
     /// Vrátí netrackovaný seznam diskuzí požadovaného uživatele
     /// </summary>
     /// <returns>Seznam základních informací o diskuzích uživatele</returns>
-    [HttpGet("user-discussions/{userId?}")]
-    public async Task<ActionResult<IEnumerable<BasicDiscussionInfoDto>>> GetUserDiscussions(string userId = null)
+    [HttpGet("user-discussions/{nickname?}")]
+    public async Task<ActionResult<IEnumerable<BasicDiscussionInfoDto>>> GetUserDiscussions(string? nickname = null)
     {
         try
         {
-            // Pokud userId není zadáno, použije se ID přihlášeného uživatele (pokud existuje)
-            if (string.IsNullOrEmpty(userId))
+            string userId = string.Empty;
+            // Pokud nickname není zadáno, použije se pro userId ID přihlášeného uživatele (pokud existuje)
+            if (string.IsNullOrEmpty(nickname))
             {
                 userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 // Pokud není ani přihlášený uživatel, vrátí chybu
                 if (string.IsNullOrEmpty(userId))
                     return Unauthorized();
+            }
+            else
+            {
+                // Pokud nickname je zadán, najdu userId dle nickname
+                var user = dbContext.Users.Where(u => u.Nickname == nickname).FirstOrDefault();
+                if (user == null) return NotFound();
+                userId = user.Id;
             }
 
             // Získání diskuzí uživatele a seřazení podle data aktualizace
@@ -627,7 +635,7 @@ public class DiscussionsController : ControllerBase
             await dbContext.SaveChangesAsync();
 
             // Vrátíme detail vytvořené diskuze
-            return CreatedAtAction(nameof(GetDiscussion), new { discussionId = discussion.Id }, null);
+            return CreatedAtAction(nameof(GetDiscussion), new { discussionId = discussion.Id }, discussion);
         }
         catch (Exception e)
         {

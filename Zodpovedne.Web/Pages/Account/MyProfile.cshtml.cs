@@ -32,7 +32,7 @@ public class MyProfileModel : BasePageModel
     public string? EmailErrorMessage { get; set; }
     public string? PasswordErrorMessage { get; set; }
 
-    // Pøidání seznamu diskuzí uživatele
+    // Seznam diskuzí uživatele
     public List<BasicDiscussionInfoDto> UserDiscussions { get; set; } = new();
 
     // Výsledek èištìní databáze
