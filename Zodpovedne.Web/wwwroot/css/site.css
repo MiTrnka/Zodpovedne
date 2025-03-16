@@ -7,6 +7,7 @@
     --text-gray: #666666;
     --light-gray: #F2EFF0;
     --light-purple: #D8B2D8;
+    --ultra-light-purple: #ECD9EC;
 }
 
 /* Reset a základní nastavení (platí pro všechny velikosti) */
@@ -14,11 +15,17 @@ html {
     font-size: 14px;
     position: relative;
     min-height: 100%;
+    font-family: 'Bodoni MT';
 }
 
 body {
     margin-bottom: 100px; /* Větší margin pro patičku na mobilu */
     background-color: var(--secondary-pink-ultra-light);
+}
+
+h1, h2, h3 {
+    font-family: 'Bodoni MT';
+    color: #333333;
 }
 
 .mainBanner {
@@ -82,7 +89,6 @@ body {
     background-color: #F2E6F2;
     font-weight: 600;
     height: 70%;
-    font-family: 'Roboto', sans-serif;
 }
 .close-notification {
     position: absolute;
@@ -102,6 +108,7 @@ body {
     justify-content: center;
     transition: transform 0.2s;
     padding: 0;
+    font-family: 'Bodoni MT';
 }
 
 .close-notification:hover {
@@ -618,6 +625,49 @@ h1 {
     max-width: 100% !important;
 }
 
+/* Detail diskuse */ /* iii */
+.text-editor-head, .text-editor-footer {
+    background-color: #FDCDC5;
+    position: relative;
+}
+.text-editor-footer{
+    padding-bottom: 0px;
+}
+.detail-diskuse-title{
+    margin-top: -10px;
+}
+#comments-list .card {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.like-btn {
+    color: var(--light-purple);
+}
+.like-btn-disable, .like-btn[disabled] {
+    color: var(--text-gray);
+}
+.like-btn-footer {
+    color: white;
+}
+    .like-btn-footer:hover {
+        color: white;
+    }
+
+.text-editor-head span[title="Autor"] {
+    margin-bottom: 1rem;
+    padding: 2px;
+    border-radius: 2px;
+}
+.reply-button {
+    border: 1.5px solid var(--primary-pink);
+    color: var(--primary-pink);
+}
+.reply-button:hover {
+    color: white;
+    background-color: var(--primary-pink);
+    border: 1.5px solid var(--primary-pink);
+}
 /* Styly pro tablet a větší obrazovky (≥576px) */
 @media (min-width: 576px) {
     /* Tlačítka na širších obrazovkách */

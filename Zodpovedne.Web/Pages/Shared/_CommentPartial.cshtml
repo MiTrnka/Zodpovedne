@@ -27,16 +27,16 @@
             @* Like tlačítko *@
             @if (Model.Likes.CanUserLike)
             {
-                <button class="btn btn-sm btn-outline-primary"
+                <button class="btn btn-sm like-btn"
                         onclick="likeComment(@Model.DiscussionId, @Model.Id)">
-                    <i class="bi bi-heart-fill"></i>
+                    <i class="bi bi-heart"></i>
                     <span id="comment-@Model.Id-likes-count">@Model.Likes.LikeCount</span>
                 </button>
             }
             else
             {
                 <span class="text-muted">
-                    <i class="bi bi-heart-fill"></i>
+                    <i class="bi bi-heart-disable"></i>
                     @Model.Likes.LikeCount
                 </span>
             }
@@ -107,15 +107,15 @@
                     @* Like tlačítko pro odpověď *@
                     @if (reply.Likes.CanUserLike)
                     {
-                        <button class="btn btn-sm btn-outline-primary"
+                        <button class="btn btn-sm like-btn"
                                 onclick="likeComment(@Model.DiscussionId, @reply.Id)">
-                            <i class="bi bi-heart-fill"></i>
+                            <i class="bi bi-heart"></i>
                             <span id="comment-@reply.Id-likes-count">@reply.Likes.LikeCount</span>
                         </button>
                     }
                     else
                     {
-                        <span class="text-muted">
+                        <span class="text-muted like-btn-disable">
                             <i class="bi bi-heart-fill"></i>
                             @reply.Likes.LikeCount
                         </span>
@@ -152,7 +152,7 @@
     {
         <div class="mt-3">
             <button class="btn btn-sm btn-outline-primary reply-button" onclick="showReplyForm(@Model.Id)">
-                <i class="bi bi-reply"></i> Odpovědět
+                <i class="bi bi-reply-fill"></i> Odpovědět
             </button>
         </div>
     }

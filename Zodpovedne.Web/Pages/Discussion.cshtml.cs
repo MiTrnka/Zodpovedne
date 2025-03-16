@@ -119,7 +119,7 @@ public class DiscussionModel : BasePageModel
     /// Vrací CSS tøídu pro tlaèítko like podle stavu
     /// </summary>
     public string GetLikeButtonClass(bool canLike) =>
-        canLike ? "btn-outline-primary" : "btn-outline-secondary";
+        canLike ? "like-btn" : "like-btn-disable";
 
     /// <summary>
     /// Generuje unikátní ID pro formuláø s odpovìdí na komentáø

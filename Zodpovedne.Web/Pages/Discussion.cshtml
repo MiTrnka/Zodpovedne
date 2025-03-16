@@ -4,6 +4,7 @@
 @model DiscussionModel
 @{
     ViewData["Title"] = Model.Discussion?.Title ?? "Diskuze";
+    /* Detail diskuse */
 
     //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
     if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -25,24 +26,24 @@
 <div class="container">
     <div class="row mb-4">
         <div class="col">
-            <h1>
+            <h1 class="text-center detail-diskuse-title">
                 <a href="/categories/@Model.CategoryCode" class="text-decoration-none">@Model.CategoryName</a>
             </h1>
             @if (Model.Discussion != null)
             {
-                <div class="card">
-                    <div class="card-header">
+                <div class="card mt-2">
+                    <div class="card-header text-editor-head">
                         @* Nadpis diskuze - editovatelný pro oprávněné uživatele *@
                         @if (Model.CanEditDiscussion)
                         {
                             <div class="editable-title">
-                                <h1 class="h3 mb-0" id="discussion-title-display">@Model.Discussion.Title</h1>
+                                <h1 class="h3 mb-0  text-editor-title" id="discussion-title-display">@Model.Discussion.Title</h1>
                                 <input type="text" class="form-control d-none" id="discussion-title-edit" value="@Model.Discussion.Title" maxlength="70" />
                             </div>
                         }
                         else
                         {
-                            <h1 class="h3 mb-0">@Model.Discussion.Title</h1>
+                            <h1 class="h3 mb-0 text-editor-title">@Model.Discussion.Title</h1>
                         }
 
                         @* Přidejte toto do sekce s detaily diskuze, např. do card-header *@
@@ -70,18 +71,19 @@
                         }
 
                         @* Metadata diskuze *@
-                        <div class="text-muted small">
-                            <span title="Autor">
+                        <div class="text-muted small ">
+                            <span title="Autor" >
                                 <i class="bi bi-person"></i> @Model.Discussion.AuthorNickname
                             </span>
-                            <span class="mx-2">•</span>
+                            <span>&nbsp;</span>
                             <span title="Datum vytvoření">
-                                <i class="bi bi-calendar"></i> @Model.Discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                <i class="bi bi-calendar-plus"></i> @Model.Discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
                             </span>
-                            <span title="Datum aktualizace">
-                                <i class="bi bi-calendar"></i> <span id="discussionUpdatedAtValue">@Model.Discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                            <span>&nbsp;|&nbsp;</span>
+                            <span title="Datum aktualizace"> <!-- Tady je potřeba udělat podmínku pro zobrazení hodnoty ohledně upraveno -->
+                                <i class="bi bi-pencil"></i> <span id="discussionUpdatedAtValue">@Model.Discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
                             </span>
-                            <span class="mx-2">•</span>
+                            <span>&nbsp;</span>
                             <span title="Počet zobrazení">
                                 <i class="bi bi-eye"></i> @Model.Discussion.ViewCount
                             </span>
@@ -113,22 +115,22 @@
                     </div>
 
                     @* Panel s tlačítky pro like, editaci a změnu viditelnosti *@
-                    <div class="card-footer d-flex justify-content-between align-items-center">
+                    <div class="card-footer text-editor-footer d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2">
                             @* Tlačítko Like *@
                             @if (Model.CanLikeDiscussion)
                             {
-                                <button class="btn @Model.GetLikeButtonClass(Model.Discussion.Likes.CanUserLike)"
+                                <button class="btn like-btn-footer @Model.GetLikeButtonClass(Model.Discussion.Likes.CanUserLike)"
                                         onclick="likeDiscussion(@Model.Discussion.Id)"
                                         @(!Model.Discussion.Likes.CanUserLike ? "disabled" : "")>
-                                    <i class="bi bi-heart-fill"></i>
+                                    <i class="bi bi-heart"></i>
                                     <span id="discussion-likes-count">@Model.Discussion.Likes.LikeCount</span>
                                 </button>
                             }
                             else
                             {
-                                <span class="text-muted">
-                                    <i class="bi bi-heart-fill"></i>
+                                <span class="text-muted like-btn-disable">
+                                    <i class="bi bi-heart"></i>
                                     @Model.Discussion.Likes.LikeCount
                                 </span>
                             }
