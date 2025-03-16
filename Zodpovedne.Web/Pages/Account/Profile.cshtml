@@ -34,7 +34,7 @@
                     @if (@Model.UserProfile?.LastLogin != null)
                     {
                         <dt>Poslední přihlášení</dt>
-                        <dd>@Model.UserProfile?.LastLogin?.ToString("dd.MM.yyyy HH:mm")</dd>
+                        <dd>@Model.UserProfile?.LastLogin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
                     }
                 </dl>
             </div>
