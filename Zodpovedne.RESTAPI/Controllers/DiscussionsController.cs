@@ -232,19 +232,22 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Vrátí netrackovaný seznam diskuzí aktuálně přihlášeného uživatele
+    /// Vrátí netrackovaný seznam diskuzí požadovaného uživatele
     /// </summary>
     /// <returns>Seznam základních informací o diskuzích uživatele</returns>
-    [Authorize]
-    [HttpGet("user-discussions")]
-    public async Task<ActionResult<IEnumerable<BasicDiscussionInfoDto>>> GetUserDiscussions()
+    [HttpGet("user-discussions/{userId?}")]
+    public async Task<ActionResult<IEnumerable<BasicDiscussionInfoDto>>> GetUserDiscussions(string userId = null)
     {
         try
         {
-            // Získání ID přihlášeného uživatele z tokenu
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            // Pokud userId není zadáno, použije se ID přihlášeného uživatele (pokud existuje)
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+            {
+                userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                // Pokud není ani přihlášený uživatel, vrátí chybu
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized();
+            }
 
             // Získání diskuzí uživatele a seřazení podle data aktualizace
             var discussions = await dbContext.Discussions
