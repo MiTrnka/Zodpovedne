@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace Zodpovedne.Web.Pages.Account;
 
-public class ProfileModel : BasePageModel
+public class MyProfileModel : BasePageModel
 {
     [BindProperty]
     public string? NewNickname { get; set; }
@@ -38,7 +38,7 @@ public class ProfileModel : BasePageModel
     // Výsledek èištìní databáze
     public CleanupResultDto? CleanupResult { get; set; }
 
-    public ProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+    public MyProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {
     }
 

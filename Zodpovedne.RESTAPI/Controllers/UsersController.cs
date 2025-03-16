@@ -239,10 +239,10 @@ public class UsersController : ControllerBase
             user.Nickname = model.Nickname;
             var result = await userManager.UpdateAsync(user);
 
-            if (result.Succeeded)
-                return Ok();
+            if (!result.Succeeded)
+                return BadRequest("Chyba při změně přezdívky");
 
-            return BadRequest(result.Errors);
+            return Ok();
         }
         catch (Exception e)
         {
@@ -271,18 +271,69 @@ public class UsersController : ControllerBase
             // Použití vestavěné metody Identity, která se postará o všechny potřebné změny
             var result = await userManager.SetEmailAsync(user, model.Email);
             if (!result.Succeeded)
-                return BadRequest(result.Errors);
+                return BadRequest("Chyba při změně emailu");
 
             // Musíme také změnit UserName, protože ten používáme jako login
             result = await userManager.SetUserNameAsync(user, model.Email);
-            if (result.Succeeded)
-                return Ok();
+            if (!result.Succeeded)
+                return BadRequest("Chyba při změně uživatelského jména (email)");
 
-            return BadRequest(result.Errors);
+            return Ok();
         }
         catch (Exception e)
         {
             _logger.Log("Chyba při vykonávání akce UpdateEmail endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Změní heslo přihlášeného uživatele
+    /// </summary>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    [HttpPut("authenticated-user/password")]
+    public async Task<IActionResult> UpdateAuthenticatedUserPassword(ChangePasswordModelDto model)
+    {
+        try
+        {
+            // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
+            var user = await GetCurrentUserAsync();
+            if (user == null) return NotFound();
+
+            var result = await this.userManager.ChangePasswordAsync(
+                user,
+                model.CurrentPassword,
+                model.NewPassword
+            );
+
+            if (!result.Succeeded)
+            {
+                // Standardizovaná chyba ve formátu ProblemDetails
+                /*var problemDetails = new ValidationProblemDetails
+                {
+                    Title = "Password change failed",
+                    Status = StatusCodes.Status400BadRequest,
+                    Detail = "One or more errors occurred while changing the password.",
+                    Instance = HttpContext.Request.Path
+                };
+
+                // Přidání chyb Identity API do formátu ProblemDetails
+                foreach (var error in result.Errors)
+                {
+                    problemDetails.Errors.Add(error.Code, new[] { error.Description });
+                }
+
+                return BadRequest(problemDetails);*/
+                return BadRequest("Nesprávné heslo");
+            }
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce UpdateAuthenticatedUserPassword endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -414,41 +465,6 @@ public class UsersController : ControllerBase
         catch (Exception e)
         {
             _logger.Log("Chyba při vykonávání akce ToggleUserVisibility endpointu.", e);
-            return StatusCode(StatusCodes.Status500InternalServerError);
-        }
-    }
-
-    /// <summary>
-    /// Změní heslo přihlášeného uživatele
-    /// </summary>
-    /// <param name="model"></param>
-    /// <returns></returns>
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    [HttpPut("authenticated-user/password")]
-    public async Task<IActionResult> UpdateAuthenticatedUserPassword(ChangePasswordModelDto model)
-    {
-        try
-        {
-            // Získá aktuálně přihlášeného uživatele (z tokenu v http hlavičce Authorization)
-            var user = await GetCurrentUserAsync();
-            if (user == null) return NotFound();
-
-            var result = await this.userManager.ChangePasswordAsync(
-                user,
-                model.CurrentPassword,
-                model.NewPassword
-            );
-
-            if (result.Succeeded)
-            {
-                return Ok();
-            }
-
-            return BadRequest(new { errors = result.Errors });
-        }
-        catch (Exception e)
-        {
-            _logger.Log("Chyba při vykonávání akce UpdateAuthenticatedUserPassword endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
