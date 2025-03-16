@@ -15,7 +15,7 @@ html {
     font-size: 14px;
     position: relative;
     min-height: 100%;
-    font-family: 'Bodoni MT';
+/*    font-family: 'Bodoni MT';*/
 }
 
 body {
@@ -24,7 +24,7 @@ body {
 }
 
 h1, h2, h3 {
-    font-family: 'Bodoni MT';
+/*    font-family: 'Bodoni MT';*/
     color: #333333;
 }
 
@@ -108,7 +108,7 @@ h1, h2, h3 {
     justify-content: center;
     transition: transform 0.2s;
     padding: 0;
-    font-family: 'Bodoni MT';
+/*    font-family: 'Bodoni MT';*/
 }
 
 .close-notification:hover {
@@ -449,6 +449,7 @@ h1 {
     font-size: 16px;
     flex-wrap: wrap;
     justify-content:flex-start;
+    width:100%;
 }
 
 .popisky {
@@ -635,6 +636,7 @@ h1 {
 }
 .detail-diskuse-title{
     margin-top: -10px;
+    width: 100%;
 }
 #comments-list .card {
     padding-left: 10px;
@@ -771,10 +773,10 @@ h1 {
 
     #discussions-list {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* Dva sloupce stejné velikosti */
-        gap: 0px 10px; /* Vertikální mezera 15px, horizontální 30px */
+        grid-template-columns: 1fr 1fr;
+        column-gap: 5px;
     }
-    
+
 }
 
 /* Speciální media query pro výšku editoru */
