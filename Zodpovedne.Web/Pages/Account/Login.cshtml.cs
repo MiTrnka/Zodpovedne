@@ -36,6 +36,12 @@ public class LoginModel : BasePageModel
 
     public string? ErrorMessageWrongUser { get; set; } = null;
 
+    public void OnGet(string? statusMessage = null)
+    {
+        if (!string.IsNullOrEmpty(statusMessage))
+            this.StatusMessage = statusMessage;
+    }
+
     /// <summary>
     /// Zpracování POST požadavku pøi odeslání pøihlašovacího formuláøe
     /// </summary>

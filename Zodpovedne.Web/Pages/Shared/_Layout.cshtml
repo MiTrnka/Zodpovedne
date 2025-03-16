@@ -125,10 +125,10 @@
                                 </div>
                             </div>
                         </li>
-                        <!-- Profil -->
+                        <!-- Můj profil -->
                         <li class="nav-item">
-                            <a class="nav-link @(IsMenuItemActive("/Account/Profile") ? "active" : "")"
-                            asp-page="/Account/Profile">@Context.Session.GetString("UserNickname")</a>
+                            <a class="nav-link @(IsMenuItemActive("/Account/MyProfile") ? "active" : "")"
+                            asp-page="/Account/MyProfile">@Context.Session.GetString("UserNickname")</a>
                         </li>
                         <!-- Odhlásit -->
                         <li class="nav-item">

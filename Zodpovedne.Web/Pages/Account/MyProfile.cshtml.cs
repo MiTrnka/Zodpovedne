@@ -46,8 +46,11 @@ public class ProfileModel : BasePageModel
     /// Pøi naètení stránky se naètou data pøihlášeného uživatele
     /// </summary>
     /// <returns></returns>
-    public async Task<IActionResult> OnGetAsync()
+    public async Task<IActionResult> OnGetAsync(string? statusMessage = null)
     {
+        if (!string.IsNullOrEmpty(statusMessage))
+            this.StatusMessage = statusMessage;
+
         if (!IsUserLoggedIn)
             return RedirectToPage("/Account/Login");
 
@@ -143,8 +146,7 @@ public class ProfileModel : BasePageModel
             _logger.Log("Chyba pøi èištìní databáze", ex);
         }
 
-        await OnGetAsync(); // Znovu naèteme data profilu
-        return Page();
+        return RedirectToPage(); // Zpùsobí znovunaètení stránky (znovu se novì naplní model)
     }
 
     /// <summary>
@@ -173,14 +175,16 @@ public class ProfileModel : BasePageModel
         {
             // Email se zmìnil úspìšnì, uživatel bude odhlášen a bude se muset znovu nalogovat, aby se mu vygeneroval nový JWT token
             if (await SignedOutIsOK())
-                return RedirectToPage("/Account/Login");
+                return RedirectToPage("/Account/Login", new { statusMessage = "Váš email byl úspìšnì zmìnìn, nyní se jím mùžete novì pøihlásit"}); // Zpùsobí naètení nové stránky (znovu se novì naplní model)
             else
+            {
+                ErrorMessage = "Nastala chyba pøi odhlašování";
                 return Page();
+            }
         }
 
         EmailErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì emailu.");
 
-        await OnGetAsync(); // Znovu naèteme data profilu
         return Page();
     }
 
@@ -214,15 +218,12 @@ public class ProfileModel : BasePageModel
 
         if (response.IsSuccessStatusCode)
         {
-            HttpContext.Session.SetString("UserNickname", NewNickname);
-            StatusMessage = "Pøezdívka byla úspìšnì zmìnìna.";
-            return Page();
+            return RedirectToPage("MyProfile", new { statusMessage = "Pøezdívka byla úspìšnì zmìnìna." }); // Zpùsobí znovunaètení stránky (znovu se novì naplní model)
         }
 
         NicknameErrorMessage = await GetErrorFromHttpResponseMessage(response,"Nastala chyba pøi zmìnì pøezdívky.");
 
-        await OnGetAsync(); // Znovu naèteme data profilu
-        return Page();
+        return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
     }
 
     /// <summary>
@@ -253,12 +254,11 @@ public class ProfileModel : BasePageModel
 
         if (response.IsSuccessStatusCode)
         {
-            StatusMessage = "Heslo bylo úspìšnì zmìnìno.";
-            return Page();
+            return RedirectToPage("MyProfile", new { statusMessage = "Heslo bylo úspìšnì zmìnìno." }); // Zpùsobí znovunaètení stránky (znovu se novì naplní model)
         }
 
         PasswordErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì hesla.");
-        await OnGetAsync();
-        return Page();
+
+        return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
     }
 }
