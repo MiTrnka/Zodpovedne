@@ -109,7 +109,7 @@ public class MyProfileModel : BasePageModel
             // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst notifikace
         }
 
-        return Page();
+        return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
     }
 
     /// <summary>
@@ -146,7 +146,8 @@ public class MyProfileModel : BasePageModel
             _logger.Log("Chyba pøi èištìní databáze", ex);
         }
 
-        return RedirectToPage(); // Zpùsobí znovunaètení stránky (znovu se novì naplní model)
+        //return RedirectToPage(); // Zpùsobí znovunaètení stránky (znovu se novì naplní model)
+        return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
     }
 
     /// <summary>
@@ -185,7 +186,7 @@ public class MyProfileModel : BasePageModel
 
         EmailErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì emailu.");
 
-        return Page();
+        return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
     }
 
     /// <summary>

@@ -6,10 +6,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
-using Zodpovedne.Data.Extensions;
 using Microsoft.OpenApi.Models;
 using Zodpovedne.Logging;
 using Zodpovedne.RESTAPI.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Zodpovedne.Data.Data;
+using Zodpovedne.Data.Interfaces;
+using Zodpovedne.Data.Models;
+using Zodpovedne.Data.Services;
 
 namespace Zodpovedne.RESTAPI
 {
@@ -78,8 +83,43 @@ namespace Zodpovedne.RESTAPI
             // Registrace služeb z projektu Data
             //builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
+
             // Konfigurace/registrace datové vrstvy (DBContext, Identity)
-            builder.Services.AddDataLayer();
+            string? connectionString = configuration.GetConnectionString("DefaultConnection");
+
+            // Pokud se ani jeden zpùsob nepodaøil, vyhodíme výjimku
+            if (string.IsNullOrEmpty(connectionString))
+                throw new InvalidOperationException("Connection string 'DefaultConnection' není nastaven v konfiguraci Data projektu.");
+
+
+            // Registrace DbContextu
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseNpgsql(connectionString));
+
+            // Registrace IDataContext
+            // Když nìkdo požádá o IDataContext, dostane instanci ApplicationDbContext
+            builder.Services.AddScoped<IDataContext>(sp =>
+                sp.GetRequiredService<ApplicationDbContext>());
+
+            // Registrace služeb pro Identity
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
+                // Pùvodní konfigurace z ServiceCollectionExtensions
+                options.Password.RequireDigit = false;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 1;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+            })
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
+
+            // Registrace dalších služeb
+            builder.Services.AddScoped<IIdentityDataSeeder, IdentityDataSeeder>();
+            builder.Services.AddScoped<ITestDataSeeder, TestDataSeeder>();
+
+
 
             // Konfigurace JWT autentizace
             builder.Services.AddAuthentication(options => {
