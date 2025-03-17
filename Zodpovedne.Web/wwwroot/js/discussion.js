@@ -367,6 +367,10 @@ async function saveDiscussionChanges(discussionId, discussionType) {
                 });
                 const formatted = formatter.format(now).replace(/\u00A0/g, '');
                 document.getElementById('discussionUpdatedAtValue').textContent = formatted;
+
+                // Způsobí kompletní znovunačtení stránky v prohlížeči (true říká ignoruj lokální cache)
+                window.location.reload(true);
+                return; // řádek viz výše sice způsobí načítání stránky, ale nemusí to být hned, takže řádky pod ním se mohou začít vykonávat a to nechci, proto return;
             }
             catch (error) {
                 document.getElementById('discussionUpdatedAtValue').textContent = '';
