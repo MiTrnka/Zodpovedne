@@ -26,8 +26,4 @@
     <ProjectReference Include="..\Zodpovedne.Contracts\Zodpovedne.Contracts.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Interfaces\" />
-  </ItemGroup>
-
 </Project>
