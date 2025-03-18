@@ -26,13 +26,14 @@ namespace Zodpovedne.Data.Services
             this.roleManager = roleManager;
         }
 
-        public async Task InitializeAsync()
+        public async Task InitializeAsync(bool testData)
         {
-            await InitializeRolesAndAdminAsync();
-            //await SeedTestDataAsync();
+            await dbContext.Database.MigrateAsync();
+            await InitializeRolesAndAdminAccountAsync();
+            if (testData) await SeedTestDataAsync();
         }
 
-        private async Task InitializeRolesAndAdminAsync()
+        private async Task InitializeRolesAndAdminAccountAsync()
         {
             // Vytvoření základních rolí Admin a Member, pokud ještě neexistují
             if (!await roleManager.RoleExistsAsync("Admin"))
@@ -64,119 +65,89 @@ namespace Zodpovedne.Data.Services
 
         private async Task SeedTestDataAsync()
         {
-            // Vytvoření testovacích uživatelů
+            // Vytvoření testovacích uživatelů, každý se nejprve dohledá podle emailu a založí se jen tehdy, pokud uživatel s daným emailem nebo Nickname není v databázi
             var users = new[]
             {
-            new { Email = "jana@mz.cz", Password = "abc", Nickname = "JanaM", Type = UserType.Normal },
-            new { Email = "petra@mz.cz", Password = "abc", Nickname = "Peta", Type = UserType.Normal },
-            new { Email = "michal@mz.cz", Password = "abc", Nickname = "TataMichal", Type = UserType.Normal },
-            new { Email = "lucie@mz.cz", Password = "abc", Nickname = "LucieS", Type = UserType.Normal },
-            new { Email = "tomas@mz.cz", Password = "abc", Nickname = "TomasK", Type = UserType.Normal },
-            new { Email = "tereza.novakova@mz.cz", Password = "abc", Nickname = "TerezaN", Type = UserType.Normal },
-            new { Email = "jan.dvorak@mz.cz", Password = "abc", Nickname = "TataHonza", Type = UserType.Normal },
-            new { Email = "marketa.svobodova@mz.cz", Password = "abc", Nickname = "MarketaS", Type = UserType.Normal },
-            new { Email = "pavel.novotny@mz.cz", Password = "abc", Nickname = "PavelTata", Type = UserType.Normal },
-            new { Email = "lenka.horakova@mz.cz", Password = "abc", Nickname = "LenkaH", Type = UserType.Normal },
-            new { Email = "jiri.prochazka@mz.cz", Password = "abc", Nickname = "JirkaP", Type = UserType.Normal },
-            new { Email = "eva.cerna@mz.cz", Password = "abc", Nickname = "EvickaC", Type = UserType.Normal },
-            new { Email = "martin.kucera@mz.cz", Password = "abc", Nickname = "Martin123", Type = UserType.Normal },
-            new { Email = "katerina.vesela@mz.cz", Password = "abc", Nickname = "KackaV", Type = UserType.Normal },
-            new { Email = "petr.kral@mz.cz", Password = "abc", Nickname = "PetrK", Type = UserType.Normal },
-            new { Email = "hana.malikova@mz.cz", Password = "abc", Nickname = "HankaM", Type = UserType.Normal },
-            new { Email = "roman.benes@mz.cz", Password = "abc", Nickname = "RomanB", Type = UserType.Normal },
-            new { Email = "barbora.sedlackova@mz.cz", Password = "abc", Nickname = "BaraS", Type = UserType.Normal },
-            new { Email = "david.pospisil@mz.cz", Password = "abc", Nickname = "DavidP", Type = UserType.Normal },
-            new { Email = "michaela.urbanova@mz.cz", Password = "abc", Nickname = "MisaU", Type = UserType.Normal },
-            new { Email = "ondrej.mach@mz.cz", Password = "abc", Nickname = "OndraM", Type = UserType.Normal },
-            new { Email = "kristyna.benesova@mz.cz", Password = "abc", Nickname = "KikaB", Type = UserType.Normal },
-            new { Email = "lukas.toman@mz.cz", Password = "abc", Nickname = "LukasT", Type = UserType.Normal },
-            new { Email = "simona.maskova@mz.cz", Password = "abc", Nickname = "SimcaM", Type = UserType.Normal },
-            new { Email = "adam.kratochvil@mz.cz", Password = "abc", Nickname = "AdamK", Type = UserType.Normal },
-            new { Email = "nikola.krejcova@mz.cz", Password = "abc", Nickname = "NikiK", Type = UserType.Normal },
-            new { Email = "vojtech.hruska@mz.cz", Password = "abc", Nickname = "VojtaH", Type = UserType.Normal },
-            new { Email = "monika.soukupova@mz.cz", Password = "abc", Nickname = "MoniS", Type = UserType.Normal },
-            new { Email = "filip.riha@mz.cz", Password = "abc", Nickname = "FilipR", Type = UserType.Normal },
-            new { Email = "adela.bila@mz.cz", Password = "abc", Nickname = "AdelkaB", Type = UserType.Normal },
-            new { Email = "radek.syka@mz.cz", Password = "abc", Nickname = "RadekS", Type = UserType.Normal },
-            new { Email = "eliska.nemcova@mz.cz", Password = "abc", Nickname = "ElaNem", Type = UserType.Normal },
-            new { Email = "tomas.strnad@mz.cz", Password = "abc", Nickname = "TomasS", Type = UserType.Normal },
-            new { Email = "vendula.kralova@mz.cz", Password = "abc", Nickname = "VendaK", Type = UserType.Normal },
-            new { Email = "patrik.musil@mz.cz", Password = "abc", Nickname = "PatrikM", Type = UserType.Normal },
-            new { Email = "denisa.vlckova@mz.cz", Password = "abc", Nickname = "DenisaV", Type = UserType.Normal },
-            new { Email = "stepan.jaros@mz.cz", Password = "abc", Nickname = "StepanJ", Type = UserType.Normal },
-            new { Email = "andrea.polakova@mz.cz", Password = "abc", Nickname = "AndiP", Type = UserType.Normal },
-            new { Email = "jakub.hajek@mz.cz", Password = "abc", Nickname = "KubaH", Type = UserType.Normal },
-            new { Email = "veronika.ruzickova@mz.cz", Password = "abc", Nickname = "VeraR", Type = UserType.Normal },
-            new { Email = "marek.holy@mz.cz", Password = "abc", Nickname = "MarekH", Type = UserType.Normal },
-            new { Email = "martina.klimova@mz.cz", Password = "abc", Nickname = "MartinaK", Type = UserType.Normal },
-            new { Email = "daniel.simek@mz.cz", Password = "abc", Nickname = "DanS", Type = UserType.Normal },
-            new { Email = "petra.kolarova@mz.cz", Password = "abc", Nickname = "PetraK", Type = UserType.Normal },
-            new { Email = "robert.stehlik@mz.cz", Password = "abc", Nickname = "RobertS", Type = UserType.Normal },
-            new { Email = "jana.mackova@mz.cz", Password = "abc", Nickname = "JanaM2", Type = UserType.Normal },
-            new { Email = "vladimir.gregor@mz.cz", Password = "abc", Nickname = "VladaG", Type = UserType.Normal },
-            new { Email = "gabriela.fojtikova@mz.cz", Password = "abc", Nickname = "GabiF", Type = UserType.Normal },
-            new { Email = "milan.bartos@mz.cz", Password = "abc", Nickname = "MilanB", Type = UserType.Normal },
-            new { Email = "sarka.huskova@mz.cz", Password = "abc", Nickname = "SarkaH", Type = UserType.Normal },
-            new { Email = "kamil.zeman@mz.cz", Password = "abc", Nickname = "KamilZ", Type = UserType.Normal },
-            new { Email = "iveta.kavkova@mz.cz", Password = "abc", Nickname = "IvetaK", Type = UserType.Normal },
-            new { Email = "radim.fiala@mz.cz", Password = "abc", Nickname = "RadimF", Type = UserType.Normal },
-            new { Email = "renata.jezkova@mz.cz", Password = "abc", Nickname = "RenataJ", Type = UserType.Normal },
-            new { Email = "matej.kopecky@mz.cz", Password = "abc", Nickname = "MatejK", Type = UserType.Normal },
-            new { Email = "linda.blazkova@mz.cz", Password = "abc", Nickname = "LindaB", Type = UserType.Normal },
-            new { Email = "michal.kolman@mz.cz", Password = "abc", Nickname = "MichalK", Type = UserType.Normal },
-            new { Email = "natalie.richtrova@mz.cz", Password = "abc", Nickname = "NatalieR", Type = UserType.Normal },
-            new { Email = "dominik.vacek@mz.cz", Password = "abc", Nickname = "DominikV", Type = UserType.Normal },
-            new { Email = "olga.duskova@mz.cz", Password = "abc", Nickname = "OlgaD", Type = UserType.Normal },
-            new { Email = "richard.beran@mz.cz", Password = "abc", Nickname = "RichardB", Type = UserType.Normal },
-            new { Email = "alena.hromadkova@mz.cz", Password = "abc", Nickname = "AlenaH", Type = UserType.Normal },
-            new { Email = "boris.sykora@mz.cz", Password = "abc", Nickname = "BorisS", Type = UserType.Normal },
-            new { Email = "zuzana.moravcova@mz.cz", Password = "abc", Nickname = "ZuzkaM", Type = UserType.Normal },
-            new { Email = "gustav.maly@mz.cz", Password = "abc", Nickname = "GustavM", Type = UserType.Normal },
-            new { Email = "aneta.vackova@mz.cz", Password = "abc", Nickname = "AnetaV", Type = UserType.Normal },
-            new { Email = "viktor.kubat@mz.cz", Password = "abc", Nickname = "ViktorK", Type = UserType.Normal },
-            new { Email = "marcela.stranska@mz.cz", Password = "abc", Nickname = "MarcelaS", Type = UserType.Normal },
-            new { Email = "ivan.nemec@mz.cz", Password = "abc", Nickname = "IvanN", Type = UserType.Normal },
-            new { Email = "jitka.stanikova@mz.cz", Password = "abc", Nickname = "JitkaS", Type = UserType.Normal },
-            new { Email = "alex.kraus@mz.cz", Password = "abc", Nickname = "AlexK", Type = UserType.Normal },
-            new { Email = "magdalena.dolezalova@mz.cz", Password = "abc", Nickname = "MagdaD", Type = UserType.Normal },
-            new { Email = "erik.valenta@mz.cz", Password = "abc", Nickname = "ErikV", Type = UserType.Normal },
-            new { Email = "klara.prokopova@mz.cz", Password = "abc", Nickname = "KlaraP", Type = UserType.Normal },
-            new { Email = "eduard.pesek@mz.cz", Password = "abc", Nickname = "EduardP", Type = UserType.Normal },
-            new { Email = "silvie.hrdlickova@mz.cz", Password = "abc", Nickname = "SilvieH", Type = UserType.Normal },
-            new { Email = "lubomir.kovarik@mz.cz", Password = "abc", Nickname = "LubaK", Type = UserType.Normal },
-            new { Email = "sabina.berankova@mz.cz", Password = "abc", Nickname = "SabinaB", Type = UserType.Normal },
-            new { Email = "kveta.richtarova@mz.cz", Password = "abc", Nickname = "KvetaR", Type = UserType.Normal },
-            new { Email = "ludek.havel@mz.cz", Password = "abc", Nickname = "LudekH", Type = UserType.Normal },
-            new { Email = "nadezda.liskova@mz.cz", Password = "abc", Nickname = "NadaL", Type = UserType.Normal },
-            new { Email = "emil.stark@mz.cz", Password = "abc", Nickname = "EmilS", Type = UserType.Normal },
-            new { Email = "sona.kadlecova@mz.cz", Password = "abc", Nickname = "SonaK", Type = UserType.Normal },
-            new { Email = "oldrich.vrana@mz.cz", Password = "abc", Nickname = "OldaV", Type = UserType.Normal },
-            new { Email = "dagmar.bartosova@mz.cz", Password = "abc", Nickname = "DasaB", Type = UserType.Normal },
-            new { Email = "vlastimil.kriz@mz.cz", Password = "abc", Nickname = "VlastaK", Type = UserType.Normal },
-            new { Email = "radka.fialova@mz.cz", Password = "abc", Nickname = "RadkaF", Type = UserType.Normal },
-            new { Email = "libor.trnka@mz.cz", Password = "abc", Nickname = "LiborT", Type = UserType.Normal },
-            new { Email = "marta.smolkova@mz.cz", Password = "abc", Nickname = "MartaS", Type = UserType.Normal },
-            new { Email = "stanislav.hradil@mz.cz", Password = "abc", Nickname = "StandaH", Type = UserType.Normal },
-            new { Email = "dita.mikova@mz.cz", Password = "abc", Nickname = "DitaM", Type = UserType.Normal },
-            new { Email = "rostislav.kaspar@mz.cz", Password = "abc", Nickname = "RostaK", Type = UserType.Normal },
-            new { Email = "milena.jandova@mz.cz", Password = "abc", Nickname = "MilenaJ", Type = UserType.Normal },
-            new { Email = "bronislav.urban@mz.cz", Password = "abc", Nickname = "BronekU", Type = UserType.Normal },
-            new { Email = "zdena.fuchsova@mz.cz", Password = "abc", Nickname = "ZdenaF", Type = UserType.Normal },
-            new { Email = "otakar.safarik@mz.cz", Password = "abc", Nickname = "OtaS", Type = UserType.Normal },
-            new { Email = "bohumila.klimesova@mz.cz", Password = "abc", Nickname = "BohumilaK", Type = UserType.Normal },
-            new { Email = "rudolf.burda@mz.cz", Password = "abc", Nickname = "RudaB", Type = UserType.Normal },
-            new { Email = "jolana.uhlirova@mz.cz", Password = "abc", Nickname = "JolanaU", Type = UserType.Normal },
-            new { Email = "zbynek.hrdina@mz.cz", Password = "abc", Nickname = "ZbynekH", Type = UserType.Normal },
-            new { Email = "daniela.pokorna@mz.cz", Password = "abc", Nickname = "DanielaP", Type = UserType.Normal },
-            new { Email = "hugo.stetina@mz.cz", Password = "abc", Nickname = "HugoS", Type = UserType.Normal },
-            new { Email = "blazena.adamcova@mz.cz", Password = "abc", Nickname = "BlazenaA", Type = UserType.Normal },
-            new { Email = "norbert.rada@mz.cz", Password = "abc", Nickname = "NorbertR", Type = UserType.Normal },
-            new { Email = "kamila.bedrova@mz.cz", Password = "abc", Nickname = "KamilaB", Type = UserType.Normal },
-            new { Email = "leopold.keller@mz.cz", Password = "abc", Nickname = "LeopoldK", Type = UserType.Normal },
-            new { Email = "doubravka.sevcikova@mz.cz", Password = "abc", Nickname = "DoubravkaS", Type = UserType.Normal },
-            new { Email = "radovan.janousek@mz.cz", Password = "abc", Nickname = "RadovanJ", Type = UserType.Normal }
-        };
-
+                new { Email = "adela.novakova@mz.cz", Nickname = "AdelaN" },
+                new { Email = "adam.kral@mz.cz", Nickname = "AdamK" },
+                new { Email = "alex.kovar@mz.cz", Nickname = "AlexK" },
+                new { Email = "alena.kubikova@mz.cz", Nickname = "AlenaK" },
+                new { Email = "andrea.kucerova@mz.cz", Nickname = "AndreaK" },
+                new { Email = "aneta.hajkova@mz.cz", Nickname = "AnetaH" },
+                new { Email = "anna.fiala@mz.cz", Nickname = "AnnaF" },
+                new { Email = "antonin.kral@mz.cz", Nickname = "AntoninK" },
+                new { Email = "barbora.novotna@mz.cz", Nickname = "BarboraN" },
+                new { Email = "bohumil.holub@mz.cz", Nickname = "BohumilH" },
+                new { Email = "bohuslav.cerny@mz.cz", Nickname = "BohuslavC" },
+                new { Email = "dana.vesela@mz.cz", Nickname = "DanaV" },
+                new { Email = "daniel.benes@mz.cz", Nickname = "DanielB" },
+                new { Email = "david.sedlak@mz.cz", Nickname = "DavidS" },
+                new { Email = "denisa.kubikova@mz.cz", Nickname = "DenisaK" },
+                new { Email = "dominik.bartos@mz.cz", Nickname = "DominikB" },
+                new { Email = "drahomir.kolar@mz.cz", Nickname = "DrahomirK" },
+                new { Email = "eduard.havlik@mz.cz", Nickname = "EduardH" },
+                new { Email = "eliska.kovarikova@mz.cz", Nickname = "EliskaK" },
+                new { Email = "ema.horakova@mz.cz", Nickname = "EmaH" },
+                new { Email = "filip.dvorak@mz.cz", Nickname = "FilipD" },
+                new { Email = "frantisek.havran@mz.cz", Nickname = "FrantisekH" },
+                new { Email = "gabriela.jelinek@mz.cz", Nickname = "GabrielaJ" },
+                new { Email = "hana.machova@mz.cz", Nickname = "HanaM" },
+                new { Email = "helena.novotna@mz.cz", Nickname = "HelenaN" },
+                new { Email = "hynek.soucek@mz.cz", Nickname = "HynekS" },
+                new { Email = "igor.krejci@mz.cz", Nickname = "IgorK" },
+                new { Email = "iva.kubova@mz.cz", Nickname = "IvaK" },
+                new { Email = "ivana.kolarova@mz.cz", Nickname = "IvanaK" },
+                new { Email = "jakub.mala@mz.cz", Nickname = "JakubM" },
+                new { Email = "jan.bartos@mz.cz", Nickname = "JanB" },
+                new { Email = "jana.cermakova@mz.cz", Nickname = "JanaC" },
+                new { Email = "jarmila.kralova@mz.cz", Nickname = "JarmilaK" },
+                new { Email = "jaromir.novotny@mz.cz", Nickname = "JaromirN" },
+                new { Email = "jaroslav.musil@mz.cz", Nickname = "JaroslavM" },
+                new { Email = "jiri.simek@mz.cz", Nickname = "JiriS" },
+                new { Email = "jitka.dostalova@mz.cz", Nickname = "JitkaD" },
+                new { Email = "josef.novak@mz.cz", Nickname = "JosefN" },
+                new { Email = "karolina.mala@mz.cz", Nickname = "KarolinaM" },
+                new { Email = "klara.novakova@mz.cz", Nickname = "KlaraN" },
+                new { Email = "kristyna.pokorny@mz.cz", Nickname = "KristynaP" },
+                new { Email = "kvetoslava.horakova@mz.cz", Nickname = "KvetoslavaH" },
+                new { Email = "linda.hajkova@mz.cz", Nickname = "LindaH" },
+                new { Email = "lubos.kovar@mz.cz", Nickname = "LubosK" },
+                new { Email = "lucie.kopecka@mz.cz", Nickname = "LucieK" },
+                new { Email = "marek.kalina@mz.cz", Nickname = "MarekK" },
+                new { Email = "marie.vesela@mz.cz", Nickname = "MarieV" },
+                new { Email = "martin.kubicek@mz.cz", Nickname = "MartinK" },
+                new { Email = "martina.svecova@mz.cz", Nickname = "MartinaS" },
+                new { Email = "matej.kral@mz.cz", Nickname = "MatejK" },
+                new { Email = "michal.prochazka@mz.cz", Nickname = "MichalP" },
+                new { Email = "michaela.dvorakova@mz.cz", Nickname = "MichaelaD" },
+                new { Email = "monika.smidova@mz.cz", Nickname = "MonikaS" },
+                new { Email = "natalie.kostka@mz.cz", Nickname = "NatalieK" },
+                new { Email = "nikola.fuksova@mz.cz", Nickname = "NikolaF" },
+                new { Email = "oldrich.sedivy@mz.cz", Nickname = "OldrichS" },
+                new { Email = "ondrej.novak@mz.cz", Nickname = "OndrejN" },
+                new { Email = "otakar.pokorny@mz.cz", Nickname = "OtakarP" },
+                new { Email = "pavel.cerny@mz.cz", Nickname = "PavelC" },
+                new { Email = "pavlina.kovarova@mz.cz", Nickname = "PavlinaK" },
+                new { Email = "petra.sikora@mz.cz", Nickname = "PetraS" },
+                new { Email = "petr.vanecek@mz.cz", Nickname = "PetrV" },
+                new { Email = "radek.horak@mz.cz", Nickname = "RadekH" },
+                new { Email = "renata.havlova@mz.cz", Nickname = "RenataH" },
+                new { Email = "roman.soucek@mz.cz", Nickname = "RomanS" },
+                new { Email = "sabina.kratochvilova@mz.cz", Nickname = "SabinaK" },
+                new { Email = "samuel.marek@mz.cz", Nickname = "SamuelM" },
+                new { Email = "sarka.jelinek@mz.cz", Nickname = "SarkaJ" },
+                new { Email = "simona.vlcek@mz.cz", Nickname = "SimonaV" },
+                new { Email = "sofia.musilova@mz.cz", Nickname = "SofiaM" },
+                new { Email = "stanislav.havel@mz.cz", Nickname = "StanislavH" },
+                new { Email = "stepan.svoboda@mz.cz", Nickname = "StepanS" },
+                new { Email = "tereza.urbanova@mz.cz", Nickname = "TerezaU" },
+                new { Email = "tomáš.janousek@mz.cz", Nickname = "TomasJ" },
+                new { Email = "vaclav.rybar@mz.cz", Nickname = "VaclavR" },
+                new { Email = "veronika.vacek@mz.cz", Nickname = "VeronikaV" },
+                new { Email = "viktor.sedlak@mz.cz", Nickname = "ViktorS" },
+                new { Email = "vladimir.klima@mz.cz", Nickname = "VladimirK" },
+                new { Email = "zdenek.benes@mz.cz", Nickname = "ZdenekB" }
+            };
             var createdUsers = new List<ApplicationUser>();
             foreach (var userData in users)
             {
@@ -187,28 +158,52 @@ namespace Zodpovedne.Data.Services
                         UserName = userData.Email,
                         Email = userData.Email,
                         Nickname = userData.Nickname,
+                        Type = UserType.Normal,
+                        Created = DateTime.UtcNow,
+                        LastLogin = DateTime.UtcNow,
                         EmailConfirmed = true,
-                        Type = userData.Type
                     };
-                    var result = await userManager.CreateAsync(user, userData.Password);
-                    if (result.Succeeded)
+                    try
                     {
-                        await userManager.AddToRoleAsync(user, "Member");
-                        createdUsers.Add(user);
+                        var result = await userManager.CreateAsync(user, "abc");
+                        if (result.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(user, "Member");
+                            createdUsers.Add(user);
+                        }
+                    }
+                    catch (Exception)
+                    {
                     }
                 }
             }
 
-            // Vytvoření kategorií
+
+
+            // Vytvoření kategorií, každá se nejprve dohledá podle Name a založí se jen tehdy, pokud kategorie s daným Name nebo Code není v databázi
             var categories = new[]
             {
-            new { Name = "Těhotenství", Code = "tehotenstvi", Description = "Diskuze o těhotenství, přípravě na porod a období před porodem" },
-            new { Name = "Porod", Code = "porod", Description = "Zkušenosti s porodem, porodnice, příprava na porod" },
-            new { Name = "Kojení", Code = "kojeni", Description = "Vše o kojení, problémy a jejich řešení" },
-            new { Name = "Výchova", Code = "vychova", Description = "Výchovné metody, řešení problémů s dětmi" },
-            new { Name = "Školky a školy", Code = "skolky-a-skoly", Description = "Diskuze o školkách, školách a vzdělávání" }
-        };
-
+                new { Name = "Vývoj", Code = "vyvoj", Description = "Kategorie s diskuzemi a komentáři vhodnými pro testování" },
+                new { Name = "Katalogy", Code = "katalogy", Description = "Diskuze o našich katalozích, kde si můžete nakoupit různé zboží" },
+                new { Name = "Těhotenství", Code = "tehotenstvi", Description = "Diskuze o těhotenství, přípravě na porod a období před porodem" },
+                new { Name = "Porod", Code = "porod", Description = "Zkušenosti s porodem, porodnice, příprava na porod" },
+                new { Name = "Kojení", Code = "kojeni", Description = "Vše o kojení, problémy a jejich řešení" },
+                new { Name = "Výchova", Code = "vychova", Description = "Výchovné metody, řešení problémů s dětmi" },
+                new { Name = "Školky a školy", Code = "skolky-a-skoly", Description = "Diskuze o školkách, školách a vzdělávání" },
+                new { Name = "Strava a příkrmy", Code = "strava-a-prikrmy", Description = "Začínáme s příkrmy, strava pro miminka a děti" },
+                new { Name = "A", Code = "a", Description = "Aaaaa" },
+                new { Name = "B", Code = "b", Description = "Bbbbb" },
+                new { Name = "C", Code = "c", Description = "Ccccc" },
+                new { Name = "D", Code = "d", Description = "Ddddd" },
+                new { Name = "E", Code = "e", Description = "Eeeee" },
+                new { Name = "F", Code = "f", Description = "Fffff" },
+                new { Name = "G", Code = "g", Description = "Ggggg" },
+                new { Name = "H", Code = "h", Description = "Hhhhh" },
+                new { Name = "I", Code = "i", Description = "Iiiii" },
+                new { Name = "J", Code = "j", Description = "Jjjjj" },
+                new { Name = "K", Code = "k", Description = "Kkkkk" },
+                new { Name = "L", Code = "l", Description = "Lllll" }
+            };
             var createdCategories = new List<Category>();
             foreach (var categoryData in categories)
             {
@@ -219,19 +214,29 @@ namespace Zodpovedne.Data.Services
                         Name = categoryData.Name,
                         Code = categoryData.Code,  // Přidáno
                         Description = categoryData.Description,
-                        DisplayOrder = createdCategories.Count + 1
+                        DisplayOrder = createdCategories.Count + 1,
+                        ImagePath = "kolecko12.webp"
                     };
-                    dbContext.Categories.Add(category);
-                    await dbContext.SaveChangesAsync();
-                    createdCategories.Add(category);
+                    try
+                    {
+                        dbContext.Categories.Add(category);
+                        await dbContext.SaveChangesAsync();
+                        createdCategories.Add(category);
+                    }
+                    catch (Exception)
+                    { }
                 }
             }
 
-            // Vytvoření diskuzí pro každou kategorii
-            var random = new Random();
 
+
+            // Vytvoření náhodných diskuzí a komentářů pro zadefinované kategorie
+            var random = new Random();
             foreach (var category in createdCategories)
             {
+                if (category.Name == "Katalogy")
+                    continue;
+
                 var discussions = GetDiscussionsForCategory(category.Name);
                 foreach (var discussionData in discussions)
                 {
@@ -244,7 +249,7 @@ namespace Zodpovedne.Data.Services
                         Title = discussionData.Title,
                         Code = discussionData.Code,
                         Content = discussionData.Content,
-                        Type = DiscussionType.Normal,
+                        Type = (discussionData.Code == "pozadavky" || discussionData.Code == "hodne-komentaru") ? DiscussionType.Top : DiscussionType.Normal,
                         CreatedAt = createdUpdatedAt,
                         UpdatedAt = createdUpdatedAt
                     };
@@ -259,8 +264,14 @@ namespace Zodpovedne.Data.Services
 
         private async Task CreateCommentsForDiscussion(Discussion discussion, List<ApplicationUser> users, Random random)
         {
+            if (discussion.Code == "pozadavky")
+                return;
+
             // Vytvoření 3-7 root komentářů
             var rootCommentsCount = random.Next(3, 8);
+            if (discussion.Code == "hodne-komentaru")
+                rootCommentsCount = 100;
+
             var createdRootComments = new List<Comment>();
             DateTime createdUpdatedAt;
 
@@ -310,130 +321,405 @@ namespace Zodpovedne.Data.Services
         {
             switch (categoryName)
             {
+                case "Vývoj":
+                    return new[]
+                    {
+                        (
+                            "Požadavky",
+                            "Diskuze o požadavcích na aplikaci ...",
+                            "pozadavky"
+                        ),
+                        (
+                            "Hodně komentářů",
+                            "Diskuze s velkým množstvím komentářů ...",
+                            "hodne-komentaru"
+                        ),
+                        (
+                            "AA",
+                            "AAAAAAAAAA AAAAAAAAAA AAAAAAAAAA AAAAAAAAAA AAAAAAAAAA AAAAAAAAAA ...",
+                            "aa"
+                        ),
+                        (
+                            "AB",
+                            "AAAAAAAAAA BBBBBBBBBB BBBBBBBBBB BBBBBBBBBB BBBBBBBBBB BBBBBBBBBB ...",
+                            "ab"
+                        ),
+                        (
+                            "AC",
+                            "AAAAAAAAAA CCCCCCCCCC CCCCCCCCCC CCCCCCCCCC CCCCCCCCCC CCCCCCCCCC ...",
+                            "ac"
+                        ),
+                        (
+                            "AD",
+                            "AAAAAAAAAA DDDDDDDDDD DDDDDDDDDD DDDDDDDDDD DDDDDDDDDD DDDDDDDDDD ...",
+                            "ad"
+                        ),
+                        (
+                            "AE",
+                            "AAAAAAAAAA EEEEEEEEEE EEEEEEEEEE EEEEEEEEEE EEEEEEEEEE EEEEEEEEEE ...",
+                            "ae"
+                        ),
+                        (
+                            "AF",
+                            "AAAAAAAAAA FFFFFFFFFF FFFFFFFFFF FFFFFFFFFF FFFFFFFFFF FFFFFFFFFF ...",
+                            "af"
+                        ),
+                        (
+                            "AG",
+                            "AAAAAAAAAA GGGGGGGGGG GGGGGGGGGG GGGGGGGGGG GGGGGGGGGG GGGGGGGGGG ...",
+                            "ag"
+                        ),
+                        (
+                            "AH",
+                            "AAAAAAAAAA HHHHHHHHHH HHHHHHHHHH HHHHHHHHHH HHHHHHHHHH HHHHHHHHHH ...",
+                            "ah"
+                        ),
+                        (
+                            "AI",
+                            "AAAAAAAAAA IIIIIIIIII IIIIIIIIII IIIIIIIIII IIIIIIIIII IIIIIIIIII ...",
+                            "ai"
+                        ),
+                        (
+                            "AJ",
+                            "AAAAAAAAAA JJJJJJJJJJ JJJJJJJJJJ JJJJJJJJJJ JJJJJJJJJJ JJJJJJJJJJ ...",
+                            "aj"
+                        ),
+                        (
+                            "AK",
+                            "AAAAAAAAAA KKKKKKKKKK KKKKKKKKKK KKKKKKKKKK KKKKKKKKKK KKKKKKKKKK ...",
+                            "ak"
+                        ),
+                        (
+                            "AL",
+                            "AAAAAAAAAA LLLLLLLLLL LLLLLLLLLL LLLLLLLLLL LLLLLLLLLL LLLLLLLLLL ...",
+                            "al"
+                        ),
+                        (
+                            "AM",
+                            "AAAAAAAAAA MMMMMMMMMM MMMMMMMMMM MMMMMMMMMM MMMMMMMMMM MMMMMMMMMM ...",
+                            "am"
+                        ),
+                        (
+                            "AN",
+                            "AAAAAAAAAA NNNNNNNNNN NNNNNNNNNN NNNNNNNNNN NNNNNNNNNN NNNNNNNNNN ...",
+                            "an"
+                        ),
+                        (
+                            "AO",
+                            "AAAAAAAAAA OOOOOOOOOO OOOOOOOOOO OOOOOOOOOO OOOOOOOOOO OOOOOOOOOO ...",
+                            "ao"
+                        ),
+                        (
+                            "AP",
+                            "AAAAAAAAAA PPPPPPPPPP PPPPPPPPPP PPPPPPPPPP PPPPPPPPPP PPPPPPPPPP ...",
+                            "ap"
+                        ),
+                        (
+                            "AQ",
+                            "AAAAAAAAAA QQQQQQQQQQ QQQQQQQQQQ QQQQQQQQQQ QQQQQQQQQQ QQQQQQQQQQ ...",
+                            "aq"
+                        ),
+                        (
+                            "AR",
+                            "AAAAAAAAAA RRRRRRRRRR RRRRRRRRRR RRRRRRRRRR RRRRRRRRRR RRRRRRRRRR ...",
+                            "ar"
+                        ),
+                        (
+                            "AS",
+                            "AAAAAAAAAA SSSSSSSSSS SSSSSSSSSS SSSSSSSSSS SSSSSSSSSS SSSSSSSSSS ...",
+                            "as"
+                        ),
+                        (
+                            "AT",
+                            "AAAAAAAAAA TTTTTTTTTT TTTTTTTTTT TTTTTTTTTT TTTTTTTTTT TTTTTTTTTT ...",
+                            "at"
+                        ),
+                        (
+                            "AU",
+                            "AAAAAAAAAA UUUUUUUUUU UUUUUUUUUU UUUUUUUUUU UUUUUUUUUU UUUUUUUUUU ...",
+                            "au"
+                        ),
+                        (
+                            "AV",
+                            "AAAAAAAAAA VVVVVVVVVV VVVVVVVVVV VVVVVVVVVV VVVVVVVVVV VVVVVVVVVV ...",
+                            "av"
+                        ),
+                        (
+                            "AW",
+                            "AAAAAAAAAA WWWWWWWWWW WWWWWWWWWW WWWWWWWWWW WWWWWWWWWW WWWWWWWWWW ...",
+                            "aw"
+                        ),
+                        (
+                            "AX",
+                            "AAAAAAAAAA XXXXXXXXXX XXXXXXXXXX XXXXXXXXXX XXXXXXXXXX XXXXXXXXXX ...",
+                            "ax"
+                        ),
+                        (
+                            "AY",
+                            "AAAAAAAAAA YYYYYYYYYY YYYYYYYYYY YYYYYYYYYY YYYYYYYYYY YYYYYYYYYY ...",
+                            "ay"
+                        ),
+                        (
+                            "AZ",
+                            "AAAAAAAAAA ZZZZZZZZZZ ZZZZZZZZZZ ZZZZZZZZZZ ZZZZZZZZZZ ZZZZZZZZZZ ...",
+                            "az"
+                        ),
+                        (
+                            "BA",
+                            "BBBBBBBBBB AAAAAAAAAA AAAAAAAAAA AAAAAAAAAA AAAAAAAAAA AAAAAAAAAA ...",
+                            "ba"
+                        ),
+                        (
+                            "BB",
+                            "BBBBBBBBBB BBBBBBBBBB BBBBBBBBBB BBBBBBBBBB BBBBBBBBBB BBBBBBBBBB ...",
+                            "bb"
+                        ),
+                        (
+                            "BC",
+                            "BBBBBBBBBB CCCCCCCCCC CCCCCCCCCC CCCCCCCCCC CCCCCCCCCC CCCCCCCCCC ...",
+                            "bc"
+                        ),
+                        (
+                            "BD",
+                            "BBBBBBBBBB DDDDDDDDDD DDDDDDDDDD DDDDDDDDDD DDDDDDDDDD DDDDDDDDDD ...",
+                            "bd"
+                        ),
+                        (
+                            "BE",
+                            "BBBBBBBBBB EEEEEEEEEE EEEEEEEEEE EEEEEEEEEE EEEEEEEEEE EEEEEEEEEE ...",
+                            "be"
+                        ),
+                        (
+                            "BF",
+                            "BBBBBBBBBB FFFFFFFFFF FFFFFFFFFF FFFFFFFFFF FFFFFFFFFF FFFFFFFFFF ...",
+                            "bf"
+                        ),
+                        (
+                            "BG",
+                            "BBBBBBBBBB GGGGGGGGGG GGGGGGGGGG GGGGGGGGGG GGGGGGGGGG GGGGGGGGGG ...",
+                            "bg"
+                        ),
+                        (
+                            "BH",
+                            "BBBBBBBBBB HHHHHHHHHH HHHHHHHHHH HHHHHHHHHH HHHHHHHHHH HHHHHHHHHH ...",
+                            "bh"
+                        ),
+                        (
+                            "BI",
+                            "BBBBBBBBBB IIIIIIIIII IIIIIIIIII IIIIIIIIII IIIIIIIIII IIIIIIIIII ...",
+                            "bi"
+                        ),
+                        (
+                            "BJ",
+                            "BBBBBBBBBB JJJJJJJJJJ JJJJJJJJJJ JJJJJJJJJJ JJJJJJJJJJ JJJJJJJJJJ ...",
+                            "bj"
+                        ),
+                        (
+                            "BK",
+                            "BBBBBBBBBB KKKKKKKKKK KKKKKKKKKK KKKKKKKKKK KKKKKKKKKK KKKKKKKKKK ...",
+                            "bk"
+                        ),
+                        (
+                            "BL",
+                            "BBBBBBBBBB LLLLLLLLLL LLLLLLLLLL LLLLLLLLLL LLLLLLLLLL LLLLLLLLLL ...",
+                            "bl"
+                        ),
+                        (
+                            "BM",
+                            "BBBBBBBBBB MMMMMMMMMM MMMMMMMMMM MMMMMMMMMM MMMMMMMMMM MMMMMMMMMM ...",
+                            "bm"
+                        ),
+                        (
+                            "BN",
+                            "BBBBBBBBBB NNNNNNNNNN NNNNNNNNNN NNNNNNNNNN NNNNNNNNNN NNNNNNNNNN ...",
+                            "bn"
+                        ),
+                        (
+                            "BO",
+                            "BBBBBBBBBB OOOOOOOOOO OOOOOOOOOO OOOOOOOOOO OOOOOOOOOO OOOOOOOOOO ...",
+                            "bo"
+                        ),
+                        (
+                            "BP",
+                            "BBBBBBBBBB PPPPPPPPPP PPPPPPPPPP PPPPPPPPPP PPPPPPPPPP PPPPPPPPPP ...",
+                            "bp"
+                        ),
+                        (
+                            "BQ",
+                            "BBBBBBBBBB QQQQQQQQQQ QQQQQQQQQQ QQQQQQQQQQ QQQQQQQQQQ QQQQQQQQQQ ...",
+                            "bq"
+                        ),
+                        (
+                            "BR",
+                            "BBBBBBBBBB RRRRRRRRRR RRRRRRRRRR RRRRRRRRRR RRRRRRRRRR RRRRRRRRRR ...",
+                            "br"
+                        ),
+                        (
+                            "BS",
+                            "BBBBBBBBBB SSSSSSSSSS SSSSSSSSSS SSSSSSSSSS SSSSSSSSSS SSSSSSSSSS ...",
+                            "bs"
+                        ),
+                        (
+                            "BT",
+                            "BBBBBBBBBB TTTTTTTTTT TTTTTTTTTT TTTTTTTTTT TTTTTTTTTT TTTTTTTTTT ...",
+                            "bt"
+                        ),
+                        (
+                            "BU",
+                            "BBBBBBBBBB UUUUUUUUUU UUUUUUUUUU UUUUUUUUUU UUUUUUUUUU UUUUUUUUUU ...",
+                            "bu"
+                        ),
+                        (
+                            "BV",
+                            "BBBBBBBBBB VVVVVVVVVV VVVVVVVVVV VVVVVVVVVV VVVVVVVVVV VVVVVVVVVV ...",
+                            "bv"
+                        ),
+                        (
+                            "BW",
+                            "BBBBBBBBBB WWWWWWWWWW WWWWWWWWWW WWWWWWWWWW WWWWWWWWWW WWWWWWWWWW ...",
+                            "bw"
+                        ),
+                        (
+                            "BX",
+                            "BBBBBBBBBB XXXXXXXXXX XXXXXXXXXX XXXXXXXXXX XXXXXXXXXX XXXXXXXXXX ...",
+                            "bx"
+                        ),
+                        (
+                            "BY",
+                            "BBBBBBBBBB YYYYYYYYYY YYYYYYYYYY YYYYYYYYYY YYYYYYYYYY YYYYYYYYYY ...",
+                            "by"
+                        ),
+                        (
+                            "BZ",
+                            "BBBBBBBBBB ZZZZZZZZZZ ZZZZZZZZZZ ZZZZZZZZZZ ZZZZZZZZZZ ZZZZZZZZZZ ...",
+                            "bz"
+                        )
+                    };
+
                 case "Těhotenství":
                     return new[]
                     {
-                    (
-                        "První příznaky těhotenství",
-                        "Chtěla bych se podělit o své první příznaky těhotenství. Nejvíc mě překvapilo...",
-                        "prvni-priznaky-tehotenstvi"
-                    ),
-                    (
-                        "Cvičení v těhotenství",
-                        "Jaké cviky jsou vhodné během těhotenství? Já osobně mám dobrou zkušenost s...",
-                        "cviceni-v-tehotenstvi"
-                    ),
-                    (
-                        "Strava v těhotenství",
-                        "Zajímalo by mě, jak jste upravily jídelníček v těhotenství. Já například...",
-                        "strava-v-tehotenstvi"
-                    ),
-                    (
-                        "Příprava na miminko",
-                        "Co všechno jste pořizovaly před narozením miminka? Já mám seznam...",
-                        "priprava-na-miminko"
-                    )
-                };
+                        (
+                            "První příznaky těhotenství",
+                            "Chtěla bych se podělit o své první příznaky těhotenství. Nejvíc mě překvapilo...",
+                            "prvni-priznaky-tehotenstvi"
+                        ),
+                        (
+                            "Cvičení v těhotenství",
+                            "Jaké cviky jsou vhodné během těhotenství? Já osobně mám dobrou zkušenost s...",
+                            "cviceni-v-tehotenstvi"
+                        ),
+                        (
+                            "Strava v těhotenství",
+                            "Zajímalo by mě, jak jste upravily jídelníček v těhotenství. Já například...",
+                            "strava-v-tehotenstvi"
+                        ),
+                        (
+                            "Příprava na miminko",
+                            "Co všechno jste pořizovaly před narozením miminka? Já mám seznam...",
+                            "priprava-na-miminko"
+                        )
+                    };
 
                 case "Porod":
                     return new[]
                     {
-                    (
-                        "Porodnice v Praze",
-                        "Máte někdo zkušenost s porodnicí v Podolí? Zajímají mě především...",
-                        "porodnice-v-praze"
-                    ),
-                    (
-                        "Porodní plán",
-                        "Jak vypadal váš porodní plán? Já do něj zahrnula následující body...",
-                        "porodni-plan"
-                    ),
-                    (
-                        "První doba porodní",
-                        "Jak dlouho vám trvala první doba porodní? U mě to bylo...",
-                        "prvni-doba-porodni"
-                    ),
-                    (
-                        "Epidurální analgezie",
-                        "Rodila jsem s epidurálem a chtěla bych se podělit o zkušenost...",
-                        "epiduralni-analgezie"
-                    )
-                };
+                        (
+                            "Porodnice v Praze",
+                            "Máte někdo zkušenost s porodnicí v Podolí? Zajímají mě především...",
+                            "porodnice-v-praze"
+                        ),
+                        (
+                            "Porodní plán",
+                            "Jak vypadal váš porodní plán? Já do něj zahrnula následující body...",
+                            "porodni-plan"
+                        ),
+                        (
+                            "První doba porodní",
+                            "Jak dlouho vám trvala první doba porodní? U mě to bylo...",
+                            "prvni-doba-porodni"
+                        ),
+                        (
+                            "Epidurální analgezie",
+                            "Rodila jsem s epidurálem a chtěla bych se podělit o zkušenost...",
+                            "epiduralni-analgezie"
+                        )
+                    };
 
                 case "Kojení":
                     return new[]
                     {
-                    (
-                        "Problémy s kojením",
-                        "Řešila jsem problém se špatným přisáváním. Pomohlo mi...",
-                        "problemy-s-kojenim"
-                    ),
-                    (
-                        "Kojení a práce",
-                        "Jak zvládáte kojení při návratu do práce? Já to řeším takto...",
-                        "kojeni-a-prace"
-                    ),
-                    (
-                        "Odstříkávání",
-                        "Jakou odsávačku používáte? Já mám zkušenost s...",
-                        "odstrikavani"
-                    ),
-                    (
-                        "Dokrmy při kojení",
-                        "Kdy jste začaly s dokrmy? My jsme začali...",
-                        "dokrmy-pri-kojeni"
-                    )
-                };
+                        (
+                            "Problémy s kojením",
+                            "Řešila jsem problém se špatným přisáváním. Pomohlo mi...",
+                            "problemy-s-kojenim"
+                        ),
+                        (
+                            "Kojení a práce",
+                            "Jak zvládáte kojení při návratu do práce? Já to řeším takto...",
+                            "kojeni-a-prace"
+                        ),
+                        (
+                            "Odstříkávání",
+                            "Jakou odsávačku používáte? Já mám zkušenost s...",
+                            "odstrikavani"
+                        ),
+                        (
+                            "Dokrmy při kojení",
+                            "Kdy jste začaly s dokrmy? My jsme začali...",
+                            "dokrmy-pri-kojeni"
+                        )
+                    };
 
                 case "Výchova":
                     return new[]
                     {
-                    (
-                        "Vzdorovité období",
-                        "Jak zvládáte období vzdoru u dvouletého dítěte? Nám pomáhá...",
-                        "vzdorovite-obdobi"
-                    ),
-                    (
-                        "Sourozenecké vztahy",
-                        "Jak jste řešili žárlení staršího sourozence? My používáme metodu...",
-                        "sourozenecke-vztahy"
-                    ),
-                    (
-                        "Spánkový režim",
-                        "Jaký máte spánkový režim u ročního dítěte? My jsme zavedli...",
-                        "spankovy-rezim"
-                    ),
-                    (
-                        "Hranice ve výchově",
-                        "Jak stanovujete hranice ve výchově? Osvědčilo se nám...",
-                        "hranice-ve-vychove"
-                    )
-                };
+                        (
+                            "Vzdorovité období",
+                            "Jak zvládáte období vzdoru u dvouletého dítěte? Nám pomáhá...",
+                            "vzdorovite-obdobi"
+                        ),
+                        (
+                            "Sourozenecké vztahy",
+                            "Jak jste řešili žárlení staršího sourozence? My používáme metodu...",
+                            "sourozenecke-vztahy"
+                        ),
+                        (
+                            "Spánkový režim",
+                            "Jaký máte spánkový režim u ročního dítěte? My jsme zavedli...",
+                            "spankovy-rezim"
+                        ),
+                        (
+                            "Hranice ve výchově",
+                            "Jak stanovujete hranice ve výchově? Osvědčilo se nám...",
+                            "hranice-ve-vychove"
+                        )
+                    };
 
                 case "Školky a školy":
                     return new[]
                     {
-                    (
-                        "Adaptace ve školce",
-                        "Jak probíhala adaptace vašeho dítěte ve školce? U nás to bylo...",
-                        "adaptace-ve-skolce"
-                    ),
-                    (
-                        "Výběr základní školy",
-                        "Podle čeho vybíráte základní školu? My se zaměřujeme na...",
-                        "vyber-zakladni-skoly"
-                    ),
-                    (
-                        "Domácí příprava do školy",
-                        "Kolik času věnujete domácí přípravě? My máme systém...",
-                        "domaci-priprava-do-skoly"
-                    ),
-                    (
-                        "Alternativní vzdělávání",
-                        "Máte zkušenost s Montessori školkou? Naše zkušenosti jsou...",
-                        "alternativni-vzdelavani"
-                    )
-                };
+                        (
+                            "Adaptace ve školce",
+                            "Jak probíhala adaptace vašeho dítěte ve školce? U nás to bylo...",
+                            "adaptace-ve-skolce"
+                        ),
+                        (
+                            "Výběr základní školy",
+                            "Podle čeho vybíráte základní školu? My se zaměřujeme na...",
+                            "vyber-zakladni-skoly"
+                        ),
+                        (
+                            "Domácí příprava do školy",
+                            "Kolik času věnujete domácí přípravě? My máme systém...",
+                            "domaci-priprava-do-skoly"
+                        ),
+                        (
+                            "Alternativní vzdělávání",
+                            "Máte zkušenost s Montessori školkou? Naše zkušenosti jsou...",
+                            "alternativni-vzdelavani"
+                        )
+                    };
 
                 default:
                     return Array.Empty<(string, string, string)>();
@@ -444,13 +730,13 @@ namespace Zodpovedne.Data.Services
         {
             var comments = new[]
             {
-            "Děkuji za sdílení zkušeností. Mám podobnou zkušenost...",
-            "To je zajímavý pohled. U nás to bylo trochu jinak...",
-            "Můžu potvrdit, také jsme to tak měli...",
-            "Díky za tip, určitě vyzkouším...",
-            "Tohle téma mě také zajímá. Chtěla bych se zeptat...",
-            "Super příspěvek, hodně mi to pomohlo..."
-        };
+                "Děkuji za sdílení zkušeností. Mám podobnou zkušenost...",
+                "To je zajímavý pohled. U nás to bylo trochu jinak...",
+                "Můžu potvrdit, také jsme to tak měli...",
+                "Díky za tip, určitě vyzkouším...",
+                "Tohle téma mě také zajímá. Chtěla bych se zeptat...",
+                "Super příspěvek, hodně mi to pomohlo..."
+            };
 
             return comments[new Random().Next(comments.Length)];
         }
@@ -459,12 +745,12 @@ namespace Zodpovedne.Data.Services
         {
             var replies = new[]
             {
-            "Souhlasím s vámi, také máme podobnou zkušenost...",
-            "Díky za odpověď, to mi pomohlo...",
-            "Můžete to prosím více rozvést?",
-            "To je dobrý nápad, díky za tip...",
-            "Zajímavý pohled, zamyslím se nad tím..."
-        };
+                "Souhlasím s vámi, také máme podobnou zkušenost...",
+                "Díky za odpověď, to mi pomohlo...",
+                "Můžete to prosím více rozvést?",
+                "To je dobrý nápad, díky za tip...",
+                "Zajímavý pohled, zamyslím se nad tím..."
+            };
 
             return replies[new Random().Next(replies.Length)];
         }

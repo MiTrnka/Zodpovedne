@@ -635,7 +635,7 @@ public class DiscussionsController : ControllerBase
             await dbContext.SaveChangesAsync();
 
             // Vrátíme detail vytvořené diskuze
-            return CreatedAtAction(nameof(GetDiscussion), new { discussionId = discussion.Id }, discussion);
+            return CreatedAtAction(nameof(GetDiscussion), new { discussionId = discussion.Id }, null);
         }
         catch (Exception e)
         {

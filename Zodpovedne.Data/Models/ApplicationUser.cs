@@ -17,4 +17,5 @@ public class ApplicationUser : IdentityUser
     public DateTime? LastLogin { get; set; }
     public DateTime? PreviousLastLogin { get; set; }
     public UserType Type { get; set; } = UserType.Normal;
+    public int LoginCount { get; set; } = 0;
 }

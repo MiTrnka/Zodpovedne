@@ -26,6 +26,7 @@ public class UserProfileDto
     public string Nickname { get; set; } = "";
     public DateTime Created { get; set; }
     public DateTime? LastLogin { get; set; }
+    public int LoginCount { get; set; }
     public List<string> Roles { get; set; } = new();
 }
 
@@ -77,6 +78,7 @@ public class UserListDto
     public string Email { get; set; } = "";
     public string Nickname { get; set; } = "";
     public DateTime? LastLogin { get; set; }
+    public int LoginCount { get; set; }
     public UserType Type { get; set; }
 }
 

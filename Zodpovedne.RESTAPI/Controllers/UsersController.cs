@@ -57,7 +57,7 @@ public class UsersController : ControllerBase
             var query = userManager.Users
                 .AsNoTracking()
                 .Where(u => u.Type != UserType.Deleted)
-                .OrderBy(u => u.Nickname);
+                .OrderByDescending(u => u.LastLogin);
 
             var totalUsers = await query.CountAsync();
             var users = await query
@@ -69,6 +69,7 @@ public class UsersController : ControllerBase
                     Email = u.Email,
                     Nickname = u.Nickname,
                     LastLogin = u.LastLogin,
+                    LoginCount = u.LoginCount,
                     Type = u.Type
                 })
                 .ToListAsync();
@@ -110,7 +111,8 @@ public class UsersController : ControllerBase
                 Nickname = user.Nickname,
                 Created = user.Created,
                 LastLogin = user.LastLogin,
-                Roles = roles.ToList()
+                Roles = roles.ToList(),
+                LoginCount = user.LoginCount,
             });
         }
         catch (Exception e)
@@ -142,7 +144,8 @@ public class UsersController : ControllerBase
                 Nickname = user.Nickname,
                 Created = user.Created,
                 LastLogin = user.LastLogin,
-                Roles = roles.ToList()
+                Roles = roles.ToList(),
+                LoginCount = user.LoginCount
             });
         }
         catch (Exception e)
@@ -541,6 +544,9 @@ public class UsersController : ControllerBase
             }
             // Uložení předchozího posledního přihlášení
             user.PreviousLastLogin = user.LastLogin;
+
+            // Inkrementace počtu přihlášeních
+            user.LoginCount++;
             // Aktualizace posledního přihlášení a rovnou uložení do databáze (SaveChanges)
             user.LastLogin = DateTime.UtcNow;
             await this.userManager.UpdateAsync(user);

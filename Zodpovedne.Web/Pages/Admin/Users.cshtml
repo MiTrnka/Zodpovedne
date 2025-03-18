@@ -36,6 +36,7 @@
                 <span>Přezdívka</span>
                 <span>Email</span>
                 <span>Poslední přihlášení</span>
+                <span>Přihlášeních</span>
                 <span>Akce</span>
             </div>
             @foreach (var user in Model.PagedUsers.Items)
@@ -44,6 +45,7 @@
                     <span>@user.Nickname</span>
                     <span>@user.Email</span>
                     <span>@(user.LastLogin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "Nikdy")</span>
+                    <span>@user.LoginCount</span>
                     <div class="user-actions">
                         <form method="post" class="d-inline">
                             <button type="submit"

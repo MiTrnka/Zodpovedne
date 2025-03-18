@@ -262,7 +262,7 @@ namespace Zodpovedne.RESTAPI
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var initializer = new DataInitializer(dbContext, userManager, roleManager);
-            await initializer.InitializeAsync();
+            await initializer.InitializeAsync(true);
 
             app.Run();
         }
