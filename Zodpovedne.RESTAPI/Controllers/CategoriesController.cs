@@ -10,11 +10,11 @@ namespace Zodpovedne.RESTAPI.Controllers;
 [Route("api/[controller]")]
 public class CategoriesController : ControllerBase
 {
-    private readonly IDataContext dbContext;
+    private readonly ApplicationDbContext dbContext;
     private readonly FileLogger _logger;
 
 
-    public CategoriesController(IDataContext dbContext, FileLogger logger)
+    public CategoriesController(ApplicationDbContext dbContext, FileLogger logger)
     {
         this.dbContext = dbContext;
         _logger = logger;

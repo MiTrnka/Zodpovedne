@@ -23,7 +23,7 @@ namespace Zodpovedne.Controllers;
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    private readonly IDataContext dbContext;
+    private readonly ApplicationDbContext dbContext;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
     private readonly FileLogger _logger;
@@ -31,7 +31,7 @@ public class UsersController : ControllerBase
     private readonly IMemoryCache _cache;
     private readonly IEmailService _emailService;
 
-    public UsersController(IDataContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger, IMemoryCache memoryCache, IEmailService emailService)
+    public UsersController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger, IMemoryCache memoryCache, IEmailService emailService)
     {
         this.userManager = userManager;
         this.signInManager = signInManager;

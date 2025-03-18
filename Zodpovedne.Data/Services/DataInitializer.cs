@@ -1,34 +1,72 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Zodpovedne.Data.Data;
-using Zodpovedne.Data.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Zodpovedne.Contracts.Enums;
+using Zodpovedne.Data.Data;
 using Zodpovedne.Data.Models;
 
-namespace Zodpovedne.Data.Services;
-
-public class TestDataSeeder : ITestDataSeeder
+namespace Zodpovedne.Data.Services
 {
-    private readonly ApplicationDbContext dbContext;
-    private readonly UserManager<ApplicationUser> userManager;
-    private readonly ILogger<TestDataSeeder> logger;
-
-    public TestDataSeeder(
-        ApplicationDbContext dbContext,
-        UserManager<ApplicationUser> userManager,
-        ILogger<TestDataSeeder> logger)
+    public class DataInitializer
     {
-        this.dbContext = dbContext;
-        this.userManager = userManager;
-        this.logger = logger;
-    }
+        private readonly ApplicationDbContext dbContext;
+        private readonly UserManager<ApplicationUser> userManager;
+        private readonly RoleManager<IdentityRole> roleManager;
 
-    public async Task SeedTestDataAsync()
-    {
-        // Vytvoření testovacích uživatelů
-        var users = new[]
+        public DataInitializer(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
         {
+            this.dbContext = dbContext;
+            this.userManager = userManager;
+            this.roleManager = roleManager;
+        }
+
+        public async Task InitializeAsync()
+        {
+            await InitializeRolesAndAdminAsync();
+            //await SeedTestDataAsync();
+        }
+
+        private async Task InitializeRolesAndAdminAsync()
+        {
+            // Vytvoření základních rolí Admin a Member, pokud ještě neexistují
+            if (!await roleManager.RoleExistsAsync("Admin"))
+                await roleManager.CreateAsync(new IdentityRole("Admin"));
+            if (!await roleManager.RoleExistsAsync("Member"))
+                await roleManager.CreateAsync(new IdentityRole("Member"));
+
+            // Vytvoření admin účtu pokud neexistuje
+            var adminEmail = "admin@mz.cz";
+            if (await userManager.FindByEmailAsync(adminEmail) == null)
+            {
+                var admin = new ApplicationUser
+                {
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    Nickname = "Admin",
+                    EmailConfirmed = true,
+                    Type = UserType.Normal
+                };
+
+                var result = await userManager.CreateAsync(admin, "abc");
+                if (result.Succeeded)
+                {
+                    //Přidání role Admin k admin účtu
+                    await userManager.AddToRoleAsync(admin, "Admin");
+                }
+            }
+        }
+
+        private async Task SeedTestDataAsync()
+        {
+            // Vytvoření testovacích uživatelů
+            var users = new[]
+            {
             new { Email = "jana@mz.cz", Password = "abc", Nickname = "JanaM", Type = UserType.Normal },
             new { Email = "petra@mz.cz", Password = "abc", Nickname = "Peta", Type = UserType.Normal },
             new { Email = "michal@mz.cz", Password = "abc", Nickname = "TataMichal", Type = UserType.Normal },
@@ -139,144 +177,142 @@ public class TestDataSeeder : ITestDataSeeder
             new { Email = "radovan.janousek@mz.cz", Password = "abc", Nickname = "RadovanJ", Type = UserType.Normal }
         };
 
-        var createdUsers = new List<ApplicationUser>();
-        foreach (var userData in users)
-        {
-            if (await userManager.FindByEmailAsync(userData.Email) == null)
+            var createdUsers = new List<ApplicationUser>();
+            foreach (var userData in users)
             {
-                var user = new ApplicationUser
+                if (await userManager.FindByEmailAsync(userData.Email) == null)
                 {
-                    UserName = userData.Email,
-                    Email = userData.Email,
-                    Nickname = userData.Nickname,
-                    EmailConfirmed = true,
-                    Type = userData.Type
-                };
-                var result = await userManager.CreateAsync(user, userData.Password);
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(user, "Member");
-                    createdUsers.Add(user);
-                    logger.LogInformation($"Vytvořen testovací účet {userData.Email}");
+                    var user = new ApplicationUser
+                    {
+                        UserName = userData.Email,
+                        Email = userData.Email,
+                        Nickname = userData.Nickname,
+                        EmailConfirmed = true,
+                        Type = userData.Type
+                    };
+                    var result = await userManager.CreateAsync(user, userData.Password);
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(user, "Member");
+                        createdUsers.Add(user);
+                    }
                 }
             }
-        }
 
-        // Vytvoření kategorií
-        var categories = new[]
-        {
-    new { Name = "Těhotenství", Code = "tehotenstvi", Description = "Diskuze o těhotenství, přípravě na porod a období před porodem" },
-    new { Name = "Porod", Code = "porod", Description = "Zkušenosti s porodem, porodnice, příprava na porod" },
-    new { Name = "Kojení", Code = "kojeni", Description = "Vše o kojení, problémy a jejich řešení" },
-    new { Name = "Výchova", Code = "vychova", Description = "Výchovné metody, řešení problémů s dětmi" },
-    new { Name = "Školky a školy", Code = "skolky-a-skoly", Description = "Diskuze o školkách, školách a vzdělávání" }
-};
-
-        var createdCategories = new List<Category>();
-        foreach (var categoryData in categories)
-        {
-            if (!await dbContext.Categories.AnyAsync(c => c.Name == categoryData.Name))
+            // Vytvoření kategorií
+            var categories = new[]
             {
-                var category = new Category
+            new { Name = "Těhotenství", Code = "tehotenstvi", Description = "Diskuze o těhotenství, přípravě na porod a období před porodem" },
+            new { Name = "Porod", Code = "porod", Description = "Zkušenosti s porodem, porodnice, příprava na porod" },
+            new { Name = "Kojení", Code = "kojeni", Description = "Vše o kojení, problémy a jejich řešení" },
+            new { Name = "Výchova", Code = "vychova", Description = "Výchovné metody, řešení problémů s dětmi" },
+            new { Name = "Školky a školy", Code = "skolky-a-skoly", Description = "Diskuze o školkách, školách a vzdělávání" }
+        };
+
+            var createdCategories = new List<Category>();
+            foreach (var categoryData in categories)
+            {
+                if (!await dbContext.Categories.AnyAsync(c => c.Name == categoryData.Name))
                 {
-                    Name = categoryData.Name,
-                    Code = categoryData.Code,  // Přidáno
-                    Description = categoryData.Description,
-                    DisplayOrder = createdCategories.Count + 1
-                };
-                dbContext.Categories.Add(category);
-                await dbContext.SaveChangesAsync();
-                createdCategories.Add(category);
-                logger.LogInformation($"Vytvořena kategorie {categoryData.Name}");
-            }
-        }
-
-        // Vytvoření diskuzí pro každou kategorii
-        var random = new Random();
-
-        foreach (var category in createdCategories)
-        {
-            var discussions = GetDiscussionsForCategory(category.Name);
-            foreach (var discussionData in discussions)
-            {
-                var author = createdUsers[random.Next(createdUsers.Count)];
-                DateTime createdUpdatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30));
-                var discussion = new Discussion
-                {
-                    CategoryId = category.Id,
-                    UserId = author.Id,
-                    Title = discussionData.Title,
-                    Code = discussionData.Code,
-                    Content = discussionData.Content,
-                    Type = DiscussionType.Normal,
-                    CreatedAt = createdUpdatedAt,
-                    UpdatedAt = createdUpdatedAt
-                };
-                dbContext.Discussions.Add(discussion);
-                await dbContext.SaveChangesAsync();
-
-                // Vytvoření komentářů k diskuzi
-                await CreateCommentsForDiscussion(discussion, createdUsers, random);
-            }
-        }
-    }
-
-    private async Task CreateCommentsForDiscussion(Discussion discussion, List<ApplicationUser> users, Random random)
-    {
-        // Vytvoření 3-7 root komentářů
-        var rootCommentsCount = random.Next(3, 8);
-        var createdRootComments = new List<Comment>();
-        DateTime createdUpdatedAt;
-
-        for (int i = 0; i < rootCommentsCount; i++)
-        {
-            var author = users[random.Next(users.Count)];
-            createdUpdatedAt = discussion.CreatedAt.AddHours(random.Next(1, 72));
-            var rootComment = new Comment
-            {
-                DiscussionId = discussion.Id,
-                UserId = author.Id,
-                Content = GetRandomComment(discussion.Title),
-                Type = CommentType.Normal,
-                CreatedAt = createdUpdatedAt,
-                UpdatedAt = createdUpdatedAt
-            };
-            dbContext.Comments.Add(rootComment);
-            await dbContext.SaveChangesAsync();
-            createdRootComments.Add(rootComment);
-
-            // Pro některé root komentáře vytvoříme 1-3 reakce
-            if (random.Next(2) == 1) // 50% šance na reakce
-            {
-                var repliesCount = random.Next(1, 4);
-                for (int j = 0; j < repliesCount; j++)
-                {
-                    var replyAuthor = users[random.Next(users.Count)];
-                    createdUpdatedAt = rootComment.CreatedAt.AddHours(random.Next(1, 24));
-                    var reply = new Comment
+                    var category = new Category
                     {
-                        DiscussionId = discussion.Id,
-                        UserId = replyAuthor.Id,
-                        ParentCommentId = rootComment.Id,
-                        Content = GetRandomReply(rootComment.Content),
-                        Type = CommentType.Normal,
+                        Name = categoryData.Name,
+                        Code = categoryData.Code,  // Přidáno
+                        Description = categoryData.Description,
+                        DisplayOrder = createdCategories.Count + 1
+                    };
+                    dbContext.Categories.Add(category);
+                    await dbContext.SaveChangesAsync();
+                    createdCategories.Add(category);
+                }
+            }
+
+            // Vytvoření diskuzí pro každou kategorii
+            var random = new Random();
+
+            foreach (var category in createdCategories)
+            {
+                var discussions = GetDiscussionsForCategory(category.Name);
+                foreach (var discussionData in discussions)
+                {
+                    var author = createdUsers[random.Next(createdUsers.Count)];
+                    DateTime createdUpdatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 30));
+                    var discussion = new Discussion
+                    {
+                        CategoryId = category.Id,
+                        UserId = author.Id,
+                        Title = discussionData.Title,
+                        Code = discussionData.Code,
+                        Content = discussionData.Content,
+                        Type = DiscussionType.Normal,
                         CreatedAt = createdUpdatedAt,
                         UpdatedAt = createdUpdatedAt
                     };
-                    dbContext.Comments.Add(reply);
+                    dbContext.Discussions.Add(discussion);
                     await dbContext.SaveChangesAsync();
+
+                    // Vytvoření komentářů k diskuzi
+                    await CreateCommentsForDiscussion(discussion, createdUsers, random);
                 }
             }
         }
-    }
 
-    private (string Title, string Content, string Code)[] GetDiscussionsForCategory(string categoryName)
-    {
-        switch (categoryName)
+        private async Task CreateCommentsForDiscussion(Discussion discussion, List<ApplicationUser> users, Random random)
         {
-            case "Těhotenství":
-                return new[]
+            // Vytvoření 3-7 root komentářů
+            var rootCommentsCount = random.Next(3, 8);
+            var createdRootComments = new List<Comment>();
+            DateTime createdUpdatedAt;
+
+            for (int i = 0; i < rootCommentsCount; i++)
+            {
+                var author = users[random.Next(users.Count)];
+                createdUpdatedAt = discussion.CreatedAt.AddHours(random.Next(1, 72));
+                var rootComment = new Comment
                 {
+                    DiscussionId = discussion.Id,
+                    UserId = author.Id,
+                    Content = GetRandomComment(discussion.Title),
+                    Type = CommentType.Normal,
+                    CreatedAt = createdUpdatedAt,
+                    UpdatedAt = createdUpdatedAt
+                };
+                dbContext.Comments.Add(rootComment);
+                await dbContext.SaveChangesAsync();
+                createdRootComments.Add(rootComment);
+
+                // Pro některé root komentáře vytvoříme 1-3 reakce
+                if (random.Next(2) == 1) // 50% šance na reakce
+                {
+                    var repliesCount = random.Next(1, 4);
+                    for (int j = 0; j < repliesCount; j++)
+                    {
+                        var replyAuthor = users[random.Next(users.Count)];
+                        createdUpdatedAt = rootComment.CreatedAt.AddHours(random.Next(1, 24));
+                        var reply = new Comment
+                        {
+                            DiscussionId = discussion.Id,
+                            UserId = replyAuthor.Id,
+                            ParentCommentId = rootComment.Id,
+                            Content = GetRandomReply(rootComment.Content),
+                            Type = CommentType.Normal,
+                            CreatedAt = createdUpdatedAt,
+                            UpdatedAt = createdUpdatedAt
+                        };
+                        dbContext.Comments.Add(reply);
+                        await dbContext.SaveChangesAsync();
+                    }
+                }
+            }
+        }
+
+        private (string Title, string Content, string Code)[] GetDiscussionsForCategory(string categoryName)
+        {
+            switch (categoryName)
+            {
+                case "Těhotenství":
+                    return new[]
+                    {
                     (
                         "První příznaky těhotenství",
                         "Chtěla bych se podělit o své první příznaky těhotenství. Nejvíc mě překvapilo...",
@@ -299,9 +335,9 @@ public class TestDataSeeder : ITestDataSeeder
                     )
                 };
 
-            case "Porod":
-                return new[]
-                {
+                case "Porod":
+                    return new[]
+                    {
                     (
                         "Porodnice v Praze",
                         "Máte někdo zkušenost s porodnicí v Podolí? Zajímají mě především...",
@@ -324,9 +360,9 @@ public class TestDataSeeder : ITestDataSeeder
                     )
                 };
 
-            case "Kojení":
-                return new[]
-                {
+                case "Kojení":
+                    return new[]
+                    {
                     (
                         "Problémy s kojením",
                         "Řešila jsem problém se špatným přisáváním. Pomohlo mi...",
@@ -349,9 +385,9 @@ public class TestDataSeeder : ITestDataSeeder
                     )
                 };
 
-            case "Výchova":
-                return new[]
-                {
+                case "Výchova":
+                    return new[]
+                    {
                     (
                         "Vzdorovité období",
                         "Jak zvládáte období vzdoru u dvouletého dítěte? Nám pomáhá...",
@@ -374,9 +410,9 @@ public class TestDataSeeder : ITestDataSeeder
                     )
                 };
 
-            case "Školky a školy":
-                return new[]
-                {
+                case "Školky a školy":
+                    return new[]
+                    {
                     (
                         "Adaptace ve školce",
                         "Jak probíhala adaptace vašeho dítěte ve školce? U nás to bylo...",
@@ -399,15 +435,15 @@ public class TestDataSeeder : ITestDataSeeder
                     )
                 };
 
-            default:
-                return Array.Empty<(string, string, string)>();
+                default:
+                    return Array.Empty<(string, string, string)>();
+            }
         }
-    }
 
-    private string GetRandomComment(string discussionTitle)
-    {
-        var comments = new[]
+        private string GetRandomComment(string discussionTitle)
         {
+            var comments = new[]
+            {
             "Děkuji za sdílení zkušeností. Mám podobnou zkušenost...",
             "To je zajímavý pohled. U nás to bylo trochu jinak...",
             "Můžu potvrdit, také jsme to tak měli...",
@@ -416,13 +452,13 @@ public class TestDataSeeder : ITestDataSeeder
             "Super příspěvek, hodně mi to pomohlo..."
         };
 
-        return comments[new Random().Next(comments.Length)];
-    }
+            return comments[new Random().Next(comments.Length)];
+        }
 
-    private string GetRandomReply(string parentComment)
-    {
-        var replies = new[]
+        private string GetRandomReply(string parentComment)
         {
+            var replies = new[]
+            {
             "Souhlasím s vámi, také máme podobnou zkušenost...",
             "Díky za odpověď, to mi pomohlo...",
             "Můžete to prosím více rozvést?",
@@ -430,6 +466,8 @@ public class TestDataSeeder : ITestDataSeeder
             "Zajímavý pohled, zamyslím se nad tím..."
         };
 
-        return replies[new Random().Next(replies.Length)];
+            return replies[new Random().Next(replies.Length)];
+        }
+
     }
 }

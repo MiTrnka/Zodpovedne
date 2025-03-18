@@ -12,7 +12,6 @@ using Zodpovedne.RESTAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Zodpovedne.Data.Data;
-using Zodpovedne.Data.Interfaces;
 using Zodpovedne.Data.Models;
 using Zodpovedne.Data.Services;
 
@@ -98,8 +97,8 @@ namespace Zodpovedne.RESTAPI
 
             // Registrace IDataContext
             // Když nìkdo požádá o IDataContext, dostane instanci ApplicationDbContext
-            builder.Services.AddScoped<IDataContext>(sp =>
-                sp.GetRequiredService<ApplicationDbContext>());
+            /*builder.Services.AddScoped<IDataContext>(sp =>
+                sp.GetRequiredService<ApplicationDbContext>());*/
 
             // Registrace služeb pro Identity
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
@@ -114,12 +113,6 @@ namespace Zodpovedne.RESTAPI
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
-
-            // Registrace dalších služeb
-            builder.Services.AddScoped<IIdentityDataSeeder, IdentityDataSeeder>();
-            builder.Services.AddScoped<ITestDataSeeder, TestDataSeeder>();
-
-
 
             // Konfigurace JWT autentizace
             builder.Services.AddAuthentication(options => {
@@ -264,18 +257,12 @@ namespace Zodpovedne.RESTAPI
 
 
             // Inicializace výchozích rolí a admin úètu pøi startu aplikace
-            /*using (var scope = app.Services.CreateScope())
-            {
-                var identityDataSeeder = scope.ServiceProvider.GetRequiredService<IIdentityDataSeeder>();
-                await identityDataSeeder.InitializeRolesAndAdminAsync();
-            }*/
-
-            //Po inicializaci rolí a admin úètu
-            /*using (var scope = app.Services.CreateScope())
-            {
-                var testDataSeeder = scope.ServiceProvider.GetRequiredService<ITestDataSeeder>();
-                await testDataSeeder.SeedTestDataAsync();
-            }*/
+            var scope = app.Services.CreateScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var initializer = new DataInitializer(dbContext, userManager, roleManager);
+            await initializer.InitializeAsync();
 
             app.Run();
         }

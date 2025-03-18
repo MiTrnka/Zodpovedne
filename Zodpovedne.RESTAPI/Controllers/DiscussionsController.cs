@@ -20,7 +20,7 @@ namespace Zodpovedne.RESTAPI.Controllers;
 [Route("api/[controller]")]
 public class DiscussionsController : ControllerBase
 {
-    private readonly IDataContext dbContext;
+    private readonly ApplicationDbContext dbContext;
     private readonly UserManager<ApplicationUser> userManager;
     private readonly FileLogger _logger;
 
@@ -29,7 +29,7 @@ public class DiscussionsController : ControllerBase
     private readonly HtmlSanitizer _sanitizer;
 
 
-    public DiscussionsController(IDataContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger)
+    public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger)
     {
         _logger = logger;
         this.dbContext = dbContext;
