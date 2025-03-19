@@ -130,7 +130,7 @@ async function loadMoreComments(discussionId) {
         // Načtení HTML pro každý komentář (root + reakční) pomocí Partial View
         for (const comment of data.comments) {
             // Pro každý root komentář z nově načtených dat zavolá handler pro vykreslení jednoho komentáře (root + reakční)
-            // Tento AJAX požadavek volá handler OnPostDiscussionPartialAsync (DiscussionModel z Discussion.cshtml.cs)
+            // Tento AJAX požadavek volá handler OnPostDiscussionPartial (DiscussionModel z Discussion.cshtml.cs)
             const htmlResponse = await fetch(`?handler=CommentPartial`, {
                 method: 'POST',
                 headers: {

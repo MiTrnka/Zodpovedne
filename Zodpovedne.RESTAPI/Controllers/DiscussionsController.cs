@@ -35,12 +35,11 @@ public class DiscussionsController : ControllerBase
         this.dbContext = dbContext;
         this.userManager = userManager;
 
+        // Inicializace a konfigurace HTML sanitizeru pro bezpečné čištění HTML vstupu
+        _sanitizer = new HtmlSanitizer();
+
         try
         {
-
-            // Inicializace a konfigurace HTML sanitizeru pro bezpečné čištění HTML vstupu
-            _sanitizer = new HtmlSanitizer();
-
             // Povolené HTML tagy
             _sanitizer.AllowedTags.Clear();
             _sanitizer.AllowedTags.Add("p");
@@ -405,7 +404,7 @@ public class DiscussionsController : ControllerBase
                 .AsNoTracking()
                 .Where(c => c.DiscussionId == discussionId)        // Komentáře patřící k této diskuzi
                 .Where(c => c.ParentCommentId != null)             // Pouze odpovědi (ne root komentáře)
-                .Where(c => rootCommentIds.Contains(c.ParentCommentId.Value)) // Pouze odpovědi na načtené root komentáře
+                .Where(c => c.ParentCommentId != null && rootCommentIds.Contains(c.ParentCommentId.Value)) // Pouze odpovědi na načtené root komentáře
                 .Where(c => c.Type != CommentType.Deleted &&       // Nekompletně smazané
                     (c.Type != CommentType.Hidden ||               // Skryté zobrazit jen pro:
                         isAdmin ||                                 // - adminy
@@ -872,7 +871,7 @@ public class DiscussionsController : ControllerBase
                 updatedAt = discussion.UpdatedAt
             });
         }
-        catch (Exception e)
+        catch (Exception)
         {
             _logger.Log($"Chyba při přesunu diskuze {discussionId} do kategorie {newCategoryId}.");
             return StatusCode(StatusCodes.Status500InternalServerError);

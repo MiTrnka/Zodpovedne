@@ -134,7 +134,7 @@
                 // Načtení HTML pro každou diskuzi pomocí Partial View
                 for (const discussion of data.discussions) {
                     // Pro každou diskuzi z nově načtených dat zavolá handler pro vykreslení jedné diskuze
-                    // Tento AJAX požadavek volá handler OnPostDiscussionPartialAsync (CategoryModel z Category.cshtml.cs)
+                    // Tento AJAX požadavek volá handler OnPostDiscussionPartial (CategoryModel z Category.cshtml.cs)
                     const htmlResponse = await fetch(`?handler=DiscussionPartial&categoryCode=${data.categoryCode}`, {
                         method: 'POST',
                         headers: {

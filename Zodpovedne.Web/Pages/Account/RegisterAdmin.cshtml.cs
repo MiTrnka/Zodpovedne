@@ -17,7 +17,6 @@ public class RegisterAdminModel : BasePageModel
     public string? ReturnUrl { get; set; }
 
     public string? SuccessMessage { get; set; }
-    public string? ErrorMessage { get; set; }
 
     public RegisterAdminModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
     {

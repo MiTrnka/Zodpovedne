@@ -19,7 +19,7 @@ namespace Zodpovedne.RESTAPI
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -199,16 +199,15 @@ namespace Zodpovedne.RESTAPI
             // Pøidáme tøídu pro logování
             builder.Services.AddSingleton<FileLogger>();
 
-            // Pak pøidáme konfiguraci pro ASP.NET Core logging za pouití našeho FileLoggeru
+            // Vytvoøíme instanci FileLoggeru pøímo
+            var fileLogger = new FileLogger(builder.Configuration);
+
+            // Pak pøidáme konfiguraci pro ASP.NET Core logging
             builder.Services.AddLogging(logging =>
             {
-                logging.ClearProviders(); // Odstraní vıchozí loggery
-                logging.AddConsole(); // Ponechá logování do konzole
-
-                // Pøidá náš vlastní logger pro kritické chyby
-                logging.AddProvider(new CustomFileLoggerProvider(
-                    logging.Services.BuildServiceProvider().GetRequiredService<FileLogger>()
-                ));
+                logging.ClearProviders();
+                logging.AddConsole();
+                logging.AddProvider(new CustomFileLoggerProvider(fileLogger));
             });
 
             // Pøidání pamìové cache napøíklad pro cachování dat z databáze (seznam diskuzí, kde nìkdo reagoval na mùj komentáø)

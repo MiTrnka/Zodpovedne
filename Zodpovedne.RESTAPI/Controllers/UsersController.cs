@@ -66,7 +66,7 @@ public class UsersController : ControllerBase
                 .Select(u => new UserListDto
                 {
                     Id = u.Id,
-                    Email = u.Email,
+                    Email = u.Email ?? "",
                     Nickname = u.Nickname,
                     LastLogin = u.LastLogin,
                     LoginCount = u.LoginCount,
@@ -442,7 +442,7 @@ public class UsersController : ControllerBase
 
                 // 4. Smažeme všechny reakční komentáře na rootové komentáře mazaného uživatele
                 await dbContext.Comments
-                    .Where(c => c.ParentCommentId != null && c.ParentComment.UserId == userId)
+                    .Where(c => c.ParentCommentId != null && c.ParentComment != null && c.ParentComment.UserId == userId)
                     .ExecuteDeleteAsync();
 
                 // 5. Smažeme všechny komentáře od uživatele
@@ -840,7 +840,7 @@ public class UsersController : ControllerBase
             var cacheKey = $"NewReplies_{userId}_{user.LastLogin?.Ticks}";
             // Pokus o získání dat z keše
             // TryGetValue vrací true, pokud klíč existuje a hodnota je uložena do cachedResult
-            if (_cache.TryGetValue(cacheKey, out List<DiscussionWithNewRepliesDto> cachedResult))
+            if (_cache.TryGetValue(cacheKey, out List<DiscussionWithNewRepliesDto>? cachedResult))
             {
                 return Ok(cachedResult);
             }
@@ -981,6 +981,11 @@ public class UsersController : ControllerBase
             var resetLink = $"{model.ResetPageUrl}?email={WebUtility.UrlEncode(user.Email)}&token={encodedToken}";
 
             // Odeslání e-mailu s odkazem
+            if (user.Email == null)
+            {
+                _logger.Log("Byl proveden pokus o odeslání emailu pro obnovu hesla, ale email byl null.");
+                return BadRequest();
+            }
             await _emailService.SendPasswordResetEmailAsync(user.Email, user.Nickname, resetLink);
 
             return Ok();

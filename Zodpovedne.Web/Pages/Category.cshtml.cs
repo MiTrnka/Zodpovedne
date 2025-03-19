@@ -164,7 +164,7 @@ public class CategoryModel : BasePageModel
     /// </summary>
     /// <param name="discussion">Data diskuze</param>
     /// <param name="categoryCode">Kód kategorie pro vytvoøení URL</param>
-    public async Task<IActionResult> OnPostDiscussionPartialAsync([FromBody] DiscussionListDto discussion, string categoryCode)
+    public IActionResult OnPostDiscussionPartial([FromBody] DiscussionListDto discussion, string categoryCode)
     {
         return Partial("_DiscussionPartial", discussion);
     }

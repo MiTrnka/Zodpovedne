@@ -30,7 +30,7 @@ public class Program
                 options.ListenAnyIP(5000); // Port, na kterém bude Web poslouchat
             });
             // nastavuje, kam se budou ukládat šifrovací klíèe pro ASP.NET Core DataProtection
-            //zajišuje šifrování a dešifrování dùležitých dat, jako jsou: Session cookies, Anti - forgery tokeny... 
+            //zajišuje šifrování a dešifrování dùležitých dat, jako jsou: Session cookies, Anti - forgery tokeny...
             // Normálnì jsou ukládány do pamìti, øádek viz níže zajistí persistentní uložení, takže i po restartu data ze Session... budou èitelná a platná
             builder.Services.AddDataProtection()
                 .PersistKeysToFileSystem(new DirectoryInfo("/var/www/zodpovedne/keys"));
@@ -56,22 +56,22 @@ public class Program
                options.Events.OnSigningIn = context =>
                {
                    // Získání identity uživatele z kontextu
-                   var identity = (ClaimsIdentity)context.Principal.Identity;
+                   var identity = context.Principal?.Identity as ClaimsIdentity;
 
                    // Kontrola jestli už existuje NameIdentifier claim
-                   var userId = identity.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                   var userId = identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                    // Pokud NameIdentifier neexistuje
                    if (userId == null)
                    {
                        // Hledání ID uživatele v jiných standardních claimech (sub nebo nameid)
-                       var userIdClaim = identity.FindFirst("sub") ??
-                                        identity.FindFirst("nameid");
+                       var userIdClaim = identity?.FindFirst("sub") ??
+                                        identity?.FindFirst("nameid");
 
                        // Pokud byl nalezen claim s ID uživatele, pøidá se jako NameIdentifier
                        if (userIdClaim != null)
                        {
-                           identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
+                           identity?.AddClaim(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
                        }
                    }
 
@@ -96,16 +96,15 @@ public class Program
         // Pøidáme tøídu pro logování
         builder.Services.AddSingleton<FileLogger>();
 
-        // Pak pøidáme konfiguraci pro ASP.NET Core logging za použití našeho FileLoggeru
+        // Vytvoøíme instanci FileLoggeru pøímo
+        var fileLogger = new FileLogger(builder.Configuration);
+
+        // Pak pøidáme konfiguraci pro ASP.NET Core logging
         builder.Services.AddLogging(logging =>
         {
-            logging.ClearProviders(); // Odstraní výchozí loggery
-            logging.AddConsole(); // Ponechá logování do konzole
-
-            // Pøidá náš vlastní logger pro kritické chyby
-            logging.AddProvider(new CustomFileLoggerProvider(
-                logging.Services.BuildServiceProvider().GetRequiredService<FileLogger>()
-            ));
+            logging.ClearProviders();
+            logging.AddConsole();
+            logging.AddProvider(new CustomFileLoggerProvider(fileLogger));
         });
 
         var app = builder.Build();

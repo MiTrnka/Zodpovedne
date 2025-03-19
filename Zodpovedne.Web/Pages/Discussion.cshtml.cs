@@ -63,7 +63,7 @@ public class DiscussionModel : BasePageModel
     /// <summary>
     /// Detail diskuze vèetnì komentáøù a informací o like
     /// </summary>
-    public DiscussionDetailDto? Discussion { get; set; }
+    public DiscussionDetailDto Discussion { get; set; } = new();
 
     /// <summary>
     /// Všechny kategorie
@@ -143,16 +143,17 @@ public class DiscussionModel : BasePageModel
             ErrorMessage = "Omlouváme se, ale požadovanou diskuzi se nepodaøilo naèíst.";
             return Page();
         }
-        Discussion = await response.Content.ReadFromJsonAsync<DiscussionDetailDto>();
-        if (Discussion == null)
+        var d = await response.Content.ReadFromJsonAsync<DiscussionDetailDto>();
+        if (d == null)
         {
             _logger.Log($"Detail diskuze nenalezen: {DiscussionCode}");
             ErrorMessage = "Omlouváme se, ale požadovanou diskuzi se nepodaøilo naèíst.";
             return Page();
         }
+        Discussion = d;
 
-        // Získání kategorie, protože potøebujeme zobrazit název kategorie
-        var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
+            // Získání kategorie, protože potøebujeme zobrazit název kategorie
+            var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
         {
             _logger.Log($"Nenalezena kategorie {CategoryCode}");

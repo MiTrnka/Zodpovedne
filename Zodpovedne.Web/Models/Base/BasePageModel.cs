@@ -152,15 +152,15 @@ public abstract class BasePageModel : PageModel
 
     protected BasePageModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger)
     {
+        _clientFactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+        // Inicializace a konfigurace HTML sanitizeru pro bezpečné čištění HTML vstupu
+        _sanitizer = new HtmlSanitizer();
+
         try
         {
-            _clientFactory = clientFactory;
-            _configuration = configuration;
-            _logger = logger;
-
-            // Inicializace a konfigurace HTML sanitizeru pro bezpečné čištění HTML vstupu
-            _sanitizer = new HtmlSanitizer();
-
             // Povolené HTML tagy
             _sanitizer.AllowedTags.Clear();
             _sanitizer.AllowedTags.Add("p");
