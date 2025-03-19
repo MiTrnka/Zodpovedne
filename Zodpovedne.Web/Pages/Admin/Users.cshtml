@@ -42,7 +42,7 @@
             @foreach (var user in Model.PagedUsers.Items)
             {
                 <div class="user-list-item">
-                    <span>@user.Nickname</span>
+                    <span><a asp-page="/Account/Profile" asp-route-nickname="@user.Nickname">@user.Nickname</a></span>
                     <span>@user.Email</span>
                     <span>@(user.LastLogin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "Nikdy")</span>
                     <span>@user.LoginCount</span>

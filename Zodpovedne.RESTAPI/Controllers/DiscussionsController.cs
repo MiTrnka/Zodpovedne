@@ -238,30 +238,50 @@ public class DiscussionsController : ControllerBase
     [HttpGet("user-discussions/{nickname?}")]
     public async Task<ActionResult<IEnumerable<BasicDiscussionInfoDto>>> GetUserDiscussions(string? nickname = null)
     {
+        string userId = String.Empty;
+        bool isMyAccount = false;
+        bool isAdmin = false;
         try
         {
-            string userId = string.Empty;
-            // Pokud nickname není zadáno, použije se pro userId ID přihlášeného uživatele (pokud existuje)
-            if (string.IsNullOrEmpty(nickname))
+            // Zjistím, jestli je uživatel přihlášen a pokud ano, zjistím jeho id a jestli je admin
+            string? userIdFromAutentization = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userIdFromAutentization != null)
             {
-                userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                // Pokud není ani přihlášený uživatel, vrátí chybu
-                if (string.IsNullOrEmpty(userId))
-                    return Unauthorized();
-            }
-            else
-            {
-                // Pokud nickname je zadán, najdu userId dle nickname
-                var user = dbContext.Users.Where(u => u.Nickname == nickname).FirstOrDefault();
-                if (user == null) return NotFound();
-                userId = user.Id;
+                isAdmin = User?.IsInRole("Admin") ?? false;
             }
 
-            // Získání diskuzí uživatele a seřazení podle data aktualizace
+            string? userIdFromNickname = null;
+
+            // Pokud nickname je zadán, najdu userId dle nickname
+            if (!string.IsNullOrEmpty(nickname))
+            {
+                var user = dbContext.Users.Where(u => u.Nickname == nickname).FirstOrDefault();
+                if (user == null)
+                    return NotFound();
+                userIdFromNickname = user.Id;
+            }
+
+            // Koukám na svůj profil
+            if ((userIdFromAutentization != null) && ((userIdFromAutentization == userIdFromNickname) || (userIdFromNickname == null)))
+            {
+                userId = userIdFromAutentization;
+                isMyAccount = true;
+            }
+            else
+            // Koukám na cizí profil (nebo na svůj a nejsem přihlášen), v tom případě musí být vyplněn nickname, abych věděl na jaký koukám
+            {
+                if (userIdFromNickname == null)
+                    return Unauthorized();
+                userId = userIdFromNickname;
+                isMyAccount = false;
+            }
+
+
+            // Získání diskuzí (skryté se mi zobrazí jen pokud jsou mé) uživatele a seřazené podle data aktualizace
             var discussions = await dbContext.Discussions
                 .AsNoTracking()
                 .Where(d => d.UserId == userId)
-                .Where(d => d.Type != DiscussionType.Deleted)
+                .Where(d => d.Type != DiscussionType.Deleted && ((d.Type != DiscussionType.Hidden) || isMyAccount || isAdmin))
                 .Include(d => d.Category)
                 .OrderByDescending(d => d.UpdatedAt)
                 .Select(d => new BasicDiscussionInfoDto
