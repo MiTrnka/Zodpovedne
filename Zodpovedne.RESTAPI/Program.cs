@@ -257,12 +257,12 @@ namespace Zodpovedne.RESTAPI
 
 
             // Inicializace výchozích rolí a admin úètu pøi startu aplikace
-            var scope = app.Services.CreateScope();
+            /*var scope = app.Services.CreateScope();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var initializer = new DataInitializer(dbContext, userManager, roleManager);
-            await initializer.InitializeAsync(true);
+            await initializer.InitializeAsync(true);*/
 
             app.Run();
         }
