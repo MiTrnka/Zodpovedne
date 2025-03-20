@@ -112,14 +112,14 @@ public class Program
         // seznam rout, pro které se ihned vrátí 404 a nepokraèuje se v pipeline
         app.MapShortCircuit(404, "wp-admin","wp-login");
 
-        // Configure the HTTP request pipeline.
+        // Konfigurace HTTP request pipeline pro produkci.
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Error");
             app.UseHsts();
+            //app.UseHttpsRedirection();
         }
 
-        app.UseHttpsRedirection();
         app.UseStaticFiles();
 
         app.UseRouting();

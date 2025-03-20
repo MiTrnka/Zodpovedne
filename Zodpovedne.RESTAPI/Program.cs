@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Data.Models;
 using Zodpovedne.Data.Services;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Zodpovedne.RESTAPI
 {
@@ -39,6 +40,9 @@ namespace Zodpovedne.RESTAPI
                 {
                     options.ListenAnyIP(5001); // Port, na kterém bude API poslouchat
                 });
+                // nastavuje, kam se budou ukládat šifrovací klíèe pro ASP.NET Core DataProtection
+                builder.Services.AddDataProtection()
+                    .PersistKeysToFileSystem(new DirectoryInfo("/var/www/zodpovedne/keys"));
             }
 
             // Kontrola existence konfiguraèního souboru a jeho položek
@@ -144,6 +148,7 @@ namespace Zodpovedne.RESTAPI
             });
 
 
+
             // Pøidání CORS do kontejneru služeb
             builder.Services.AddCors(options =>
             {
@@ -225,7 +230,7 @@ namespace Zodpovedne.RESTAPI
             }
             else
             {
-                app.UseHttpsRedirection();
+                //app.UseHttpsRedirection();
             }
 
             // Pøidání middleware pro response caching
