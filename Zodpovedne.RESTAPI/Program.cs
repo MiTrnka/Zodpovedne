@@ -155,12 +155,29 @@ namespace Zodpovedne.RESTAPI
                 options.AddPolicy("AllowSpecificOrigins",
                     policy =>
                     {
-                        policy.WithOrigins(
-                                "http://localhost:5214"
-                            )
-                            .AllowAnyMethod()
-                            .AllowAnyHeader()
-                            .AllowCredentials();
+                        if (builder.Environment.IsDevelopment())
+                        {
+                            policy.WithOrigins("http://localhost:5214")
+                                 .AllowAnyMethod()
+                                 .AllowAnyHeader()
+                                 .AllowCredentials();
+                        }
+                        else
+                        {
+                            policy.WithOrigins(
+                                 "https://mamouzodpovedne.cz",
+                                 "https://www.mamouzodpovedne.cz",
+                                 "https://mamouzodpovedne.sk",
+                                 "https://www.mamouzodpovedne.sk",
+                                 "https://mamazodpovedne.cz",
+                                 "https://www.mamazodpovedne.cz",
+                                 "https://mamazodpovedne.sk",
+                                 "https://www.mamazodpovedne.sk"
+                             )
+                             .AllowAnyMethod()
+                             .AllowAnyHeader()
+                             .AllowCredentials();
+                        }
                     });
             });
 
