@@ -172,7 +172,11 @@ namespace Zodpovedne.RESTAPI
                                  "https://mamazodpovedne.cz",
                                  "https://www.mamazodpovedne.cz",
                                  "https://mamazodpovedne.sk",
-                                 "https://www.mamazodpovedne.sk"
+                                 "https://www.mamazodpovedne.sk",
+                                 "https://api.mamazodpovedne.cz",
+                                 "https://api.mamouzodpovedne.cz",
+                                 "https://api.mamazodpovedne.sk",
+                                 "https://api.mamouzodpovedne.sk"
                              )
                              .AllowAnyMethod()
                              .AllowAnyHeader()
