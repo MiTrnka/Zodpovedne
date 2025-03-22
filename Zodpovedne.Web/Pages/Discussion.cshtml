@@ -31,13 +31,13 @@
             </h1>
             @if (Model.Discussion != null)
             {
-                <div class="card mt-2">
+                <div class="card mt-2 shadow text-editor-wrapper">
                     <div class="card-header text-editor-head">
                         @* Nadpis diskuze - editovatelný pro oprávněné uživatele *@
                         @if (Model.CanEditDiscussion)
                         {
                             <div class="editable-title">
-                                <h1 class="h3 mb-0  text-editor-title" id="discussion-title-display">@Model.Discussion.Title</h1>
+                                <h1 class="h3 text-editor-title" id="discussion-title-display">@Model.Discussion.Title</h1>
                                 <input type="text" class="form-control d-none" id="discussion-title-edit" value="@Model.Discussion.Title" maxlength="70" />
                             </div>
                         }
@@ -87,10 +87,7 @@
                             <span title="Počet zobrazení">
                                 <i class="bi bi-eye"></i> @Model.Discussion.ViewCount
                             </span>
-                            @if (Model.Discussion.Type == DiscussionType.Top)
-                            {
-                                <span class="bi-star-fill ms-1 text-primary">@*TOP*@</span>
-                            }
+                           
                             @if (Model.Discussion.Type == DiscussionType.Hidden)
                             {
                                 //<span class="badge bg-warning ms-2">Tvá diskuze je skrytá</span>
@@ -115,8 +112,8 @@
                     </div>
 
                     @* Panel s tlačítky pro like, editaci a změnu viditelnosti *@
-                    <div class="card-footer text-editor-footer d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
+                    <div class="card-footer text-editor-footer d-flex align-items-center">
+                        <div class="d-flex justify-content-between w-100 gap-2">
                             @* Tlačítko Like *@
                             @if (Model.CanLikeDiscussion)
                             {
@@ -134,7 +131,29 @@
                                     @Model.Discussion.Likes.LikeCount
                                 </span>
                             }
+                            @if (Model.Discussion.Type == DiscussionType.Top)
+                            {
+                                @if (Model.Discussion.Type == DiscussionType.Top)
+                                {
+                                    <span class="ms-1 top-star">@*TOP*@
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25">
+                                            <!-- Pěticípá hvězda -->
+                                            <path d="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
+                                                  fill="#FFB5B5"
+                                                  stroke="#e06f70"
+                                                  stroke-width="0.5" />
 
+                                            <!-- Text TOP -->
+                                            <text x="12" y="14"
+                                                  font-family="Arial, sans-serif"
+                                                  font-weight="bold"
+                                                  font-size="4.5"
+                                                  text-anchor="middle"
+                                                  fill="#d15657">TOP</text>
+                                        </svg>
+                                    </span>
+                                }
+                            }
                             @* Tlačítko pro změnu viditelnosti (pouze pro adminy) *@
                             @if (Model.IsAdmin)
                             {
