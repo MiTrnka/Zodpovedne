@@ -817,12 +817,40 @@ h1 {
     padding: 5px;
     margin-bottom: 10px !important;
 }
-
-.detail-diskuse-title{
-    margin-top: -20px;
-    margin-bottom: 20px;
-    width: 100%;
+.detail-diskuse-title-wrapper {
+    width: auto;
+    padding: 7px 12px;
+    margin-bottom: 0px;
+    margin-top: -10px;
+    position: relative;
 }
+.detail-diskuse-title {
+    width: 100%;
+    font-size: 24px;
+    font-weight: 400;
+    margin-bottom: -5px;
+}
+/* Styl pro aktivní stránku - dvojité podtržení */
+.detail-diskuse-title::after {
+    content: '';
+    position: absolute;
+    width: 26%;
+    height: 1px;
+    bottom: 0;
+    right: 35%;
+    background-color: var(--primary-color);
+}
+
+.detail-diskuse-title::before {
+    content: '';
+    position: absolute;
+    width: 30%;
+    height: 1px;
+    bottom: 3px;
+    right: 35%;
+    background-color: var(--primary-color);
+}
+    
 #comments-list .card {
     padding-left: 10px;
     padding-right: 10px;

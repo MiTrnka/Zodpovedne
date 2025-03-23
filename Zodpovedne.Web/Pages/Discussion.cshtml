@@ -26,9 +26,11 @@
 <div class="container">
     <div class="row mb-4">
         <div class="col">
-            <h1 class="text-center detail-diskuse-title">
-                <a href="/categories/@Model.CategoryCode" class="text-decoration-none">@Model.CategoryName</a>
-            </h1>
+            <div class="detail-diskuse-title-wrapper">
+                <h1 class="text-center detail-diskuse-title">
+                    <a href="/categories/@Model.CategoryCode" class="text-decoration-none">@Model.CategoryName</a>
+                </h1>
+            </div>
             @if (Model.Discussion != null)
             {
                 <div class="card mt-2 shadow text-editor-wrapper">
