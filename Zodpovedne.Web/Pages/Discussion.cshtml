@@ -144,8 +144,8 @@
                             {
                                 @if (Model.Discussion.Type == DiscussionType.Top)
                                 {
-                                    <span class="ms-1 top-star">@*TOP*@
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25">
+                                    <span class="top-star">@*TOP*@
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
 
                                             <path d="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
                                             fill="#FFB5B5"
@@ -165,7 +165,7 @@
                             @* Tlačítko pro změnu viditelnosti (pouze pro adminy) *@
                             @if (Model.IsAdmin)
                             {
-                                <button class="btn @(Model.Discussion.Type == DiscussionType.Hidden ? "btn-outline-primary" : "btn-outline-primary")"
+                                <button class="btn @(Model.Discussion.Type == DiscussionType.Hidden ? "btn-outline-primary prepniVlastnostBtn" : "btn-outline-primary prepniVlastnostBtn")"
                                 onclick="toggleDiscussionVisibility(@Model.Discussion.Id)">
                                     <i class="bi bi-eye@(Model.Discussion.Type == DiscussionType.Hidden ? "" : "-slash")"></i>
 
@@ -175,13 +175,13 @@
                             @* Tlačítko pro přepínání typu diskuze mezi Top a Normal (pouze pro adminy) *@
                             @if (Model.IsAdmin && (Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Top))
                             {
-                                <button class="btn @(Model.Discussion.Type == DiscussionType.Top ? "btn-outline-primary" : "btn-outline-primary")"
+                                <button class="btn @(Model.Discussion.Type == DiscussionType.Top ? "btn-outline-primary prepniVlastnostBtn" : "btn-outline-primary prepniVlastnostBtn")"
                                         onclick="toggleTopStatus(@Model.Discussion.Id)">
                                     @if (Model.Discussion.Type == DiscussionType.Top)
                                     {
                                         <text>
                                             <span>
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                                                     <path d="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
                                                           fill="#FFB5B5"
                                                           stroke="#e06f70"
@@ -205,9 +205,9 @@
                                     else
                                     {
                                         <text>
-                                            <span class="ms-1 top-star">
+                                            <span class="top-star">
                                                 @*TOP*@
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                                                     <path d="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
                                                           fill="#FFB5B5"
                                                           stroke="#e06f70"

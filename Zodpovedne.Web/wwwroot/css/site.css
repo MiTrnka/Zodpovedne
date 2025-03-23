@@ -33,6 +33,89 @@ body {
     background-color: var(--light-primary-color-ultra-light);
 }
 
+/* Detail diskuse - graficke cary pro jednotlive komentar  */
+/* Hlavní kontejner komentáře */
+.komentar-wrapper {
+    position: relative;
+    padding-left: 24px !important;
+}
+
+/* Nastavení pozicování pro levou část hlavičky komentáře */
+.hlavicka-komentare-leva-cast {
+    position: relative;
+}
+
+/* Vertikální červená čára vedoucí od kolečka dolů */
+.komentar-wrapper::after {
+    content: "";
+    position: absolute;
+    left: 11px; /* Pozice odpovídající kolečku */
+    top: 17px; /* Začátek pod kolečkem */
+    bottom: 19px; /* Konec před tlačítkem odpovědět */
+    height: calc(100% - 30px);
+    width: 2px;
+    background-color: #ff6b6b;
+    z-index: 1;
+}
+
+/* Červené kolečko u hlavičky komentáře */
+.hlavicka-komentare-leva-cast::before {
+    content: "";
+    position: absolute;
+    left: -18px; /* Pozice kolečka vlevo od hlavičky */
+    top: 4px; /* Vertikální zarovnání */
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #ff6b6b;
+    z-index: 2;
+}
+
+/* Horizontální čára vedoucí k odpovědi */
+.odpoved-na-komentar {
+    position: relative;
+    margin-left: 30px !important; /* Přepsání bootstrap ms-2 pro více prostoru */
+    padding: 7px !important;
+}
+
+    .odpoved-na-komentar::before {
+        content: "";
+        position: absolute;
+        left: -42px;
+        top: 15px; /* Vertikální zarovnání s odpovědí */
+        width: 40px;
+        height: 2px;
+        background-color: #ff6b6b;
+        z-index: 1;
+    }
+
+/* Čára vedoucí k tlačítku Odpovědět */
+.reply-button {
+    position: relative;
+    margin-left: 35px;
+    margin-bottom: 0px !important;
+    height: 30px;
+}
+
+    .reply-button::before {
+        content: "";
+        position: absolute;
+        left: -48px;
+        top: 50%;
+        width: 40px;
+        height: 2px;
+        background-color: #ff6b6b;
+        z-index: 1;
+    }
+
+
+/* Úprava ostatních stylů pro lepší vzhled s vytvořenými čárami */
+.komentar-wrapper {
+    overflow: visible; /* Zajistí, že čáry nebudou oříznuty */
+    padding-left: 20px; /* Přidá prostor vlevo pro kolečko a čáru */
+}
+/* konec detailu diskuse */
+
 h1, h2, h3, h4, h5 {
     font-family: 'Bookman Old Style';
     font-weight: 400;
@@ -138,9 +221,12 @@ a {
 }
 
 /* Základní styly pro tlačítka */
-.btn {
+.btn{
     width: 100%; /* Na mobilu tlačítka přes celou šířku */
     margin-bottom: 0.5rem;
+}
+.like-btn-disable, .like-btn, .pocetZobrazeni {
+    margin-bottom: 0.5rem !important;
 }
 
 .btn-primary {
@@ -170,22 +256,35 @@ a {
 }
 .pocetZobrazeni {
     display: flex;
-    margin-top: -8px;
     gap: 5px;
     color: var(--primary-color);
+    margin-bottom: 0.5rem;
 }
-.like-btn-footer, .like-btn-disable, .like-btn{
+
+.like-btn-footer, .like-btn-disable, .like-btn {
     display: flex;
     gap: 5px;
     align-items: center;
     color: var(--primary-color) !important;
+    transition: ease-in-out;
+    padding:0;
 }
 
-.like-btn-disable i:before, .like-btn i:before, .like-btn-disable *, .like-btn *{
+.bi-heart:hover{
+    transform:scale(1.3);
+}
+.bi-heart-fill, .bi-heart-fill::before, like-btn-disable * {
+    cursor: default;
+}
+
+.like-btn-disable i:before, .like-btn i:before, .like-btn-disable *, .like-btn * {
     color: var(--primary-color) !important;
 }
 
-
+#edit-discussion-btn{
+    border-radius: 5px;
+    margin-right: 5px;
+}
 .btn:focus,
 .btn:active:focus {
     outline: none;
@@ -204,10 +303,12 @@ a {
 
 .btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
     color: white !important;
-    background-color: var(--light-primary-color-ultra-light) !important;
+    background-color: var(--primary-color) !important;
     border: 1.5px solid var(--primary-color) !important;
 }
-
+.prepniVlastnostBtn:hover {
+    background-color: var(--light-primary-color-ultra-light) !important;
+}
 /* Navigace */
 .nav-link:hover {
     position: relative;
@@ -729,6 +830,9 @@ h1 {
 .text-editor-footer{
     justify-content: space-between;
 }
+.btn, .pocetZobrazeni{
+    width: auto;
+}
 
 
 .like-btn-disable, .like-btn[disabled] {
@@ -753,11 +857,11 @@ h1 {
     background-color: var(--primary-color);
     border: 1.5px solid var(--primary-color);
 }
+
 /* Styly pro tablet a větší obrazovky (≥576px) */
 @media (min-width: 576px) {
     /* Tlačítka na širších obrazovkách */
-    .btn {
-        width: auto;
+    .btn, .pocetZobrazeni, like-btn-disable, like-btn {
         margin-bottom: 0;
     }
 
@@ -772,9 +876,7 @@ h1 {
     .user-list-item {
         grid-template-columns: 1fr 1fr 1fr;
     }
-    .pocetZobrazeni {
-        margin-top: 0px;
-    }
+
 }
 
 /* Styly pro větší tablety a menší notebooky (≥768px) */

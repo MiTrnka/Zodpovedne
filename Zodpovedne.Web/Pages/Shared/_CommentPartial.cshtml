@@ -1,10 +1,10 @@
 ﻿@model Zodpovedne.Contracts.DTO.CommentDto
 
-<div class="card mb-2">
+<div class="card komentar-wrapper mb-2">
     @* Hlavička komentáře s metadaty a tlačítky *@
-    <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-2 hlavicka-komentare">
         @* Levá část - informace o autorovi a času *@
-        <div class="text-muted small">
+        <div class="text-muted hlavicka-komentare-leva-cast small">
             <i class="bi bi-person"></i> <a asp-page="/Account/Profile" asp-route-nickname="@Model.AuthorNickname">@Model.AuthorNickname</a>
             <span class="mx-2">•</span>
             @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
@@ -90,7 +90,7 @@
     @* Odpovědi na komentář *@
     @foreach (var reply in Model.Replies.OrderBy(r => r.UpdatedAt))
     {
-        <div class="card-body border-top ms-2 p-2">
+        <div class="card-body odpoved-na-komentar border-top">
             @* Hlavička odpovědi *@
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <div class="text-muted small">
