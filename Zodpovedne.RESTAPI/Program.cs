@@ -157,10 +157,11 @@ namespace Zodpovedne.RESTAPI
                     {
                         if (builder.Environment.IsDevelopment())
                         {
-                            policy.WithOrigins("http://localhost:5214")
-                                 .AllowAnyMethod()
-                                 .AllowAnyHeader()
-                                 .AllowCredentials();
+                            policy
+                                .SetIsOriginAllowed(origin => true) // Povolí jakýkoliv origin v development módu
+                                .AllowAnyMethod()
+                                .AllowAnyHeader()
+                                .AllowCredentials();
                         }
                         else
                         {
