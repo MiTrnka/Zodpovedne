@@ -35,10 +35,12 @@
             }
             else
             {
-                <span class="text-muted">
-                    <i class="bi bi-heart-disable"></i>
-                    @Model.Likes.LikeCount
-                </span>
+                <button class="btn btn-sm like-btn-disable">
+                    <span class="text-muted">
+                        <i class="bi bi-heart-fill"></i>
+                        @Model.Likes.LikeCount
+                    </span>
+                </button>
             }
 
             @* Admin tlačítko pro viditelnost *@

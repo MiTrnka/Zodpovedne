@@ -13,13 +13,12 @@
     --text-color: #666666; /* šedivá barva */
     --light-text-color: #F2EFF0; /* světle šedivá */
 }
-.roboto-slab-<uniquifier > {
-    font-family: "Roboto Slab", serif;
-    font-optical-sizing: auto;
-    font-weight: <weight>;
+@font-face {
+    font-family: 'Bookman Old Style'; 
+    src: url('font/BOOKOS.ttf') format('truetype');
+    font-weight: normal;
     font-style: normal;
 }
-
 
 /* Reset a základní nastavení (platí pro všechny velikosti) */
 html {
@@ -35,8 +34,8 @@ body {
 }
 
 h1, h2, h3, h4, h5 {
-    font-family: 'Roboto Slab';
-    font-weight: 600;
+    font-family: 'Bookman Old Style';
+    font-weight: 400;
     color: #333333;
 }
 
@@ -150,11 +149,11 @@ a {
     border-color: var(--primary-color);
 }
 
-.btn-primary:active:focus {
-    outline: none;
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--primary-color);
-    border-color: var(--primary-color);
-}
+    .btn-primary:active:focus, .btn-outline-primary:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--primary-color);
+        border-color: var(--primary-color);
+    }
 
     .btn-primary:hover {
         background-color: var(--primary-color-hover);
@@ -165,6 +164,27 @@ a {
         background-color: var(--light-primary-color);
         border-color: var(--light-primary-color);
     }
+.top-star{
+    display: flex;
+    align-items:center;
+}
+.pocetZobrazeni {
+    display: flex;
+    margin-top: -8px;
+    gap: 5px;
+    color: var(--primary-color);
+}
+.like-btn-footer, .like-btn-disable, .like-btn{
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    color: var(--primary-color) !important;
+}
+
+.like-btn-disable i:before, .like-btn i:before, .like-btn-disable *, .like-btn *{
+    color: var(--primary-color) !important;
+}
+
 
 .btn:focus,
 .btn:active:focus {
@@ -173,12 +193,32 @@ a {
     border-color: var(--primary-color);
 }
 
+.btn-outline-primary-invert {
+    border: 1.5px solid white;
+    color: white;
+}
+.btn-outline-primary {
+    border: 1.5px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
+    color: white !important;
+    background-color: var(--light-primary-color-ultra-light) !important;
+    border: 1.5px solid var(--primary-color) !important;
+}
+
 /* Navigace */
 .nav-link:hover {
     position: relative;
 }
 
-
+#discussion-likes-count{
+    color: var(--primary-color);
+}
+.detail-diskuse-dolni-btn-wrapper i {
+    color: var(--primary-color);
+}
 /* Styl pro hover efekt - postupně se objevující jednoduché podtržení */
 .nav-link:not(.active):hover::after {
     content: '';
@@ -690,17 +730,12 @@ h1 {
     justify-content: space-between;
 }
 
-.like-btn {
-    color: var(--secondary-color);
-}
+
 .like-btn-disable, .like-btn[disabled] {
     color: var(--text-color);
 }
-.like-btn-footer {
-    color: white;
-}
-    .like-btn-footer:hover {
-        color: white;
+    .like-btn-disable i {
+        color: var(--text-color);
     }
 
 .text-editor-head span[title="Autor"], span[title="Autor"] a{
@@ -737,6 +772,9 @@ h1 {
     .user-list-item {
         grid-template-columns: 1fr 1fr 1fr;
     }
+    .pocetZobrazeni {
+        margin-top: 0px;
+    }
 }
 
 /* Styly pro větší tablety a menší notebooky (≥768px) */
@@ -760,6 +798,7 @@ h1 {
     .logo-container img {
         width: 200px;
     }
+
 }
 
 /* Styly pro notebooky a desktopy (≥992px) */

@@ -203,7 +203,7 @@ async function likeDiscussion(discussionId) {
             if (!result.canUserLike) {
                 const button = document.querySelector(`button[onclick="likeDiscussion(${discussionId})"]`);
                 button.disabled = true;
-                button.classList.replace('btn-outline-primary', 'btn-outline-secondary');
+                button.classList.replace('like-btn', 'like-btn-disable');
             }
         } else {
             alert('Nepodařilo se přidat like.');
@@ -232,7 +232,7 @@ async function likeComment(discussionId, commentId) {
             if (!result.canUserLike) {
                 const button = document.querySelector(`button[onclick="likeComment(${discussionId}, ${commentId})"]`);
                 button.disabled = true;
-                button.classList.replace('btn-outline-primary', 'btn-outline-secondary');
+                button.classList.replace('like-btn', 'like-btn-disable');
             }
         } else {
             alert('Nepodařilo se přidat like.');

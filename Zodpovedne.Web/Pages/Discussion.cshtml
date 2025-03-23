@@ -52,7 +52,7 @@
                             <div class="mt-3">
                                 <form method="post" asp-page-handler="ChangeCategory" onsubmit="return confirmCategoryChange()">
                                     <div class="input-group">
-                                        <select id="categorySelect" name="newCategoryId" class="form-select">
+                                        <select id="categorySelect" name="newCategoryId" class="form-select mb-3">
                                             <option value="">-- Vyberte kategorii --</option>
                                             @foreach (var category in Model.AllCategories)
                                             {
@@ -62,7 +62,7 @@
                                                 </option>
                                             }
                                         </select>
-                                        <button type="submit" class="btn btn-outline-primary">
+                                        <button type="submit" class="btn btn-outline-primary-invert mb-3">
                                             Změnit kategorii
                                         </button>
                                     </div>
@@ -83,11 +83,7 @@
                             <span title="Datum aktualizace"> <!-- Tady je potřeba udělat podmínku pro zobrazení hodnoty ohledně upraveno -->
                                 <i class="bi bi-pencil"></i> <span id="discussionUpdatedAtValue">@Model.Discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
                             </span>
-                            <span>&nbsp;</span>
-                            <span title="Počet zobrazení">
-                                <i class="bi bi-eye"></i> @Model.Discussion.ViewCount
-                            </span>
-                           
+
                             @if (Model.Discussion.Type == DiscussionType.Hidden)
                             {
                                 //<span class="badge bg-warning ms-2">Tvá diskuze je skrytá</span>
@@ -113,22 +109,35 @@
 
                     @* Panel s tlačítky pro like, editaci a změnu viditelnosti *@
                     <div class="card-footer text-editor-footer d-flex align-items-center">
-                        <div class="d-flex justify-content-between w-100 gap-2">
+                        <div class="d-flex w-100 gap-1 detail-diskuse-dolni-btn-wrapper">
                             @* Tlačítko Like *@
                             @if (Model.CanLikeDiscussion)
                             {
                                 <button class="btn like-btn-footer @Model.GetLikeButtonClass(Model.Discussion.Likes.CanUserLike)"
-                                        onclick="likeDiscussion(@Model.Discussion.Id)"
-                                        @(!Model.Discussion.Likes.CanUserLike ? "disabled" : "")>
-                                    <i class="bi bi-heart"></i>
+                                onclick="likeDiscussion(@Model.Discussion.Id)"
+                                @(!Model.Discussion.Likes.CanUserLike ? "disabled" : "")>
+                                    @* Pokud okud uživatle může likovat vloží se nevyplněné srdce, pokud nemůže likovat srdce bude vyplněné *@
+                                    @if (Model.Discussion.Likes.CanUserLike)
+                                    {
+                                        <text><i class="bi bi-heart"></i></text>
+                                    }
+                                    else{
+                                        <text><i class="bi bi-heart-fill"></i></text>
+                                    }
                                     <span id="discussion-likes-count">@Model.Discussion.Likes.LikeCount</span>
                                 </button>
+                                <span title="Počet zobrazení" class="d-flex align-items-center pocetZobrazeni">
+                                    <i class="bi bi-eye"></i> @Model.Discussion.ViewCount
+                                </span>
                             }
                             else
                             {
                                 <span class="text-muted like-btn-disable">
-                                    <i class="bi bi-heart"></i>
+                                    <i class="bi bi-heart-fill"></i>
                                     @Model.Discussion.Likes.LikeCount
+                                </span>
+                                <span title="Počet zobrazení" class="d-flex align-items-center pocetZobrazeni">
+                                    <i class="bi bi-eye"></i> @Model.Discussion.ViewCount
                                 </span>
                             }
                             @if (Model.Discussion.Type == DiscussionType.Top)
@@ -137,19 +146,18 @@
                                 {
                                     <span class="ms-1 top-star">@*TOP*@
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25">
-                                            <!-- Pěticípá hvězda -->
-                                            <path d="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
-                                                  fill="#FFB5B5"
-                                                  stroke="#e06f70"
-                                                  stroke-width="0.5" />
 
-                                            <!-- Text TOP -->
+                                            <path d="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
+                                            fill="#FFB5B5"
+                                            stroke="#e06f70"
+                                            stroke-width="0.5" />
+
                                             <text x="12" y="14"
-                                                  font-family="Arial, sans-serif"
-                                                  font-weight="bold"
-                                                  font-size="4.5"
-                                                  text-anchor="middle"
-                                                  fill="#d15657">TOP</text>
+                                            font-family="Arial, sans-serif"
+                                            font-weight="bold"
+                                            font-size="4.5"
+                                            text-anchor="middle"
+                                            fill="#d15657">TOP</text>
                                         </svg>
                                     </span>
                                 }
@@ -157,10 +165,10 @@
                             @* Tlačítko pro změnu viditelnosti (pouze pro adminy) *@
                             @if (Model.IsAdmin)
                             {
-                                <button class="btn @(Model.Discussion.Type == DiscussionType.Hidden ? "btn-warning" : "btn-outline-warning")"
-                                        onclick="toggleDiscussionVisibility(@Model.Discussion.Id)">
+                                <button class="btn @(Model.Discussion.Type == DiscussionType.Hidden ? "btn-outline-primary" : "btn-outline-primary")"
+                                onclick="toggleDiscussionVisibility(@Model.Discussion.Id)">
                                     <i class="bi bi-eye@(Model.Discussion.Type == DiscussionType.Hidden ? "" : "-slash")"></i>
-                                    @(Model.Discussion.Type == DiscussionType.Hidden ? "Odkryj" : "Skryj")
+
                                 </button>
                             }
 
@@ -169,8 +177,54 @@
                             {
                                 <button class="btn @(Model.Discussion.Type == DiscussionType.Top ? "btn-outline-primary" : "btn-outline-primary")"
                                         onclick="toggleTopStatus(@Model.Discussion.Id)">
-                                    <i class="bi bi-star@(Model.Discussion.Type == DiscussionType.Top ? "-fill" : "")"></i>
-                                    @(Model.Discussion.Type == DiscussionType.Top ? "Zrušit" : "Nastavit")
+                                    @if (Model.Discussion.Type == DiscussionType.Top)
+                                    {
+                                        <text>
+                                            <span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25">
+                                                    <path d="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
+                                                          fill="#FFB5B5"
+                                                          stroke="#e06f70"
+                                                          stroke-width="0.5" />
+
+                                                    <text x="12" y="14"
+                                                          font-family="Arial, sans-serif"
+                                                          font-weight="bold"
+                                                          font-size="4.5"
+                                                          text-anchor="middle"
+                                                          fill="#d15657">TOP</text>
+
+                                                    <line x1="2" y1="2" x2="22" y2="22"
+                                                          stroke="#e06f70"
+                                                          stroke-width="1"
+                                                          stroke-linecap="round" />
+                                                </svg>
+                                            </span>
+                                        </text>
+                                    }
+                                    else
+                                    {
+                                        <text>
+                                            <span class="ms-1 top-star">
+                                                @*TOP*@
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25">
+                                                    <path d="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
+                                                          fill="#FFB5B5"
+                                                          stroke="#e06f70"
+                                                          stroke-width="0.5" />
+
+                                                    <text x="12" y="14"
+                                                          font-family="Arial, sans-serif"
+                                                          font-weight="bold"
+                                                          font-size="4.5"
+                                                          text-anchor="middle"
+                                                          fill="#d15657">TOP</text>
+                                                </svg>
+                                            </span>
+                                        </text>
+                                    }
+
+
                                 </button>
                             }
                         </div>
@@ -180,7 +234,7 @@
                         {
                             <div class="btn-group">
                                 <button id="edit-discussion-btn" class="btn btn-primary" onclick="toggleDiscussionEdit(true)">
-                                    <i class="bi bi-pencil"></i> Upravit
+                                    <i class="bi bi-pencil"></i>
                                 </button>
                                 <button id="save-discussion-btn" class="btn btn-success d-none" onclick="saveDiscussionChanges(@Model.Discussion.Id, @((int)Model.Discussion.Type))">
                                     <i class="bi bi-check"></i> Uložit
