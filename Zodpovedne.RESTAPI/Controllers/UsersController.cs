@@ -123,7 +123,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Vrátí informace o přihlášeném uživateli
+    /// Vrátí informace o uživateli
     /// </summary>
     /// <returns></returns>
     [HttpGet("{nickname}")]

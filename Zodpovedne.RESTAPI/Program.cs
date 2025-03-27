@@ -41,6 +41,8 @@ namespace Zodpovedne.RESTAPI
                     options.ListenAnyIP(5001); // Port, na kterém bude API poslouchat
                 });
                 // nastavuje, kam se budou ukládat šifrovací klíèe pro ASP.NET Core DataProtection
+                // možná komplikace, pokud API bude bìžet na více serverech, protože klíèe nebudou sdíleny
+                // v takovém pøípadì je do budoucna lepší použít nìjaký externí úložištì, napø. Azure Key Vault
                 builder.Services.AddDataProtection()
                     .PersistKeysToFileSystem(new DirectoryInfo("/var/www/zodpovedne/keys"));
             }
@@ -79,21 +81,18 @@ namespace Zodpovedne.RESTAPI
             {
                 // Maximální velikost jedné položky v cache je 10 MB. Pokud by nìjaká HTTP odpovìï mìla vìtší velikost, nebude cachována.
                 options.MaximumBodySize = 10 * 1024 * 1024;
-                // celková maximální velikost všech položek v cache je 100 MB. Když tento limit bude pøekroèen, nejstarší nebo nejménì používané položky budou odstranìny z cache.
-                options.SizeLimit = 100 * 1024 * 1024;
+                // celková maximální velikost všech položek v cache je 1000 MB. Když tento limit bude pøekroèen, nejstarší nebo nejménì používané položky budou odstranìny z cache.
+                options.SizeLimit = 1000 * 1024 * 1024;
             });
 
             // Registrace služeb z projektu Data
             //builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
 
-            // Konfigurace/registrace datové vrstvy (DBContext, Identity)
+            // Naètení connection stringu z konfigurace
             string? connectionString = configuration.GetConnectionString("DefaultConnection");
-
-            // Pokud se ani jeden zpùsob nepodaøil, vyhodíme výjimku
             if (string.IsNullOrEmpty(connectionString))
                 throw new InvalidOperationException("Connection string 'DefaultConnection' není nastaven v konfiguraci Data projektu.");
-
 
             // Registrace DbContextu
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -148,7 +147,6 @@ namespace Zodpovedne.RESTAPI
             });
 
 
-
             // Pøidání CORS do kontejneru služeb
             builder.Services.AddCors(options =>
             {
@@ -190,25 +188,28 @@ namespace Zodpovedne.RESTAPI
             builder.Services.AddScoped<IEmailService, EmailService>();
 
             builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
 
-            // Registrace Swaggeru, v produkci zakomentovat, v závorce je nepovinná èást, která konfiguruje pouze to, abych mohl vložit token v Swaggeru do hlavièky Authorization
-            builder.Services.AddSwaggerGen(c =>
+            if (builder.Environment.IsDevelopment())
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Zodpovedne API", Version = "v1" });
+                builder.Services.AddEndpointsApiExplorer();
 
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                // Registrace Swaggeru, v produkci zakomentovat, v závorce je nepovinná èást, která konfiguruje pouze to, abych mohl vložit token v Swaggeru do hlavièky Authorization
+                builder.Services.AddSwaggerGen(c =>
                 {
-                    Description = "JWT Authorization header. Just enter the token",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.Http,  // Zmìna zde
-                    Scheme = "bearer",  // a zde
-                    BearerFormat = "JWT"
-                });
+                    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Zodpovedne API", Version = "v1" });
 
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
+                    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        Description = "JWT Authorization header. Just enter the token",
+                        Name = "Authorization",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.Http,  // Zmìna zde
+                        Scheme = "bearer",  // a zde
+                        BearerFormat = "JWT"
+                    });
+
+                    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
                     {
                         new OpenApiSecurityScheme
                         {
@@ -220,8 +221,9 @@ namespace Zodpovedne.RESTAPI
                         },
                         Array.Empty<string>()
                     }
+                    });
                 });
-            });
+            }
 
             // Pøidáme tøídu pro logování
             builder.Services.AddSingleton<FileLogger>();

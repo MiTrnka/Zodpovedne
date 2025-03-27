@@ -78,7 +78,7 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Načte netrackovaný seznam dostupných diskuzí s možností filtrování podle kategorie a stránkování.
+    /// Načte pro zadanou kategorii netrackovaný seznam dostupných diskuzí s možností stránkování.
     /// Poskytuje základní informace o diskuzích včetně počtu komentářů a lajků.
     /// Respektuje viditelnost obsahu podle typu uživatele.
     /// </summary>

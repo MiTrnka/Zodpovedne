@@ -12,6 +12,16 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        int expirationInHours = 6;
+        try
+        {
+            expirationInHours = builder.Configuration.GetValue<int>("ExpirationInHours");
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("ExpirationInHours není nastaveno v appsettings.json, použije se výchozí hodnota 6 hodin");
+        }
+
         // Podmíneèná konfigurace podle prostøedí
         if (builder.Environment.IsDevelopment())
         {
@@ -48,7 +58,7 @@ public class Program
                options.LogoutPath = "/Account/Logout";
 
                // Doba platnosti cookie
-               options.ExpireTimeSpan = TimeSpan.FromHours(12);
+               options.ExpireTimeSpan = TimeSpan.FromHours(expirationInHours);
 
                // Událost která se spustí pøi pøihlášení uživatele
                // Protože nìkteré claimy z JWT tokenù se nenamapují automaticky, je potøeba je pøidat ruènì
@@ -85,7 +95,7 @@ public class Program
         builder.Services.AddDistributedMemoryCache();
         builder.Services.AddSession(options =>
         {
-            options.IdleTimeout = TimeSpan.FromHours(12);
+            options.IdleTimeout = TimeSpan.FromHours(expirationInHours);
             options.Cookie.HttpOnly = true;
             options.Cookie.IsEssential = true;
         });
