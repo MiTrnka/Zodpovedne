@@ -5,20 +5,20 @@ using Zodpovedne.Contracts.Enums;
 namespace Zodpovedne.Data.Models;
 
 /// <summary>
-/// Povolení pro zasílání zpráv mezi uživateli.
+/// Stav přátelství mezi 2 uživateli.
 /// </summary>
-public class MessagingPermission
+public class Friendship
 {
     public int Id { get; set; }
 
     /// <summary>
-    /// ID uživatele, který je/byl žádán o udělení povolení s ním komunikovat.
+    /// ID uživatele, který je/byl žádán o přátelství.
     /// </summary>
     [Required]
-    public string GranterUserId { get; set; } = "";
+    public string ApproverUserId { get; set; } = "";
 
     /// <summary>
-    /// ID uživatele, který žádá/žádal o povolení
+    /// ID uživatele, který žádá/žádal o přátelství
     /// </summary>
     [Required]
     public string RequesterUserId { get; set; } = "";
@@ -26,14 +26,14 @@ public class MessagingPermission
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
-    /// Typ/stav povolení (nové, schváleno, zamítnuto...).
+    /// Stav přátelství
     /// </summary>
     [Required]
-    public MessagingPermissionType MessagingPermissionType { get; set; } = MessagingPermissionType.New;
+    public FriendshipStatus FriendshipStatus { get; set; } = FriendshipStatus.Requested;
 
     // Navigační vlastnosti
-    [ForeignKey("GranterUserId")]
-    public virtual ApplicationUser GranterUser { get; set; } = null!;
+    [ForeignKey("ApproverUserId")]
+    public virtual ApplicationUser ApproverUser { get; set; } = null!;
 
     [ForeignKey("RequesterUserId")]
     public virtual ApplicationUser RequesterUser { get; set; } = null!;

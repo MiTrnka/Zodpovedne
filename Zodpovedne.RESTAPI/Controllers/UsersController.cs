@@ -1085,4 +1085,107 @@ public class UsersController : ControllerBase
         var user = await this.userManager.FindByEmailAsync(email);
         return user;
     }
+
+
+
+    /// <summary>
+    /// Endpoint pro získání stavu přátelství mezi dvěma uživateli.
+    /// Vrací null, pokud záznam o přátelství neexistuje, nebo stav přátelství.
+    /// </summary>
+    /// <param name="targetUserId">ID cílového uživatele, u kterého zjišťujeme stav přátelství</param>
+    /// <returns>Status přátelství nebo null, pokud neexistuje</returns>
+    [Authorize]
+    [HttpGet("friendship-status/{targetUserId}")]
+    public async Task<ActionResult<FriendshipStatus?>> GetFriendshipStatus(string targetUserId)
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele (žadatele)
+            var requesterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(requesterId))
+                return Unauthorized();
+
+            // Kontrola, že nejde o žádost na zjištění přátelství se sebou samým
+            if (requesterId == targetUserId)
+                return BadRequest("Nelze zjistit stav přátelství sám se sebou.");
+
+            // Vyhledání záznamu přátelství v obou směrech
+            // (buď přihlášený je žadatel, nebo je schvalovatel)
+            var friendship = await dbContext.Friendships
+                .FirstOrDefaultAsync(f =>
+                    (f.ApproverUserId == targetUserId && f.RequesterUserId == requesterId) ||
+                    (f.ApproverUserId == requesterId && f.RequesterUserId == targetUserId));
+
+            // Pokud záznam neexistuje, vrátíme null
+            if (friendship == null)
+                return Ok((FriendshipStatus?)null);
+
+            // Jinak vrátíme status přátelství
+            return Ok(friendship.FriendshipStatus);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při zjišťování stavu přátelství", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Endpoint pro vytvoření žádosti o přátelství.
+    /// Před vytvořením kontroluje, zda již nějaká vazba mezi uživateli neexistuje.
+    /// </summary>
+    /// <param name="targetUserId">ID cílového uživatele, kterému zasíláme žádost</param>
+    /// <returns>Výsledek operace</returns>
+    [Authorize]
+    [HttpPost("request-friendship/{targetUserId}")]
+    public async Task<IActionResult> RequestFriendship(string targetUserId)
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele (žadatele)
+            var requesterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(requesterId))
+                return Unauthorized();
+
+            // Kontrola, že uživatel nežádá o přátelství sám sebe
+            if (requesterId == targetUserId)
+                return BadRequest("Nelze žádat o přátelství sám sebe.");
+
+            // Kontrola existence cílového uživatele
+            var targetUser = await userManager.FindByIdAsync(targetUserId);
+            if (targetUser == null)
+                return NotFound("Uživatel nebyl nalezen.");
+
+            // Kontrola existence vazby přátelství v obou směrech
+            var existingFriendship = await dbContext.Friendships
+                .FirstOrDefaultAsync(f =>
+                    (f.ApproverUserId == targetUserId && f.RequesterUserId == requesterId) ||
+                    (f.ApproverUserId == requesterId && f.RequesterUserId == targetUserId));
+
+            // Pokud vazba už existuje, vrátíme chybu
+            if (existingFriendship != null)
+                return BadRequest("Žádost o přátelství nebo přátelství již existuje.");
+
+            // Vytvoření nové žádosti o přátelství
+            var friendship = new Friendship
+            {
+                RequesterUserId = requesterId,    // ID žadatele (přihlášený uživatel)
+                ApproverUserId = targetUserId,    // ID schvalovatele (cílový uživatel)
+                FriendshipStatus = FriendshipStatus.Requested,  // Počáteční stav - žádost odeslána
+                CreatedAt = DateTime.UtcNow       // Aktuální čas vytvoření
+            };
+
+            // Přidání do databáze a uložení změn
+            dbContext.Friendships.Add(friendship);
+            await dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vytváření žádosti o přátelství", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
 }

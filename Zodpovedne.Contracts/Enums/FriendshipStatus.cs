@@ -1,8 +1,8 @@
 ﻿namespace Zodpovedne.Contracts.Enums;
 
-public enum MessagingPermissionType
+public enum FriendshipStatus
 {
-    New = 0,
+    Requested = 0,
     Approved = 1,
     Denied = 2
 }

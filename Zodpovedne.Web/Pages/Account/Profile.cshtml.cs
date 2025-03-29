@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
+using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Logging;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Models.Base;
@@ -12,6 +13,27 @@ namespace Zodpovedne.Web.Pages.Account
         public UserProfileDto? UserProfile { get; set; }
         // Seznam diskuzí uživatele
         public List<BasicDiscussionInfoDto> UserDiscussions { get; set; } = new();
+
+        /// <summary>
+        /// Informace o stavu pøátelství mezi pøihlášeným uživatelem a zobrazeným uživatelem.
+        /// Null znamená, že žádný vztah zatím neexistuje.
+        /// </summary>
+        public FriendshipStatus? FriendshipStatus { get; private set; }
+
+        /// <summary>
+        /// Indikuje, zda pøihlášený uživatel mùže odeslat žádost o pøátelství tomuto uživateli.
+        /// </summary>
+        public bool CanRequestFriendship =>
+            // Mùže požádat pokud: 
+            IsUserLoggedIn &&                               // Je pøihlášený
+            UserProfile?.Id != CurrentUserId &&             // Není to jeho vlastní profil
+            FriendshipStatus == null;                       // A žádný vztah zatím neexistuje
+
+        /// <summary>
+        /// Indikuje, zda již byla odeslána žádost o pøátelství, na kterou èekáme odpovìï.
+        /// </summary>
+        public bool HasPendingFriendshipRequest =>
+            FriendshipStatus == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested;
 
         public ProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
         {
@@ -26,16 +48,16 @@ namespace Zodpovedne.Web.Pages.Account
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.Log("Nepodaøilo se naèíst data pøihlášeného uživatele.");
-                ErrorMessage = "Omlouváme se, nepodaøilo se naèíst Váš profil.";
+                _logger.Log("Nepodaøilo se naèíst data uživatele.");
+                ErrorMessage = "Omlouváme se, nepodaøilo se naèíst profil uživatele.";
                 return Page();
             }
 
             UserProfile = await response.Content.ReadFromJsonAsync<UserProfileDto>();
             if (UserProfile == null)
             {
-                _logger.Log("Nepodaøilo se naèíst data pøihlášeného uživatele z response.");
-                ErrorMessage = "Omlouváme se, nepodaøilo se naèíst Váš profil.";
+                _logger.Log("Nepodaøilo se naèíst data uživatele z response.");
+                ErrorMessage = "Omlouváme se, nepodaøilo se naèíst profil uživatele.";
                 return Page();
             }
 
@@ -58,7 +80,64 @@ namespace Zodpovedne.Web.Pages.Account
                 // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst diskuze
             }
 
+            // Zjištìní stavu pøátelství - pouze pokud je uživatel pøihlášen a není to jeho vlastní profil
+            if (IsUserLoggedIn && UserProfile.Id != CurrentUserId)
+            {
+                try
+                {
+                    // Volání API pro zjištìní stavu pøátelství
+                    var friendshipResponse = await client.GetAsync($"{ApiBaseUrl}/users/friendship-status/{UserProfile.Id}");
+                    if (friendshipResponse.IsSuccessStatusCode)
+                    {
+                        // Naètení stavu pøátelství z odpovìdi
+                        FriendshipStatus = await friendshipResponse.Content.ReadFromJsonAsync<FriendshipStatus?>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log("Nepodaøilo se naèíst stav pøátelství", ex);
+                    // Nebudeme zobrazovat chybu, FriendshipStatus zùstane null
+                }
+            }
+
             return Page();
+        }
+
+        /// <summary>
+        /// Handler pro odeslání žádosti o pøátelství
+        /// </summary>
+        /// <param name="targetUserId">ID uživatele, kterému se odesílá žádost</param>
+        /// <param name="nickname">Pøezdívka uživatele, na jehož profilu se nacházíme</param>
+        public async Task<IActionResult> OnPostRequestFriendshipAsync(string targetUserId, string nickname)
+        {
+            try
+            {
+                // Vytvoøení klienta s autorizaèním tokenem
+                var client = _clientFactory.CreateBearerClient(HttpContext);
+
+                // Odeslání POST požadavku na vytvoøení žádosti o pøátelství
+                var response = await client.PostAsync($"{ApiBaseUrl}/users/request-friendship/{targetUserId}", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Nastavení informace o úspìchu pro uživatele
+                    StatusMessage = "Žádost o pøátelství byla úspìšnì odeslána.";
+                }
+                else
+                {
+                    // Zpracování chybové odpovìdi z API
+                    ErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nepodaøilo se odeslat žádost o pøátelství.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Logování chyby a zobrazení hlášky uživateli
+                _logger.Log("Chyba pøi odesílání žádosti o pøátelství", ex);
+                ErrorMessage = "Pøi odesílání žádosti došlo k chybì. Zkuste to prosím pozdìji.";
+            }
+
+            // Pøesmìrování zpìt na profil uživatele, aby vidìl zmìnu stavu tlaèítka
+            return RedirectToPage(new { nickname = nickname });
         }
     }
 }

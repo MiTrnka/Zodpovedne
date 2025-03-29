@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
+/// <summary>
+/// Kontroller pro práci s privátními zprávami
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class MessagesController : ControllerBase

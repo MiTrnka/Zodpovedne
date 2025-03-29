@@ -26,7 +26,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Comment> Comments { get; set; }
     public DbSet<DiscussionLike> DiscussionLikes { get; set; }
     public DbSet<CommentLike> CommentLikes { get; set; }
-    public DbSet<MessagingPermission> MessagingPermissions { get; set; }
+    public DbSet<Friendship> Friendships { get; set; }
     public DbSet<Message> Messages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -142,24 +142,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         });
 
         // Konfigurace AllowedMessagingPermission s kaskádovým mazáním
-        builder.Entity<MessagingPermission>(entity =>
+        builder.Entity<Friendship>(entity =>
         {
-            entity.ToTable("MessagingPermissions"); // Název tabulky
+            entity.ToTable("Friendships"); // Název tabulky
 
             // Vztah k uživateli, který povolení uděluje (Granter)
-            entity.HasOne(mp => mp.GranterUser)
+            entity.HasOne(f => f.ApproverUser)
                   .WithMany()
-                  .HasForeignKey(mp => mp.GranterUserId)
+                  .HasForeignKey(f => f.ApproverUserId)
                   .OnDelete(DeleteBehavior.Cascade); // Při smazání uživatele se smaže i toto povolení
 
             // Vztah k uživateli/žadateli, kterému je povolení uděleno
-            entity.HasOne(mp => mp.RequesterUser)
+            entity.HasOne(f => f.RequesterUser)
                   .WithMany()
-                  .HasForeignKey(mp => mp.RequesterUserId)
+                  .HasForeignKey(f => f.RequesterUserId)
                   .OnDelete(DeleteBehavior.Cascade); // Při smazání uživatele se smaže i toto povolení
 
             // Unikátní index pro kombinaci GranterUserId a AllowedUserId, aby nemohlo být stejné povolení zadáno vícekrát
-            entity.HasIndex(mp => new { mp.GranterUserId, mp.RequesterUserId }).IsUnique();
+            entity.HasIndex(mp => new { mp.ApproverUserId, mp.RequesterUserId }).IsUnique();
         });
 
         // Konfigurace Message s kaskádovým mazáním
