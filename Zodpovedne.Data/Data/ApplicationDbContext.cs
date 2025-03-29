@@ -26,6 +26,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Comment> Comments { get; set; }
     public DbSet<DiscussionLike> DiscussionLikes { get; set; }
     public DbSet<CommentLike> CommentLikes { get; set; }
+    public DbSet<MessagingPermission> AllowedMessagingPermissions { get; set; }
+    public DbSet<Message> Messages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -137,6 +139,56 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(cl => cl.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+        });
+
+        // Konfigurace AllowedMessagingPermission s kaskádovým mazáním
+        builder.Entity<MessagingPermission>(entity =>
+        {
+            entity.ToTable("MessagingPermissions"); // Název tabulky
+
+            // Vztah k uživateli, který povolení dává (Granter)
+            entity.HasOne(amp => amp.GranterUser)
+                  .WithMany() // Pokud bys chtěl v ApplicationUser kolekci GrantedPermissions, přidej ji a sem dej WithMany(u => u.GrantedPermissions)
+                  .HasForeignKey(amp => amp.GranterUserId)
+                  .OnDelete(DeleteBehavior.Cascade); // Při smazání uživatele se smaže i toto povolení
+
+            // Vztah k uživateli, kterému je povolení dáno (Allowed)
+            entity.HasOne(amp => amp.AllowedUser)
+                  .WithMany() // Pokud bys chtěl v ApplicationUser kolekci AllowedToMessage, přidej ji a sem dej WithMany(u => u.AllowedToMessage)
+                  .HasForeignKey(amp => amp.AllowedUserId)
+                  .OnDelete(DeleteBehavior.Cascade); // Při smazání uživatele se smaže i toto povolení
+
+            // Unikátní index pro kombinaci GranterUserId a AllowedUserId, aby nemohlo být stejné povolení zadáno vícekrát
+            entity.HasIndex(amp => new { amp.GranterUserId, amp.AllowedUserId }).IsUnique();
+        });
+
+        // Konfigurace Message s kaskádovým mazáním
+        builder.Entity<Message>(entity =>
+        {
+            entity.ToTable("Messages"); // Název tabulky
+
+            // Vztah k odesílateli
+            entity.HasOne(m => m.SenderUser)
+                  .WithMany() // Pokud bys chtěl v ApplicationUser kolekci SentMessages, přidej ji a sem dej WithMany(u => u.SentMessages)
+                  .HasForeignKey(m => m.SenderUserId)
+                  .OnDelete(DeleteBehavior.Cascade); // Při smazání odesílatele se smaže i zpráva
+
+            // Vztah k příjemci
+            entity.HasOne(m => m.RecipientUser)
+                  .WithMany() // Pokud bys chtěl v ApplicationUser kolekci ReceivedMessages, přidej ji a sem dej WithMany(u => u.ReceivedMessages)
+                  .HasForeignKey(m => m.RecipientUserId)
+                  .OnDelete(DeleteBehavior.Cascade); // Při smazání příjemce se smaže i zpráva
+
+            // Index pro rychlejší hledání zpráv podle času odeslání (užitečné)
+            entity.HasIndex(m => m.SentAt);
+
+            // Index pro rychlejší hledání konverzace mezi dvěma uživateli
+            entity.HasIndex(m => new { m.SenderUserId, m.RecipientUserId });
+            entity.HasIndex(m => new { m.RecipientUserId, m.SenderUserId }); // I pro opačný směr
+
+            // INDEX pro seskupování/filtrování podle jednoho uživatele !!!
+            entity.HasIndex(m => m.SenderUserId);     // Pro rychlé hledání zpráv ODESLANÝCH uživatelem
+            entity.HasIndex(m => m.RecipientUserId);  // Pro rychlé hledání zpráv PŘIJATÝCH uživatelem
         });
     }
 }
