@@ -12,16 +12,16 @@ public class MessagingPermission
     public int Id { get; set; }
 
     /// <summary>
-    /// ID uživatele, který UDĚLUJE povolení (ten, komu mohou ostatní psát).
+    /// ID uživatele, který je/byl žádán o udělení povolení s ním komunikovat.
     /// </summary>
     [Required]
     public string GranterUserId { get; set; } = "";
 
     /// <summary>
-    /// ID uživatele, kterému JE UDĚLENO povolení (ten, kdo může psát Granter uživateli).
+    /// ID uživatele, který žádá/žádal o povolení
     /// </summary>
     [Required]
-    public string AllowedUserId { get; set; } = "";
+    public string RequesterUserId { get; set; } = "";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -35,6 +35,6 @@ public class MessagingPermission
     [ForeignKey("GranterUserId")]
     public virtual ApplicationUser GranterUser { get; set; } = null!;
 
-    [ForeignKey("AllowedUserId")]
-    public virtual ApplicationUser AllowedUser { get; set; } = null!;
+    [ForeignKey("RequesterUserId")]
+    public virtual ApplicationUser RequesterUser { get; set; } = null!;
 }

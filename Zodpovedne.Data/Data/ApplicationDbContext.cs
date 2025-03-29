@@ -26,7 +26,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Comment> Comments { get; set; }
     public DbSet<DiscussionLike> DiscussionLikes { get; set; }
     public DbSet<CommentLike> CommentLikes { get; set; }
-    public DbSet<MessagingPermission> AllowedMessagingPermissions { get; set; }
+    public DbSet<MessagingPermission> MessagingPermissions { get; set; }
     public DbSet<Message> Messages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -146,20 +146,20 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.ToTable("MessagingPermissions"); // Název tabulky
 
-            // Vztah k uživateli, který povolení dává (Granter)
-            entity.HasOne(amp => amp.GranterUser)
-                  .WithMany() // Pokud bys chtěl v ApplicationUser kolekci GrantedPermissions, přidej ji a sem dej WithMany(u => u.GrantedPermissions)
-                  .HasForeignKey(amp => amp.GranterUserId)
+            // Vztah k uživateli, který povolení uděluje (Granter)
+            entity.HasOne(mp => mp.GranterUser)
+                  .WithMany()
+                  .HasForeignKey(mp => mp.GranterUserId)
                   .OnDelete(DeleteBehavior.Cascade); // Při smazání uživatele se smaže i toto povolení
 
-            // Vztah k uživateli, kterému je povolení dáno (Allowed)
-            entity.HasOne(amp => amp.AllowedUser)
-                  .WithMany() // Pokud bys chtěl v ApplicationUser kolekci AllowedToMessage, přidej ji a sem dej WithMany(u => u.AllowedToMessage)
-                  .HasForeignKey(amp => amp.AllowedUserId)
+            // Vztah k uživateli/žadateli, kterému je povolení uděleno
+            entity.HasOne(mp => mp.RequesterUser)
+                  .WithMany()
+                  .HasForeignKey(mp => mp.RequesterUserId)
                   .OnDelete(DeleteBehavior.Cascade); // Při smazání uživatele se smaže i toto povolení
 
             // Unikátní index pro kombinaci GranterUserId a AllowedUserId, aby nemohlo být stejné povolení zadáno vícekrát
-            entity.HasIndex(amp => new { amp.GranterUserId, amp.AllowedUserId }).IsUnique();
+            entity.HasIndex(mp => new { mp.GranterUserId, mp.RequesterUserId }).IsUnique();
         });
 
         // Konfigurace Message s kaskádovým mazáním

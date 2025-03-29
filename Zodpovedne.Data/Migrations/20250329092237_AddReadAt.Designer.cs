@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Zodpovedne.Data.Data;
@@ -11,9 +12,11 @@ using Zodpovedne.Data.Data;
 namespace Zodpovedne.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250329092237_AddReadAt")]
+    partial class AddReadAt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -488,6 +491,10 @@ namespace Zodpovedne.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AllowedUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -498,15 +505,11 @@ namespace Zodpovedne.Data.Migrations
                     b.Property<int>("MessagingPermissionType")
                         .HasColumnType("integer");
 
-                    b.Property<string>("RequesterUserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("RequesterUserId");
+                    b.HasIndex("AllowedUserId");
 
-                    b.HasIndex("GranterUserId", "RequesterUserId")
+                    b.HasIndex("GranterUserId", "AllowedUserId")
                         .IsUnique();
 
                     b.ToTable("MessagingPermissions", (string)null);
@@ -667,21 +670,21 @@ namespace Zodpovedne.Data.Migrations
 
             modelBuilder.Entity("Zodpovedne.Data.Models.MessagingPermission", b =>
                 {
+                    b.HasOne("Zodpovedne.Data.Models.ApplicationUser", "AllowedUser")
+                        .WithMany()
+                        .HasForeignKey("AllowedUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Zodpovedne.Data.Models.ApplicationUser", "GranterUser")
                         .WithMany()
                         .HasForeignKey("GranterUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Zodpovedne.Data.Models.ApplicationUser", "RequesterUser")
-                        .WithMany()
-                        .HasForeignKey("RequesterUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("AllowedUser");
 
                     b.Navigation("GranterUser");
-
-                    b.Navigation("RequesterUser");
                 });
 
             modelBuilder.Entity("Zodpovedne.Data.Models.Category", b =>
