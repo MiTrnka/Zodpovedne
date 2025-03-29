@@ -23,7 +23,15 @@ public class Message
     [MaxLength(1000, ErrorMessage = "Zpráva může mít maximálně 1000 znaků.")]
     public string Content { get; set; } = "";
 
+    /// <summary>
+    /// Čas, kdy byla zpráva odeslána.
+    /// </summary>
     public DateTime SentAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Čas, kdy byla zpráva přečtena.
+    /// </summary>
+    public DateTime? ReadAt { get; set; }
 
     /// <summary>
     /// Typ zprávy (normální, smazaná...).
