@@ -4,6 +4,9 @@ using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Data.Models;
 
+/// <summary>
+/// Povolení pro zasílání zpráv mezi uživateli.
+/// </summary>
 public class MessagingPermission
 {
     public int Id { get; set; }

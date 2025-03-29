@@ -73,7 +73,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("V konstruktoru DiscussionsController se nepoda+rilo nastavit sanitizer", e);
+            _logger.Log("V konstruktoru DiscussionsController se nepodařilo nastavit sanitizer", e);
         }
     }
 

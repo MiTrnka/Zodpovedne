@@ -6,6 +6,9 @@ using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Data.Models;
 
+/// <summary>
+/// Zpráva mezi uživateli.
+/// </summary>
 public class Message
 {
     public int Id { get; set; }
