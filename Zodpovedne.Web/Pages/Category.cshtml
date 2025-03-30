@@ -24,8 +24,7 @@
     @* Záhlaví kategorie *@
     <div class="row mb-4">
         <div class="col">
-            <div class="title-with-icon">
-                <img src="~/images/category/kolecko12.webp" alt="Alternate Text" />
+            <div class="detail-category-title">
                 <h1 class="long-word-break title-detail-category mb-0">@Model.CategoryName</h1>
             </div>
            
@@ -52,12 +51,12 @@
             @* Ovládací prvky pro načítání dalších diskuzí *@
             @if (Model.HasNextPage)
             {
-                <div id="loading-container" class="text-center mb-4">
+                <div id="loading-container" class="text-center mb-4 mt-2">
                     <button id="load-more" class="btn btn-primary" onclick="loadMoreDiscussions()">
                         Načíst další diskuze
                     </button>
                     <div id="loading-spinner" class="d-none">
-                        <div class="spinner-border text-primary" role="status">
+                        <div class="spinner-border spinner" role="status">
                             <span class="visually-hidden">Načítání...</span>
                         </div>
                     </div>

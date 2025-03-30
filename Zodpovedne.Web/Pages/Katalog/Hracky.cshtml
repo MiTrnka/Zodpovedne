@@ -15,88 +15,35 @@
     </div>
 </div>
 <div class="container col-12" style="bg-transparent">
-    <h1 class="mb-4 mt-4" style="color: var(--text-gray);">Hračky pro děti</h1>
+    <h1 class="catalog-title mb-4 mt-4" style="color: var(--text-gray);">Hračky pro děti</h1>
     <div class="row">
         @{
-            await Html.RenderPartialAsync("_KatalogPartial", new KatalogDetailDto("Kladivko", "Pro zatloukani hracek", "url obrazku", 20, "url do obchodu"));
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dřevěné montessory kuličky v krníčku", "Hračka z bezpečných materiálů. Materiál lipové dřevo, kuličky jsou velké průměr 3 cm. Výborné pro rozvoj jemné motoriky a učení barev. Hrníčky se na sebe dají skládat.", "https://image.alza.cz/products/HRAam077/HRAam077.jpg?width=2000&height=2000", 420, "https://m.alza.cz/SK/hracky/ulanik-montessori-drevena-hracka-rainbow-balls-in-cups-d7197633.htm")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dřevěné montessory kuličky v krníčku", "Hračka z bezpečných materiálů. Materiál lipové dřevo, kuličky jsou velké průměr 3 cm. Výborné pro rozvoj jemné motoriky a učení barev. Hrníčky se na sebe dají skládat.", "https://image.alza.cz/products/HRAam077/HRAam077.jpg?width=2000&height=2000", 420, "https://m.alza.cz/SK/hracky/ulanik-montessori-drevena-hracka-rainbow-balls-in-cups-d7197633.htm")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dřevěné montessory kuličky v krníčku", "Hračka z bezpečných materiálů. Materiál lipové dřevo, kuličky jsou velké průměr 3 cm. Výborné pro rozvoj jemné motoriky a učení barev. Hrníčky se na sebe dají skládat.", "https://image.alza.cz/products/HRAam077/HRAam077.jpg?width=2000&height=2000", 420, "https://m.alza.cz/SK/hracky/ulanik-montessori-drevena-hracka-rainbow-balls-in-cups-d7197633.htm")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dřevěné montessory kuličky v krníčku", "Hračka z bezpečných materiálů. Materiál lipové dřevo, kuličky jsou velké průměr 3 cm. Výborné pro rozvoj jemné motoriky a učení barev. Hrníčky se na sebe dají skládat.", "https://image.alza.cz/products/HRAam077/HRAam077.jpg?width=2000&height=2000", 420, "https://m.alza.cz/SK/hracky/ulanik-montessori-drevena-hracka-rainbow-balls-in-cups-d7197633.htm")
+            );
+
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dřevěné montessory kuličky v krníčku", "Hračka z bezpečných materiálů. Materiál lipové dřevo, kuličky jsou velké průměr 3 cm. Výborné pro rozvoj jemné motoriky a učení barev. Hrníčky se na sebe dají skládat.", "https://image.alza.cz/products/HRAam077/HRAam077.jpg?width=2000&height=2000", 420, "https://m.alza.cz/SK/hracky/ulanik-montessori-drevena-hracka-rainbow-balls-in-cups-d7197633.htm")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dřevěné montessory kuličky v krníčku", "Hračka z bezpečných materiálů. Materiál lipové dřevo, kuličky jsou velké průměr 3 cm. Výborné pro rozvoj jemné motoriky a učení barev. Hrníčky se na sebe dají skládat.", "https://image.alza.cz/products/HRAam077/HRAam077.jpg?width=2000&height=2000", 420, "https://m.alza.cz/SK/hracky/ulanik-montessori-drevena-hracka-rainbow-balls-in-cups-d7197633.htm")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dřevěné montessory kuličky v krníčku", "Hračka z bezpečných materiálů. Materiál lipové dřevo, kuličky jsou velké průměr 3 cm. Výborné pro rozvoj jemné motoriky a učení barev. Hrníčky se na sebe dají skládat.", "https://image.alza.cz/products/HRAam077/HRAam077.jpg?width=2000&height=2000", 420, "https://m.alza.cz/SK/hracky/ulanik-montessori-drevena-hracka-rainbow-balls-in-cups-d7197633.htm")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dřevěné montessory kuličky v krníčku", "Hračka z bezpečných materiálů. Materiál lipové dřevo, kuličky jsou velké průměr 3 cm. Výborné pro rozvoj jemné motoriky a učení barev. Hrníčky se na sebe dají skládat.", "https://image.alza.cz/products/HRAam077/HRAam077.jpg?width=2000&height=2000", 420, "https://m.alza.cz/SK/hracky/ulanik-montessori-drevena-hracka-rainbow-balls-in-cups-d7197633.htm")
+            );
         }
-
-        <div class="card h-100 col-lg-3 col-md-6 col-sm-12 mb-4 p-4 border rounded-0 bg-transparent"
-             onmouseover="this.classList.add('shadow'); this.classList.add('bg-white');"
-             onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
-            <div class="card-header rounded-0 bg-transparent">
-                <h5 class="card-title mb-0">Edukativní dřevěné kostky</h5>
-            </div>
-            <img src="https://picsum.photos/400/300" class="card-img-top rounded-0" alt="Dřevěné kostky">
-            <div class="card-body">
-                <h5 class="card-title">Edukativní dřevěné kostky</h5>
-                <p class="card-text">Sada 50 dřevěných kostek v různých barvách pro rozvoj motoriky a kreativity vašeho dítěte.</p>
-            </div>
-            <div class="card-footer">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="badge" style="background-color: var(--primary-pink)">Věk: 3+</span>
-                    <span class="text-success fw-bold">399 Kč</span>
-                </div>
-                <button class="btn btn-primary mt-2 w-100">Přejít do obchodu</button>
-            </div>
-        </div>
-        <div class="card h-100 col-lg-3 col-md-6 col-sm-12 mb-4 p-3 border rounded-0 bg-transparent"
-             onmouseover="this.classList.add('shadow'); this.classList.add('bright-white');"
-             onmouseout="this.classList.remove('shadow'); this.classList.remove('bright-white');">
-            <img src="https://picsum.photos/400/300" class="card-img-top" alt="Dřevěné kostky">
-            <div class="card-body">
-                <h5 class="card-title">Edukativní dřevěné kostky</h5>
-                <p class="card-text">Sada 50 dřevěných kostek v různých barvách pro rozvoj motoriky a kreativity vašeho dítěte.</p>
-            </div>
-        </div>
-        <div class="card h-100 col-lg-3 col-md-6 col-sm-12 mb-4 p-3 border rounded-0 bg-transparent"
-             onmouseover="this.classList.add('shadow'); this.classList.add('bright-white');"
-             onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
-            <img src="https://picsum.photos/400/300" class="card-img-top" alt="Dřevěné kostky">
-            <div class="card-body">
-                <h5 class="card-title">Edukativní dřevěné kostky</h5>
-                <p class="card-text">Sada 50 dřevěných kostek v různých barvách pro rozvoj motoriky a kreativity vašeho dítěte.</p>
-            </div>
-        </div>
-    </div>
-    <div class="row g-4">
-        <div class="card h-100 col-lg-3 col-md-6 col-sm-12 mb-4 p-3 border rounded-0 bg-transparent"
-             onmouseover="this.classList.add('shadow'); this.classList.add('bright-white');"
-             onmouseout="this.classList.remove('shadow'); this.classList.remove('bright-white');">
-            <img src="https://picsum.photos/400/300" class="card-img-top" alt="Dřevěné kostky">
-            <div class="card-body">
-                <h5 class="card-title">Edukativní dřevěné kostky</h5>
-                <p class="card-text">Sada 50 dřevěných kostek v různých barvách pro rozvoj motoriky a kreativity vašeho dítěte.</p>
-            </div>
-        </div>
-        <div class="card h-100 col-lg-3 col-md-6 col-sm-12 mb-4 p-3 border rounded-0 bg-transparent"
-             onmouseover="this.classList.add('shadow'); this.classList.add('bg-white');"
-             onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
-            <img src="https://picsum.photos/400/300" class="card-img-top" alt="Dřevěné kostky">
-            <div class="card-body">
-                <h5 class="card-title">Edukativní dřevěné kostky</h5>
-                <p class="card-text">Sada 50 dřevěných kostek v různých barvách pro rozvoj motoriky a kreativity vašeho dítěte.</p>
-            </div>
-        </div>
-        <div class ="card h-100 col-lg-3 col-md-6 col-sm-12 mb-4 p-3 border rounded-0 bg-transparent"
-                  onmouseover="this.classList.add('shadow'); this.classList.add('bg-white');"
-                  onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
-            <img src="https://picsum.photos/400/300" class="card-img-top" alt="Dřevěné kostky">
-            <div class="card-body">
-                <h5 class="card-title">Edukativní dřevěné kostky</h5>
-                <p class="card-text">Sada 50 dřevěných kostek v různých barvách pro rozvoj motoriky a kreativity vašeho dítěte.</p>
-            </div>
-        </div>
-        <div class="card h-100 col-lg-3 col-md-6 col-sm-12 mb-4 p-3 border rounded-0 bg-transparent"
-             onmouseover="this.classList.add('shadow'); this.classList.add('bg-white');"
-             onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
-            <img src="https://picsum.photos/400/300" class="card-img-top" alt="Dřevěné kostky">
-            <div class="card-body">
-                <h5 class="card-title">Edukativní dřevěné kostky</h5>
-                <p class="card-text">Sada 50 dřevěných kostek v různých barvách pro rozvoj motoriky a kreativity vašeho dítěte.</p>
-            </div>
-
-        </div>
     </div>
 
 </div>
