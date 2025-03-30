@@ -128,14 +128,14 @@
                                 </div>
                             </div>
                         </li>
-                        <!-- Notifikační panáček pro nové žádosti o přátelství -->
-                        <div class="nav-item mx-2 position-relative" style="cursor: pointer;">
+                        <!-- Účet přihlášeného uživatele s notifikací pro nové žádosti o přátelství -->
+                        <li class="nav-item mx-2 position-relative" style="cursor: pointer;">
                             <i id="friendship-icon" class="bi bi-people-fill fs-5"></i>
                             <span id="friendship-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size: 0.5rem;">
                                 <span id="friendship-count">0</span>
                                 <span class="visually-hidden">žádostí o přátelství</span>
                             </span>
-                        </div>
+                        </li>
                         <!-- Můj profil -->
                         <li class="nav-item">
                             <a class="nav-link @(IsMenuItemActive("/Account/MyProfile") ? "active" : "")"

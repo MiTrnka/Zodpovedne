@@ -16,30 +16,30 @@ document.addEventListener('DOMContentLoaded', function () {
     const textarea = document.getElementById('new-comment-textarea'); // Textového pole pro nový komentář
     const submitButton = document.getElementById('submit-comment-button'); // Tlačítko pro odeslání root komentáře
 
-    if (textarea && submitButton) {
-        // Zobrazení tlačítka odeslat při kliknutí do textové oblasti pro přidání nového root komentáře
-        textarea.addEventListener('focus', function () {
-            submitButton.style.display = 'inline-block';
-        });
+    //if (textarea && submitButton) {
+    //    // Zobrazení tlačítka odeslat při kliknutí do textové oblasti pro přidání nového root komentáře
+    //    textarea.addEventListener('focus', function () {
+    //        submitButton.style.display = 'inline-block';
+    //    });
 
-        // Skrytí tlačítka odeslat root komentár při kliknutí mimo textovou oblast a tlačítko
-        document.addEventListener('click', function (event) {
-            // Nekryjeme tlačítko, pokud je textová oblast prázdná a má focus
-            if (textarea.value.trim() !== '') {
-                return;
-            }
-            // Skryjeme tlačítko, jen když uživatel kliknul mimo textovou oblast a tlačítko
-            if (!textarea.contains(event.target) && !submitButton.contains(event.target)) {
-                submitButton.style.display = 'none';
-            }
-        });
-        // Pro lepší UX nový komentář: pokud uživatel začne psát, tlačítko zůstane viditelné
-        textarea.addEventListener('input', function () {
-            if (textarea.value.trim() !== '') {
-                submitButton.style.display = 'inline-block';
-            }
-        });
-    }
+    //    // Skrytí tlačítka odeslat root komentár při kliknutí mimo textovou oblast a tlačítko
+    //    document.addEventListener('click', function (event) {
+    //        // Nekryjeme tlačítko, pokud je textová oblast prázdná a má focus
+    //        if (textarea.value.trim() !== '') {
+    //            return;
+    //        }
+    //        // Skryjeme tlačítko, jen když uživatel kliknul mimo textovou oblast a tlačítko
+    //        if (!textarea.contains(event.target) && !submitButton.contains(event.target)) {
+    //            submitButton.style.display = 'none';
+    //        }
+    //    });
+    //    // Pro lepší UX nový komentář: pokud uživatel začne psát, tlačítko zůstane viditelné
+    //    textarea.addEventListener('input', function () {
+    //        if (textarea.value.trim() !== '') {
+    //            submitButton.style.display = 'inline-block';
+    //        }
+    //    });
+    //}
     // Funkcionalita pro Reply (odpovědi na komentáře)
     // Jelikož je tlkačítek pro odpověď více, pracujeme s polem tlačítek a textových polí
     $('.reply-button').each(function (index) {
@@ -78,6 +78,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Při kliknutí mimo prvky odpovědi skryjeme textové pole a tlačítka
         $(document).on('click', function (event) {
+
+            // Kontrola pro emoji list, aby kliknutí na emoji nezavřelo formulář
+            const emojiList = $('#emoji-list-comment-reply');
+            const clickedOnEmoji = $emojiList.is(event.target) || $emojiList.has(event.target).length > 0;
+
             if (
                 $replyArea.is(':visible') &&
                 !$replyArea.is(event.target) &&
@@ -87,7 +92,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 !$replyArea.has(event.target).length &&
                 !$submitReplyButton.has(event.target).length &&
                 !$cancelReplyButton.has(event.target).length &&
-                !$replyButton.has(event.target).length
+                !$replyButton.has(event.target).length &&
+                !clickedOnComment && // ignoruje kliknutí na komentář
+                !clickedOnEmoji      // ignoruje kliknutí na emoji
             ) {
                 // Skryjeme prvky, ale zachováme obsah textového pole
                 $replyArea.hide();
@@ -95,6 +102,61 @@ document.addEventListener('DOMContentLoaded', function () {
                 $cancelReplyButton.hide();
                 $replyButton.show();
             }
+        });
+    });
+    // Otevreni nabidky smajliku - pridat komentar
+    const emojiBtn = document.getElementById("emoji-btn");
+    const emojiList = document.getElementById("emoji-list");
+    const textareaKomentare = document.getElementById("new-comment-textarea");
+    const poleSmajliku = document.querySelectorAll("#emoji-list .emoji");
+
+
+    emojiBtn.addEventListener("click", () => {
+        emojiList.style.display = emojiList.style.display === "block" ? "none" : "block";
+    });
+    // Vlozeni smajlika do textarei pri kliknuti na smajlika
+    poleSmajliku.forEach(smajlik => {
+        smajlik.addEventListener("click", () => {
+            // Získání aktuální hodnoty textarea
+            const aktualni = textareaKomentare.value;
+            // Přidání emoji na konec
+            textareaKomentare.value = aktualni + smajlik.textContent;
+        });
+    });
+
+    // Otevreni nabidky smajliku - pridat reakci na komentar
+    const emojiBtnsReply = document.querySelectorAll(".emoji-btn-comment-reply");
+
+    emojiBtnsReply.forEach((emojiBtn, index) => {
+        // Najdeme příslušný emoji list 
+        const form = emojiBtn.closest("form");
+        const emojiListReply = form.querySelector(".emoji-list-comment-reply");
+
+        if (!emojiListReply) return; // Pokud list neexistuje, přeskočíme
+
+        // Najděme všechny emoji v tomto listu
+        const allEmojis = emojiListReply.querySelectorAll(".emoji");
+
+        // Přidáme event listener pro tlačítko zobrazení emoji
+        emojiBtn.addEventListener("click", () => {
+            emojiListReply.style.display = emojiListReply.style.display === "block" ? "none" : "block";
+        });
+
+
+        if (!form) return; // Pokud není formulář, přeskočíme
+
+        const replyTextarea = form.querySelector(".new-comment-textarea-reply");
+
+        if (!replyTextarea) return; // Pokud není textarea, přeskočíme
+
+        // Přidáme event listener pro všechny emoji v tomto listu
+        allEmojis.forEach(emoji => {
+            emoji.addEventListener("click", (event) => {
+                // Vložíme emoji do TÉTO konkrétní textarea
+                const aktualni = replyTextarea.value;
+                replyTextarea.value = aktualni + emoji.textContent;
+                event.stopPropagation();
+            });
         });
     });
 

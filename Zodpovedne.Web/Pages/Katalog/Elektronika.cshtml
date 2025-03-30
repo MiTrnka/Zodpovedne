@@ -1,22 +1,48 @@
 ﻿@page "/katalog/elektronika"
-@model Zodpovedne.Web.Pages.Katalog.ElektronikaModel
+@using Zodpovedne.Contracts.DTO;
+@model KatalogDetailDto;
 @{
-    ViewData["Title"] = "Elektronika pro děti";
+    ViewData["Title"] = "Elektronika";
 }
 
-<div class="container">
-    <h3 class="mb-4" style="color: var(--text-gray);">Elektronika pro děti</h3>
-
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="product-card">
-                <img src="https://picsum.photos/400/300" class="card-img-top" alt="Dětské chůvičky">
-                <div class="card-body">
-                    <h5 class="card-title">Dětská chůvička s kamerou</h5>
-                    <p class="card-text">Moderní dětská chůvička s HD kamerou, nočním viděním a obousměrným přenosem zvuku. Ideální pro kontrolu spánku vašeho miminka.</p>
-                </div>
-            </div>
-        </div>
-        <!-- Add more product cards -->
+<div class="mainBanner">
+    <div class="mainBannerPicture">
+        <p class="mw-60">
+            <span class="checkmark">&#10003;</span> Pečlivě vybrané produkty<br> <span class="checkmark">&#10003;</span> Kvalitní provedení<br>
+            <span class="checkmark">&#10003;</span> Ověřeno rodiči
+        </p>
+        <div class="underlineGraphic"></div>
     </div>
+</div>
+<div class="container col-12" style="bg-transparent">
+    <h1 class="catalog-title mb-4 mt-4" style="color: var(--text-gray);">Elektronika</h1>
+    <div class="row">
+        @{
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dětská kamera Owlet Cam", "Dětská chůvička - s přenosem obrazu (video), přenos zvuku probíhá přes internet, chytrá chůvička (s aplikací pro Android nebo iOS), s wifi připojením, senzor teploty, oboustranný přenos a noční vidění, dětská jednotka se nabíjí ze sítě a rodičovskou jednotku nabíjí baterie", "https://image.alza.cz/products/HRAbz36780/HRAbz36780.jpg?width=2000&height=2000", 4629, "https://www.alza.cz/maxi/kamera-owlet-cam-d7386046.htm?o=5")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dětská kamera Owlet Cam", "Dětská chůvička - s přenosem obrazu (video), přenos zvuku probíhá přes internet, chytrá chůvička (s aplikací pro Android nebo iOS), s wifi připojením, senzor teploty, oboustranný přenos a noční vidění, dětská jednotka se nabíjí ze sítě a rodičovskou jednotku nabíjí baterie", "https://image.alza.cz/products/HRAbz36780/HRAbz36780.jpg?width=2000&height=2000", 4629, "https://www.alza.cz/maxi/kamera-owlet-cam-d7386046.htm?o=5")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dětská kamera Owlet Cam", "Dětská chůvička - s přenosem obrazu (video), přenos zvuku probíhá přes internet, chytrá chůvička (s aplikací pro Android nebo iOS), s wifi připojením, senzor teploty, oboustranný přenos a noční vidění, dětská jednotka se nabíjí ze sítě a rodičovskou jednotku nabíjí baterie", "https://image.alza.cz/products/HRAbz36780/HRAbz36780.jpg?width=2000&height=2000", 4629, "https://www.alza.cz/maxi/kamera-owlet-cam-d7386046.htm?o=5")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dětská kamera Owlet Cam", "Dětská chůvička - s přenosem obrazu (video), přenos zvuku probíhá přes internet, chytrá chůvička (s aplikací pro Android nebo iOS), s wifi připojením, senzor teploty, oboustranný přenos a noční vidění, dětská jednotka se nabíjí ze sítě a rodičovskou jednotku nabíjí baterie", "https://image.alza.cz/products/HRAbz36780/HRAbz36780.jpg?width=2000&height=2000", 4629, "https://www.alza.cz/maxi/kamera-owlet-cam-d7386046.htm?o=5")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dětská kamera Owlet Cam", "Dětská chůvička - s přenosem obrazu (video), přenos zvuku probíhá přes internet, chytrá chůvička (s aplikací pro Android nebo iOS), s wifi připojením, senzor teploty, oboustranný přenos a noční vidění, dětská jednotka se nabíjí ze sítě a rodičovskou jednotku nabíjí baterie", "https://image.alza.cz/products/HRAbz36780/HRAbz36780.jpg?width=2000&height=2000", 4629, "https://www.alza.cz/maxi/kamera-owlet-cam-d7386046.htm?o=5")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dětská kamera Owlet Cam", "Dětská chůvička - s přenosem obrazu (video), přenos zvuku probíhá přes internet, chytrá chůvička (s aplikací pro Android nebo iOS), s wifi připojením, senzor teploty, oboustranný přenos a noční vidění, dětská jednotka se nabíjí ze sítě a rodičovskou jednotku nabíjí baterie", "https://image.alza.cz/products/HRAbz36780/HRAbz36780.jpg?width=2000&height=2000", 4629, "https://www.alza.cz/maxi/kamera-owlet-cam-d7386046.htm?o=5")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dětská kamera Owlet Cam", "Dětská chůvička - s přenosem obrazu (video), přenos zvuku probíhá přes internet, chytrá chůvička (s aplikací pro Android nebo iOS), s wifi připojením, senzor teploty, oboustranný přenos a noční vidění, dětská jednotka se nabíjí ze sítě a rodičovskou jednotku nabíjí baterie", "https://image.alza.cz/products/HRAbz36780/HRAbz36780.jpg?width=2000&height=2000", 4629, "https://www.alza.cz/maxi/kamera-owlet-cam-d7386046.htm?o=5")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Dětská kamera Owlet Cam", "Dětská chůvička - s přenosem obrazu (video), přenos zvuku probíhá přes internet, chytrá chůvička (s aplikací pro Android nebo iOS), s wifi připojením, senzor teploty, oboustranný přenos a noční vidění, dětská jednotka se nabíjí ze sítě a rodičovskou jednotku nabíjí baterie", "https://image.alza.cz/products/HRAbz36780/HRAbz36780.jpg?width=2000&height=2000", 4629, "https://www.alza.cz/maxi/kamera-owlet-cam-d7386046.htm?o=5")
+            );
+        }
+    </div>
+
 </div>

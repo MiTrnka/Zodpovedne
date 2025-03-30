@@ -1,22 +1,49 @@
 ﻿@page "/katalog/obleceni"
-@model Zodpovedne.Web.Pages.Katalog.ObleceniModel
+@using Zodpovedne.Contracts.DTO;
+@model KatalogDetailDto;
+
 @{
-    ViewData["Title"] = "Dětské oblečení";
+    ViewData["Title"] = "Oblečení pro děti";
 }
 
-<div class="container">
-    <h1 class="mb-4" style="color: var(--text-gray);">Dětské oblečení</h1>
-
-    <div class="row g-4">
-        <div class="col-md-4">
-            <div class="product-card">
-                <img src="https://picsum.photos/400/300" class="card-img-top" alt="Dětské body">
-                <div class="card-body">
-                    <h5 class="card-title">Organické bavlněné body</h5>
-                    <p class="card-text">Měkké a pohodlné body z organické bavlny, ideální pro citlivou dětskou pokožku.</p>
-                </div>
-            </div>
-        </div>
-        <!-- Add more product cards -->
+<div class="mainBanner">
+    <div class="mainBannerPicture">
+        <p class="mw-60">
+            <span class="checkmark">&#10003;</span> Oblečení z kvalitní látky<br> <span class="checkmark">&#10003;</span> Pohodlné <br>
+            <span class="checkmark">&#10003;</span> Ověřeno rodiči
+        </p>
+        <div class="underlineGraphic"></div>
     </div>
+</div>
+<div class="container col-12" style="bg-transparent">
+    <h1 class="catalog-title mb-4 mt-4" style="color: var(--text-gray);">Oblečení pro děti</h1>
+    <div class="row">
+        @{
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Overal Ergopouch, vel. 68, věk 3-6 měsíců, do 8 kg", "Velmi příjemný overal na spaní z biobavlny s certifikátem GOTS. Overal má 2 zipy s krytkou - možné rozepnout jen dolní část - praktické pro přebalování.", "https://image.alza.cz/products/HRAls1731/HRAls1731.jpg?width=2000&height=2000", 769, "https://www.alza.cz/maxi/ergopouch-overal-na-spani-organicka-bavlna-layers-grey-marle-0-2-tog?dq=7812224&gQT=1")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Overal Ergopouch, vel. 68, věk 3-6 měsíců, do 8 kg", "Velmi příjemný overal na spaní z biobavlny s certifikátem GOTS. Overal má 2 zipy s krytkou - možné rozepnout jen dolní část - praktické pro přebalování.", "https://image.alza.cz/products/HRAls1731/HRAls1731.jpg?width=2000&height=2000", 769, "https://www.alza.cz/maxi/ergopouch-overal-na-spani-organicka-bavlna-layers-grey-marle-0-2-tog?dq=7812224&gQT=1")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Overal Ergopouch, vel. 68, věk 3-6 měsíců, do 8 kg", "Velmi příjemný overal na spaní z biobavlny s certifikátem GOTS. Overal má 2 zipy s krytkou - možné rozepnout jen dolní část - praktické pro přebalování.", "https://image.alza.cz/products/HRAls1731/HRAls1731.jpg?width=2000&height=2000", 769, "https://www.alza.cz/maxi/ergopouch-overal-na-spani-organicka-bavlna-layers-grey-marle-0-2-tog?dq=7812224&gQT=1")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Overal Ergopouch, vel. 68, věk 3-6 měsíců, do 8 kg", "Velmi příjemný overal na spaní z biobavlny s certifikátem GOTS. Overal má 2 zipy s krytkou - možné rozepnout jen dolní část - praktické pro přebalování.", "https://image.alza.cz/products/HRAls1731/HRAls1731.jpg?width=2000&height=2000", 769, "https://www.alza.cz/maxi/ergopouch-overal-na-spani-organicka-bavlna-layers-grey-marle-0-2-tog?dq=7812224&gQT=1")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Overal Ergopouch, vel. 68, věk 3-6 měsíců, do 8 kg", "Velmi příjemný overal na spaní z biobavlny s certifikátem GOTS. Overal má 2 zipy s krytkou - možné rozepnout jen dolní část - praktické pro přebalování.", "https://image.alza.cz/products/HRAls1731/HRAls1731.jpg?width=2000&height=2000", 769, "https://www.alza.cz/maxi/ergopouch-overal-na-spani-organicka-bavlna-layers-grey-marle-0-2-tog?dq=7812224&gQT=1")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Overal Ergopouch, vel. 68, věk 3-6 měsíců, do 8 kg", "Velmi příjemný overal na spaní z biobavlny s certifikátem GOTS. Overal má 2 zipy s krytkou - možné rozepnout jen dolní část - praktické pro přebalování.", "https://image.alza.cz/products/HRAls1731/HRAls1731.jpg?width=2000&height=2000", 769, "https://www.alza.cz/maxi/ergopouch-overal-na-spani-organicka-bavlna-layers-grey-marle-0-2-tog?dq=7812224&gQT=1")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Overal Ergopouch, vel. 68, věk 3-6 měsíců, do 8 kg", "Velmi příjemný overal na spaní z biobavlny s certifikátem GOTS. Overal má 2 zipy s krytkou - možné rozepnout jen dolní část - praktické pro přebalování.", "https://image.alza.cz/products/HRAls1731/HRAls1731.jpg?width=2000&height=2000", 769, "https://www.alza.cz/maxi/ergopouch-overal-na-spani-organicka-bavlna-layers-grey-marle-0-2-tog?dq=7812224&gQT=1")
+            );
+            await Html.RenderPartialAsync("_KatalogPartial",
+            new KatalogDetailDto("Overal Ergopouch, vel. 68, věk 3-6 měsíců, do 8 kg", "Velmi příjemný overal na spaní z biobavlny s certifikátem GOTS. Overal má 2 zipy s krytkou - možné rozepnout jen dolní část - praktické pro přebalování.", "https://image.alza.cz/products/HRAls1731/HRAls1731.jpg?width=2000&height=2000", 769, "https://www.alza.cz/maxi/ergopouch-overal-na-spani-organicka-bavlna-layers-grey-marle-0-2-tog?dq=7812224&gQT=1")
+            );
+        }
+    </div>
+
 </div>

@@ -9,9 +9,10 @@
     --light-secondary-color: #ECD9EC; /* světle fialová barva */
 
     --tertiary-color: white;
-
     --text-color: #666666; /* šedivá barva */
+    --ultra-light-text-color: #EBEBEB; /* velmi světle šedivá */
     --light-text-color: #F2EFF0; /* světle šedivá */
+    --comment-graphic-color: #D6D6D6;
 }
 @font-face {
     font-family: 'Bookman Old Style'; 
@@ -25,7 +26,7 @@ html {
     font-size: 14px;
     position: relative;
     min-height: 100%;
-/*    font-family: 'Bodoni MT';*/
+    font-family: 'Bookman Old Style';
 }
 
 body {
@@ -52,9 +53,9 @@ body {
     left: 11px; /* Pozice odpovídající kolečku */
     top: 17px; /* Začátek pod kolečkem */
     bottom: 19px; /* Konec před tlačítkem odpovědět */
-    height: calc(100% - 30px);
+    height: calc(100% - 40px);
     width: 2px;
-    background-color: #ff6b6b;
+    background-color: var(--comment-graphic-color);
     z-index: 1;
 }
 
@@ -67,7 +68,7 @@ body {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background-color: #ff6b6b;
+    background-color: var(--comment-graphic-color);
     z-index: 2;
 }
 
@@ -75,7 +76,7 @@ body {
 .odpoved-na-komentar {
     position: relative;
     margin-left: 30px !important; /* Přepsání bootstrap ms-2 pro více prostoru */
-    padding: 7px !important;
+    padding: 0px 7px 7px 7px !important;
 }
 
     .odpoved-na-komentar::before {
@@ -85,7 +86,7 @@ body {
         top: 15px; /* Vertikální zarovnání s odpovědí */
         width: 40px;
         height: 2px;
-        background-color: #ff6b6b;
+        background-color: var(--comment-graphic-color);
         z-index: 1;
     }
 
@@ -93,7 +94,7 @@ body {
 .reply-button {
     position: relative;
     margin-left: 35px;
-    margin-bottom: 0px !important;
+    margin-bottom: 10px !important;
     height: 30px;
 }
 
@@ -104,13 +105,32 @@ body {
         top: 50%;
         width: 40px;
         height: 2px;
-        background-color: #ff6b6b;
+        background-color: var(--comment-graphic-color);
         z-index: 1;
     }
-
-
-/* Úprava ostatních stylů pro lepší vzhled s vytvořenými čárami */
-.komentar-wrapper {
+#emoji-list, .emoji-list-comment-reply {
+    display: none;
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid var(--comment-graphic-color);
+    border-radius: 5px;
+}
+.btn-add-coment-wrapper {
+    display: inline-flex;
+    align-items: center;
+}
+#emoji-btn, .emoji-btn-comment-reply{
+    background-color: white;
+    border: none;
+    font-size: 20px;
+}
+.emoji {
+    font-size: 20px;
+    cursor: pointer;
+    margin: 5px;
+}
+    /* Úprava ostatních stylů pro lepší vzhled s vytvořenými čárami */
+    .komentar-wrapper {
     overflow: visible; /* Zajistí, že čáry nebudou oříznuty */
     padding-left: 20px; /* Přidá prostor vlevo pro kolečko a čáru */
 }
@@ -118,41 +138,13 @@ body {
 
 h1, h2, h3, h4, h5 {
     font-family: 'Bookman Old Style';
-    font-weight: 400;
+    font-weight: 300;
     color: #333333;
 }
 
-.mainBanner {
-    width: 100%;
-    height: 120px;
-    margin-top: 0px;
-}
-.mainBannerPicture {
-    width: 100%;
-    height: 70px;
-    background-image: url("../images/dudlik_a_lahvicka_samostatne.webp");
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: right center;
-}
-.checkmark{
+.spinner {
     color: var(--primary-color);
 }
-.underlineGraphic {
-    position: relative;
-}
-.underlineGraphic::after {
-    content: "";
-    width: 100%;
-    height: 0.2rem;
-    background-color: var(--primary-color);
-    display: block;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-
-}
-
 .maintenanceNotification {
     position: absolute;
     top: 220px;
@@ -161,7 +153,7 @@ h1, h2, h3, h4, h5 {
     height: 250px;
     width: 100%;
     margin: 0 auto;
-     z-index: 1000;
+    z-index: 1000;
 }
 .maintenance-text-wrapper {
     display: flex;
@@ -788,10 +780,13 @@ h1 {
     border-radius: 0;
 }
 .text-editor-head {
-    background: linear-gradient(to bottom, var(--light-primary-color) 0%, var(--primary-color) 100%);
-    color: white;
-    padding: 12px 16px;
+    background-color: var(--ultra-light-text-color) !important; /* linear-gradient(to bottom, var(--light-primary-color) 0%, var(--primary-color) 100%)*/
+    border: none;
+    color: var(--text-color);
     border-radius: 0px !important;
+}
+.text-editor-title {
+    font-weight: 300 !important;
 }
 .text-editor-head i {
     color: var(--primary-color);
@@ -835,21 +830,22 @@ h1 {
     content: '';
     position: absolute;
     width: 26%;
+    margin: 0 auto;
     height: 1px;
     bottom: 0;
     right: 35%;
     background-color: var(--primary-color);
 }
 
-.detail-diskuse-title::before {
-    content: '';
-    position: absolute;
-    width: 30%;
-    height: 1px;
-    bottom: 3px;
-    right: 35%;
-    background-color: var(--primary-color);
-}
+    .detail-diskuse-title::before {
+        content: '';
+        position: absolute;
+        width: 30%;
+        height: 1px;
+        bottom: 3px;
+        right: 35%;
+        background-color: var(--primary-color);
+    }
     
 #comments-list .card {
     padding-left: 10px;
