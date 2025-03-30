@@ -1193,8 +1193,6 @@ public class UsersController : ControllerBase
         }
     }
 
-    // Přidejte tyto endpointy do třídy UsersController v projektu Zodpovedne.RESTAPI
-
     /// <summary>
     /// Vrací seznam všech přátelství pro přihlášeného uživatele.
     /// Zahrnuje jak žádosti o přátelství, tak již potvrzená přátelství.
@@ -1216,7 +1214,11 @@ public class UsersController : ControllerBase
             var friendships = await dbContext.Friendships
                 .Include(f => f.ApproverUser)    // Načtení souvisejících uživatelů pro přístup k jejich datům
                 .Include(f => f.RequesterUser)   // Načtení souvisejících uživatelů pro přístup k jejich datům
-                .Where(f => f.ApproverUserId == userId || f.RequesterUserId == userId)
+                .Where(f =>
+                    // Buď je přihlášený uživatel approver a requester je normal
+                    (f.ApproverUserId == userId && f.RequesterUser.Type == UserType.Normal) ||
+                    // Nebo je přihlášený uživatel requester a approver je normal
+                    (f.RequesterUserId == userId && f.ApproverUser.Type == UserType.Normal))
                 .ToListAsync();
 
             // Transformace dat pro vrácení klientovi
@@ -1379,6 +1381,7 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <returns>Počet čekajících žádostí o přátelství</returns>
     [Authorize]
+    [ResponseCache(Duration = 20, VaryByHeader = "Authorization")] // Cachování na 20 sekund, různé pro různé uživatele
     [HttpGet("friendship-requests-count")]
     public async Task<ActionResult<int>> GetFriendshipRequestsCount()
     {
@@ -1390,8 +1393,12 @@ public class UsersController : ControllerBase
                 return Unauthorized();
 
             // Zjištění počtu žádostí o přátelství, které čekají na schválení
+            // Ignorujeme žádosti od skrytých nebo smazaných uživatelů
             var requestsCount = await dbContext.Friendships
-                .CountAsync(f => f.ApproverUserId == userId && f.FriendshipStatus == FriendshipStatus.Requested);
+                .Where(f => f.ApproverUserId == userId &&
+                       f.FriendshipStatus == FriendshipStatus.Requested &&
+                       f.RequesterUser.Type == UserType.Normal) // Pouze normální uživatelé
+                .CountAsync();
 
             return Ok(requestsCount);
         }
