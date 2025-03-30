@@ -1,11 +1,82 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Hlavní stránka";
 }
 
-<div class="text-center">
-    <h1>Mámou zodpovědně</h1>
-    <h2>Vítejte na úvodní stránce</h2>
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="text-center">Mámou zodpovědně</h1>
+            <p class="lead text-center">Novinky od vašich přátel a zajímavé diskuze</p>
+        </div>
+    </div>
 
+    <div class="row">
+        <div class="col-12">
+            @if (Model.CombinedFeed.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Autor</th>
+                                <th>Diskuze</th>
+                                <th>Kategorie</th>
+                                <th>Aktualizováno</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var discussion in Model.CombinedFeed)
+                            {
+                                <tr>
+                                    <td>
+                                        <a href="/Account/Profile/@discussion.AuthorNickname" class="text-decoration-none">
+                                            <i class="bi bi-person-circle"></i> @discussion.AuthorNickname
+                                        </a>
+                                    </td>
+                                    <td class="long-word-break">
+                                        <a href="/categories/@discussion.CategoryCode/@discussion.Code" class="text-decoration-none">
+                                            @if (discussion.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
+                                            {
+                                                <span class="top-star" title="TOP diskuze">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                                                        <path d="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
+                                                              fill="#FFB5B5" stroke="#e06f70" stroke-width="0.5" />
+                                                        <text x="12" y="14" font-family="Arial, sans-serif" font-weight="bold"
+                                                              font-size="4.5" text-anchor="middle" fill="#d15657">TOP</text>
+                                                    </svg>
+                                                </span>
+                                            }
+                                            @discussion.Title
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="/categories/@discussion.CategoryCode" class="text-decoration-none">
+                                            @discussion.CategoryName
+                                        </a>
+                                    </td>
+                                    <td class="text-nowrap">
+                                        <small class="text-muted" title="@discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")">
+                                            @discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                        </small>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <p>Zatím zde nejsou žádné diskuze k zobrazení. Přidejte si přátele nebo si prohlédněte <a href="/categories">kategorie diskuzí</a>.</p>
+                </div>
+            }
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+}

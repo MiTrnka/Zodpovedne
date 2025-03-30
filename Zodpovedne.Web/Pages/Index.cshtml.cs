@@ -1,20 +1,54 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Zodpovedne.Contracts.DTO;
+using Zodpovedne.Web.Models.Base;
+using Zodpovedne.Web.Extensions;
+using Zodpovedne.Logging;
 
 namespace Zodpovedne.Web.Pages
 {
-    public class IndexModel : PageModel
+    public class IndexModel : BasePageModel
     {
-        private readonly ILogger<IndexModel> _logger;
+        /// <summary>
+        /// Seznam diskuzí pøátel a TOP diskuzí
+        /// </summary>
+        public List<DiscussionListDto> CombinedFeed { get; private set; } = new();
 
-        public IndexModel(ILogger<IndexModel> logger)
+        public IndexModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger)
+        : base(clientFactory, configuration, logger)
         {
-            _logger = logger;
         }
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
-            return RedirectToPage("/categories");
+            // Nepøihlášený uživatel je pøesmìrován na šeznam kategorií
+            if (!IsUserLoggedIn)
+            {
+                return RedirectToPage("/categories");
+            }
+
+            try
+            {
+                // Naètení kombinovaného seznamu diskuzí
+                var client = _clientFactory.CreateBearerClient(HttpContext);
+                var response = await client.GetAsync($"{ApiBaseUrl}/discussions/combined-feed");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    CombinedFeed = await response.Content.ReadFromJsonAsync<List<DiscussionListDto>>() ?? new();
+                }
+                else
+                {
+                    _logger.Log($"Nepodaøilo se naèíst kombinovaný feed: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Log("Chyba pøi naèítání kombinovaného feedu", ex);
+                // Zde nechceme zobrazovat chybu uživateli, staèí logování
+            }
+
+            return Page();
         }
     }
 }
