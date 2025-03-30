@@ -23,13 +23,13 @@
 
 <div class="container">
     <div class="col-md-6">
-        <h2>Profil uživatele</h2>
+        <h2>@(Model.FriendshipStatus == FriendshipStatus.Approved ? "Profil přítele" : "Profil uživatele")</h2>
 
         <div class="card mb-4">
             <div class="card-body">
                 <dl>
                     <dt>Přezdívka</dt>
-                    <dd>@(Model.FriendshipStatus == FriendshipStatus.Approved ? "(přítel) " : "")@Model.UserProfile?.Nickname</dd>
+                    <dd>@Model.UserProfile?.Nickname</dd>
                     <dt>Registrován</dt>
                     <dd>@Model.UserProfile?.Created.ToString("dd.MM.yyyy HH:mm")</dd>
                     @if (@Model.UserProfile?.LastLogin != null)
