@@ -13,11 +13,73 @@
  *    - lastBadgeClickTimestamp: Používá se pouze pro počítání nových notifikací v badge (od posledního kliknutí)
  */
 document.addEventListener('DOMContentLoaded', function () {
+
+    // NÍŽE JE SEKCE PRO POČET ŽÁDOSTÍ O PŘÁTELSTVÍ
+    // Získáme element pro ikonu přátelství
+    const friendshipIcon = document.getElementById('friendship-icon');
+    if (!friendshipIcon) return;
+    // Přidáme event listener pro kliknutí na ikonu přátelství
+    friendshipIcon.addEventListener('click', function () {
+        // Přesměrování na stránku s profilem
+        window.location.href = '/Account/MyProfile';
+    });
+    // Načteme počet žádostí o přátelství
+    loadFriendshipRequests();
+    // Nastavíme pravidelné načítání počtu žádostí o přátelství
+    setInterval(loadFriendshipRequests, 60000); // každou minutu
+    /**
+     * Funkce pro načtení počtu žádostí o přátelství a aktualizaci UI
+     * Spouští se při načtení stránky a poté v pravidelném intervalu
+     */
+    function loadFriendshipRequests() {
+        // Zkontrolujeme, zda je uživatel přihlášen
+        const token = sessionStorage.getItem('JWTToken');
+        if (!token) return;
+
+        // Zkontrolujeme, zda máme URL pro API
+        const apiBaseUrl = document.getElementById('apiBaseUrl')?.value;
+        if (!apiBaseUrl) return;
+
+        // Získáme element pro ikonu přátelství a badge
+        const friendshipBadge = document.getElementById('friendship-badge');
+        const friendshipCount = document.getElementById('friendship-count');
+
+        // Pokud elementy neexistují, ukončíme funkci
+        if (!friendshipBadge || !friendshipCount) return;
+
+        // Načtení počtu žádostí o přátelství z API
+        fetch(`${apiBaseUrl}/users/friendship-requests-count`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Chyba při načítání počtu žádostí o přátelství');
+                return response.json();
+            })
+            .then(count => {
+                // Aktualizace počtu v badge
+                friendshipCount.textContent = count;
+
+                // Zobrazení/skrytí badge podle počtu žádostí
+                if (count > 0) {
+                    friendshipBadge.classList.remove('d-none');
+                } else {
+                    friendshipBadge.classList.add('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Chyba při načítání počtu žádostí o přátelství:', error);
+            });
+    }
+
+
+
+    // NÍŽE JE SEKCE PRO NOTIFIKAČNÍ SYSTÉM PRO NOVÉ ODPVĚDI V DISKUZÍCH
     // Hlavní elementy
     const bellIcon = document.getElementById('notification-bell');
     const badge = document.getElementById('notification-badge');
     const notificationsList = document.getElementById('notifications-list');
-
     // Pokud chybí základní elementy, notifikační systém nemůže fungovat
     if (!bellIcon || !badge || !notificationsList) return;
 
@@ -67,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /**
-     * Načte notifikace z API
+     * Načte diskuzní notifikace z API
      * Volá se při inicializaci a poté pravidelně v intervalu
      */
     function loadNotifications() {

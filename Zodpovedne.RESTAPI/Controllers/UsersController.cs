@@ -1374,5 +1374,31 @@ public class UsersController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Vrací počet žádostí o přátelství, které čekají na schválení přihlášeným uživatelem.
+    /// </summary>
+    /// <returns>Počet čekajících žádostí o přátelství</returns>
+    [Authorize]
+    [HttpGet("friendship-requests-count")]
+    public async Task<ActionResult<int>> GetFriendshipRequestsCount()
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
 
+            // Zjištění počtu žádostí o přátelství, které čekají na schválení
+            var requestsCount = await dbContext.Friendships
+                .CountAsync(f => f.ApproverUserId == userId && f.FriendshipStatus == FriendshipStatus.Requested);
+
+            return Ok(requestsCount);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při zjišťování počtu žádostí o přátelství", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }
