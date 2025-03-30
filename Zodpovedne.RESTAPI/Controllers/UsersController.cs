@@ -1088,6 +1088,11 @@ public class UsersController : ControllerBase
 
 
 
+
+
+
+
+
     /// <summary>
     /// Endpoint pro získání stavu přátelství mezi dvěma uživateli.
     /// Vrací null, pokud záznam o přátelství neexistuje, nebo stav přátelství.
@@ -1187,5 +1192,187 @@ public class UsersController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    // Přidejte tyto endpointy do třídy UsersController v projektu Zodpovedne.RESTAPI
+
+    /// <summary>
+    /// Vrací seznam všech přátelství pro přihlášeného uživatele.
+    /// Zahrnuje jak žádosti o přátelství, tak již potvrzená přátelství.
+    /// </summary>
+    /// <returns>Seznam přátelství s informacemi o uživatelích</returns>
+    [Authorize]
+    [HttpGet("friendships")]
+    public async Task<ActionResult<IEnumerable<object>>> GetUserFriendships()
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            // Vyhledání všech přátelství, kde uživatel figuruje
+            // jako žadatel nebo schvalovatel
+            var friendships = await dbContext.Friendships
+                .Include(f => f.ApproverUser)    // Načtení souvisejících uživatelů pro přístup k jejich datům
+                .Include(f => f.RequesterUser)   // Načtení souvisejících uživatelů pro přístup k jejich datům
+                .Where(f => f.ApproverUserId == userId || f.RequesterUserId == userId)
+                .ToListAsync();
+
+            // Transformace dat pro vrácení klientovi
+            var result = friendships.Select(f =>
+            {
+                // Zjištění, kdo je druhý uživatel (ten, který NENÍ přihlášený)
+                var otherUser = f.ApproverUserId == userId ? f.RequesterUser : f.ApproverUser;
+
+                // Zjištění role přihlášeného uživatele
+                var isRequester = f.RequesterUserId == userId;
+
+                return new
+                {
+                    FriendshipId = f.Id,
+                    OtherUserId = otherUser.Id,
+                    OtherUserNickname = otherUser.Nickname,
+                    Status = f.FriendshipStatus,
+                    IsRequester = isRequester,   // Indikuje, zda přihlášený uživatel je původním žadatelem
+                    CreatedAt = f.CreatedAt
+                };
+            })
+            // Řazení: nejprve žádosti o přátelství, pak potvrzená přátelství
+            // a v rámci každé skupiny abecedně podle přezdívky
+            .OrderBy(f => f.Status == FriendshipStatus.Requested ? 0 : 1)
+            .ThenBy(f => f.OtherUserNickname);
+
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při načítání přátelství", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Schválí žádost o přátelství.
+    /// </summary>
+    /// <param name="friendshipId">ID záznamu přátelství</param>
+    /// <returns>Výsledek operace</returns>
+    [Authorize]
+    [HttpPost("friendships/{friendshipId}/approve")]
+    public async Task<IActionResult> ApproveFriendship(int friendshipId)
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            // Vyhledání záznamu přátelství
+            var friendship = await dbContext.Friendships.FindAsync(friendshipId);
+            if (friendship == null)
+                return NotFound("Žádost o přátelství nebyla nalezena.");
+
+            // Kontrola, zda přihlášený uživatel je schvalovatel
+            if (friendship.ApproverUserId != userId)
+                return Forbid();
+
+            // Kontrola, zda je žádost ve stavu Requested
+            if (friendship.FriendshipStatus != FriendshipStatus.Requested)
+                return BadRequest("Tato žádost o přátelství nemůže být schválena.");
+
+            // Změna stavu na Approved
+            friendship.FriendshipStatus = FriendshipStatus.Approved;
+            await dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při schvalování žádosti o přátelství", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Zamítne žádost o přátelství.
+    /// </summary>
+    /// <param name="friendshipId">ID záznamu přátelství</param>
+    /// <returns>Výsledek operace</returns>
+    [Authorize]
+    [HttpPost("friendships/{friendshipId}/deny")]
+    public async Task<IActionResult> DenyFriendship(int friendshipId)
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            // Vyhledání záznamu přátelství
+            var friendship = await dbContext.Friendships.FindAsync(friendshipId);
+            if (friendship == null)
+                return NotFound("Žádost o přátelství nebyla nalezena.");
+
+            // Kontrola, zda přihlášený uživatel je schvalovatel
+            if (friendship.ApproverUserId != userId)
+                return Forbid();
+
+            // Kontrola, zda je žádost ve stavu Requested
+            if (friendship.FriendshipStatus != FriendshipStatus.Requested)
+                return BadRequest("Tato žádost o přátelství nemůže být zamítnuta.");
+
+            // Změna stavu na Denied
+            friendship.FriendshipStatus = FriendshipStatus.Denied;
+            await dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při zamítání žádosti o přátelství", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Odstraní přátelství mezi uživateli.
+    /// </summary>
+    /// <param name="friendshipId">ID záznamu přátelství</param>
+    /// <returns>Výsledek operace</returns>
+    [Authorize]
+    [HttpDelete("friendships/{friendshipId}")]
+    public async Task<IActionResult> RemoveFriendship(int friendshipId)
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            // Vyhledání záznamu přátelství
+            var friendship = await dbContext.Friendships.FindAsync(friendshipId);
+            if (friendship == null)
+                return NotFound("Přátelství nebylo nalezeno.");
+
+            // Kontrola, zda je přihlášený uživatel jednou ze stran přátelství
+            if (friendship.ApproverUserId != userId && friendship.RequesterUserId != userId)
+                return Forbid();
+
+            // Odstranění přátelství z databáze
+            dbContext.Friendships.Remove(friendship);
+            await dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při odstraňování přátelství", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
 
 }

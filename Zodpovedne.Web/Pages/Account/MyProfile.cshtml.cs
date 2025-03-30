@@ -7,11 +7,38 @@ using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using System.Text.Json;
+using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Web.Pages.Account;
 
 public class MyProfileModel : BasePageModel
 {
+    /// <summary>
+    /// Tøída reprezentující pøátelství s jiným uživatelem
+    /// </summary>
+    public class FriendshipItem
+    {
+        public int FriendshipId { get; set; }
+        public string OtherUserId { get; set; } = "";
+        public string OtherUserNickname { get; set; } = "";
+        public FriendshipStatus Status { get; set; }
+        public bool IsRequester { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    /// <summary>
+    /// Seznam pøátelství pøihlášeného uživatele
+    /// </summary>
+    public List<FriendshipItem> Friendships { get; private set; } = new();
+
+    /// <summary>
+    /// Indikuje, zda má uživatel nìjaké žádosti o pøátelství
+    /// </summary>
+    public bool HasFriendshipRequests => Friendships.Any(f =>
+        f.Status == FriendshipStatus.Requested && !f.IsRequester);
+
+
+
     [BindProperty]
     public string? NewNickname { get; set; }
 
@@ -107,6 +134,21 @@ public class MyProfileModel : BasePageModel
         {
             _logger.Log("Nepodaøilo se naèíst notifikace o nových odpovìdích", ex);
             // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst notifikace
+        }
+
+        // Naètení pøátelství
+        try
+        {
+            var friendshipsResponse = await client.GetAsync($"{ApiBaseUrl}/users/friendships");
+            if (friendshipsResponse.IsSuccessStatusCode)
+            {
+                Friendships = await friendshipsResponse.Content.ReadFromJsonAsync<List<FriendshipItem>>() ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Nepodaøilo se naèíst seznam pøátel", ex);
+            // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst pøátele
         }
 
         return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
@@ -261,5 +303,96 @@ public class MyProfileModel : BasePageModel
         PasswordErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì hesla.");
 
         return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
+    }
+
+
+
+
+
+    /// <summary>
+    /// Handler pro schválení žádosti o pøátelství
+    /// </summary>
+    /// <param name="friendshipId">ID pøátelství</param>
+    public async Task<IActionResult> OnPostApproveFriendshipAsync(int friendshipId)
+    {
+        try
+        {
+            var client = _clientFactory.CreateBearerClient(HttpContext);
+            var response = await client.PostAsync($"{ApiBaseUrl}/users/friendships/{friendshipId}/approve", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                StatusMessage = "Žádost o pøátelství byla schválena.";
+            }
+            else
+            {
+                ErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nepodaøilo se schválit žádost o pøátelství.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Chyba pøi schvalování žádosti o pøátelství", ex);
+            ErrorMessage = "Pøi schvalování žádosti došlo k chybì.";
+        }
+
+        return RedirectToPage(new { statusMessage = StatusMessage });
+    }
+
+    /// <summary>
+    /// Handler pro zamítnutí žádosti o pøátelství
+    /// </summary>
+    /// <param name="friendshipId">ID pøátelství</param>
+    public async Task<IActionResult> OnPostDenyFriendshipAsync(int friendshipId)
+    {
+        try
+        {
+            var client = _clientFactory.CreateBearerClient(HttpContext);
+            var response = await client.PostAsync($"{ApiBaseUrl}/users/friendships/{friendshipId}/deny", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                StatusMessage = "Žádost o pøátelství byla zamítnuta.";
+            }
+            else
+            {
+                ErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nepodaøilo se zamítnout žádost o pøátelství.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Chyba pøi zamítání žádosti o pøátelství", ex);
+            ErrorMessage = "Pøi zamítání žádosti došlo k chybì.";
+        }
+
+        return RedirectToPage(new { statusMessage = StatusMessage });
+    }
+
+    /// <summary>
+    /// Handler pro odebrání pøátelství
+    /// </summary>
+    /// <param name="friendshipId">ID pøátelství</param>
+    public async Task<IActionResult> OnPostRemoveFriendshipAsync(int friendshipId)
+    {
+        try
+        {
+            var client = _clientFactory.CreateBearerClient(HttpContext);
+            var response = await client.DeleteAsync($"{ApiBaseUrl}/users/friendships/{friendshipId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                StatusMessage = "Pøátelství bylo odebráno.";
+            }
+            else
+            {
+                ErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nepodaøilo se odebrat pøátelství.");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Chyba pøi odebírání pøátelství", ex);
+            ErrorMessage = "Pøi odebírání pøátelství došlo k chybì.";
+        }
+
+        return RedirectToPage(new { statusMessage = StatusMessage });
     }
 }

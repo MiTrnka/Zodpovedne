@@ -1,4 +1,5 @@
 ﻿@page "/Account/Profile/{nickname}"
+@using Zodpovedne.Contracts.Enums
 @model ProfileModel
 @{
     ViewData["Title"] = "Profil";
@@ -28,7 +29,7 @@
             <div class="card-body">
                 <dl>
                     <dt>Přezdívka</dt>
-                    <dd>@Model.UserProfile?.Nickname</dd>
+                    <dd>@(Model.FriendshipStatus == FriendshipStatus.Approved ? "(přítel) " : "")@Model.UserProfile?.Nickname</dd>
                     <dt>Registrován</dt>
                     <dd>@Model.UserProfile?.Created.ToString("dd.MM.yyyy HH:mm")</dd>
                     @if (@Model.UserProfile?.LastLogin != null)

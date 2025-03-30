@@ -103,6 +103,132 @@
             </div>
         </div>
 
+        <!-- Sekce s přáteli -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" type="button" id="toggle-friends">
+                        Přátelé
+                        <i class="bi bi-chevron-down" id="friends-chevron"></i>
+                        @if (Model.HasFriendshipRequests)
+                        {
+                            <span class="badge bg-primary">
+                                @Model.Friendships.Count(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && !f.IsRequester)
+                            </span>
+                        }
+                    </button>
+                </h5>
+            </div>
+            <div class="card-body" id="friends-list" style="display: none;">
+                @if (Model.Friendships.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <tbody>
+                                @* Nejprve zobrazíme žádosti o přátelství (kde uživatel je schvalovatel) *@
+                                @foreach (var friendship in Model.Friendships
+                               .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && !f.IsRequester)
+                               .OrderBy(f => f.OtherUserNickname))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a href="/Account/Profile/@friendship.OtherUserNickname" class="text-decoration-none">
+                                                @friendship.OtherUserNickname <span class="badge bg-warning">žádá o přátelství</span>
+                                            </a>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="btn-group" role="group">
+                                                <form method="post" asp-page-handler="ApproveFriendship" asp-route-friendshipId="@friendship.FriendshipId" class="d-inline">
+                                                    <button type="submit" class="btn btn-success btn-sm">
+                                                        <i class="bi bi-check-lg"></i> Potvrdit
+                                                    </button>
+                                                </form>
+                                                <form method="post" asp-page-handler="DenyFriendship" asp-route-friendshipId="@friendship.FriendshipId" class="d-inline ms-1">
+                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                        <i class="bi bi-x-lg"></i> Zamítnout
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+
+                                @* Potom zobrazíme již potvrzená přátelství *@
+                                @foreach (var friendship in Model.Friendships
+                               .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Approved)
+                               .OrderBy(f => f.OtherUserNickname))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a href="/Account/Profile/@friendship.OtherUserNickname" class="text-decoration-none">
+                                                @friendship.OtherUserNickname
+                                            </a>
+                                        </td>
+                                        <td class="text-end">
+                                            <form method="post" asp-page-handler="RemoveFriendship" asp-route-friendshipId="@friendship.FriendshipId"
+                                                  onsubmit="return confirm('Opravdu chcete odebrat tohoto přítele?');">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    <i class="bi bi-person-dash"></i> Odebrat
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+
+                                @* Zobrazíme i odeslané žádosti o přátelství *@
+                                @foreach (var friendship in Model.Friendships
+                               .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && f.IsRequester)
+                               .OrderBy(f => f.OtherUserNickname))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a href="/Account/Profile/@friendship.OtherUserNickname" class="text-decoration-none">
+                                                @friendship.OtherUserNickname <span class="badge bg-secondary">čeká na potvrzení</span>
+                                            </a>
+                                        </td>
+                                        <td class="text-end">
+                                            <form method="post" asp-page-handler="RemoveFriendship" asp-route-friendshipId="@friendship.FriendshipId"
+                                                  onsubmit="return confirm('Opravdu chcete zrušit tuto žádost o přátelství?');">
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                    <i class="bi bi-x-circle"></i> Zrušit žádost
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+
+                                @* Nakonec zobrazíme zamítnuté žádosti o přátelství *@
+                                @foreach (var friendship in Model.Friendships
+                               .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Denied)
+                               .OrderBy(f => f.OtherUserNickname))
+                                {
+                                    <tr>
+                                        <td>
+                                            <a href="/Account/Profile/@friendship.OtherUserNickname" class="text-decoration-none text-secondary">
+                                                @friendship.OtherUserNickname <span class="badge bg-light text-secondary">zamítnuto</span>
+                                            </a>
+                                        </td>
+                                        <td class="text-end">
+                                            <form method="post" asp-page-handler="RemoveFriendship" asp-route-friendshipId="@friendship.FriendshipId"
+                                                  onsubmit="return confirm('Opravdu chcete odstranit tohoto uživatele ze seznamu zamítnutých?');">
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                    <i class="bi bi-trash"></i> Odstranit ze zamítnutých
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Zatím nemáte žádné přátele.</p>
+                }
+            </div>
+        </div>
+
         <!-- Sekce s diskuzemi uživatele -->
         <div class="card mb-4">
             <div class="card-header">
@@ -283,6 +409,23 @@
                     notificationsContainer.style.display = 'none';
                     notificationsChevronIcon.classList.remove('bi-chevron-up');
                     notificationsChevronIcon.classList.add('bi-chevron-down');
+                }
+            });
+
+             // Kód pro přepínání sekce s přáteli
+            const toggleFriendsBtn = document.getElementById('toggle-friends');
+            const friendsContainer = document.getElementById('friends-list');
+            const friendsChevron = document.getElementById('friends-chevron');
+
+            toggleFriendsBtn.addEventListener('click', function () {
+                if (friendsContainer.style.display === 'none') {
+                    friendsContainer.style.display = 'block';
+                    friendsChevron.classList.remove('bi-chevron-down');
+                    friendsChevron.classList.add('bi-chevron-up');
+                } else {
+                    friendsContainer.style.display = 'none';
+                    friendsChevron.classList.remove('bi-chevron-up');
+                    friendsChevron.classList.add('bi-chevron-down');
                 }
             });
         });
