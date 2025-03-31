@@ -4,6 +4,7 @@ using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Filters;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
+using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -71,17 +72,18 @@ public class MessagesModel : BasePageModel
             if (friendshipsResponse.IsSuccessStatusCode)
             {
                 // Zpracování seznamu pøátelství
-                var friendships = await friendshipsResponse.Content.ReadFromJsonAsync<List<dynamic>>();
+                var friendships = await friendshipsResponse.Content
+                .ReadFromJsonAsync<List<FriendshipDto>>();
 
                 if (friendships != null)
                 {
-                    // Filtrování pouze na schválené pøátelství
+                    // Filtrování pouze na schválená pøátelství
                     Friends = friendships
-                        .Where(f => ((int)f.Status) == 1) // Status 1 = Approved
+                        .Where(f => f.Status == FriendshipStatus.Approved)
                         .Select(f => new FriendItem
                         {
-                            UserId = (string)f.OtherUserId,
-                            Nickname = (string)f.OtherUserNickname
+                            UserId = f.OtherUserId,
+                            Nickname = f.OtherUserNickname
                         })
                         .OrderBy(f => f.Nickname)
                         .ToList();
