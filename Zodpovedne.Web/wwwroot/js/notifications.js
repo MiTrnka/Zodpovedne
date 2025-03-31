@@ -294,4 +294,76 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+
+
+
+
+
+
+
+    // NÍŽE JE SEKCE PRO POČET NEPŘEČTENÝCH ZPRÁV
+    // Získáme element pro ikonu zpráv
+    const messagesIcon = document.getElementById('messages-icon');
+    if (messagesIcon) {
+        // Přidáme event listener pro kliknutí na ikonu zpráv
+        messagesIcon.addEventListener('click', function () {
+            // Přesměrování na stránku zpráv
+            window.location.href = '/Messages';
+        });
+        // Načteme počet nepřečtených zpráv
+        loadUnreadMessagesCount();
+        // Nastavíme pravidelné načítání počtu nepřečtených zpráv
+        setInterval(loadUnreadMessagesCount, 60000); // každou minutu
+    }
+
+    /**
+     * Funkce pro načtení počtu nepřečtených zpráv a aktualizaci UI
+     * Spouští se při načtení stránky a poté v pravidelném intervalu
+     */
+    function loadUnreadMessagesCount() {
+        // Zkontrolujeme, zda je uživatel přihlášen
+        const token = sessionStorage.getItem('JWTToken');
+        if (!token) return;
+
+        // Zkontrolujeme, zda máme URL pro API
+        const apiBaseUrl = document.getElementById('apiBaseUrl')?.value;
+        if (!apiBaseUrl) return;
+
+        // Získáme element pro badge (číselný indikátor) u ikony zpráv
+        const messagesBadge = document.getElementById('messages-badge');
+        const messagesCount = document.getElementById('messages-count');
+
+        // Pokud elementy neexistují, ukončíme funkci
+        if (!messagesBadge || !messagesCount) return;
+
+        // Načtení počtu nepřečtených zpráv z API
+        fetch(`${apiBaseUrl}/messages/unread-count`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Chyba při načítání počtu nepřečtených zpráv');
+                return response.json();
+            })
+            .then(count => {
+                // Aktualizace počtu v badge
+                messagesCount.textContent = count;
+
+                // Zobrazení/skrytí badge podle počtu zpráv
+                if (count > 0) {
+                    messagesBadge.classList.remove('d-none');
+                    // Volitelně: přidat animaci nebo zvýraznění ikony pro upozornění uživatele
+                    messagesIcon.classList.add('text-primary');
+                } else {
+                    messagesBadge.classList.add('d-none');
+                    messagesIcon.classList.remove('text-primary');
+                }
+            })
+            .catch(error => {
+                console.error('Chyba při načítání počtu nepřečtených zpráv:', error);
+            });
+    }
+
+
 });
