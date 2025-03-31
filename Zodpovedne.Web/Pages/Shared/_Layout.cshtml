@@ -106,6 +106,16 @@
                                 asp-route-returnUrl="@Context.Request.Path">Registrovat dalšího admina</a>
                             </li>
                         }
+                        <!-- Ikona zpráv -->
+                        <li class="nav-item me-2">
+                            <a class="nav-link position-relative" href="/Messages" id="messages-link">
+                                <i class="bi bi-envelope" id="messages-icon"></i>
+                                <span id="messages-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                                    <span id="messages-count">0</span>
+                                    <span class="visually-hidden">nepřečtených zpráv</span>
+                                </span>
+                            </a>
+                        </li>
                         <!-- Notifikační zvoneček s dropdown menu -->
                         <li class="nav-item dropdown" id="notifications-container">
                             <a class="nav-link position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
