@@ -25,11 +25,6 @@ public class MessagesModel : BasePageModel
     }
 
     /// <summary>
-    /// Seznam konverzací pøihlášeného uživatele
-    /// </summary>
-    public List<ConversationDto> Conversations { get; private set; } = new();
-
-    /// <summary>
     /// Seznam pøátel pøihlášeného uživatele pro zahájení nové konverzace
     /// </summary>
     public List<FriendItem> Friends { get; private set; } = new();
@@ -52,20 +47,6 @@ public class MessagesModel : BasePageModel
 
         try
         {
-            // Naètení seznamu konverzací
-            var conversationsResponse = await client.GetAsync($"{ApiBaseUrl}/messages/conversations");
-
-            if (conversationsResponse.IsSuccessStatusCode)
-            {
-                Conversations = await conversationsResponse.Content.ReadFromJsonAsync<List<ConversationDto>>() ?? new();
-            }
-            else
-            {
-                _logger.Log($"Nepodaøilo se naèíst konverzace, status: {conversationsResponse.StatusCode}");
-                ErrorMessage = "Nepodaøilo se naèíst seznam konverzací.";
-                return Page();
-            }
-
             // Naètení seznamu pøátel pro zahájení nových konverzací
             var friendshipsResponse = await client.GetAsync($"{ApiBaseUrl}/users/friendships");
 

@@ -145,12 +145,6 @@ async function loadConversation(userId, nickname) {
             addLoadMoreButton();
         }
 
-        // Aktualizace oznámení o nepřečtených zprávách (nepovinné)
-        // Toto je automaticky zpracováno na straně serveru při načtení konverzace
-
-        // Označení aktivní konverzace v seznamu
-        highlightActiveConversation(userId);
-
     } catch (error) {
         console.error('Chyba při načítání konverzace:', error);
         document.getElementById('messages-container').innerHTML =
@@ -317,7 +311,7 @@ function displayMessages(messages, clearContainer = false) {
 
     // Scrollování na konec, pokud jde o nově načtenou konverzaci
     if (clearContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        messagesContainer.scrollTop = 0; // messagesContainer.scrollHeight;
     }
 }
 
@@ -372,23 +366,5 @@ function addMessageToUI(message, isFromCurrentUser) {
     messagesContainer.appendChild(messageElement);
 
     // Scrollování na konec
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-/**
- * Zvýrazní aktivní konverzaci v seznamu
- * @param {string} userId - ID uživatele, jehož konverzace má být zvýrazněna
- */
-function highlightActiveConversation(userId) {
-    // Odstranění zvýraznění z předchozí aktivní konverzace
-    const activeItems = document.querySelectorAll('.conversation-item.active');
-    activeItems.forEach(item => item.classList.remove('active'));
-
-    // Přidání zvýraznění pro aktuální konverzaci
-    const currentItem = document.querySelector(`.conversation-item[data-user-id="${userId}"]`);
-    if (currentItem) {
-        currentItem.classList.add('active');
-        // Odstranění tučného písma, pokud byly nepřečtené zprávy
-        currentItem.classList.remove('fw-bold');
-    }
+    messagesContainer.scrollTop = 0; // messagesContainer.scrollHeight;
 }
