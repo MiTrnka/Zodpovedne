@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Načteme počet žádostí o přátelství
     loadFriendshipRequests();
     // Nastavíme pravidelné načítání počtu žádostí o přátelství
-    setInterval(loadFriendshipRequests, 60000); // každou minutu
+    setInterval(loadFriendshipRequests, 30000); // každých 30 sekund
     /**
      * Funkce pro načtení počtu žádostí o přátelství a aktualizaci UI
      * Spouští se při načtení stránky a poté v pravidelném intervalu
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!bellIcon || !badge || !notificationsList) return;
 
     // Konfigurace
-    const REFRESH_INTERVAL = 60000; // 60 sekund
+    const REFRESH_INTERVAL = 30000; // 30 sekund
     const ANIMATION_CLASS = 'notification-active';
     const BADGE_HIDE_CLASS = 'd-none';
 
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Načteme počet nepřečtených zpráv
         loadUnreadMessagesCount();
         // Nastavíme pravidelné načítání počtu nepřečtených zpráv
-        setInterval(loadUnreadMessagesCount, 60000); // každou minutu
+        setInterval(loadUnreadMessagesCount, 30000); // každých 30 sekund
     }
 
     /**

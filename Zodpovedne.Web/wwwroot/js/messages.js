@@ -9,6 +9,7 @@ let currentPage = 1;             // Aktuální stránka zpráv
 let hasOlderMessages = false;    // Indikátor, zda existují starší zprávy
 let isLoadingMessages = false;   // Indikátor, zda probíhá načítání zpráv
 const pageSize = 20;             // Počet zpráv na stránku
+const REFRESH_INTERVAL = 30000; // 30 sekund
 
 // Po načtení dokumentu inicializujeme event listenery
 document.addEventListener('DOMContentLoaded', function () {
@@ -37,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Spustíme aktualizaci počtu nepřečtených zpráv každých 30 sekund
     updateUnreadCounts();
-    setInterval(updateUnreadCounts, 30000);
+    setInterval(updateUnreadCounts, REFRESH_INTERVAL);
 
 });
 
