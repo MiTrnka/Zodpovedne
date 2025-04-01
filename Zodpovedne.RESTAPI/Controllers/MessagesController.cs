@@ -261,4 +261,49 @@ public class MessagesController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Vrací počet nepřečtených zpráv pro každého přítele s nepřečtenými zprávami
+    /// </summary>
+    /// <returns>Slovník s ID uživatelů jako klíči a počtem nepřečtených zpráv jako hodnotami</returns>
+    [HttpGet("unread-counts-by-user")]
+    public async Task<ActionResult<Dictionary<string, int>>> GetUnreadMessagesByUser()
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId))
+                return Unauthorized();
+
+            // 1. KROK: Získání seznamu ID přátel pro filtrování
+            var friendIds = await _dbContext.Friendships
+                .Where(f => (f.ApproverUserId == currentUserId || f.RequesterUserId == currentUserId) &&
+                      f.FriendshipStatus == FriendshipStatus.Approved)
+                .Select(f => f.ApproverUserId == currentUserId ? f.RequesterUserId : f.ApproverUserId)
+                .ToListAsync();
+
+            // 2. KROK: Získání počtu nepřečtených zpráv od každého přítele
+            var unreadCounts = await _dbContext.Messages
+                .Where(m =>
+                    m.RecipientUserId == currentUserId && // Uživatel je příjemcem
+                    m.ReadAt == null &&                   // Zpráva ještě nebyla přečtena
+                    friendIds.Contains(m.SenderUserId)    // Odesílatel je přítel
+                )
+                .GroupBy(m => m.SenderUserId)             // Seskupení podle odesílatele
+                .Select(g => new                          // Počet zpráv pro každého odesílatele
+                {
+                    SenderId = g.Key,
+                    Count = g.Count()
+                })
+                .ToDictionaryAsync(x => x.SenderId, x => x.Count);
+
+            return unreadCounts;
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Chyba při získávání počtu nepřečtených zpráv podle uživatelů", ex);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }

@@ -34,6 +34,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // Spustíme aktualizaci počtu nepřečtených zpráv každých 30 sekund
+    updateUnreadCounts();
+    setInterval(updateUnreadCounts, 30000);
+
 });
 
 /**
@@ -147,6 +152,16 @@ async function loadConversation(userId, nickname) {
         const messagesContainer = document.getElementById('messages-container');
         if (messagesContainer) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Aktualizace UI - odstranění označení nepřečtených zpráv
+        const friendElement = document.querySelector(`.list-group-item[onclick*="loadConversation('${userId}'"]`);
+        if (friendElement) {
+            friendElement.classList.remove('list-group-item-primary');
+            const badge = friendElement.querySelector('.badge');
+            if (badge) {
+                badge.remove();
+            }
         }
 
     } catch (error) {
@@ -400,4 +415,59 @@ function addMessageToUI(message, isFromCurrentUser) {
 
     // Scrollování na konec (k nejnovější zprávě)
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+/**
+* Pravidelně aktualizuje počet nepřečtených zpráv pro každého přítele
+*/
+async function updateUnreadCounts() {
+    const apiBaseUrl = document.getElementById('apiBaseUrl')?.value;
+    if (!apiBaseUrl) return;
+
+    try {
+        const response = await fetch(`${apiBaseUrl}/messages/unread-counts-by-user`, {
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+            }
+        });
+
+        if (!response.ok) return;
+
+        const unreadCounts = await response.json();
+
+        // Aktualizace UI pro každého přítele
+        document.querySelectorAll('.list-group-item-action').forEach(item => {
+            const onclickAttr = item.getAttribute('onclick');
+            if (!onclickAttr) return;
+
+            // Extrahování userId z onclick atributu
+            const match = onclickAttr.match(/loadConversation\('([^']+)'/);
+            if (!match || !match[1]) return;
+
+            const userId = match[1];
+            const unreadCount = unreadCounts[userId] || 0;
+
+            // Získání nebo vytvoření badge elementu
+            let badge = item.querySelector('.badge');
+            if (unreadCount > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'badge bg-primary rounded-pill';
+                    const flexContainer = item.querySelector('.d-flex') || item;
+                    flexContainer.appendChild(badge);
+                }
+                badge.textContent = unreadCount;
+                item.classList.add('list-group-item-primary');
+            } else {
+                if (badge) {
+                    badge.remove();
+                }
+                if (userId !== currentRecipientId) {
+                    item.classList.remove('list-group-item-primary');
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Chyba při aktualizaci počtu nepřečtených zpráv:', error);
+    }
 }

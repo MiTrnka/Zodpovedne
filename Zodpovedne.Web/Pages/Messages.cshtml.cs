@@ -22,6 +22,7 @@ public class MessagesModel : BasePageModel
     {
         public string UserId { get; set; } = "";
         public string Nickname { get; set; } = "";
+        public int UnreadCount { get; set; } = 0;
     }
 
     /// <summary>
@@ -47,7 +48,7 @@ public class MessagesModel : BasePageModel
 
         try
         {
-            // Pøidání uživatelských dat do ViewData pro odlišení zpráv v konverzacích (moje zpráva od zprávy toho druhého)
+            // Pøidání uživatelských dat do ViewData pro odlišení zpráv v konverzacích
             ViewData["CurrentUserId"] = CurrentUserId;
 
             // Naètení seznamu pøátel pro zahájení nových konverzací
@@ -57,12 +58,12 @@ public class MessagesModel : BasePageModel
             {
                 // Zpracování seznamu pøátelství
                 var friendships = await friendshipsResponse.Content
-                .ReadFromJsonAsync<List<FriendshipDto>>();
+                    .ReadFromJsonAsync<List<FriendshipDto>>();
 
                 if (friendships != null)
                 {
                     // Filtrování pouze na schválená pøátelství
-                    Friends = friendships
+                    var approvedFriendships = friendships
                         .Where(f => f.Status == FriendshipStatus.Approved)
                         .Select(f => new FriendItem
                         {
@@ -70,6 +71,30 @@ public class MessagesModel : BasePageModel
                             Nickname = f.OtherUserNickname
                         })
                         .OrderBy(f => f.Nickname)
+                        .ToList();
+
+                    // Získání poètu nepøeètených zpráv od každého pøítele
+                    var unreadByUserResponse = await client.GetAsync($"{ApiBaseUrl}/messages/unread-counts-by-user");
+                    if (unreadByUserResponse.IsSuccessStatusCode)
+                    {
+                        var unreadCounts = await unreadByUserResponse.Content.ReadFromJsonAsync<Dictionary<string, int>>();
+                        if (unreadCounts != null)
+                        {
+                            // Pøiøazení poètu nepøeètených zpráv k jednotlivým pøátelùm
+                            foreach (var friend in approvedFriendships)
+                            {
+                                if (unreadCounts.TryGetValue(friend.UserId, out int count))
+                                {
+                                    friend.UnreadCount = count;
+                                }
+                            }
+                        }
+                    }
+
+                    // Seøazení pøátel - nejprve ti s nepøeètenými zprávami, potom ostatní
+                    Friends = approvedFriendships
+                        .OrderByDescending(f => f.UnreadCount > 0)
+                        .ThenBy(f => f.Nickname)
                         .ToList();
                 }
             }
