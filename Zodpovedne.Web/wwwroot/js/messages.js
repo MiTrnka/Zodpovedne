@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Nastavíme event listener pro detekci, když uživatel scrolluje nahoru k začátku konverzace
         messagesContainer.addEventListener('scroll', function () {
             // Pokud jsme blízko začátku a existují starší zprávy, načteme další dávku
+            // scrollTop < 50 znamená, že jsme 50px od vrcholu kontejneru
             if (messagesContainer.scrollTop < 50 && hasOlderMessages && !isLoadingMessages) {
                 loadMoreMessages(apiBaseUrl);
             }
@@ -79,9 +80,11 @@ function initMessageForm(apiBaseUrl) {
             // Vyčištění formuláře
             messageInput.value = '';
 
-            // Aktualizace seznamu konverzací (optional)
-            // Mohli bychom aktualizovat seznam konverzací, ale pro jednoduchost
-            // očekáváme, že uživatel obnoví stránku nebo příště uvidí aktualizovaný seznam
+            // Scrollování dolů k nejnovější zprávě
+            const messagesContainer = document.getElementById('messages-container');
+            if (messagesContainer) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
         } catch (error) {
             console.error('Chyba při odesílání zprávy:', error);
             alert('Nepodařilo se odeslat zprávu. Zkuste to prosím znovu.');
@@ -140,9 +143,10 @@ async function loadConversation(userId, nickname) {
         // Aktualizace stránkování
         hasOlderMessages = data.hasOlderMessages;
 
-        // Pokud jsou další zprávy, přidáme tlačítko pro načtení dalších
-        if (hasOlderMessages) {
-            addLoadMoreButton();
+        // Scrollování na konec k nejnovější zprávě
+        const messagesContainer = document.getElementById('messages-container');
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
     } catch (error) {
@@ -164,16 +168,20 @@ async function loadMoreMessages(apiBaseUrl) {
 
     // Příprava na načtení další stránky
     const nextPage = currentPage + 1;
+    const messagesContainer = document.getElementById('messages-container');
 
-    // Zobrazení indikátoru načítání v tlačítku, pokud existuje
-    const loadMoreBtn = document.querySelector('.load-more-messages');
-    if (loadMoreBtn) {
-        loadMoreBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Načítání...';
-        loadMoreBtn.disabled = true;
-    }
+    // Zapamatujeme si aktuální pozici scrollu a výšku obsahu
+    const scrollHeight = messagesContainer.scrollHeight;
+    const scrollPosition = messagesContainer.scrollTop;
 
     try {
         isLoadingMessages = true;
+
+        // Přidání indikátoru načítání
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'text-center p-2';
+        loadingIndicator.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Načítání...';
+        messagesContainer.insertBefore(loadingIndicator, messagesContainer.firstChild);
 
         // Načtení starších zpráv z API
         const response = await fetch(`${apiBaseUrl}/messages/conversation/${currentRecipientId}?page=${nextPage}&pageSize=${pageSize}`, {
@@ -189,6 +197,9 @@ async function loadMoreMessages(apiBaseUrl) {
         // Zpracování odpovědi
         const data = await response.json();
 
+        // Odstranění indikátoru načítání
+        messagesContainer.removeChild(loadingIndicator);
+
         // Přidání zpráv do UI (na začátek, protože jsou starší)
         displayMessages(data.messages, false);
 
@@ -196,26 +207,31 @@ async function loadMoreMessages(apiBaseUrl) {
         currentPage = nextPage;
         hasOlderMessages = data.hasOlderMessages;
 
-        // Pokud už nejsou starší zprávy, odstraníme tlačítko
-        if (!hasOlderMessages && loadMoreBtn) {
-            loadMoreBtn.remove();
-        }
+        // Zachování relativní pozice scrollu
+        // Zjistíme rozdíl ve výšce obsahu před a po přidání zpráv
+        const newScrollHeight = messagesContainer.scrollHeight;
+        const scrollDiff = newScrollHeight - scrollHeight;
+
+        // Nastavíme scroll tak, aby uživatel zůstal na stejném místě v konverzaci
+        // (posunutý o výšku nově načteného obsahu)
+        messagesContainer.scrollTop = scrollPosition + scrollDiff;
 
     } catch (error) {
         console.error('Chyba při načítání starších zpráv:', error);
-        if (loadMoreBtn) {
-            loadMoreBtn.innerHTML = 'Nepodařilo se načíst starší zprávy';
-            loadMoreBtn.classList.remove('btn-primary');
-            loadMoreBtn.classList.add('btn-danger');
-        }
+        // V případě chyby zobrazíme diskrétní notifikaci
+        const errorNotification = document.createElement('div');
+        errorNotification.className = 'alert alert-danger p-1 m-1 small';
+        errorNotification.textContent = 'Nepodařilo se načíst starší zprávy';
+        messagesContainer.insertBefore(errorNotification, messagesContainer.firstChild);
+
+        // Automatické odstranění notifikace po 3 sekundách
+        setTimeout(() => {
+            if (errorNotification.parentNode === messagesContainer) {
+                messagesContainer.removeChild(errorNotification);
+            }
+        }, 3000);
     } finally {
         isLoadingMessages = false;
-
-        // Obnovení tlačítka, pokud existuje a jsou další zprávy
-        if (loadMoreBtn && hasOlderMessages) {
-            loadMoreBtn.innerHTML = 'Načíst starší zprávy';
-            loadMoreBtn.disabled = false;
-        }
     }
 }
 
@@ -281,7 +297,13 @@ function displayMessages(messages, clearContainer = false) {
 
     // Vytvoření HTML pro každou zprávu
     const currentUserId = document.querySelector('meta[name="current-user-id"]')?.content;
-    const messagesHTML = messages.map(message => {
+
+    // Třídíme zprávy podle času
+    const sortedMessages = [...messages].sort((a, b) =>
+        new Date(a.sentAt) - new Date(b.sentAt)
+    );
+
+    const messagesHTML = sortedMessages.map(message => {
         const isCurrentUserSender = message.senderUserId === currentUserId;
         const messageClass = isCurrentUserSender ? 'message-sent' : 'message-received';
         const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -295,48 +317,19 @@ function displayMessages(messages, clearContainer = false) {
         `;
     }).join('');
 
-    // Přidání zpráv do kontejneru (na začátek, pokud jsou starší)
+    // Přidání zpráv do kontejneru
     if (clearContainer) {
         messagesContainer.innerHTML = messagesHTML;
     } else {
         // Připojíme na začátek, protože jde o starší zprávy
-        const firstMessage = messagesContainer.firstChild;
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = messagesHTML;
 
+        // Vložíme všechny zprávy na začátek kontejneru
         while (tempDiv.firstChild) {
-            messagesContainer.insertBefore(tempDiv.firstChild, firstMessage);
+            messagesContainer.insertBefore(tempDiv.firstChild, messagesContainer.firstChild);
         }
     }
-
-    // Scrollování na konec, pokud jde o nově načtenou konverzaci
-    if (clearContainer) {
-        messagesContainer.scrollTop = 0; // messagesContainer.scrollHeight;
-    }
-}
-
-/**
- * Přidá tlačítko pro načtení starších zpráv
- */
-function addLoadMoreButton() {
-    const messagesContainer = document.getElementById('messages-container');
-    if (!messagesContainer) return;
-
-    // Vytvoření tlačítka
-    const loadMoreButton = document.createElement('button');
-    loadMoreButton.className = 'btn btn-outline-primary btn-sm load-more-messages';
-    loadMoreButton.textContent = 'Načíst starší zprávy';
-
-    // Přidání event listeneru
-    loadMoreButton.addEventListener('click', function () {
-        const apiBaseUrl = document.getElementById('apiBaseUrl')?.value;
-        if (apiBaseUrl) {
-            loadMoreMessages(apiBaseUrl);
-        }
-    });
-
-    // Přidání na začátek kontejneru
-    messagesContainer.insertBefore(loadMoreButton, messagesContainer.firstChild);
 }
 
 /**
@@ -365,6 +358,6 @@ function addMessageToUI(message, isFromCurrentUser) {
     // Přidání na konec kontejneru
     messagesContainer.appendChild(messageElement);
 
-    // Scrollování na konec
-    messagesContainer.scrollTop = 0; // messagesContainer.scrollHeight;
+    // Scrollování na konec (k nejnovější zprávě)
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
