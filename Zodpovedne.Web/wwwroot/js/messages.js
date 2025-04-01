@@ -295,8 +295,25 @@ function displayMessages(messages, clearContainer = false) {
         return;
     }
 
-    // Vytvoření HTML pro každou zprávu
-    const currentUserId = document.querySelector('meta[name="current-user-id"]')?.content;
+    // Získáme ID aktuálního uživatele z meta tagu
+    // Pokud meta tag neexistuje, zkusíme alternativní způsoby získání ID
+    let currentUserId = document.querySelector('meta[name="current-user-id"]')?.content;
+
+    // Pokud ID není v meta tagu, zkusíme ho získat ze session storage (pokud bylo uloženo při přihlášení)
+    if (!currentUserId) {
+        try {
+            // Můžeme zkusit dekódovat JWT token
+            const token = sessionStorage.getItem('JWTToken');
+            if (token) {
+                // Parsování JWT tokenu pro získání user ID
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                // Hledání ID v obvyklých JWT claimech
+                currentUserId = payload.nameid || payload.sub || payload.userId;
+            }
+        } catch (error) {
+            console.error('Chyba při získávání ID uživatele:', error);
+        }
+    }
 
     // Třídíme zprávy podle času
     const sortedMessages = [...messages].sort((a, b) =>
@@ -304,13 +321,18 @@ function displayMessages(messages, clearContainer = false) {
     );
 
     const messagesHTML = sortedMessages.map(message => {
+        // Určení, zda je zpráva od aktuálního uživatele
         const isCurrentUserSender = message.senderUserId === currentUserId;
         const messageClass = isCurrentUserSender ? 'message-sent' : 'message-received';
+
+        // Pro ladění - přidáme data atributy s informacemi o odesílateli
+        const debugInfo = `data-sender="${message.senderUserId}" data-current="${currentUserId || 'unknown'}"`;
+
         const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateFormatted = new Date(message.sentAt).toLocaleDateString();
 
         return `
-            <div class="message ${messageClass}">
+            <div class="message ${messageClass}" ${debugInfo}>
                 <div class="message-content">${message.content}</div>
                 <div class="message-time">${timeFormatted} | ${dateFormatted}</div>
             </div>
@@ -343,6 +365,25 @@ function addMessageToUI(message, isFromCurrentUser) {
 
     // Vytvoření HTML elementu pro zprávu
     const messageElement = document.createElement('div');
+
+    // Pokud isFromCurrentUser není explicitně dodáno, určíme to podle message.senderUserId
+    if (isFromCurrentUser === undefined) {
+        // Získáme ID aktuálního uživatele z meta tagu nebo tokenu
+        let currentUserId = document.querySelector('meta[name="current-user-id"]')?.content;
+        if (!currentUserId) {
+            try {
+                const token = sessionStorage.getItem('JWTToken');
+                if (token) {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    currentUserId = payload.nameid || payload.sub || payload.userId;
+                }
+            } catch (error) {
+                console.error('Chyba při získávání ID uživatele:', error);
+            }
+        }
+        isFromCurrentUser = message.senderUserId === currentUserId;
+    }
+
     messageElement.className = `message ${isFromCurrentUser ? 'message-sent' : 'message-received'}`;
 
     // Formátování času

@@ -47,6 +47,9 @@ public class MessagesModel : BasePageModel
 
         try
         {
+            // Pøidání uživatelských dat do ViewData pro odlišení zpráv v konverzacích (moje zpráva od zprávy toho druhého)
+            ViewData["CurrentUserId"] = CurrentUserId;
+
             // Naètení seznamu pøátel pro zahájení nových konverzací
             var friendshipsResponse = await client.GetAsync($"{ApiBaseUrl}/users/friendships");
 
