@@ -24,11 +24,6 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Přidání uživatelských dat do ViewData pro odlišení zpráv v konverzacích (moje zpráva od zprávy toho druhého) -->
-    @if (ViewData["CurrentUserId"] != null)
-    {
-        <meta name="current-user-id" content="@ViewData["CurrentUserId"]" />
-    }
     <title>@ViewData["Title"] - Mámou zodpovědně</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />

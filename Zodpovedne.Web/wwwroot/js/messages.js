@@ -295,11 +295,10 @@ function displayMessages(messages, clearContainer = false) {
         return;
     }
 
-    // Získáme ID aktuálního uživatele z meta tagu
-    // Pokud meta tag neexistuje, zkusíme alternativní způsoby získání ID
-    let currentUserId = document.querySelector('meta[name="current-user-id"]')?.content;
+    // Získáme ID aktuálního uživatele z hidden pole
+    let currentUserId = document.getElementById('current-user-id-input')?.value;
 
-    // Pokud ID není v meta tagu, zkusíme ho získat ze session storage (pokud bylo uloženo při přihlášení)
+    // Pokud ID není v hidden poli, zkusíme ho získat ze session storage (pokud bylo uloženo při přihlášení)
     if (!currentUserId) {
         try {
             // Můžeme zkusit dekódovat JWT token
