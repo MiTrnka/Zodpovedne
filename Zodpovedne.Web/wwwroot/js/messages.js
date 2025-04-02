@@ -58,6 +58,12 @@ async function refreshCurrentConversation() {
             return;
         }
 
+        // Zobrazení indikátoru načítání - aby uživatel věděl, že se něco děje
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.classList.remove('d-none');
+        }
+
         // Načtení první stránky konverzace s aktuálním příjemcem (nejnovější zprávy)
         const response = await fetch(`${apiBaseUrl}/messages/conversation/${currentRecipientId}?page=1&pageSize=${pageSize}`, {
             headers: {
@@ -71,38 +77,53 @@ async function refreshCurrentConversation() {
         const data = await response.json();
 
         // Pokud nemáme žádné zprávy, není co aktualizovat
-        if (!data.messages || data.messages.length === 0) return;
-
-        // Získáme ID poslední zobrazené zprávy v konverzaci
-        const messagesContainer = document.getElementById('messages-container');
-        const existingMessages = messagesContainer.querySelectorAll('.message');
-        let lastDisplayedMessageId = 0;
-
-        if (existingMessages.length > 0) {
-            // Hledáme v atributech data-id poslední zobrazené zprávy
-            const lastMessage = existingMessages[existingMessages.length - 1];
-            lastDisplayedMessageId = parseInt(lastMessage.getAttribute('data-id') || '0');
+        if (!data.messages || data.messages.length === 0) {
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('d-none');
+            }
+            return;
         }
 
-        // Filtrujeme jen nové zprávy, které ještě nejsou zobrazeny
-        const newMessages = data.messages.filter(message => message.id > lastDisplayedMessageId);
+        // Získáme ID všech aktuálně zobrazených zpráv v konverzaci
+        const messagesContainer = document.getElementById('messages-container');
+        const existingMessages = messagesContainer.querySelectorAll('.message');
+        const existingMessageIds = Array.from(existingMessages)
+            .map(msg => parseInt(msg.getAttribute('data-id') || '0'))
+            .filter(id => id > 0);
 
-        // Pokud nemáme žádné nové zprávy, není co aktualizovat
-        if (newMessages.length === 0) return;
+        // Filtrujeme zprávy, které ještě nejsou zobrazeny
+        const newMessages = data.messages.filter(message => !existingMessageIds.includes(message.id));
 
-        // Přidáme nové zprávy do UI
-        newMessages.forEach(message => {
-            addMessageToUI(message);
-        });
+        // Skryjeme počáteční zprávu, pokud je v kontejneru jen informace o prázdné konverzaci
+        if (messagesContainer.querySelector('.text-center.text-muted.my-5')) {
+            messagesContainer.innerHTML = '';
+        }
 
-        // Scrollování dolů k nejnovější zprávě
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // Pokud máme nové zprávy, přidáme je do UI
+        if (newMessages.length > 0) {
+            // Seřadíme zprávy podle času
+            newMessages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
 
-        // Protože jsme načetli a zobrazili nové zprávy, odstraníme notifikaci u aktuálního příjemce
+            // Přidáme nové zprávy do UI
+            newMessages.forEach(message => {
+                addMessageToUI(message);
+            });
+
+            // Scrollování dolů k nejnovější zprávě
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Odstraníme notifikaci u aktuálního příjemce
         removeUnreadNotification(currentRecipientId);
 
     } catch (error) {
         console.error('Chyba při aktualizaci konverzace:', error);
+    } finally {
+        // Skrytí indikátoru načítání
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.classList.add('d-none');
+        }
     }
 }
 
