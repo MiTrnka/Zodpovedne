@@ -4,12 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Zodpovedne.Web.Extensions;
+using Ganss.Xss;
 
 namespace Zodpovedne.Web.Pages.Account;
 
 public class LogoutModel : BasePageModel
 {
-    public LogoutModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+    public LogoutModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
     {
     }
     public async Task<IActionResult> OnGetAsync()

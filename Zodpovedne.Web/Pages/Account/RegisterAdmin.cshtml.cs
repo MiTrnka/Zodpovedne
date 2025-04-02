@@ -5,6 +5,7 @@ using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Logging;
+using Ganss.Xss;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -18,7 +19,7 @@ public class RegisterAdminModel : BasePageModel
 
     public string? SuccessMessage { get; set; }
 
-    public RegisterAdminModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+    public RegisterAdminModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
     {
     }
 

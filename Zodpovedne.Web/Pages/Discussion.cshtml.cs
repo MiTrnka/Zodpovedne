@@ -18,6 +18,7 @@ using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Ganss.Xss;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -28,7 +29,7 @@ namespace Zodpovedne.Web.Pages;
 [IgnoreAntiforgeryToken]
 public class DiscussionModel : BasePageModel
 {
-    public DiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+    public DiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
     {
     }
 

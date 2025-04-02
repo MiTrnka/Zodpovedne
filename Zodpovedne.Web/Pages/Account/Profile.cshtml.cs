@@ -1,3 +1,4 @@
+using Ganss.Xss;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
@@ -35,7 +36,7 @@ namespace Zodpovedne.Web.Pages.Account
         public bool HasPendingFriendshipRequest =>
             FriendshipStatus == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested;
 
-        public ProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+        public ProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
         {
         }
 

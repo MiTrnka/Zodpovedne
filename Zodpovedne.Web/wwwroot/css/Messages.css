@@ -1,0 +1,122 @@
+﻿/* CSS soubor pro stránku Messages - mobile first přístup */
+
+/* Definice RGB verze barvy pro CSS proměnné */
+:root {
+    --light-primary-color-rgb: 255, 181, 181;
+}
+
+/* Základní kontejner stránky se zprávami */
+.message-page-container {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Na mobilech bude sekce s konverzací zobrazena jako první */
+.message-conversation-section {
+    order: 1;
+    margin-bottom: 20px;
+}
+
+/* Na mobilech bude sekce s přáteli zobrazena jako druhá */
+.message-friends-section {
+    order: 2;
+}
+
+/* Styl pro kontejner zpráv */
+.messages-container {
+    height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+}
+
+/* Styl pro jednu zprávu */
+.message {
+    max-width: 75%;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 1rem;
+    position: relative;
+    word-wrap: break-word;
+}
+
+/* Zpráva od jiného uživatele */
+.message-received {
+    align-self: flex-start;
+    background-color: #f1f0f0;
+    border-bottom-left-radius: 0.25rem;
+}
+
+/* Zpráva od přihlášeného uživatele */
+.message-sent {
+    align-self: flex-end;
+    background-color: var(--light-primary-color);
+    color: #333;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* Čas zprávy */
+.message-time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 0.25rem;
+    text-align: right;
+}
+
+/* Tlačítko pro načtení starších zpráv */
+.load-more-messages {
+    align-self: center;
+    margin: 1rem 0;
+}
+
+/* Aktivní konverzace */
+.conversation-item.active {
+    background-color: var(--light-primary-color-ultra-light);
+}
+
+/* Zvýraznění přítele s nepřečtenými zprávami */
+.list-group-item-primary {
+    background-color: rgba(var(--light-primary-color-rgb), 0.2);
+    border-left: 3px solid var(--primary-color);
+    font-weight: 500;
+}
+
+/* Styl pro zvýraznění vybraného přítele */
+.selected-friend {
+    background-color: var(--light-primary-color-ultra-light) !important;
+    border-left: 3px solid var(--primary-color) !important;
+}
+
+/* Styly pro tablet a větší obrazovky (≥768px) */
+@media (min-width: 768px) {
+    /* Na větších obrazovkách měníme na řádkové rozložení */
+    .message-page-container {
+        flex-direction: row;
+    }
+
+    /* Sekce s přáteli bude vlevo */
+    .message-friends-section {
+        order: 1;
+        padding-right: 10px;
+    }
+
+    /* Sekce s konverzací bude vpravo */
+    .message-conversation-section {
+        order: 2;
+        margin-bottom: 0;
+    }
+
+    /* Širší oblast pro zobrazení zpráv na větších obrazovkách */
+    .messages-container {
+        height: 500px;
+    }
+}
+
+/* Styly pro velké desktopy (≥1200px) */
+@media (min-width: 1200px) {
+    /* Ještě větší oblast pro zprávy na velkých obrazovkách */
+    .messages-container {
+        height: 600px;
+    }
+}

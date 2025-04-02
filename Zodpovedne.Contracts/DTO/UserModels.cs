@@ -116,3 +116,14 @@ public class DiscussionWithNewRepliesDto
     public DateTime LatestReplyTime { get; set; }
     public int CommentsWithNewRepliesCount { get; set; }
 }
+
+// Dto pro deserializaci přátelství
+public class FriendshipDto
+{
+    public int FriendshipId { get; set; }
+    public string OtherUserId { get; set; } = "";
+    public string OtherUserNickname { get; set; } = "";
+    public FriendshipStatus Status { get; set; }  // Použití enumu FriendshipStatus
+    public bool IsRequester { get; set; }
+    public DateTime CreatedAt { get; set; }
+}

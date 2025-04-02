@@ -1,3 +1,4 @@
+using Ganss.Xss;
 using Microsoft.AspNetCore.Mvc;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Logging;
@@ -12,8 +13,8 @@ namespace Zodpovedne.Web.Pages.Account
 
         public bool EmailSent { get; set; } = false;
 
-        public ForgotPasswordModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger)
-            : base(clientFactory, configuration, logger)
+        public ForgotPasswordModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer)
+            : base(clientFactory, configuration, logger, sanitizer)
         {
         }
 
