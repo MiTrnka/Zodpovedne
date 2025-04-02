@@ -187,6 +187,46 @@ namespace Zodpovedne.RESTAPI
             // Registrace služby pro odesílání e-mailù
             builder.Services.AddScoped<IEmailService, EmailService>();
 
+            // Registrace HTML sanitizeru jako singleton
+            builder.Services.AddSingleton<Ganss.Xss.IHtmlSanitizer>(provider => {
+                var sanitizer = new Ganss.Xss.HtmlSanitizer();
+
+                // Konfigurace sanitizeru
+
+                // Povolené HTML tagy
+                sanitizer.AllowedTags.Clear();
+                sanitizer.AllowedTags.Add("p");
+                sanitizer.AllowedTags.Add("br");
+                sanitizer.AllowedTags.Add("b");
+                sanitizer.AllowedTags.Add("strong");
+                sanitizer.AllowedTags.Add("i");
+                sanitizer.AllowedTags.Add("em");
+                sanitizer.AllowedTags.Add("ul");
+                sanitizer.AllowedTags.Add("ol");
+                sanitizer.AllowedTags.Add("li");
+                sanitizer.AllowedTags.Add("h2");
+                sanitizer.AllowedTags.Add("h3");
+                sanitizer.AllowedTags.Add("h4");
+                sanitizer.AllowedTags.Add("a");
+                sanitizer.AllowedTags.Add("img");
+
+                // Povolené HTML atributy
+                sanitizer.AllowedAttributes.Clear();
+                sanitizer.AllowedAttributes.Add("href");
+                sanitizer.AllowedAttributes.Add("src");
+                sanitizer.AllowedAttributes.Add("alt");
+
+                sanitizer.KeepChildNodes = true;
+
+                // Povolené CSS styly
+                sanitizer.AllowedCssProperties.Clear();
+                sanitizer.AllowedCssProperties.Add("color");
+                sanitizer.AllowedCssProperties.Add("font-weight");
+                sanitizer.AllowedCssProperties.Add("text-align");
+
+                return sanitizer;
+            });
+
             builder.Services.AddControllers();
 
             if (builder.Environment.IsDevelopment())

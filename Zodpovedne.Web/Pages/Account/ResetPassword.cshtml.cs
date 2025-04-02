@@ -1,3 +1,4 @@
+using Ganss.Xss;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using Zodpovedne.Contracts.DTO;
@@ -31,8 +32,8 @@ namespace Zodpovedne.Web.Pages.Account
 
         public bool Success { get; set; } = false;
 
-        public ResetPasswordModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger)
-            : base(clientFactory, configuration, logger)
+        public ResetPasswordModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer)
+            : base(clientFactory, configuration, logger, sanitizer)
         {
         }
 

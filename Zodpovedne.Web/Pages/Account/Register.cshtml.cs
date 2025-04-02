@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
+using Ganss.Xss;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -14,7 +15,7 @@ public class RegisterModel : BasePageModel
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
 
-    public RegisterModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+    public RegisterModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
     {
     }
 

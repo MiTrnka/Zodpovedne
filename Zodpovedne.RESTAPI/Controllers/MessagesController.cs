@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Ganss.Xss;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -21,16 +22,20 @@ public class MessagesController : ControllerBase
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly FileLogger _logger;
+    // HtmlSanitizer pro bezpečné čištění HTML vstupu
+    private readonly IHtmlSanitizer _sanitizer;
 
     /// <summary>
     /// Konstruktor controlleru zpráv
     /// </summary>
     /// <param name="dbContext">Databázový kontext pro přístup k datům</param>
     /// <param name="logger">Logger pro zaznamenávání chyb a událostí</param>
-    public MessagesController(ApplicationDbContext dbContext, FileLogger logger)
+    public MessagesController(ApplicationDbContext dbContext, FileLogger logger, IHtmlSanitizer sanitizer)
     {
         _dbContext = dbContext;
         _logger = logger;
+        _sanitizer = sanitizer;
+
     }
 
     /// <summary>
@@ -155,6 +160,9 @@ public class MessagesController : ControllerBase
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(currentUserId))
                 return Unauthorized();
+
+            // Sanitizace obsahu zprávy před uložením
+            model.Content = _sanitizer.Sanitize(model.Content);
 
             // 1. KROK: Ověření, že příjemce existuje a není smazaný
             var recipient = await _dbContext.Users

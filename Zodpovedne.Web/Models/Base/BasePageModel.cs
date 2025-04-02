@@ -23,7 +23,7 @@ public abstract class BasePageModel : PageModel
     protected readonly FileLogger _logger;
 
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
-    protected readonly HtmlSanitizer _sanitizer;
+    protected readonly IHtmlSanitizer _sanitizer;
 
     /// <summary>
     /// Chybová zpráva pro zobrazení uživateli, pokud je vyplněna, zobrazí se na stránce a nic dalšího se na stránce nezobrazí
@@ -150,52 +150,12 @@ public abstract class BasePageModel : PageModel
         await next();
     }
 
-    protected BasePageModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger)
+    protected BasePageModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer)
     {
         _clientFactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-        // Inicializace a konfigurace HTML sanitizeru pro bezpečné čištění HTML vstupu
-        _sanitizer = new HtmlSanitizer();
-
-        try
-        {
-            // Povolené HTML tagy
-            _sanitizer.AllowedTags.Clear();
-            _sanitizer.AllowedTags.Add("p");
-            _sanitizer.AllowedTags.Add("br");
-            _sanitizer.AllowedTags.Add("b");
-            _sanitizer.AllowedTags.Add("strong");
-            _sanitizer.AllowedTags.Add("i");
-            _sanitizer.AllowedTags.Add("em");
-            _sanitizer.AllowedTags.Add("ul");
-            _sanitizer.AllowedTags.Add("ol");
-            _sanitizer.AllowedTags.Add("li");
-            _sanitizer.AllowedTags.Add("h2");
-            _sanitizer.AllowedTags.Add("h3");
-            _sanitizer.AllowedTags.Add("h4");
-            _sanitizer.AllowedTags.Add("a");
-            _sanitizer.AllowedTags.Add("img");
-
-            // Povolené HTML atributy
-            _sanitizer.AllowedAttributes.Clear();
-            _sanitizer.AllowedAttributes.Add("href");
-            _sanitizer.AllowedAttributes.Add("src");
-            _sanitizer.AllowedAttributes.Add("alt");
-
-            _sanitizer.KeepChildNodes = true;
-
-            // Povolené CSS styly (žádné)
-            _sanitizer.AllowedCssProperties.Clear();
-            _sanitizer.AllowedCssProperties.Add("color");
-            _sanitizer.AllowedCssProperties.Add("font-weight");
-            _sanitizer.AllowedCssProperties.Add("text-align");
-        }
-        catch (Exception e)
-        {
-            _logger.Log("Nastala chyba při inicializaci BasePageModelu.", e);
-        }
+        _sanitizer = sanitizer;
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Logging;
+using Ganss.Xss;
 
 namespace Zodpovedne.Web.Pages.Admin;
 
@@ -15,7 +16,7 @@ public class UsersModel : BasePageModel
 
     public PagedResultDto<UserListDto>? PagedUsers { get; set; }
 
-    public UsersModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+    public UsersModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
     {
     }
 

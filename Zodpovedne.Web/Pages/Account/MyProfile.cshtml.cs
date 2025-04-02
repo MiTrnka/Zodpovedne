@@ -8,6 +8,7 @@ using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using System.Text.Json;
 using Zodpovedne.Contracts.Enums;
+using Ganss.Xss;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -65,7 +66,7 @@ public class MyProfileModel : BasePageModel
     // Výsledek èištìní databáze
     public CleanupResultDto? CleanupResult { get; set; }
 
-    public MyProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger) : base(clientFactory, configuration, logger)
+    public MyProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
     {
     }
 
