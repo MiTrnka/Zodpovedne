@@ -11,6 +11,24 @@ let isLoadingMessages = false;   // Indikátor, zda probíhá načítání zprá
 const pageSize = 20;             // Počet zpráv na stránku
 const REFRESH_INTERVAL = 30000; // 30 sekund
 
+/**
+ * Zvýrazní řádek aktuálně vybraného přítele v seznamu
+ * @param {string} userId - ID přítele, jehož řádek má být zvýrazněn
+ */
+function highlightSelectedFriend(userId) {
+    // Nejprve odstraníme zvýraznění ze všech řádků
+    document.querySelectorAll('.list-group-item').forEach(item => {
+        // Odstraníme třídu 'selected-friend' ze všech prvků
+        item.classList.remove('selected-friend');
+    });
+
+    // Nyní přidáme zvýraznění vybranému příteli
+    const friendElement = document.querySelector(`.list-group-item[onclick*="loadConversation('${userId}'"]`);
+    if (friendElement) {
+        friendElement.classList.add('selected-friend');
+    }
+}
+
 // Po načtení dokumentu inicializujeme event listenery
 document.addEventListener('DOMContentLoaded', function () {
     // Získání API URL z konfigurace
@@ -134,7 +152,14 @@ async function refreshCurrentConversation() {
 function removeUnreadNotification(userId) {
     const friendElement = document.querySelector(`.list-group-item[onclick*="loadConversation('${userId}'"]`);
     if (friendElement) {
+        // Odstraníme list-group-item-primary, která způsobuje modré podbarvení pro notifikace
         friendElement.classList.remove('list-group-item-primary');
+
+        // Ale zachováme zvýraznění, pokud je to aktuálně vybraný přítel
+        if (userId === currentRecipientId) {
+            friendElement.classList.add('selected-friend');
+        }
+
         const badge = friendElement.querySelector('.badge');
         if (badge) {
             badge.remove();
@@ -226,6 +251,9 @@ async function loadConversation(userId, nickname) {
 
     // Aktualizace UI
     updateConversationUI(nickname);
+
+    // Zvýraznění vybraného přítele v seznamu
+    highlightSelectedFriend(userId);
 
     // Zobrazení indikátoru načítání
     const loadingIndicator = document.getElementById('loading-indicator');
@@ -573,11 +601,11 @@ async function updateUnreadCounts() {
                         flexContainer.appendChild(badge);
                     }
                     badge.textContent = unreadCount;
-                    item.classList.add('list-group-item-primary');
                 } else {
                     if (badge) {
                         badge.remove();
                     }
+                    // Pro jistotu odstraníme podbarvení, pokud by tam bylo
                     item.classList.remove('list-group-item-primary');
                 }
             }
