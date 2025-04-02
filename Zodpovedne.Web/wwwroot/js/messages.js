@@ -43,6 +43,85 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /**
+ * Funkce pro aktualizaci aktuální otevřené konverzace
+ * Načte nejnovější zprávy od posledního načtení
+ * @returns {Promise<void>}
+ */
+async function refreshCurrentConversation() {
+    // Pokud není otevřená žádná konverzace, není co aktualizovat
+    if (!currentRecipientId) return;
+
+    try {
+        const apiBaseUrl = document.getElementById('apiBaseUrl')?.value;
+        if (!apiBaseUrl) {
+            console.error('Není definován apiBaseUrl');
+            return;
+        }
+
+        // Načtení první stránky konverzace s aktuálním příjemcem (nejnovější zprávy)
+        const response = await fetch(`${apiBaseUrl}/messages/conversation/${currentRecipientId}?page=1&pageSize=${pageSize}`, {
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+            }
+        });
+
+        if (!response.ok) throw new Error('Nepodařilo se načíst zprávy');
+
+        // Zpracování odpovědi
+        const data = await response.json();
+
+        // Pokud nemáme žádné zprávy, není co aktualizovat
+        if (!data.messages || data.messages.length === 0) return;
+
+        // Získáme ID poslední zobrazené zprávy v konverzaci
+        const messagesContainer = document.getElementById('messages-container');
+        const existingMessages = messagesContainer.querySelectorAll('.message');
+        let lastDisplayedMessageId = 0;
+
+        if (existingMessages.length > 0) {
+            // Hledáme v atributech data-id poslední zobrazené zprávy
+            const lastMessage = existingMessages[existingMessages.length - 1];
+            lastDisplayedMessageId = parseInt(lastMessage.getAttribute('data-id') || '0');
+        }
+
+        // Filtrujeme jen nové zprávy, které ještě nejsou zobrazeny
+        const newMessages = data.messages.filter(message => message.id > lastDisplayedMessageId);
+
+        // Pokud nemáme žádné nové zprávy, není co aktualizovat
+        if (newMessages.length === 0) return;
+
+        // Přidáme nové zprávy do UI
+        newMessages.forEach(message => {
+            addMessageToUI(message);
+        });
+
+        // Scrollování dolů k nejnovější zprávě
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        // Protože jsme načetli a zobrazili nové zprávy, odstraníme notifikaci u aktuálního příjemce
+        removeUnreadNotification(currentRecipientId);
+
+    } catch (error) {
+        console.error('Chyba při aktualizaci konverzace:', error);
+    }
+}
+
+/**
+ * Odstraní notifikaci o nepřečtených zprávách od daného uživatele
+ * @param {string} userId - ID uživatele, jehož notifikace chceme odstranit
+ */
+function removeUnreadNotification(userId) {
+    const friendElement = document.querySelector(`.list-group-item[onclick*="loadConversation('${userId}'"]`);
+    if (friendElement) {
+        friendElement.classList.remove('list-group-item-primary');
+        const badge = friendElement.querySelector('.badge');
+        if (badge) {
+            badge.remove();
+        }
+    }
+}
+
+/**
  * Inicializace formuláře pro odeslání zprávy
  * @param {string} apiBaseUrl - URL pro API endpointy
  */
@@ -91,6 +170,10 @@ function initMessageForm(apiBaseUrl) {
             if (messagesContainer) {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
+
+            // Refresh konverzace po odeslání zprávy pro získání případných nových zpráv
+            await refreshCurrentConversation();
+
         } catch (error) {
             console.error('Chyba při odesílání zprávy:', error);
             alert('Nepodařilo se odeslat zprávu. Zkuste to prosím znovu.');
@@ -155,15 +238,8 @@ async function loadConversation(userId, nickname) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // Aktualizace UI - odstranění označení nepřečtených zpráv
-        const friendElement = document.querySelector(`.list-group-item[onclick*="loadConversation('${userId}'"]`);
-        if (friendElement) {
-            friendElement.classList.remove('list-group-item-primary');
-            const badge = friendElement.querySelector('.badge');
-            if (badge) {
-                badge.remove();
-            }
-        }
+        // Aktualizace UI - odstranění označení nepřečtených zpráv u aktuálního příjemce
+        removeUnreadNotification(currentRecipientId);
 
     } catch (error) {
         console.error('Chyba při načítání konverzace:', error);
@@ -341,7 +417,7 @@ function displayMessages(messages, clearContainer = false) {
         const messageClass = isCurrentUserSender ? 'message-sent' : 'message-received';
 
         // Pro ladění - přidáme data atributy s informacemi o odesílateli
-        const debugInfo = `data-sender="${message.senderUserId}" data-current="${currentUserId || 'unknown'}"`;
+        const debugInfo = `data-sender="${message.senderUserId}" data-current="${currentUserId || 'unknown'}" data-id="${message.id}"`;
 
         const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateFormatted = new Date(message.sentAt).toLocaleDateString();
@@ -401,6 +477,9 @@ function addMessageToUI(message, isFromCurrentUser) {
 
     messageElement.className = `message ${isFromCurrentUser ? 'message-sent' : 'message-received'}`;
 
+    // Přidáme data-id atribut pro identifikaci zprávy
+    messageElement.setAttribute('data-id', message.id);
+
     // Formátování času
     const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const dateFormatted = new Date(message.sentAt).toLocaleDateString();
@@ -448,26 +527,40 @@ async function updateUnreadCounts() {
             const userId = match[1];
             const unreadCount = unreadCounts[userId] || 0;
 
-            // Získání nebo vytvoření badge elementu
-            let badge = item.querySelector('.badge');
-            if (unreadCount > 0) {
-                if (!badge) {
-                    badge = document.createElement('span');
-                    badge.className = 'badge bg-primary rounded-pill';
-                    const flexContainer = item.querySelector('.d-flex') || item;
-                    flexContainer.appendChild(badge);
+            // Pokud je konverzace s tímto uživatelem právě otevřená,
+            // refreshneme konverzaci místo zobrazení notifikace
+            if (userId === currentRecipientId) {
+                if (unreadCount > 0) {
+                    // Volání funkce pro refresh konverzace
+                    refreshCurrentConversation();
                 }
-                badge.textContent = unreadCount;
-                item.classList.add('list-group-item-primary');
-            } else {
+                // Odstraníme notifikaci bez ohledu na počet nepřečtených zpráv
+                item.classList.remove('list-group-item-primary');
+                const badge = item.querySelector('.badge');
                 if (badge) {
                     badge.remove();
                 }
-                if (userId !== currentRecipientId) {
+            } else {
+                // Pro ostatní přátele standardní aktualizace notifikací
+                let badge = item.querySelector('.badge');
+                if (unreadCount > 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'badge bg-primary rounded-pill';
+                        const flexContainer = item.querySelector('.d-flex') || item;
+                        flexContainer.appendChild(badge);
+                    }
+                    badge.textContent = unreadCount;
+                    item.classList.add('list-group-item-primary');
+                } else {
+                    if (badge) {
+                        badge.remove();
+                    }
                     item.classList.remove('list-group-item-primary');
                 }
             }
         });
+
     } catch (error) {
         console.error('Chyba při aktualizaci počtu nepřečtených zpráv:', error);
     }
