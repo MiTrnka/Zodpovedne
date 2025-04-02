@@ -139,7 +139,11 @@ function initMessageForm(apiBaseUrl) {
         if (!recipientId || !content) return;
 
         try {
-            // Odeslání zprávy na server
+            // KLÍČOVÁ ZMĚNA: Nejprve aktualizujeme konverzaci, PŘED odesláním nové zprávy
+            // To zajistí, že uvidíme nejnovější zprávy od druhého účastníka
+            await refreshCurrentConversation();
+
+            // Až poté odešleme novou zprávu
             const response = await fetch(`${apiBaseUrl}/messages`, {
                 method: 'POST',
                 headers: {
@@ -170,9 +174,6 @@ function initMessageForm(apiBaseUrl) {
             if (messagesContainer) {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
-
-            // Refresh konverzace po odeslání zprávy pro získání případných nových zpráv
-            await refreshCurrentConversation();
 
         } catch (error) {
             console.error('Chyba při odesílání zprávy:', error);
