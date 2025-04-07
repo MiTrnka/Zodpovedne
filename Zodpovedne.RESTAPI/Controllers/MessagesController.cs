@@ -39,7 +39,7 @@ public class MessagesController : ControllerBase
     }
 
     /// <summary>
-    /// Získá zprávy z konverzace s konkrétním uživatelem.
+    /// Získá zprávy z konverzace s konkrétním uživatelem, nastaví jim ReadAt na aktuální čas, celkový počet zpráv a bool, jestli jsou ještě nějaké starší zprávy (pro stránkování).
     /// Podporuje stránkování pro postupné načítání starších zpráv.
     /// </summary>
     /// <param name="otherUserId">ID uživatele, se kterým probíhá konverzace</param>
@@ -95,6 +95,7 @@ public class MessagesController : ControllerBase
                     (m.SenderUserId == currentUserId && m.RecipientUserId == otherUserId) ||
                     (m.SenderUserId == otherUserId && m.RecipientUserId == currentUserId)
                 )
+                .Where(m => m.MessageType != MessageType.Deleted) // Odstraním smazané zprávy
                 .OrderByDescending(m => m.SentAt) // Nejnovější první
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -150,7 +151,7 @@ public class MessagesController : ControllerBase
     /// Zprávu lze odeslat pouze uživateli, který je v seznamu přátel.
     /// </summary>
     /// <param name="model">Data pro odeslání zprávy</param>
-    /// <returns>Detaily odeslané zprávy</returns>
+    /// <returns>Detaily odeslané zprávy, včetně právě vygenerovaného Id z databáze</returns>
     [HttpPost]
     public async Task<ActionResult<MessageDto>> SendMessage(SendMessageDto model)
     {
@@ -231,7 +232,7 @@ public class MessagesController : ControllerBase
     }
 
     /// <summary>
-    /// Vrací celkový počet nepřečtených zpráv pro přihlášeného uživatele.
+    /// Vrací celkový počet všech dosud nepřečtených zpráv pro přihlášeného uživatele.
     /// Používá se pro zobrazení indikátoru na ikoně zpráv v menu.
     /// </summary>
     /// <returns>Počet nepřečtených zpráv</returns>
@@ -306,7 +307,7 @@ public class MessagesController : ControllerBase
                 })
                 .ToDictionaryAsync(x => x.SenderId, x => x.Count);
 
-            return unreadCounts;
+            return this.Ok(unreadCounts);
         }
         catch (Exception ex)
         {
