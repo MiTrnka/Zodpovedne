@@ -62,14 +62,9 @@ public class MessagesController : ControllerBase
             if (pageSize > 50) pageSize = 50; // Omezení maximální velikosti stránky
 
             // 1. KROK: Ověření, že uživatel má přístup ke konverzaci (jsou přátelé)
-            bool areFriends = await _dbContext.Friendships
-                .AnyAsync(f =>
-                    ((f.ApproverUserId == currentUserId && f.RequesterUserId == otherUserId) ||
-                     (f.ApproverUserId == otherUserId && f.RequesterUserId == currentUserId)) &&
-                    f.FriendshipStatus == FriendshipStatus.Approved);
-
+            bool areFriends = await AreFriends(currentUserId, otherUserId);
             if (!areFriends)
-                return Forbid(); // Uživatelé nejsou přátelé, nemají přístup ke konverzaci
+                return Forbid("Uživatelé nejsou přátelé"); // Uživatelé nejsou přátelé, nemají přístup ke konverzaci
 
             // 2. KROK: Ověření, že druhý uživatel existuje a není smazaný
             var otherUser = await _dbContext.Users
@@ -175,12 +170,7 @@ public class MessagesController : ControllerBase
                 return NotFound("Příjemce neexistuje nebo je skrytý/smazaný.");
 
             // 2. KROK: Ověření, že uživatelé jsou přátelé
-            bool areFriends = await _dbContext.Friendships
-                .AnyAsync(f =>
-                    ((f.ApproverUserId == currentUserId && f.RequesterUserId == model.RecipientUserId) ||
-                     (f.ApproverUserId == model.RecipientUserId && f.RequesterUserId == currentUserId)) &&
-                    f.FriendshipStatus == FriendshipStatus.Approved);
-
+            bool areFriends = await AreFriends(currentUserId, model.RecipientUserId);
             if (!areFriends)
                 return BadRequest("Zprávy lze odesílat pouze přátelům.");
 
@@ -314,5 +304,20 @@ public class MessagesController : ControllerBase
             _logger.Log("Chyba při získávání počtu nepřečtených zpráv podle uživatelů", ex);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
+    }
+
+    /// <summary>
+    /// Vrátí bool, zda jsou dva uživatelé přátelé.
+    /// </summary>
+    /// <param name="firstUserId"></param>
+    /// <param name="secondUserId"></param>
+    /// <returns></returns>
+    protected async Task<bool> AreFriends(string firstUserId, string secondUserId)
+    {
+        return await _dbContext.Friendships
+            .AnyAsync(f =>(
+                (f.ApproverUserId == firstUserId && f.RequesterUserId == secondUserId) ||
+                (f.ApproverUserId == secondUserId && f.RequesterUserId == firstUserId))
+                && f.FriendshipStatus == FriendshipStatus.Approved);
     }
 }
