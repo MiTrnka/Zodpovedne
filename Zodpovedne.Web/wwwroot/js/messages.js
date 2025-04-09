@@ -29,7 +29,7 @@ function highlightSelectedFriend(userId) {
     }
 }
 
-// Po načtení dokumentu inicializujeme event listenery
+// Po načtení dokumentu (stránky Messages.cshtml) inicializujeme event listenery
 document.addEventListener('DOMContentLoaded', function () {
     // Získání API URL z konfigurace
     const apiBaseUrl = document.getElementById('apiBaseUrl')?.value || '';
@@ -168,7 +168,7 @@ function removeUnreadNotification(userId) {
 }
 
 /**
- * Inicializace formuláře pro odeslání zprávy
+ * Inicializace formuláře pro odeslání zprávy, spouští se ihned po načtení stránky Messages.cshtml a po odeslání nové zprávy
  * @param {string} apiBaseUrl - URL pro API endpointy
  */
 function initMessageForm(apiBaseUrl) {
@@ -185,7 +185,7 @@ function initMessageForm(apiBaseUrl) {
         if (!recipientId || !content) return;
 
         try {
-            // KLÍČOVÁ ZMĚNA: Nejprve aktualizujeme konverzaci, PŘED odesláním nové zprávy
+            // Nejprve aktualizujeme konverzaci před odesláním nové zprávy
             // To zajistí, že uvidíme nejnovější zprávy od druhého účastníka
             await refreshCurrentConversation();
 
@@ -229,7 +229,7 @@ function initMessageForm(apiBaseUrl) {
 }
 
 /**
- * Načte konverzaci s vybraným uživatelem
+ * Po kliknutí na přítele se načte konverzace s ním a odstraní se u něho notifikace o nepřečtených zprávách
  * @param {string} userId - ID uživatele, se kterým chceme zobrazit konverzaci
  * @param {string} nickname - Přezdívka uživatele pro zobrazení
  */
@@ -245,7 +245,7 @@ async function loadConversation(userId, nickname) {
     }
 
     // Reset proměnných
-    currentRecipientId = userId;
+    currentRecipientId = userId; // Nastavení ID právě vybraného přítele, se kterým budeme komunikovat
     currentPage = 1;
     hasOlderMessages = false;
 
@@ -414,7 +414,7 @@ function updateConversationUI(nickname) {
 }
 
 /**
- * Zobrazí zprávy v UI
+ * Zobrazí zprávy v UI (rozhodnutí, která zpráva se zobrazí jako moje a která jako od příjemce), připojení nové zprávy
  * @param {Array} messages - Seznam zpráv k zobrazení
  * @param {boolean} clearContainer - Zda má být kontejner před přidáním zpráv vyčištěn
  */
@@ -465,9 +465,6 @@ function displayMessages(messages, clearContainer = false) {
         // Určení, zda je zpráva od aktuálního uživatele
         const isCurrentUserSender = message.senderUserId === currentUserId;
         const messageClass = isCurrentUserSender ? 'message-sent' : 'message-received';
-
-        // Pro ladění - přidáme data atributy s informacemi o odesílateli
-        const debugInfo = `data-sender="${message.senderUserId}" data-current="${currentUserId || 'unknown'}" data-id="${message.id}"`;
 
         const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateFormatted = new Date(message.sentAt).toLocaleDateString();
