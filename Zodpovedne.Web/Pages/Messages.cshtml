@@ -35,7 +35,7 @@
                         @foreach (var friend in Model.Friends)
                         {
                             <a href="javascript:void(0)"
-                               class="list-group-item list-group-item-action @(friend.UnreadCount > 0 ? "list-group-item-primary" : "")"
+                               class="list-group-item list-group-item-action"
                                onclick="loadConversation('@friend.UserId', '@friend.Nickname')">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>

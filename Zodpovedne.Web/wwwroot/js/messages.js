@@ -521,24 +521,6 @@ function addMessageToUI(message, isFromCurrentUser) {
     // Vytvoření HTML elementu pro zprávu
     const messageElement = document.createElement('div');
 
-    // Pokud isFromCurrentUser není explicitně dodáno, určíme to podle message.senderUserId
-    if (isFromCurrentUser === undefined) {
-        // Získáme ID aktuálního uživatele z meta tagu nebo tokenu
-        let currentUserId = document.querySelector('meta[name="current-user-id"]')?.content;
-        if (!currentUserId) {
-            try {
-                const token = sessionStorage.getItem('JWTToken');
-                if (token) {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    currentUserId = payload.nameid || payload.sub || payload.userId;
-                }
-            } catch (error) {
-                console.error('Chyba při získávání ID uživatele:', error);
-            }
-        }
-        isFromCurrentUser = message.senderUserId === currentUserId;
-    }
-
     messageElement.className = `message ${isFromCurrentUser ? 'message-sent' : 'message-received'}`;
 
     // Přidáme data-id atribut pro identifikaci zprávy
