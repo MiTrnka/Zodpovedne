@@ -16,6 +16,9 @@ const REFRESH_INTERVAL = 30000; // 30 sekund
  * @param {string} userId - ID přítele, jehož řádek má být zvýrazněn
  */
 function highlightSelectedFriend(userId) {
+    // Pokud není userId nastaveno, neprovádět žádné zvýraznění
+    if (!userId) return;
+
     // Nejprve odstraníme zvýraznění ze všech řádků
     document.querySelectorAll('.list-group-item').forEach(item => {
         // Odstraníme třídu 'selected-friend' ze všech prvků
@@ -94,6 +97,13 @@ async function refreshCurrentConversation() {
         // Zpracování odpovědi
         const data = await response.json();
 
+        // Získáme ID všech aktuálně zobrazených zpráv v konverzaci
+        const messagesContainer = document.getElementById('messages-container');
+        const existingMessages = messagesContainer.querySelectorAll('.message');
+        const existingMessageIds = Array.from(existingMessages)
+            .map(msg => parseInt(msg.getAttribute('data-id') || '0'))
+            .filter(id => id > 0);
+
         // Pokud nemáme žádné zprávy, není co aktualizovat
         if (!data.messages || data.messages.length === 0) {
             if (loadingIndicator) {
@@ -102,32 +112,31 @@ async function refreshCurrentConversation() {
             return;
         }
 
-        // Získáme ID všech aktuálně zobrazených zpráv v konverzaci
-        const messagesContainer = document.getElementById('messages-container');
-        const existingMessages = messagesContainer.querySelectorAll('.message');
-        const existingMessageIds = Array.from(existingMessages)
-            .map(msg => parseInt(msg.getAttribute('data-id') || '0'))
-            .filter(id => id > 0);
-
         // Filtrujeme zprávy, které ještě nejsou zobrazeny
         const newMessages = data.messages.filter(message => !existingMessageIds.includes(message.id));
 
-        // Skryjeme počáteční zprávu, pokud je v kontejneru jen informace o prázdné konverzaci
-        if (messagesContainer.querySelector('.text-center.text-muted.my-5')) {
+        // OPRAVA: Zkontrolujeme, zda máme nějaký obsah v kontejneru
+        const emptyConversationMessage = messagesContainer.querySelector('.text-center.text-muted.my-5');
+        // Pokud jde o prázdnou konverzaci a existují nové zprávy, kompletně nahradíme obsah
+        if (emptyConversationMessage && newMessages.length > 0) {
+            // Vyčistíme kontejner a zobrazíme všechny zprávy znovu
             messagesContainer.innerHTML = '';
+            // Použijeme funkci displayMessages pro správné zobrazení všech zpráv
+            displayMessages(data.messages, true);
         }
-
-        // Pokud máme nové zprávy, přidáme je do UI
-        if (newMessages.length > 0) {
-            // Seřadíme zprávy podle času
+        // Jinak přidáme jen nové zprávy
+        else if (newMessages.length > 0) {
+            // Seřadíme zprávy podle času (od nejstarší po nejnovější)
             newMessages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
 
             // Přidáme nové zprávy do UI
             newMessages.forEach(message => {
                 addMessageToUI(message);
             });
+        }
 
-            // Scrollování dolů k nejnovější zprávě
+        // Scrollování dolů k nejnovější zprávě vždy, když máme nové zprávy
+        if (newMessages.length > 0) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
@@ -185,8 +194,8 @@ function initMessageForm(apiBaseUrl) {
         if (!recipientId || !content) return;
 
         try {
-            // Nejprve aktualizujeme konverzaci před odesláním nové zprávy
-            // To zajistí, že uvidíme nejnovější zprávy od druhého účastníka
+            // OPRAVA: Nejprve aktualizujeme konverzaci, ABY byly načteny všechny předchozí zprávy
+            // To pomůže řešit problém s chybějícími zprávami při prvním odeslání
             await refreshCurrentConversation();
 
             // Až poté odešleme novou zprávu
@@ -209,7 +218,8 @@ function initMessageForm(apiBaseUrl) {
             // Zpracování odpovědi
             const messageData = await response.json();
 
-            // Přidání nové zprávy do UI
+            // OPRAVA: Přidání nové zprávy do UI s explicitním nastavením isFromCurrentUser na true
+            // Toto zajistí správné formátování zprávy jako odeslané
             addMessageToUI(messageData, true);
 
             // Vyčištění formuláře
@@ -456,16 +466,22 @@ function displayMessages(messages, clearContainer = false) {
         }
     }
 
-    // Třídíme zprávy podle času
+    // OPRAVA: Třídíme zprávy podle času (od nejstarší po nejnovější)
+    // Toto zajistí správné pořadí zpráv v konverzaci
     const sortedMessages = [...messages].sort((a, b) =>
         new Date(a.sentAt) - new Date(b.sentAt)
     );
 
+    // Sestavíme HTML pro všechny zprávy
     const messagesHTML = sortedMessages.map(message => {
         // Určení, zda je zpráva od aktuálního uživatele
         const isCurrentUserSender = message.senderUserId === currentUserId;
         const messageClass = isCurrentUserSender ? 'message-sent' : 'message-received';
 
+        // Přidáme data atributy s informacemi o zprávě a odesílateli pro identifikaci
+        const debugInfo = `data-sender="${message.senderUserId}" data-current="${currentUserId || 'unknown'}" data-id="${message.id}"`;
+
+        // Formátování času a data
         const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateFormatted = new Date(message.sentAt).toLocaleDateString();
 
@@ -481,7 +497,8 @@ function displayMessages(messages, clearContainer = false) {
     if (clearContainer) {
         messagesContainer.innerHTML = messagesHTML;
     } else {
-        // Připojíme na začátek, protože jde o starší zprávy
+        // OPRAVA: Změna způsobu přidávání starších zpráv
+        // Pokud jde o starší zprávy, přidáme je na začátek
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = messagesHTML;
 
