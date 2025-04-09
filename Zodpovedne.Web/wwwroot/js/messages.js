@@ -563,14 +563,9 @@ async function updateUnreadCounts() {
 
         // Aktualizace UI pro každého přítele
         document.querySelectorAll('.list-group-item-action').forEach(item => {
-            const onclickAttr = item.getAttribute('onclick');
-            if (!onclickAttr) return;
+            const userId = item.dataset.userId;
+            if (!userId) return;
 
-            // Extrahování userId z onclick atributu
-            const match = onclickAttr.match(/loadConversation\('([^']+)'/);
-            if (!match || !match[1]) return;
-
-            const userId = match[1];
             const unreadCount = unreadCounts[userId] || 0;
 
             // Pokud je konverzace s tímto uživatelem právě otevřená,
