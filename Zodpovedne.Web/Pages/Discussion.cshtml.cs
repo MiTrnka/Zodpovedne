@@ -154,7 +154,7 @@ public class DiscussionModel : BasePageModel
         Discussion = d;
 
             // Získání kategorie, protože potøebujeme zobrazit název kategorie
-            var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
+            var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/Categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
         {
             _logger.Log($"Nenalezena kategorie {CategoryCode}");
@@ -175,7 +175,7 @@ public class DiscussionModel : BasePageModel
         // Pokud je uživatel admin, naèteme seznam všech kategorií, aby mohl admin mezi nimi pøesouvat diskuze
         if (IsAdmin)
         {
-            var categoriesResponse = await client.GetAsync($"{ApiBaseUrl}/categories");
+            var categoriesResponse = await client.GetAsync($"{ApiBaseUrl}/Categories");
             if (categoriesResponse.IsSuccessStatusCode)
             {
                 AllCategories = await categoriesResponse.Content.ReadFromJsonAsync<List<CategoryDto>>() ?? new();

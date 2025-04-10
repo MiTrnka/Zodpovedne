@@ -31,7 +31,7 @@ public class CreateDiscussionModel : BasePageModel
     {
         // Získání detailù kategorie
         var client = _clientFactory.CreateBearerClient(HttpContext);
-        var response = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
+        var response = await client.GetAsync($"{ApiBaseUrl}/Categories/{CategoryCode}");
 
         if (!response.IsSuccessStatusCode)
         {
@@ -60,7 +60,7 @@ public class CreateDiscussionModel : BasePageModel
         {
             // Znovu naèteme kategorii pro zobrazení, ale zachováme vyplnìná data
             var client = _clientFactory.CreateBearerClient(HttpContext);
-            var response = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
+            var response = await client.GetAsync($"{ApiBaseUrl}/Categories/{CategoryCode}");
 
             if (response.IsSuccessStatusCode)
             {

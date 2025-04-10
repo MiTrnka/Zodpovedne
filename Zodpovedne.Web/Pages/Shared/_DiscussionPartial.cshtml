@@ -10,7 +10,7 @@
              onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
                 <div class="title-autor-wrapper">
                     <div class="title-wrapper">
-                        <a href="/categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none w-100">
+                        <a href="/Categories/@Model.CategoryCode/@Model.Code" class="text-decoration-none w-100">
                              <div class="card-title seznam-diskuse-title">
                                 @* Zobrazení TOP badgu pro prioritní diskuze *@
                                 @if (Model.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
@@ -77,5 +77,5 @@
                         <i class="bi bi-eye"></i> @Model.ViewCount
                     </span>
                 </div>
-  
+
         </div>

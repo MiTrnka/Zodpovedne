@@ -22,7 +22,7 @@ public class CategoriesModel : BasePageModel
     public async Task<IActionResult> OnGetAsync()
     {
         var client = _clientFactory.CreateClient();
-        var response = await client.GetAsync($"{ApiBaseUrl}/categories");
+        var response = await client.GetAsync($"{ApiBaseUrl}/Categories");
 
         if (!response.IsSuccessStatusCode)
         {

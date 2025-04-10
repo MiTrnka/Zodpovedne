@@ -66,7 +66,7 @@ public class CategoryModel : BasePageModel
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
         // Získání detailu kategorie
-        var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/categories/{CategoryCode}");
+        var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/Categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
         {
             _logger.Log($"Nenalezena kategorie {CategoryCode}");

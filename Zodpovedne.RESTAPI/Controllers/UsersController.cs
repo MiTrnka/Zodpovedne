@@ -922,7 +922,7 @@ public class UsersController : ControllerBase
                         {
                             DiscussionId = group.DiscussionId,
                             Title = discussion.Title,
-                            DiscussionUrl = $"/categories/{discussion.CategoryCode}/{discussion.DiscussionCode}",
+                            DiscussionUrl = $"/Categories/{discussion.CategoryCode}/{discussion.DiscussionCode}",
                             CategoryName = discussion.Name,
                             LatestReplyTime = group.LatestReplyTime,
                             CommentsWithNewRepliesCount = group.CommentsCount

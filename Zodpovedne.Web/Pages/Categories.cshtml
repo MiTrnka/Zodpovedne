@@ -1,4 +1,4 @@
-﻿@page "/categories"
+﻿@page "/Categories"
 @model CategoriesModel
 @{
     ViewData["Title"] = "Témata diskuzí";
@@ -36,7 +36,7 @@
                          onmouseover="this.classList.add('shadow'); this.classList.add('bg-white');"
                          onmouseout="this.classList.remove('shadow'); this.classList.remove('bg-white');">
                         <div class="card-body">
-                            <a href="/categories/@category.Code" class="text-decoration-none d-flex">
+                            <a href="/Categories/@category.Code" class="text-decoration-none d-flex">
                                 <div class="card-body-icon-wrapper">
                                     <img src="~/images/category/@category.ImagePath" alt="Alternate Text" />
                                 </div>

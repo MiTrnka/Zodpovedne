@@ -25,7 +25,7 @@ namespace Zodpovedne.Web.Pages
             // Nepøihlášený uživatel je pøesmìrován na šeznam kategorií
             if (!IsUserLoggedIn)
             {
-                return RedirectToPage("/categories");
+                return RedirectToPage("/Categories");
             }
 
             try

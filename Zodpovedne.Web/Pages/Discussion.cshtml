@@ -1,4 +1,4 @@
-﻿@page "/categories/{categoryCode}/{discussionCode}"
+﻿@page "/Categories/{categoryCode}/{discussionCode}"
 @using System.Security.Claims
 @using Zodpovedne.Contracts.Enums
 @model DiscussionModel
@@ -28,7 +28,7 @@
         <div class="col">
             <div class="detail-diskuse-title-wrapper">
                 <h1 class="text-center detail-diskuse-title">
-                    <a href="/categories/@Model.CategoryCode" class="text-decoration-none">@Model.CategoryName</a>
+                    <a href="/Categories/@Model.CategoryCode" class="text-decoration-none">@Model.CategoryName</a>
                 </h1>
             </div>
             @if (Model.Discussion != null)
