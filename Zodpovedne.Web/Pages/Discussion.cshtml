@@ -1,6 +1,7 @@
 ﻿@page "/Categories/{categoryCode}/{discussionCode}"
 @using System.Security.Claims
 @using Zodpovedne.Contracts.Enums
+@inject Zodpovedne.Web.Services.Translator Translator
 @model DiscussionModel
 @{
     ViewData["Title"] = Model.Discussion?.Title ?? "Diskuze";
@@ -272,7 +273,7 @@
                                         <button type="submit" id="submit-comment-button" class="btn btn-primary mt-2">Odeslat</button>
                                         <button type="button" id="emoji-btn" class="mt-2">&#128512;</button>
                                     </div>
-                                  
+
                                     <div id="emoji-list">
                                         <!-- Srdce a like emoji -->
                                         <span class="emoji">&#x2764;&#xFE0F;</span>     <!-- červené srdce -->

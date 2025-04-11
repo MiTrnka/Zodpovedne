@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using System.Security.Claims;
 using Zodpovedne.Logging;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web;
 
@@ -105,6 +106,9 @@ public class Program
 
         // Pøidáme tøídu pro logování
         builder.Services.AddSingleton<FileLogger>();
+
+        // Pøidáme tøídu pro pøeklady
+        builder.Services.AddSingleton<Translator>();
 
         // Registrace HTML sanitizeru jako singleton
         builder.Services.AddSingleton<Ganss.Xss.IHtmlSanitizer>(provider => {

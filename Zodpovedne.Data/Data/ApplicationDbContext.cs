@@ -28,6 +28,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<CommentLike> CommentLikes { get; set; }
     public DbSet<Friendship> Friendships { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public DbSet<Translation> Translations { get; set; }
+    public DbSet<SiteInstance> SiteInstances { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -190,5 +192,46 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(m => m.SenderUserId);     // Pro rychlé hledání zpráv ODESLANÝCH uživatelem
             entity.HasIndex(m => m.RecipientUserId);  // Pro rychlé hledání zpráv PŘIJATÝCH uživatelem
         });
+
+        // Konfigurace SiteInstance
+        builder.Entity<SiteInstance>(entity =>
+        {
+            entity.ToTable("SiteInstances");
+
+            // Id musí být unikátní
+            entity.HasKey(e => e.Id);
+
+            // Kód instance musí být unikátní
+            entity.HasIndex(e => e.Code)
+                .IsUnique();
+        });
+
+        // Konfigurace Translation
+        builder.Entity<Translation>(entity =>
+        {
+            entity.ToTable("Translations");
+
+            // Primární klíč
+            entity.HasKey(e => e.Id);
+
+            // Kód překladu musí být vyplněn
+            entity.Property(e => e.Code)
+                .IsRequired();
+
+            // Text překladu musí být vyplněn
+            entity.Property(e => e.TranslatedText)
+                .IsRequired();
+
+            // Vztah k Translation (N:1)
+            entity.HasOne(t => t.SiteInstance)
+                .WithMany()
+                .HasForeignKey(t => t.SiteInstanceId)
+                .OnDelete(DeleteBehavior.Restrict); // Zakázat kaskádové mazání
+
+            // Unikátní index na kombinaci SiteInstanceId a Code
+            entity.HasIndex(e => new { e.SiteInstanceId, e.Code })
+                .IsUnique();
+        });
+
     }
 }
