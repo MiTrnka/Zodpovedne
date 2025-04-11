@@ -5,6 +5,7 @@ using Zodpovedne.Web.Filters;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Ganss.Xss;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -15,7 +16,7 @@ namespace Zodpovedne.Web.Pages;
 public class CreateDiscussionModel : BasePageModel
 {
 
-    public CreateDiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
+    public CreateDiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator) : base(clientFactory, configuration, logger, sanitizer, translator)
     {
     }
 

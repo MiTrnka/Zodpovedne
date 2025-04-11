@@ -5,6 +5,7 @@ using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Ganss.Xss;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -30,8 +31,8 @@ public class SearchModel : BasePageModel
     /// <summary>
     /// Konstruktor - pøedává závislosti do nadøazené tøídy BasePageModel
     /// </summary>
-    public SearchModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer)
-        : base(clientFactory, configuration, logger, sanitizer)
+    public SearchModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+        : base(clientFactory, configuration, logger, sanitizer, translator)
     {
     }
 

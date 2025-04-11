@@ -6,6 +6,7 @@ using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Zodpovedne.Contracts.Enums;
 using Ganss.Xss;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -31,8 +32,8 @@ public class MessagesModel : BasePageModel
     /// </summary>
     public List<FriendItem> Friends { get; private set; } = new();
 
-    public MessagesModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer)
-        : base(clientFactory, configuration, logger, sanitizer)
+    public MessagesModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+        : base(clientFactory, configuration, logger, sanitizer, translator)
     {
     }
 

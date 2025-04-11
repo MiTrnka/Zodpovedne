@@ -5,12 +5,13 @@ using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Zodpovedne.Web.Extensions;
 using Ganss.Xss;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web.Pages.Account;
 
 public class LogoutModel : BasePageModel
 {
-    public LogoutModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
+    public LogoutModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator) : base(clientFactory, configuration, logger, sanitizer, translator)
     {
     }
     public async Task<IActionResult> OnGetAsync()

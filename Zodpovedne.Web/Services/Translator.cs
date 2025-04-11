@@ -5,7 +5,7 @@ namespace Zodpovedne.Web.Services;
 public class Translator
 {
     private Dictionary<string, string> _translations = new Dictionary<string, string>();
-    private readonly string _siteInstance;
+    public string SiteInstance { get; }
     private readonly FileLogger _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _apiBaseUrl;
@@ -23,11 +23,10 @@ public class Translator
         _apiBaseUrl = configuration.GetValue<string>("ApiBaseUrl")
             ?? throw new ArgumentNullException("ApiBaseUrl není nastaven v konfiguraci");
 
-        _siteInstance = configuration.GetValue<string>("SiteInstance") ?? "mamazodpovedne.cz";
-        _logger.Log($"Translator inicializován pro instanci: {_siteInstance}");
+        SiteInstance = configuration.GetValue<string>("SiteInstance") ?? "mamazodpovedne.cz";
     }
 
-    // Asynchronní inicializace, která se volá při prvním použití služby
+    // Asynchronní inicializace, která se volá při prvním použití služby, zavolá metodu pro načtení překladů pro danou site instanci
     private async Task EnsureInitializedAsync()
     {
         if (_isInitialized)
@@ -48,18 +47,22 @@ public class Translator
         }
     }
 
+    /// <summary>
+    /// Načte překlady z API pro danou instanci na+ctenou z konfigurace v appsettings.json
+    /// </summary>
+    /// <returns></returns>
     private async Task LoadTranslationsAsync()
     {
         try
         {
             var client = _httpClientFactory.CreateClient();
-            var response = await client.GetAsync($"{_apiBaseUrl}/Translations/{_siteInstance}");
+            var response = await client.GetAsync($"{_apiBaseUrl}/Translations/{SiteInstance}");
 
             if (response.IsSuccessStatusCode)
             {
                 _translations = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>()
                     ?? new Dictionary<string, string>();
-                _logger.Log($"Načteno {_translations.Count} překladů pro instanci {_siteInstance}");
+                _logger.Log($"Načteno {_translations.Count} překladů pro instanci {SiteInstance}");
             }
             else
             {
@@ -77,7 +80,7 @@ public class Translator
     }
 
     // Hlavní metoda pro získání překladu
-    public async Task<string> GetTranslationAsync(string key, string defaultValue = "")
+    public async Task<string> TranslateAsync(string key, string defaultValue = "")
     {
         await EnsureInitializedAsync();
 
@@ -88,10 +91,10 @@ public class Translator
     }
 
     // Synchronní verze pro jednoduchost použití (vnitřně používá asynchronní metodu)
-    public string GetTranslation(string key, string defaultValue = "")
+    public string Translate(string key, string defaultValue = "")
     {
         // Synchronní volání asynchronní metody - není ideální, ale pro jednoduchost může být užitečné
-        return GetTranslationAsync(key, defaultValue).GetAwaiter().GetResult();
+        return TranslateAsync(key, defaultValue).GetAwaiter().GetResult();
     }
 
     // Metoda pro ruční aktualizaci překladů

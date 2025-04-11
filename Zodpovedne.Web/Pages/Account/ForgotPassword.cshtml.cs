@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Logging;
 using Zodpovedne.Web.Models.Base;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web.Pages.Account
 {
@@ -13,8 +14,8 @@ namespace Zodpovedne.Web.Pages.Account
 
         public bool EmailSent { get; set; } = false;
 
-        public ForgotPasswordModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer)
-            : base(clientFactory, configuration, logger, sanitizer)
+        public ForgotPasswordModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+            : base(clientFactory, configuration, logger, sanitizer, translator)
         {
         }
 

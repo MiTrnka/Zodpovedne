@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Zodpovedne.Contracts.DTO;
 using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web.Models.Base;
 
@@ -21,6 +22,7 @@ public abstract class BasePageModel : PageModel
     protected readonly IHttpClientFactory _clientFactory;
     protected readonly IConfiguration _configuration;
     protected readonly FileLogger _logger;
+    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
 
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
     protected readonly IHtmlSanitizer _sanitizer;
@@ -150,12 +152,13 @@ public abstract class BasePageModel : PageModel
         await next();
     }
 
-    protected BasePageModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer)
+    protected BasePageModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
     {
         _clientFactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _sanitizer = sanitizer;
+        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>

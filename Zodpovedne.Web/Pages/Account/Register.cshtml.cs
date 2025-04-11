@@ -4,6 +4,7 @@ using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Ganss.Xss;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -15,7 +16,7 @@ public class RegisterModel : BasePageModel
     [BindProperty(SupportsGet = true)]
     public string? ReturnUrl { get; set; }
 
-    public RegisterModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
+    public RegisterModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator) : base(clientFactory, configuration, logger, sanitizer, translator)
     {
     }
 

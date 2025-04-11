@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Logging;
 using Zodpovedne.Web.Models.Base;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web.Pages.Account
 {
@@ -32,8 +33,8 @@ namespace Zodpovedne.Web.Pages.Account
 
         public bool Success { get; set; } = false;
 
-        public ResetPasswordModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer)
-            : base(clientFactory, configuration, logger, sanitizer)
+        public ResetPasswordModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+            : base(clientFactory, configuration, logger, sanitizer, translator)
         {
         }
 

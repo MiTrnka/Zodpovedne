@@ -178,8 +178,6 @@ namespace Zodpovedne.Data.Services
                 }
             }
 
-
-
             // Vytvoření kategorií, každá se nejprve dohledá podle Name a založí se jen tehdy, pokud kategorie s daným Name nebo Code není v databázi
             var categories = new[]
             {
@@ -228,7 +226,26 @@ namespace Zodpovedne.Data.Services
                 }
             }
 
-
+            // Vytvoření úvodních site instancí
+            var siteInstances = new[] { "mamazodpovedne.cz", "mamazodpovedne.sk" };
+            var createdsiteInstances = new List<SiteInstance>();
+            foreach (var siteInstancesData in siteInstances)
+            {
+                if (!await dbContext.SiteInstances.AnyAsync(si => si.Code == siteInstancesData))
+                {
+                    var siteInstance = new SiteInstance
+                    {
+                        Code = siteInstancesData
+                    };
+                    try
+                    {
+                        dbContext.SiteInstances.Add(siteInstance);
+                        await dbContext.SaveChangesAsync();
+                    }
+                    catch (Exception)
+                    { }
+                }
+            }
 
             // Vytvoření náhodných diskuzí a komentářů pro zadefinované kategorie
             var random = new Random();

@@ -8,6 +8,7 @@ using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Ganss.Xss;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -18,7 +19,7 @@ namespace Zodpovedne.Web.Pages.Account;
 public class LoginModel : BasePageModel
 {
 
-    public LoginModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer) : base(clientFactory, configuration, logger, sanitizer)
+    public LoginModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator) : base(clientFactory, configuration, logger, sanitizer, translator)
     {
     }
 

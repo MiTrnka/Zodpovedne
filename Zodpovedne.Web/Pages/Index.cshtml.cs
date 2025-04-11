@@ -5,6 +5,7 @@ using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Logging;
 using Ganss.Xss;
+using Zodpovedne.Web.Services;
 
 namespace Zodpovedne.Web.Pages
 {
@@ -15,8 +16,8 @@ namespace Zodpovedne.Web.Pages
         /// </summary>
         public List<DiscussionListDto> CombinedFeed { get; private set; } = new();
 
-        public IndexModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer)
-        : base(clientFactory, configuration, logger, sanitizer)
+        public IndexModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+        : base(clientFactory, configuration, logger, sanitizer, translator)
         {
         }
 
