@@ -15,14 +15,10 @@ public class TranslationsController : ControllerBase
     private readonly ApplicationDbContext dbContext;
     private readonly FileLogger _logger;
 
-    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
-
-
-    public TranslationsController(ApplicationDbContext dbContext, FileLogger logger, Translator translator)
+    public TranslationsController(ApplicationDbContext dbContext, FileLogger logger)
     {
         this.dbContext = dbContext;
         _logger = logger;
-        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>
