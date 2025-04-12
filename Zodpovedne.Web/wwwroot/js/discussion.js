@@ -160,6 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+   
 });
 
 async function loadMoreComments(discussionId) {
@@ -382,8 +383,31 @@ function toggleDiscussionEdit(show) {
         saveBtn.classList.add('d-none');
         cancelBtn.classList.add('d-none');
     }
+    $("#emoji-btn-discussion").toggle()
 }
+// Vlozeni smajliku do diskuse
+const emojiBtnDiskuse = document.getElementById("emoji-btn-discussion"); // btn smajlika
+const poleSmajlikuDiskuse = document.querySelectorAll("#emoji-list-discussion .emoji"); // pole vsech smajliku v nabidce
+const emojiListDiskuse = document.getElementById("emoji-list-discussion");
 
+emojiBtnDiskuse.addEventListener("click", () => {
+    emojiListDiskuse.style.display = emojiListDiskuse.style.display === "block" ? "none" : "block";
+});
+// Vložení smajlíka do editoru při kliknutí
+poleSmajlikuDiskuse.forEach(smajlik => {
+    smajlik.addEventListener("click", () => {
+        // Kontrola, zda globální instance CKEditoru existuje
+        if (window.discussionEditor) {
+            const emoji = smajlik.textContent;
+
+            // Použití API CKEditoru 5 pro vložení emoji
+            window.discussionEditor.model.change(writer => {
+                window.discussionEditor.model.insertContent(writer.createText(emoji));
+            });
+
+        }
+    });
+});
 // Funkce pro uložení změn v diskuzi
 async function saveDiscussionChanges(discussionId, discussionType) {
     const titleEdit = document.getElementById('discussion-title-edit');

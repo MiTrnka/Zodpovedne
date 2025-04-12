@@ -21,9 +21,8 @@
 }
 
 <div class="container">
-    <div class="">
-        <div class="col-md-4">
-            <h2>Přihlášení</h2>
+        <div class="col-md-4 login-wrapper shadow">
+        <h2 class="mb-4 mt-2 text-center">Přihlášení</h2>
 
             @if (!string.IsNullOrEmpty(Model.ErrorMessage))
             {
@@ -35,22 +34,21 @@
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                 <div class="mb-3">
-                    <label asp-for="Input.Email" class="form-label">Email</label>
-                    <input asp-for="Input.Email" class="form-control" />
+                    <label asp-for="Input.Email" class="form-label mb-0">Email</label>
+                <input asp-for="Input.Email"  class="form-control" />
                     <span asp-validation-for="Input.Email" class="text-danger"></span>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="Input.Password" class="form-label">Heslo</label>
-                    <input asp-for="Input.Password" type="password" class="form-control" />
+                <div class="mb-4">
+                <label asp-for="Input.Password" class="form-label mb-0">Heslo</label>
+                <input asp-for="Input.Password" type="password" class="form-control" />
                     <span asp-validation-for="Input.Password" class="text-danger"></span>
                     <div class="mt-1">
                         <a href="/Account/ForgotPassword">Zapomněli jste heslo?</a>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100">Přihlásit</button>
+                <button type="submit" class="btn btn-primary w-100 shadow mb-3">Přihlásit</button>
             </form>
         </div>
-    </div>
 </div>

@@ -16,7 +16,7 @@
 }
 @font-face {
     font-family: 'Bookman Old Style'; 
-    src: url('font/books.ttf') format('truetype');
+    src: url('../font/books.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
@@ -108,21 +108,29 @@ body {
         background-color: var(--comment-graphic-color);
         z-index: 1;
     }
-#emoji-list, .emoji-list-comment-reply {
+#emoji-list, .emoji-list-comment-reply, #emoji-list-discussion {
     display: none;
     max-height: 120px;
     overflow-y: auto;
     border: 1px solid var(--comment-graphic-color);
     border-radius: 5px;
+    margin-top: 10px;
 }
-.btn-add-coment-wrapper {
-    display: inline-flex;
-    align-items: center;
-}
-#emoji-btn, .emoji-btn-comment-reply{
+    #emoji-list-discussion{
+        margin-bottom: 10px;
+    }
+    .btn-add-coment-wrapper {
+        display: inline-flex;
+        align-items: center;
+    }
+#emoji-btn, .emoji-btn-comment-reply, #emoji-btn-discussion {
     background-color: white;
     border: none;
     font-size: 20px;
+}
+#emoji-btn-discussion{
+    margin-bottom: 8px;
+    display: none;
 }
 .emoji {
     font-size: 20px;
@@ -902,6 +910,41 @@ h1 {
     border: 1.5px solid var(--primary-color);
 }
 
+/* Stranka registrace */
+.register-wrapper, .login-wrapper, .create-disscussion-wrapper {
+    width: 95%;
+    max-width: 750px;
+    margin: 0px auto;
+    padding: 20px;
+    background-color: white;
+    backdrop-filter: blur(5px); /* Rozmazání pozadí */
+    -webkit-backdrop-filter: blur(5px); /* Pro Safari podporu */
+    border-radius: 15px; /* iii */
+}
+.create-disscussion-wrapper {
+    max-width: 1400px;
+}
+.create-disscussion-wrapper form{
+    width: 100%;
+}
+.register-btn-wrapper, .create-discusssion-btn-wrapper {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+.register-btn-wrapper button, .create-discussion-btn{
+    width: 60%;
+    max-width: 500px;
+}
+.create-discussion-back-wrapper{
+    display: flex;
+    align-items: center;
+}
+
+
+.register-btn-wrapper a {
+    width: 40%;
+}
 /* Styly pro tablet a větší obrazovky (≥576px) */
 @media (min-width: 576px) {
     /* Tlačítka na širších obrazovkách */
@@ -970,7 +1013,7 @@ h1 {
 @media (min-width: 1200px) {
     .container {
         max-width: 1550px;
-        margin: 0 auto;
+        margin: 0px auto;
     }
     .logo-container {
         width: auto;

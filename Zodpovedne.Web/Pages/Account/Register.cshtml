@@ -5,8 +5,8 @@
 }
 
 <div class="container">
-    <div class="col-md-6">
-        <h2>Registrace nového účtu</h2>
+    <div class="col-md-6 register-wrapper shadow">
+        <h2 class="mb-4 mt-2 text-center">Registrace nového účtu</h2>
 
         @if (!string.IsNullOrEmpty(Model.ErrorMessage))
         {
@@ -17,26 +17,26 @@
             <input type="hidden" asp-for="ReturnUrl" />
 
             <div class="mb-3">
-                <label asp-for="Input.Email" class="form-label">Email</label>
+                <label asp-for="Input.Email" class="form-label m-0">Email</label>
                 <input asp-for="Input.Email" class="form-control" />
                 <span asp-validation-for="Input.Email" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
-                <label asp-for="Input.Nickname" class="form-label">Přezdívka</label>
+                <label asp-for="Input.Nickname" class="form-label m-0">Přezdívka</label>
                 <input asp-for="Input.Nickname" class="form-control" />
                 <span asp-validation-for="Input.Nickname" class="text-danger"></span>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Input.Password" class="form-label">Heslo</label>
+            <div class="mb-4">
+                <label asp-for="Input.Password" class="form-label m-0">Heslo</label>
                 <input asp-for="Input.Password" type="password" class="form-control" />
                 <span asp-validation-for="Input.Password" class="text-danger"></span>
             </div>
 
-            <div class="mb-3">
-                <a href="@Model.ReturnUrl" class="btn btn-secondary">Zpět</a>
-                <button type="submit" class="btn btn-primary">Založit</button>
+            <div class="mb-3 register-btn-wrapper">
+                <a href="@Model.ReturnUrl" class="btn btn-secondary shadow">Zpět</a>
+                <button type="submit" class="btn btn-primary shadow">Založit</button>
             </div>
         </form>
     </div>
