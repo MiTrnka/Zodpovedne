@@ -63,7 +63,9 @@
             aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="navbar-collapse collapse d-xl-inline-flex justify-content-between" id="navbarContent">
+            <div class="navbar-collapse collapse d-xl-inline-flex justify-content-between" id="navbarContent" style="z-index: 1050; top: 100%; width: 95%;">
+
+
                 <!-- Levá část menu -->
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
@@ -86,7 +88,7 @@
 
                 <!-- Fulltext search -->
                 <form class="d-flex fulltextForm" action="/Search" method="get">
-                    <input class="form-control fulltextFormInput" type="search" name="query" placeholder="Vyhledat..." aria-label="Vyhledat">
+                    <input class="form-control fulltextFormInput" type="search" name="query" placeholder="Vyhledat v diskusích..." aria-label="Vyhledat">
                     <button class="btn btn-primary fulltextFormBtn" type="submit">Hledat</button>
                 </form>
 
@@ -107,24 +109,24 @@
                             </li>
                         }
                         <!-- Ikona zpráv -->
-                        <li class="nav-item me-2">
-                            <a class="nav-link position-relative" href="/Messages" id="messages-link">
+                        <li class="nav-item">
+                            <a class="nav-link position-relative nav-link @(IsMenuItemActive("/Messages") ? "active" : "")" href="/Messages" id="messages-link">
                                 <i class="bi bi-envelope nav-icon" id="messages-icon"></i>
-                                <span id="messages-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                                <span id="messages-badge" class="position-absolute top-0 translate-middle badge rounded-pill bg-danger d-none">
                                     <span id="messages-count">0</span>
                                     <span class="visually-hidden">nepřečtených zpráv</span>
                                 </span>
                             </a>
                         </li>
                         <!-- Notifikační zvoneček s dropdown menu -->
-                        <li class="nav-item dropdown" id="notifications-container">
-                            <a class="nav-link position-relative" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <li class="nav-item dropdown position-relative" id="notifications-container">
+                            <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-bell" id="notification-bell"></i>
-                                <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger d-none" id="notification-badge">
+                                <span class="position-absolute top-0 translate-middle badge rounded-pill bg-danger d-none" id="notification-badge">
                                     <span id="notifications-count">0</span>
                                 </span>
                             </a>
-                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" id="notifications-dropdown">
+                            <div class="dropdown-menu start-50 position-absolute translate-middle-x" aria-labelledby="notificationsDropdown" id="notifications-dropdown">
                                 <div class="p-2" id="notifications-header">
                                     <h6 class="dropdown-header">Nové odpovědi</h6>
                                 </div>
@@ -139,20 +141,18 @@
                             </div>
                         </li>
                         <!-- Účet přihlášeného uživatele s notifikací pro nové žádosti o přátelství -->
-                        <li class="position-relative" style="cursor: pointer;">
-                            <i id="friendship-icon" class="bi bi-people-fill"></i>
-                            <span id="friendship-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size: 0.5rem;">
+                        <li class="position-relative nav-item account-icon-text nav-link @(IsMenuItemActive("/Account/MyProfile") ? "active" : "")" style="cursor: pointer;">
+                            <i id="user-icon" class="bi bi-person"></i>
+                            <span id="friendship-badge" class="position-absolute top-0 translate-middle badge rounded-pill bg-danger d-none" style="font-size: 0.5rem;">
                                 <span id="friendship-count">0</span>
                                 <span class="visually-hidden">žádostí o přátelství</span>
                             </span>
-                        </li>
                         <!-- Můj profil -->
-                        <li class="nav-item">
-                            <a class="nav-link @(IsMenuItemActive("/Account/MyProfile") ? "active" : "")"
+                            <a class="user-name"
                             asp-page="/Account/MyProfile">@Context.Session.GetString("UserNickname")</a>
                         </li>
                         <!-- Odhlásit -->
-                        <li class="nav-item">
+                        <li class="nav-item odhlasit-menu">
                             <a class="nav-link" asp-page="/Account/Logout">Odhlásit se</a>
                         </li>
                     }

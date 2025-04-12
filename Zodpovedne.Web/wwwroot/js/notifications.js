@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // NÍŽE JE SEKCE PRO POČET ŽÁDOSTÍ O PŘÁTELSTVÍ
     // Získáme element pro ikonu přátelství
-    const friendshipIcon = document.getElementById('friendship-icon');
+    const friendshipIcon = document.getElementById('user-icon');
     if (!friendshipIcon) return;
     // Přidáme event listener pro kliknutí na ikonu přátelství
     friendshipIcon.addEventListener('click', function () {
