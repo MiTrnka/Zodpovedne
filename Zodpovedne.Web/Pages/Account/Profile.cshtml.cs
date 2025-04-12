@@ -6,7 +6,7 @@ using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Logging;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Models.Base;
-using Zodpovedne.Web.Services;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.Web.Pages.Account
 {

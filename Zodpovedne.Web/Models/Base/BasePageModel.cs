@@ -10,7 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Zodpovedne.Contracts.DTO;
 using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
-using Zodpovedne.Web.Services;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.Web.Models.Base;
 

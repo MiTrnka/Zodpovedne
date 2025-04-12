@@ -1,7 +1,7 @@
 ﻿@page "/Categories/{categoryCode}/{discussionCode}"
 @using System.Security.Claims
 @using Zodpovedne.Contracts.Enums
-@inject Zodpovedne.Web.Services.Translator Translator
+@inject Zodpovedne.Logging.Services.Translator Translator
 @model DiscussionModel
 @{
     ViewData["Title"] = Model.Discussion?.Title ?? "Diskuze";

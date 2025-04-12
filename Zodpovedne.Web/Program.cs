@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using System.Security.Claims;
 using Zodpovedne.Logging;
-using Zodpovedne.Web.Services;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.Web;
 
@@ -107,6 +107,17 @@ public class Program
         // Pøidáme tøídu pro logování
         builder.Services.AddSingleton<FileLogger>();
 
+        // Vytvoøíme instanci FileLoggeru pøímo
+        var fileLogger = new FileLogger(builder.Configuration);
+
+        // Pak pøidáme konfiguraci pro ASP.NET Core logging
+        builder.Services.AddLogging(logging =>
+        {
+            logging.ClearProviders();
+            logging.AddConsole();
+            logging.AddProvider(new CustomFileLoggerProvider(fileLogger));
+        });
+
         // Pøidáme tøídu pro pøeklady
         builder.Services.AddSingleton<Translator>();
 
@@ -148,18 +159,6 @@ public class Program
             sanitizer.AllowedCssProperties.Add("text-align");
 
             return sanitizer;
-        });
-
-
-        // Vytvoøíme instanci FileLoggeru pøímo
-        var fileLogger = new FileLogger(builder.Configuration);
-
-        // Pak pøidáme konfiguraci pro ASP.NET Core logging
-        builder.Services.AddLogging(logging =>
-        {
-            logging.ClearProviders();
-            logging.AddConsole();
-            logging.AddProvider(new CustomFileLoggerProvider(fileLogger));
         });
 
         var app = builder.Build();

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Logging;
 using Zodpovedne.Web.Models.Base;
-using Zodpovedne.Web.Services;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.Web.Pages.Account
 {

@@ -9,7 +9,7 @@ using Zodpovedne.Logging;
 using System.Text.Json;
 using Zodpovedne.Contracts.Enums;
 using Ganss.Xss;
-using Zodpovedne.Web.Services;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.Web.Pages.Account;
 

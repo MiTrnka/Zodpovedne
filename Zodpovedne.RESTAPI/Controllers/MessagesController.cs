@@ -8,6 +8,7 @@ using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Data.Models;
 using Zodpovedne.Logging;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
@@ -25,17 +26,19 @@ public class MessagesController : ControllerBase
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
     private readonly IHtmlSanitizer _sanitizer;
 
+    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
+
     /// <summary>
     /// Konstruktor controlleru zpráv
     /// </summary>
     /// <param name="dbContext">Databázový kontext pro přístup k datům</param>
     /// <param name="logger">Logger pro zaznamenávání chyb a událostí</param>
-    public MessagesController(ApplicationDbContext dbContext, FileLogger logger, IHtmlSanitizer sanitizer)
+    public MessagesController(ApplicationDbContext dbContext, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
     {
         _dbContext = dbContext;
         _logger = logger;
         _sanitizer = sanitizer;
-
+        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>

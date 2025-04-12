@@ -1,6 +1,7 @@
-﻿using Zodpovedne.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using System.Net.Http.Json;
 
-namespace Zodpovedne.Web.Services;
+namespace Zodpovedne.Logging.Services;
 
 public class Translator
 {
@@ -62,7 +63,6 @@ public class Translator
             {
                 _translations = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>()
                     ?? new Dictionary<string, string>();
-                _logger.Log($"Načteno {_translations.Count} překladů pro instanci {SiteInstance}");
             }
             else
             {

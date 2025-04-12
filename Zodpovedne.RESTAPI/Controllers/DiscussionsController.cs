@@ -10,6 +10,7 @@ using Zodpovedne.Data.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Ganss.Xss;
 using Zodpovedne.Logging;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
@@ -26,13 +27,16 @@ public class DiscussionsController : ControllerBase
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
     private readonly IHtmlSanitizer _sanitizer;
 
+    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
 
-    public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, IHtmlSanitizer sanitizer)
+
+    public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
     {
         _logger = logger;
         this.dbContext = dbContext;
         this.userManager = userManager;
         _sanitizer = sanitizer;
+        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>

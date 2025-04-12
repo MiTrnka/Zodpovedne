@@ -19,7 +19,7 @@ using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Ganss.Xss;
-using Zodpovedne.Web.Services;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.Web.Pages;
 

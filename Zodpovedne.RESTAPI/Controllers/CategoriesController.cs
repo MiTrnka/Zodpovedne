@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Logging;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
@@ -12,12 +13,13 @@ public class CategoriesController : ControllerBase
 {
     private readonly ApplicationDbContext dbContext;
     private readonly FileLogger _logger;
+    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
 
-
-    public CategoriesController(ApplicationDbContext dbContext, FileLogger logger)
+    public CategoriesController(ApplicationDbContext dbContext, FileLogger logger, Translator translator)
     {
         this.dbContext = dbContext;
         _logger = logger;
+        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>

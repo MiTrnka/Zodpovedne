@@ -5,7 +5,7 @@ using Zodpovedne.Web.Filters;
 using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Ganss.Xss;
-using Zodpovedne.Web.Services;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.Web.Pages;
 

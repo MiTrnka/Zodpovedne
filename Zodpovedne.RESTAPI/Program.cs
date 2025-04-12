@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Data.Models;
-using Zodpovedne.Data.Services;
+using Zodpovedne.Logging.Services;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace Zodpovedne.RESTAPI
@@ -187,6 +187,26 @@ namespace Zodpovedne.RESTAPI
             // Registrace sluby pro odesílání e-mailù
             builder.Services.AddScoped<IEmailService, EmailService>();
 
+            // Pøidáme HttpClient pro volání API
+            builder.Services.AddHttpClient();
+
+            // Pøidáme tøídu pro logování
+            builder.Services.AddSingleton<FileLogger>();
+
+            // Vytvoøíme instanci FileLoggeru pøímo
+            var fileLogger = new FileLogger(builder.Configuration);
+
+            // Pak pøidáme konfiguraci pro ASP.NET Core logging
+            builder.Services.AddLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddConsole();
+                logging.AddProvider(new CustomFileLoggerProvider(fileLogger));
+            });
+
+            // Pøidáme tøídu pro pøeklady
+            builder.Services.AddSingleton<Translator>();
+
             // Registrace HTML sanitizeru jako singleton
             builder.Services.AddSingleton<Ganss.Xss.IHtmlSanitizer>(provider => {
                 var sanitizer = new Ganss.Xss.HtmlSanitizer();
@@ -264,20 +284,6 @@ namespace Zodpovedne.RESTAPI
                     });
                 });
             }
-
-            // Pøidáme tøídu pro logování
-            builder.Services.AddSingleton<FileLogger>();
-
-            // Vytvoøíme instanci FileLoggeru pøímo
-            var fileLogger = new FileLogger(builder.Configuration);
-
-            // Pak pøidáme konfiguraci pro ASP.NET Core logging
-            builder.Services.AddLogging(logging =>
-            {
-                logging.ClearProviders();
-                logging.AddConsole();
-                logging.AddProvider(new CustomFileLoggerProvider(fileLogger));
-            });
 
             // Pøidání pamìové cache napøíklad pro cachování dat z databáze (seznam diskuzí, kde nìkdo reagoval na mùj komentáø)
             builder.Services.AddMemoryCache();

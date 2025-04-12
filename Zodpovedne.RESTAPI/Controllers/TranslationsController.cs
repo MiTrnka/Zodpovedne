@@ -4,6 +4,7 @@ using Zodpovedne.Data.Data;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Logging;
 using Zodpovedne.Data.Models;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
@@ -14,11 +15,14 @@ public class TranslationsController : ControllerBase
     private readonly ApplicationDbContext dbContext;
     private readonly FileLogger _logger;
 
+    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
 
-    public TranslationsController(ApplicationDbContext dbContext, FileLogger logger)
+
+    public TranslationsController(ApplicationDbContext dbContext, FileLogger logger, Translator translator)
     {
         this.dbContext = dbContext;
         _logger = logger;
+        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>

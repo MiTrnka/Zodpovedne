@@ -12,10 +12,10 @@ using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Logging;
 using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Caching.Memory;
 using System.Net;
 using Zodpovedne.RESTAPI.Services;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.Controllers;
 
@@ -31,7 +31,9 @@ public class UsersController : ControllerBase
     private readonly IMemoryCache _cache;
     private readonly IEmailService _emailService;
 
-    public UsersController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger, IMemoryCache memoryCache, IEmailService emailService)
+    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
+
+    public UsersController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger, IMemoryCache memoryCache, IEmailService emailService, Translator translator)
     {
         this.userManager = userManager;
         this.signInManager = signInManager;
@@ -40,6 +42,7 @@ public class UsersController : ControllerBase
         _logger = logger;
         _cache = memoryCache;
         _emailService = emailService;
+        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>

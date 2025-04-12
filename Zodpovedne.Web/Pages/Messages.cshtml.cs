@@ -6,7 +6,7 @@ using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Zodpovedne.Contracts.Enums;
 using Ganss.Xss;
-using Zodpovedne.Web.Services;
+using Zodpovedne.Logging.Services;
 
 namespace Zodpovedne.Web.Pages;
 
