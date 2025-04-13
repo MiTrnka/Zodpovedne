@@ -606,3 +606,30 @@ async function updateUnreadCounts() {
         console.error('Chyba při aktualizaci počtu nepřečtených zpráv:', error);
     }
 }
+// Otevreni nabidky smajliku - pridat komentar
+const emojiBtn = document.getElementById("emoji-btn");
+const emojiList = document.getElementById("emoji-list");
+const textarea = document.getElementById("message-input");
+const poleSmajliku = document.querySelectorAll("#emoji-list .emoji");
+
+
+emojiBtn.addEventListener("click", () => {
+    emojiList.style.display = emojiList.style.display === "block" ? "none" : "block";
+});
+// Vlozeni smajlika do textarei pri kliknuti na smajlika
+poleSmajliku.forEach(smajlik => {
+    smajlik.addEventListener("click", () => {
+        // Získání aktuální hodnoty textarea
+        const aktualni = textarea.value;
+        // Získání pozice kurzoru
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+
+        // Vložení emoji na pozici kurzoru
+        textarea.value = aktualni.substring(0, start) + smajlik.textContent + aktualni.substring(end);
+
+        // Nastavení kurzoru za vložený smajlík
+        const newPosition = start + smajlik.textContent.length;
+        textarea.setSelectionRange(newPosition, newPosition);
+    });
+});
