@@ -92,6 +92,8 @@ public class Program
         // Add services to the container.
         builder.Services.AddRazorPages();
 
+        builder.Services.AddControllers();
+
         // Pøidáme služby pro session
         builder.Services.AddDistributedMemoryCache();
         builder.Services.AddSession(options =>
@@ -183,6 +185,7 @@ public class Program
         app.UseAuthorization();
         app.UseSession();
         app.MapRazorPages();
+        app.MapControllers();
 
         app.Run();
     }
