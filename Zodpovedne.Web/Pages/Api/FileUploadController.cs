@@ -29,11 +29,8 @@ namespace Zodpovedne.Web.Pages.Api
         }
 
         /// <summary>
-        /// Endpoint pro nahrání souboru
+        /// Endpoint pro nahrání souboru s limitem velikosti
         /// </summary>
-        /// <param name="upload">Nahrávaný soubor</param>
-        /// <param name="discussionCode">Kód diskuze, pro kterou je soubor nahráván</param>
-        /// <returns>URL nahraného souboru pro CKEditor</returns>
         [HttpPost("upload")]
         public async Task<IActionResult> UploadImage(IFormFile upload, [FromQuery] string discussionCode)
         {
@@ -45,17 +42,36 @@ namespace Zodpovedne.Web.Pages.Api
                     return BadRequest(new { error = "Chybí soubor nebo kód diskuze" });
                 }
 
+                // Kontrola velikosti souboru (omezení na 2MB)
+                const int maxFileSize = 2 * 1024 * 1024; // 2MB
+                if (upload.Length > maxFileSize)
+                {
+                    return BadRequest(new
+                    {
+                        uploaded = 0,
+                        error = new { message = "Soubor je příliš velký. Maximální velikost je 2MB." }
+                    });
+                }
+
                 // Validace kódu diskuze - pro bezpečnost, abychom zabránili přístupu k nežádoucím adresářům
                 if (!IsValidDiscussionCode(discussionCode))
                 {
                     _logger.Log($"Neplatný kód diskuze při nahrávání souboru: {discussionCode}");
-                    return BadRequest(new { error = "Neplatný kód diskuze" });
+                    return BadRequest(new
+                    {
+                        uploaded = 0,
+                        error = new { message = "Neplatný kód diskuze" }
+                    });
                 }
 
                 // Validace typu souboru - povolíme pouze obrázky
                 if (!IsAllowedFileType(upload.FileName))
                 {
-                    return BadRequest(new { error = "Nepodporovaný typ souboru" });
+                    return BadRequest(new
+                    {
+                        uploaded = 0,
+                        error = new { message = "Nepodporovaný typ souboru. Povolené jsou pouze JPG, PNG a GIF." }
+                    });
                 }
 
                 // Vytvoření názvu souboru - použijeme GUID pro zajištění unikátnosti
@@ -93,16 +109,17 @@ namespace Zodpovedne.Web.Pages.Api
             catch (Exception ex)
             {
                 _logger.Log("Chyba při nahrávání souboru", ex);
-                return StatusCode(500, new { error = "Chyba při nahrávání souboru" });
+                return StatusCode(500, new
+                {
+                    uploaded = 0,
+                    error = new { message = "Chyba při nahrávání souboru" }
+                });
             }
         }
 
         /// <summary>
-        /// Endpoint pro smazání souboru
+        /// Endpoint pro smazání souboru s čištěním prázdných adresářů
         /// </summary>
-        /// <param name="discussionCode">Kód diskuze, ke které patří soubor</param>
-        /// <param name="fileName">Název souboru, který má být smazán</param>
-        /// <returns>Výsledek operace</returns>
         [HttpDelete("delete")]
         public IActionResult DeleteImage([FromQuery] string discussionCode, [FromQuery] string fileName)
         {
@@ -140,12 +157,64 @@ namespace Zodpovedne.Web.Pages.Api
                 // Smazání souboru
                 System.IO.File.Delete(filePath);
 
+                // Kontrola, zda je adresář prázdný a případné jeho smazání
+                string directoryPath = Path.Combine(_environment.WebRootPath, "uploads", "discussions", discussionCode);
+                if (Directory.Exists(directoryPath) && !Directory.EnumerateFileSystemEntries(directoryPath).Any())
+                {
+                    Directory.Delete(directoryPath);
+                }
+
                 return Ok(new { success = true });
             }
             catch (Exception ex)
             {
                 _logger.Log("Chyba při mazání souboru", ex);
                 return StatusCode(500, new { error = "Chyba při mazání souboru" });
+            }
+        }
+
+        /// <summary>
+        /// Endpoint pro získání seznamu souborů v diskuzi
+        /// </summary>
+        [HttpGet("list")]
+        public IActionResult ListDiscussionFiles([FromQuery] string discussionCode)
+        {
+            try
+            {
+                // Validace kódu diskuze - pro bezpečnost
+                if (string.IsNullOrEmpty(discussionCode) || !IsValidDiscussionCode(discussionCode))
+                {
+                    _logger.Log($"Neplatný kód diskuze při výpisu souborů: {discussionCode}");
+                    return BadRequest(new { error = "Neplatný kód diskuze" });
+                }
+
+                // Cesta k adresáři
+                string directoryPath = Path.Combine(_environment.WebRootPath, "uploads", "discussions", discussionCode);
+
+                // Kontrola, zda adresář existuje
+                if (!Directory.Exists(directoryPath))
+                {
+                    return Ok(new { files = new List<object>() });
+                }
+
+                // Získání seznamu souborů
+                var files = Directory.GetFiles(directoryPath)
+                    .Select(f => new FileInfo(f))
+                    .Select(f => new
+                    {
+                        name = f.Name,
+                        url = $"/uploads/discussions/{discussionCode}/{f.Name}",
+                        size = f.Length,
+                        lastModified = f.LastWriteTime
+                    })
+                    .ToList();
+
+                return Ok(new { files });
+            }
+            catch (Exception ex)
+            {
+                _logger.Log("Chyba při výpisu souborů", ex);
+                return StatusCode(500, new { error = "Chyba při výpisu souborů" });
             }
         }
 
@@ -178,7 +247,7 @@ namespace Zodpovedne.Web.Pages.Api
         private bool IsAllowedFileType(string fileName)
         {
             // Povolené přípony souborů
-            string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif" };
+            string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
 
             // Získání přípony souboru a kontrola, zda je povolena
             string extension = Path.GetExtension(fileName).ToLowerInvariant();

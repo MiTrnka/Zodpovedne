@@ -8,6 +8,13 @@
     upload() {
         return this.loader.file
             .then(file => new Promise((resolve, reject) => {
+                // Kontrola velikosti souboru na straně klienta
+                const maxFileSize = 2 * 1024 * 1024; // 2MB
+                if (file.size > maxFileSize) {
+                    reject(`Soubor je příliš velký. Maximální velikost je 2MB.`);
+                    return;
+                }
+
                 this._initRequest();
                 this._initListeners(resolve, reject, file);
                 this._sendRequest(file);
@@ -47,14 +54,26 @@
         const loader = this.loader;
         const genericErrorText = `Nepodařilo se nahrát soubor: ${file.name}.`;
 
-        xhr.addEventListener('error', () => reject(genericErrorText));
-        xhr.addEventListener('abort', () => reject());
+        xhr.addEventListener('error', () => {
+            reject(genericErrorText);
+        });
+
+        xhr.addEventListener('abort', () => {
+            reject('Nahrávání bylo přerušeno.');
+        });
+
         xhr.addEventListener('load', () => {
             const response = xhr.response;
 
             // Kontrola, zda server vrátil chybu
             if (!response || response.error) {
-                return reject(response && response.error ? response.error.message : genericErrorText);
+                return reject(response && response.error && response.error.message ?
+                    response.error.message : genericErrorText);
+            }
+
+            // Kontrola, zda server vrátil očekávanou strukturu
+            if (!response.uploaded || !response.url) {
+                return reject('Neplatná odpověď serveru.');
             }
 
             // Pokud je vše v pořádku, vrátíme data podle očekávaného formátu CKEditoru
@@ -77,6 +96,13 @@
 
     // Odeslání requestu s nahrávaným souborem
     _sendRequest(file) {
+        // Validace typu souboru na straně klienta
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            this.xhr.abort();
+            throw new Error('Nepodporovaný typ souboru. Povolené jsou pouze JPG, PNG a GIF.');
+        }
+
         // Vytvoření FormData objektu a přidání souboru
         const data = new FormData();
         data.append('upload', file);

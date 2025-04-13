@@ -516,46 +516,63 @@ async function cleanupUnusedImages(newContent) {
         // Načtení původního obsahu diskuze
         const originalContent = document.getElementById('discussion-content-display').innerHTML;
 
-        // Najdeme všechny obrázky v původním obsahu
-        const originalImagesRegex = /<img[^>]+src="([^"]+)"[^>]*>/g;
-        let originalImages = [];
-        let match;
+        // Optimalizovaná regex pro nalezení všech obrázků
+        const imagesRegex = /<img[^>]+src="([^"]+)"[^>]*>/g;
 
-        // Extrahujeme URL všech obrázků z původního obsahu
-        while ((match = originalImagesRegex.exec(originalContent)) !== null) {
-            // Získáme pouze název souboru z URL
-            const imageUrl = match[1];
-            if (imageUrl.includes('/uploads/discussions/')) {
-                const fileName = imageUrl.split('/').pop();
-                originalImages.push(fileName);
+        // Pomocná funkce pro extrakci URL obrázků z obsahu
+        function extractImageUrls(content) {
+            let images = new Set();
+            let match;
+
+            // Reset regex - důležité pro opakované použití
+            imagesRegex.lastIndex = 0;
+
+            while ((match = imagesRegex.exec(content)) !== null) {
+                const imageUrl = match[1];
+                // Zpracuj pouze obrázky patřící k této diskuzi
+                if (imageUrl.includes(`/uploads/discussions/${discussionCode}/`)) {
+                    const fileName = imageUrl.split('/').pop();
+                    if (fileName) {
+                        images.add(fileName);
+                    }
+                }
             }
+
+            return images;
         }
 
-        // Najdeme všechny obrázky v novém obsahu
-        const newImagesRegex = /<img[^>]+src="([^"]+)"[^>]*>/g;
-        let newImages = [];
-
-        // Extrahujeme URL všech obrázků z nového obsahu
-        while ((match = newImagesRegex.exec(newContent)) !== null) {
-            // Získáme pouze název souboru z URL
-            const imageUrl = match[1];
-            if (imageUrl.includes('/uploads/discussions/')) {
-                const fileName = imageUrl.split('/').pop();
-                newImages.push(fileName);
-            }
-        }
+        // Extrahujeme URL všech obrázků z obou obsahů
+        const originalImages = extractImageUrls(originalContent);
+        const newImages = extractImageUrls(newContent);
 
         // Najdeme obrázky, které jsou v původním obsahu, ale ne v novém (byly smazány)
-        const deletedImages = originalImages.filter(img => !newImages.includes(img));
+        let deletedImages = [];
+        originalImages.forEach(img => {
+            if (!newImages.has(img)) {
+                deletedImages.push(img);
+            }
+        });
+
+        console.log(`Nalezeno ${deletedImages.length} obrázků ke smazání.`);
 
         // Smažeme tyto obrázky ze serveru
         for (const fileName of deletedImages) {
-            await fetch(`/api/FileUpload/delete?discussionCode=${discussionCode}&fileName=${fileName}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+            try {
+                const response = await fetch(`/api/FileUpload/delete?discussionCode=${discussionCode}&fileName=${encodeURIComponent(fileName)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+                    }
+                });
+
+                if (response.ok) {
+                    console.log(`Úspěšně smazán obrázek: ${fileName}`);
+                } else {
+                    console.warn(`Nepodařilo se smazat obrázek: ${fileName}`);
                 }
-            });
+            } catch (deleteError) {
+                console.error(`Chyba při mazání obrázku ${fileName}:`, deleteError);
+            }
         }
 
         return true;
@@ -563,28 +580,6 @@ async function cleanupUnusedImages(newContent) {
         console.error('Chyba při mazání nepoužívaných obrázků:', error);
         // Pokračujeme i když mazání selže
         return true;
-    }
-}
-
-// Funkce pro změnu viditelnosti diskuze
-async function toggleDiscussionVisibility(discussionId) {
-    try {
-        const apiBaseUrl = document.getElementById('apiBaseUrl').value;
-        const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/toggle-visibility`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
-            }
-        });
-
-        if (response.ok) {
-            location.reload();
-        } else {
-            alert('Nepodařilo se změnit viditelnost diskuze.');
-        }
-    } catch (error) {
-        console.error('Chyba při změně viditelnosti:', error);
-        alert('Došlo k chybě při změně viditelnosti diskuze.');
     }
 }
 
