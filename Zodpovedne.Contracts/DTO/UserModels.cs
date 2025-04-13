@@ -6,8 +6,8 @@ namespace Zodpovedne.Contracts.DTO;
 
 public class RegisterModelDto
 {
-    [Required]
     [EmailAddress]
+    [Required(ErrorMessage = "Email je povinný")]
     public string Email { get; set; } = "";
 
     [Required(ErrorMessage = "Heslo je povinné")]
@@ -32,8 +32,7 @@ public class UserProfileDto
 
 public class LoginModelDto
 {
-    [Required]
-    [EmailAddress]
+    [Required(ErrorMessage = "Email je povinný")]
     public string Email { get; set; } = "";
 
     [Required(ErrorMessage = "Heslo je povinné")]
