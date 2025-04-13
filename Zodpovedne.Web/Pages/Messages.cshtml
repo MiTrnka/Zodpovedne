@@ -79,17 +79,197 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer">
+                <div class="card-footer " style="padding: 4px 4px 4px 0px;">
                     <!-- Formulář pro odeslání nové zprávy -->
                     <form id="message-form" class="d-none">
                         <input type="hidden" id="recipient-id" />
                         <div class="input-group">
-                            <textarea id="message-input" class="form-control" placeholder="Napište zprávu..." required></textarea>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="button" id="emoji-btn">&#128512;</button>
+                            <textarea id="message-input" class="form-control" style="height: 100%;" placeholder="Napište zprávu..." required></textarea>
+                            <button type="submit" class="btn btn-primary m-0">
                                 <i class="bi bi-send"></i>
                             </button>
                         </div>
                     </form>
+                    <div id="emoji-list">
+                        <!-- Srdce a like emoji -->
+                        <span class="emoji">&#x2764;&#xFE0F;</span>     <!-- červené srdce -->
+                        <span class="emoji">&#128077;</span>    <!-- palec nahoru -->
+                        <span class="emoji">&#128079;</span>    <!-- tleskání -->
+                        <span class="emoji">&#128076;</span>    <!-- OK symbol -->
+                        <span class="emoji">&#128591;</span>    <!-- sepjaté ruce -->
+                        <span class="emoji">&#128075;</span>    <!-- mávající ruka -->
+                        <span class="emoji">&#128170;</span>    <!-- biceps -->
+                        <span class="emoji">&#128400;</span>    <!-- OK symbol ruka -->
+                        <!-- Standardní smajlíky vyjadřující emoce -->
+                        <span class="emoji">&#128512;</span>    <!-- široký úsměv -->
+                        <span class="emoji">&#128513;</span>    <!-- úsměv s velkýma očima -->
+                        <span class="emoji">&#128514;</span>    <!-- smích se slzami -->
+                        <span class="emoji">&#128515;</span>    <!-- úsměv s úsměvnýma očima -->
+                        <span class="emoji">&#128516;</span>    <!-- úsměv s přimhouřenýma očima -->
+                        <span class="emoji">&#128517;</span>    <!-- úsměv s potem -->
+                        <span class="emoji">&#128518;</span>    <!-- úsměv s šilhavýma očima -->
+                        <span class="emoji">&#128519;</span>    <!-- anděl -->
+                        <span class="emoji">&#128520;</span>    <!-- ďáblík -->
+                        <span class="emoji">&#128521;</span>    <!-- mrkající -->
+                        <span class="emoji">&#128522;</span>    <!-- spokojený -->
+                        <span class="emoji">&#128523;</span>    <!-- olizující se -->
+                        <span class="emoji">&#128524;</span>    <!-- bez výrazu -->
+                        <span class="emoji">&#128525;</span>    <!-- zamilovaný -->
+                        <span class="emoji">&#128526;</span>    <!-- chladný s brýlemi -->
+                        <span class="emoji">&#128527;</span>    <!-- samolibý -->
+                        <span class="emoji">&#128528;</span>    <!-- neutrální -->
+                        <span class="emoji">&#128529;</span>    <!-- bezvýrazný -->
+                        <span class="emoji">&#128530;</span>    <!-- zklamaný -->
+                        <span class="emoji">&#128531;</span>    <!-- studený pot -->
+                        <span class="emoji">&#128532;</span>    <!-- smutný -->
+                        <span class="emoji">&#128533;</span>    <!-- zmatený -->
+                        <span class="emoji">&#128534;</span>    <!-- sklíčený -->
+                        <span class="emoji">&#128535;</span>    <!-- polibek -->
+                        <span class="emoji">&#128536;</span>    <!-- polibek s očima -->
+                        <span class="emoji">&#128537;</span>    <!-- milující -->
+                        <span class="emoji">&#128538;</span>    <!-- polibek s úsměvem -->
+                        <span class="emoji">&#128539;</span>    <!-- vypláznutý jazyk -->
+                        <span class="emoji">&#128540;</span>    <!-- vypláznutý jazyk a mrkání -->
+                        <span class="emoji">&#128541;</span>    <!-- vypláznutý jazyk a šilhání -->
+                        <span class="emoji">&#128542;</span>    <!-- zklamaný -->
+                        <span class="emoji">&#128543;</span>    <!-- uražený -->
+                        <span class="emoji">&#128544;</span>    <!-- vzteklý -->
+                        <span class="emoji">&#128545;</span>    <!-- rozzlobený -->
+                        <span class="emoji">&#128546;</span>    <!-- plačící -->
+                        <span class="emoji">&#128547;</span>    <!-- trpící -->
+                        <span class="emoji">&#128548;</span>    <!-- zamračený se zuby -->
+                        <span class="emoji">&#128549;</span>    <!-- úzkostný s potem -->
+                        <span class="emoji">&#128550;</span>    <!-- překvapený -->
+                        <span class="emoji">&#128551;</span>    <!-- zklamaný ale ulevený -->
+                        <span class="emoji">&#128552;</span>    <!-- vyděšený -->
+                        <span class="emoji">&#128553;</span>    <!-- unavený -->
+                        <span class="emoji">&#128554;</span>    <!-- ospalý -->
+                        <span class="emoji">&#128555;</span>    <!-- unavený -->
+                        <span class="emoji">&#128556;</span>    <!-- grimasa -->
+                        <span class="emoji">&#128557;</span>    <!-- hlasitě plačící -->
+                        <span class="emoji">&#128558;</span>    <!-- překvapený s otevřenými ústy -->
+                        <span class="emoji">&#128559;</span>    <!-- překvapený -->
+                        <span class="emoji">&#128560;</span>    <!-- vyděšený -->
+                        <span class="emoji">&#128561;</span>    <!-- křičící -->
+                        <span class="emoji">&#129326;</span>    <!-- nevolnost -->
+                        <span class="emoji">&#129327;</span>    <!-- kýchnutí -->
+                        <span class="emoji">&#129318;</span>    <!-- obracející oči -->
+                        <span class="emoji">&#129335;</span>    <!-- pokrčení rameny -->
+                        <span class="emoji">&#x1F648;</span>    <!-- opice -->
+                        <span class="emoji">&#128580;</span>    <!-- nedůvěřivý -->
+                        <span class="emoji">&#129296;</span>    <!-- mrzoutský -->
+                        <span class="emoji">&#129301;</span>    <!-- po úrazu -->
+                        <span class="emoji">&#x1F321;</span>    <!-- teploměr -->
+                        <span class="emoji">&#129314;</span>    <!-- na zvracení -->
+                        <span class="emoji">&#128564;</span>    <!-- spící -->
+                        <span class="emoji">&#128567;</span>    <!-- s rouškou -->
+                        <span class="emoji">&#128562;</span>    <!-- šokovaný -->
+                        <!-- Oslavné a sváteční emoji -->
+                        <span class="emoji">&#127881;</span>    <!-- party popper -->
+                        <span class="emoji">&#x2728;</span>    <!-- hvězdicky -->
+                        <span class="emoji">&#128144;</span>    <!-- kvetina -->
+                        <span class="emoji">&#127942;</span>    <!-- trofej -->
+                        <span class="emoji">&#127874;</span>    <!-- narozeninový dort -->
+                        <span class="emoji">&#x1F381;</span>    <!-- dárek -->
+                        <span class="emoji">&#127872;</span>    <!-- dárek -->
+                        <span class="emoji">&#127882;</span>    <!-- konfety -->
+                        <span class="emoji">&#127880;</span>    <!-- hvězda -->
+                        <!-- Jídlo a pití -->
+                        <span class="emoji">&#127849;</span>    <!-- donut -->
+                        <span class="emoji">&#127846;</span>    <!-- zmrzlina -->
+                        <span class="emoji">&#127863;</span>    <!-- víno -->
+                        <span class="emoji">&#127866;</span>    <!-- pivo -->
+                        <span class="emoji">&#129365;</span>    <!-- brambora -->
+                        <span class="emoji">&#129379;</span>    <!-- muffin -->
+                        <span class="emoji">&#127814;</span>    <!-- hruška -->
+                        <span class="emoji">&#129382;</span>    <!-- želé -->
+                        <span class="emoji">&#127812;</span>    <!-- houby -->
+                        <span class="emoji">&#127836;</span>    <!-- nudle -->
+                        <span class="emoji">&#127828;</span>    <!-- hamburger -->
+                        <span class="emoji">&#127839;</span>    <!-- hranolky -->
+                        <span class="emoji">&#127852;</span>    <!-- čokoláda -->
+                        <span class="emoji">&#127829;</span>    <!-- pizza -->
+                        <span class="emoji">&#129366;</span>    <!-- chleba -->
+                        <span class="emoji">&#129472;</span>    <!-- čaj -->
+                        <span class="emoji">&#127851;</span>    <!-- lízátko -->
+                        <span class="emoji">&#129375;</span>    <!-- vajíčko -->
+                        <span class="emoji">&#129360;</span>    <!-- palačinka -->
+                        <span class="emoji">&#129367;</span>    <!-- čajová konvice -->
+                        <span class="emoji">&#127855;</span>    <!-- koktejl -->
+                        <!-- Zvířata -->
+                        <span class="emoji">&#128054;</span>    <!-- pes -->
+                        <span class="emoji">&#128049;</span>    <!-- kočka -->
+                        <span class="emoji">&#128008;</span>    <!-- kočka -->
+                        <span class="emoji">&#128021;</span>    <!-- prasátko -->
+                        <span class="emoji">&#128039;</span>    <!-- kuře -->
+                        <span class="emoji">&#128038;</span>    <!-- pták -->
+                        <span class="emoji">&#128044;</span>    <!-- kuře -->
+                        <span class="emoji">&#128023;</span>    <!-- ovce -->
+                        <span class="emoji">&#128040;</span>    <!-- koala -->
+                        <span class="emoji">&#129409;</span>    <!-- lama -->
+                        <span class="emoji">&#129418;</span>    <!-- liška -->
+                        <!-- Květiny a příroda -->
+                        <span class="emoji">&#127808;</span>    <!-- čtyřlístek -->
+                        <span class="emoji">&#x1F335;</span>    <!-- kaktus -->
+                        <span class="emoji">&#x1F334;</span>    <!-- palma -->
+                        <span class="emoji">&#127794;</span>    <!-- jehličnatý strom -->
+                        <span class="emoji">&#127793;</span>    <!-- listnatý strom -->
+                        <span class="emoji">&#127807;</span>    <!-- tulipán -->
+                        <span class="emoji">&#127799;</span>    <!-- růže -->
+                        <span class="emoji">&#127804;</span>    <!-- slunečnice -->
+                        <span class="emoji">&#127802;</span>    <!-- zvadlá květina -->
+                        <span class="emoji">&#127809;</span>    <!-- javor -->
+                        <span class="emoji">&#127810;</span>    <!-- listí -->
+                        <!-- Počasí a vesmír -->
+                        <span class="emoji">&#9728;</span>      <!-- slunce -->
+                        <span class="emoji">&#11088;</span>     <!-- hvězda -->
+                        <span class="emoji">&#127771;</span>    <!-- měsíc -->
+                        <span class="emoji">&#9889;</span>      <!-- blesk -->
+                        <span class="emoji">&#9729;</span>      <!-- mrak -->
+                        <span class="emoji">&#127785;</span>    <!-- tornádo -->
+                        <span class="emoji">&#127782;</span>    <!-- duha -->
+                        <span class="emoji">&#10052;</span>     <!-- sněhová vločka -->
+                        <span class="emoji">&#x2603;</span>     <!-- sněhulák -->
+                        <span class="emoji">&#9748;</span>      <!-- deštník -->
+                        <!-- Doprava a budovy -->
+                        <span class="emoji">&#128663;</span>    <!-- auto -->
+                        <span class="emoji">&#9992;</span>      <!-- letadlo -->
+                        <span class="emoji">&#x1F3D6;</span>      <!-- letadlo -->
+                        <span class="emoji">&#128674;</span>    <!-- loď -->
+                        <span class="emoji">&#128690;</span>    <!-- kolo -->
+                        <span class="emoji">&#128657;</span>    <!-- ambulance -->
+                        <span class="emoji">&#x1F514;</span>    <!-- zvonek -->
+                        <span class="emoji">&#9888;</span>      <!-- varování -->
+                        <span class="emoji">&#128680;</span>    <!-- policie -->
+                        <span class="emoji">&#128643;</span>    <!-- metro -->
+                        <span class="emoji">&#128642;</span>    <!-- lokomotiva -->
+                        <span class="emoji">&#127974;</span>    <!-- budova -->
+                        <span class="emoji">&#127968;</span>    <!-- dům -->
+                        <span class="emoji">&#127981;</span>    <!-- továrna -->
+                        <span class="emoji">&#127970;</span>    <!-- vysoká budova -->
+                        <!-- Různé -->
+                        <span class="emoji">&#128176;</span>    <!-- peníze s křídly -->
+                        <span class="emoji">&#128181;</span>    <!-- měna -->
+                        <span class="emoji">&#x1F4D6;</span>    <!-- kniha -->
+                        <span class="emoji">&#x1F4DA;</span>    <!-- knihy -->
+                        <span class="emoji">&#128197;</span>    <!-- kalendář -->
+                        <span class="emoji">&#9989;</span>      <!-- zelená značka zaškrtnutí -->
+                        <span class="emoji">&#10060;</span>     <!-- červený křížek -->
+                        <span class="emoji">&#128066;</span>    <!-- ucho -->
+                        <span class="emoji">&#128064;</span>    <!-- oči -->
+                        <span class="emoji">&#128067;</span>    <!-- nos -->
+                        <span class="emoji">&#127936;</span>    <!-- basketbal -->
+                        <span class="emoji">&#127938;</span>    <!-- lyžař -->
+                        <span class="emoji">&#9917;</span>      <!-- fotbalový míč -->
+                        <span class="emoji">&#x1F945;</span>    <!-- brána -->
+                        <span class="emoji">&#127939;</span>    <!-- běžec -->
+                        <span class="emoji">&#128240;</span>    <!-- noviny -->
+                        <span class="emoji">&#128241;</span>    <!-- telefon -->
+                        <span class="emoji">&#x1F4FA;</span>    <!-- tv -->
+                        <span class="emoji">&#128269;</span>    <!-- lupa -->
+                        <span class="emoji">&#128373;</span>    <!-- detektiv -->
+                    </div>
                 </div>
             </div>
         </div>

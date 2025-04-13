@@ -75,34 +75,6 @@ document.addEventListener('DOMContentLoaded', function () {
             $cancelReplyButton.hide();
             $replyButton.show();
         });
-
-        // Při kliknutí mimo prvky odpovědi skryjeme textové pole a tlačítka
-        $(document).on('click', function (event) {
-
-            // Kontrola pro emoji list, aby kliknutí na emoji nezavřelo formulář
-            const emojiList = $('#emoji-list-comment-reply');
-            const clickedOnEmoji = $emojiList.is(event.target) || $emojiList.has(event.target).length > 0;
-
-            if (
-                $replyArea.is(':visible') &&
-                !$replyArea.is(event.target) &&
-                !$submitReplyButton.is(event.target) &&
-                !$cancelReplyButton.is(event.target) &&
-                !$replyButton.is(event.target) &&
-                !$replyArea.has(event.target).length &&
-                !$submitReplyButton.has(event.target).length &&
-                !$cancelReplyButton.has(event.target).length &&
-                !$replyButton.has(event.target).length &&
-                !clickedOnComment && // ignoruje kliknutí na komentář
-                !clickedOnEmoji      // ignoruje kliknutí na emoji
-            ) {
-                // Skryjeme prvky, ale zachováme obsah textového pole
-                $replyArea.hide();
-                $submitReplyButton.hide();
-                $cancelReplyButton.hide();
-                $replyButton.show();
-            }
-        });
     });
     // Otevreni nabidky smajliku - pridat komentar
     const emojiBtn = document.getElementById("emoji-btn");
@@ -119,8 +91,17 @@ document.addEventListener('DOMContentLoaded', function () {
         smajlik.addEventListener("click", () => {
             // Získání aktuální hodnoty textarea
             const aktualni = textareaKomentare.value;
-            // Přidání emoji na konec
-            textareaKomentare.value = aktualni + smajlik.textContent;
+            // Získání pozice kurzoru
+            const start = textareaKomentare.selectionStart;
+            const end = textareaKomentare.selectionEnd;
+
+            // Vložení emoji na pozici kurzoru
+            textareaKomentare.value = aktualni.substring(0, start) + smajlik.textContent + aktualni.substring(end);
+
+            // Nastavení kurzoru za vložený smajlík
+            const newPosition = start + smajlik.textContent.length;
+            textarea.setSelectionRange(newPosition, newPosition);
+
         });
     });
 
@@ -153,8 +134,20 @@ document.addEventListener('DOMContentLoaded', function () {
         allEmojis.forEach(emoji => {
             emoji.addEventListener("click", (event) => {
                 // Vložíme emoji do TÉTO konkrétní textarea
+
+                // Získání aktuální hodnoty textarea
                 const aktualni = replyTextarea.value;
-                replyTextarea.value = aktualni + emoji.textContent;
+                // Získání pozice kurzoru
+                const start = replyTextarea.selectionStart;
+                const end = replyTextarea.selectionEnd;
+
+                // Vložení emoji na pozici kurzoru
+                replyTextarea.value = aktualni.substring(0, start) + emoji.textContent + aktualni.substring(end);
+
+                // Nastavení kurzoru za vložený smajlík
+                const newPosition = start + emoji.textContent.length;
+                replyTextarea.setSelectionRange(newPosition, newPosition);
+
                 event.stopPropagation();
             });
         });
