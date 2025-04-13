@@ -135,7 +135,6 @@ public class DiscussionModel : BasePageModel
     public async Task<IActionResult> OnGetAsync()
     {
         var client = _clientFactory.CreateBearerClient(HttpContext);
-
         // Získání detailu diskuze (1. stránka)
         var response = await client.GetAsync($"{ApiBaseUrl}/discussions/byCode/{DiscussionCode}?page=1&pageSize={PageSize}");
 

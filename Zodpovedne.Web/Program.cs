@@ -198,8 +198,8 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
         app.UseSession();
-        app.MapRazorPages();
         app.MapControllers();
+        app.MapRazorPages();
 
         app.Run();
     }

@@ -13,7 +13,7 @@ namespace Zodpovedne.Web.Pages.Api
     /// API controller pro nahrávání souborů z CKEditoru.
     /// Zpracovává požadavky na nahrání a mazání obrázků.
     /// </summary>
-    [Route("api/[controller]")]
+    [Route("upload")]
     [ApiController]
     public class FileUploadController : ControllerBase
     {
@@ -31,7 +31,7 @@ namespace Zodpovedne.Web.Pages.Api
         /// <summary>
         /// Endpoint pro nahrání souboru s limitem velikosti
         /// </summary>
-        [HttpPost("upload")]
+        [HttpPost("file")]
         public async Task<IActionResult> UploadImage(IFormFile upload, [FromQuery] string discussionCode)
         {
             try
@@ -120,7 +120,7 @@ namespace Zodpovedne.Web.Pages.Api
         /// <summary>
         /// Endpoint pro smazání souboru s čištěním prázdných adresářů
         /// </summary>
-        [HttpDelete("delete")]
+        [HttpDelete("file")]
         public IActionResult DeleteImage([FromQuery] string discussionCode, [FromQuery] string fileName)
         {
             try

@@ -580,7 +580,7 @@ async function cleanupUnusedImages(newContent) {
         // Smažeme tyto obrázky ze serveru
         for (const fileName of deletedImages) {
             try {
-                const response = await fetch(`/api/FileUpload/delete?discussionCode=${discussionCode}&fileName=${encodeURIComponent(fileName)}`, {
+                const response = await fetch(`/upload/file?discussionCode=${discussionCode}&fileName=${encodeURIComponent(fileName)}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`

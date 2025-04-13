@@ -36,7 +36,7 @@
         const xhr = this.xhr = new XMLHttpRequest();
 
         // Nastavení URL endpoint pro nahrávání
-        xhr.open('POST', `/api/FileUpload/upload?discussionCode=${discussionCode}`, true);
+        xhr.open('POST', `/upload/file?discussionCode=${discussionCode}`, true);
 
         // Nastavení JWT tokenu pro autorizaci, pokud je k dispozici
         const token = sessionStorage.getItem('JWTToken');
