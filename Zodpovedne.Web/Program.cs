@@ -145,12 +145,19 @@ public class Program
             sanitizer.AllowedTags.Add("h4");
             sanitizer.AllowedTags.Add("a");
             sanitizer.AllowedTags.Add("img");
+            sanitizer.AllowedTags.Add("figure"); // Pøidaný pro zarovnání obrázkù
+            sanitizer.AllowedTags.Add("figcaption"); // Pøidaný pro popisky obrázkù
 
             // Povolené HTML atributy
             sanitizer.AllowedAttributes.Clear();
             sanitizer.AllowedAttributes.Add("href");
             sanitizer.AllowedAttributes.Add("src");
             sanitizer.AllowedAttributes.Add("alt");
+            sanitizer.AllowedAttributes.Add("class"); // Dùležité pro zarovnání
+            sanitizer.AllowedAttributes.Add("style"); // Dùležité pro zarovnání
+            sanitizer.AllowedAttributes.Add("align"); // Pro starší zpùsob zarovnání
+            sanitizer.AllowedAttributes.Add("width");
+            sanitizer.AllowedAttributes.Add("height");
 
             sanitizer.KeepChildNodes = true;
 
@@ -159,6 +166,13 @@ public class Program
             sanitizer.AllowedCssProperties.Add("color");
             sanitizer.AllowedCssProperties.Add("font-weight");
             sanitizer.AllowedCssProperties.Add("text-align");
+            sanitizer.AllowedCssProperties.Add("margin");
+            sanitizer.AllowedCssProperties.Add("margin-left");
+            sanitizer.AllowedCssProperties.Add("margin-right");
+            sanitizer.AllowedCssProperties.Add("float"); // Dùležité pro zarovnání
+            sanitizer.AllowedCssProperties.Add("width");
+            sanitizer.AllowedCssProperties.Add("height");
+            sanitizer.AllowedCssProperties.Add("display");
 
             return sanitizer;
         });

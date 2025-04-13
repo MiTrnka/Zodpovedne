@@ -15,7 +15,7 @@
     --comment-graphic-color: #D6D6D6;
 }
 @font-face {
-    font-family: 'Bookman Old Style'; 
+    font-family: 'Bookman Old Style';
     src: url('../font/books.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
@@ -718,13 +718,13 @@ h1 {
     color:var(--text-color);
     text-align:center;
 }
+
 .lead {
     margin-bottom: -10px;
     margin-top: 5px;
     text-align: center;
 }
 
-}
 /* Grid pro seznam uživatelů - mobilní verze */
 .user-list {
     display: flex;
@@ -874,7 +874,7 @@ h1 {
         right: 35%;
         background-color: var(--primary-color);
     }
-    
+
 #comments-list .card {
     padding-left: 10px;
     padding-right: 10px;

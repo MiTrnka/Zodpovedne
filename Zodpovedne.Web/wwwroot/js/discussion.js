@@ -372,6 +372,28 @@ async function toggleDiscussionEdit(show) {
                         ]
                     },
                     language: 'cs',
+                    // Konfigurace obrázků
+                    image: {
+                        toolbar: [
+                            'imageTextAlternative',
+                            '|',
+                            'imageStyle:alignLeft',
+                            'imageStyle:alignCenter',
+                            'imageStyle:alignRight'
+                        ],
+                        // Definice stylů zarovnání
+                        styles: {
+                            options: [
+                                'alignLeft',
+                                'alignCenter',
+                                'alignRight'
+                            ]
+                        },
+                        // Nastavení upload URL
+                        upload: {
+                            types: ['jpeg', 'png', 'gif', 'jpg', 'webp']
+                        }
+                    },
                     // Důležité: přidání našeho vlastního adaptéru pro nahrávání
                     extraPlugins: [MyCustomUploadAdapterPlugin]
                 })

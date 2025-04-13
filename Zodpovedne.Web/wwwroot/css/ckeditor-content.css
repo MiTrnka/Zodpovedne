@@ -1,0 +1,49 @@
+﻿/* Styly pro obrázky v CKEditoru */
+
+/* Zarovnání obrázků */
+.image-style-align-left {
+    float: left;
+    margin-right: 20px;
+    margin-bottom: 10px;
+}
+
+.image-style-align-center {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+.image-style-align-right {
+    float: right;
+    margin-left: 20px;
+    margin-bottom: 10px;
+}
+
+/* Styly pro obalový element figure */
+figure {
+    margin: 1rem 0;
+}
+
+    figure.image-style-align-left {
+        float: left;
+        margin-right: 20px;
+    }
+
+    figure.image-style-align-center {
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+    }
+
+    figure.image-style-align-right {
+        float: right;
+        margin-left: 20px;
+    }
+
+/* Popisky obrázků */
+figcaption {
+    font-size: 0.9rem;
+    color: #666;
+    text-align: center;
+    margin-top: 5px;
+}
