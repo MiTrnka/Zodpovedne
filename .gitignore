@@ -380,5 +380,9 @@ FodyWeavers.xsd
 /Zodpovedne.RESTAPI/Properties/launchSettings.json
 /Zodpovedne.Web/Properties/launchSettings.json
 
+# Ignorovat uploads adresář a jeho obsah
+wwwroot/uploads/
+wwwroot/uploads/**/*
+
 
 
