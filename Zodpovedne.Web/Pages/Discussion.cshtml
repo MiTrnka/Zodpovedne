@@ -230,9 +230,9 @@
                             }
 
                           <button type="button" id="emoji-btn-discussion">&#128512;</button>
-                           
+
                         </div>
-                       
+
                         @* Tlačítka pro editaci *@
                         @if (Model.CanEditDiscussion)
                         {
@@ -435,7 +435,7 @@
                         <span class="emoji">&#128373;</span>    <!-- detektiv -->
                     </div>
                 </div>
-                
+
                 @* Sekce komentářů *@
                 <div class="mt-5">
                     <h3>Komentáře</h3>
@@ -684,10 +684,16 @@
 <input type="hidden" id="current-page" value="@Model.CurrentPage" />
 
 @section Scripts {
-    <!-- Import CKEditoru -->
-    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/decoupled-document/ckeditor.js"></script>
+    <!-- Import CKEditoru s podporou nahrávání obrázků -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
 
-    <!-- Pro přihlášeného uživatele uloží jeho JWT (JSON Web Token) do sessionStorage prohlížeče. Ten se pak používá při AJAX požadavcích na endpointy (některé ho vyžadují) -->
+    <!-- Přidáme plugin pro nahrávání souborů -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/translations/cs.js"></script>
+
+    <!-- Import adaptéru pro nahrávání souborů -->
+    <script src="~/js/ckeditor-upload-adapter.js"></script>
+
+    <!-- Pro přihlášeného uživatele uloží jeho JWT (JSON Web Token) do sessionStorage prohlížeče -->
     @if (Model.IsUserLoggedIn)
     {
         <script>
@@ -697,6 +703,6 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <!-- Import javascriptu, asp-append-version="true" automaticky přidává verzi k URL souboru, což zajistí, že prohlížeče načtou novou verzi po změně souboru -->
+    <!-- Import javascriptu -->
     <script src="~/js/discussion.js" asp-append-version="true"></script>
 }
