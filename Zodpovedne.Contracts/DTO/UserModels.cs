@@ -32,6 +32,7 @@ public class UserProfileDto
 
 public class LoginModelDto
 {
+    [EmailAddress]
     [Required(ErrorMessage = "Email je povinný")]
     public string Email { get; set; } = "";
 
