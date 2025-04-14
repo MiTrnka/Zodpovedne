@@ -1411,4 +1411,79 @@ public class UsersController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Vrací seznam přátel konkrétního uživatele.
+    /// Přístupné pouze pro přihlášené uživatele, kteří jsou přáteli s daným uživatelem nebo je to jejich vlastní profil.
+    /// </summary>
+    /// <param name="userId">ID uživatele, jehož přátele chceme zobrazit</param>
+    /// <returns>Seznam přátel</returns>
+    [Authorize]
+    [HttpGet("user-friends/{userId}")]
+    public async Task<ActionResult<IEnumerable<object>>> GetUserFriends(string userId)
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId))
+                return Unauthorized();
+
+            // Kontrola oprávnění - může vidět přátele jen vlastník profilu nebo jeho přátelé
+            bool canViewFriends = (currentUserId == userId); // Je to vlastní profil
+
+            if (!canViewFriends)
+            {
+                // Zkontrolujeme, zda jsou přátelé
+                bool areFriends = await dbContext.Friendships
+                    .AnyAsync(f => (
+                        (f.ApproverUserId == currentUserId && f.RequesterUserId == userId) ||
+                        (f.ApproverUserId == userId && f.RequesterUserId == currentUserId))
+                        && f.FriendshipStatus == FriendshipStatus.Approved);
+
+                if (!areFriends)
+                    return Forbid("Nejste přátelé s tímto uživatelem");
+            }
+
+            // Vyhledání všech přátelství uživatele, kde je schváleno
+            var friendships = await dbContext.Friendships
+                .Include(f => f.ApproverUser)
+                .Include(f => f.RequesterUser)
+                .Where(f =>
+                    // Buď je uživatel approver a requester je normal
+                    (f.ApproverUserId == userId && f.RequesterUser.Type == UserType.Normal) ||
+                    // Nebo je uživatel requester a approver je normal
+                    (f.RequesterUserId == userId && f.ApproverUser.Type == UserType.Normal))
+                .Where(f => f.FriendshipStatus == FriendshipStatus.Approved)
+                .ToListAsync();
+
+            // Transformace dat pro vrácení klientovi
+            var result = friendships.Select(f =>
+            {
+                // Zjištění, kdo je druhý uživatel (ten, který NENÍ zobrazovaný uživatel)
+                var otherUser = f.ApproverUserId == userId ? f.RequesterUser : f.ApproverUser;
+
+                // Zjištění role zobrazovaného uživatele
+                var isRequester = f.RequesterUserId == userId;
+
+                return new
+                {
+                    FriendshipId = f.Id,
+                    OtherUserId = otherUser.Id,
+                    OtherUserNickname = otherUser.Nickname,
+                    Status = f.FriendshipStatus,
+                    IsRequester = isRequester,
+                    CreatedAt = f.CreatedAt
+                };
+            })
+            .OrderBy(f => f.OtherUserNickname);
+
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při načítání přátel uživatele", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }

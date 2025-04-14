@@ -65,6 +65,43 @@
                 <!-- Pro stavy Approved (přijato) a Denied (odmítnuto) se nic nezobrazuje -->
             </div>
         }
+
+        <!-- Sekce s přáteli uživatele - viditelná pouze pro přátele -->
+        @if (Model.CanViewFriends)
+        {
+            <h3>Přátelé uživatele @Model.UserProfile?.Nickname</h3>
+            <div class="card mb-4">
+                <div class="card-body">
+                    @if (Model.UserFriends.Any())
+                    {
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                            @foreach (var friend in Model.UserFriends)
+                            {
+                                <div class="col">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">
+                                                <a href="/Account/Profile/@friend.OtherUserNickname" class="text-decoration-none">
+                                                    <i class="bi bi-person-circle"></i> @friend.OtherUserNickname
+                                                </a>
+                                            </h5>
+                                            <p class="card-text small text-muted">
+                                                <i class="bi bi-calendar"></i> Přátelé od: @friend.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Uživatel nemá zatím žádné přátele.</p>
+                    }
+                </div>
+            </div>
+        }
+
         <!-- Sekce s diskuzemi uživatele -->
         <h3>Diskuze vytvořené uživatelem @Model.UserProfile?.Nickname</h3>
         <div class="card-body">
