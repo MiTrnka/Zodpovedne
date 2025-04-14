@@ -241,6 +241,28 @@ async function toggleTopStatus(discussionId) {
     }
 }
 
+// Funkce pro přepínání typu diskuze mezi DiscussionType.Normal a DiscussionType.Private
+async function togglePrivateStatus(discussionId) {
+    try {
+        const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+        const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/toggle-private`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+            }
+        });
+
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Nepodařilo se změnit Private status diskuze.');
+        }
+    } catch (error) {
+        console.error('Chyba při změně Private statusu:', error);
+        alert('Došlo k chybě při změně Private statusu diskuze.');
+    }
+}
+
 // Funkce pro přidání like k diskuzi
 async function likeDiscussion(discussionId) {
     try {

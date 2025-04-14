@@ -709,6 +709,45 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
+    /// Přepne typ diskuze mezi Normal a Private
+    /// Přístupné pouze pro adminy
+    /// </summary>
+    [HttpPut("{discussionId}/toggle-private")]
+    public async Task<IActionResult> ToggleDiscussionPrivate(int discussionId)
+    {
+        try
+        {
+            var discussion = await dbContext.Discussions.FindAsync(discussionId);
+            if (discussion == null)
+                return NotFound();
+
+            // Kontrola oprávnění - může editovat pouze autor nebo admin
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+            if (!isAdmin && discussion.UserId != userId)
+                return Forbid();
+
+            // Přepnutí typu mezi Normal a Top je možné jen pro tyto dva stavy
+            if (discussion.Type != DiscussionType.Normal && discussion.Type != DiscussionType.Private)
+                return BadRequest("Nelze měnit Private status pro tento typ diskuze.");
+
+            // Přepnutí typu mezi Normal a Top
+            discussion.Type = discussion.Type == DiscussionType.Normal
+                ? DiscussionType.Private
+                : DiscussionType.Normal;
+
+            discussion.UpdatedAt = DateTime.UtcNow;
+            await dbContext.SaveChangesAsync();
+
+            return Ok(new { type = discussion.Type });
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce ToggleDiscussionPrivate endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+    /// <summary>
     /// Smaže diskuzi a všechny její komentáře
     /// Přístupné pouze pro adminy
     /// </summary>
