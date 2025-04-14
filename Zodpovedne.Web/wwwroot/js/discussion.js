@@ -428,6 +428,18 @@ async function toggleDiscussionEdit(show) {
         editBtn.classList.remove('d-none');
         saveBtn.classList.add('d-none');
         cancelBtn.classList.add('d-none');
+
+        // Zrušení instance editoru při zrušení editace
+        if (window.discussionEditor) {
+            try {
+                // Pokud je instance editoru aktivní, zrušte ji
+                window.discussionEditor.destroy();
+                window.discussionEditor = null;
+            } catch (error) {
+                console.error('Chyba při rušení instance editoru:', error);
+            }
+        }
+
     }
     $("#emoji-btn-discussion").toggle();
 }
