@@ -365,7 +365,6 @@ async function toggleDiscussionEdit(show) {
                             'numberedList',
                             '|',
                             'imageUpload',
-                            'blockQuote',
                             '|',
                             'undo',
                             'redo'

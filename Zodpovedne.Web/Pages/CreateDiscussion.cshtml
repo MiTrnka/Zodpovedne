@@ -262,8 +262,19 @@
                 // Základní konfigurace nástrojů
                 // Možné další nástroje: italic, underline, strikethrough, code, subscript, superscript
                 // heading, alignment, indent, outdent, link, imageUpload, blockQuote, insertTable
-                toolbar: ['bold', 'Underline', '|', 'bulletedList', 'numberedList', 'imageUpload'],
-           
+                toolbar: [
+                            'heading',
+                            '|',
+                            'bold',
+                            'italic',
+                            'link',
+                            'bulletedList',
+                            'numberedList',
+                            '|',
+                            'undo',
+                            'redo'
+                        ],
+
                 // Nastavení jazyka editoru
                 // Možné hodnoty: 'en', 'cs', 'sk', 'de', 'es', 'fr', atd.
                 language: 'cs'
@@ -291,7 +302,7 @@
                 const toolbarContainer = document.querySelector('#toolbar-container');
                 toolbarContainer.appendChild(editor.ui.view.toolbar.element);
             });
-   
+
         // Funkce pro přenos obsahu z editoru do skrytého textarea před odesláním formuláře
         function updateContent() {
             if (editor) {
