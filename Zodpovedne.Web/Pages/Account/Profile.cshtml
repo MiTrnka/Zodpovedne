@@ -32,10 +32,13 @@
                     <dd>@Model.UserProfile?.Nickname</dd>
                     <dt>Registrován</dt>
                     <dd>@Model.UserProfile?.Created.ToString("dd.MM.yyyy HH:mm")</dd>
-                    @if (@Model.UserProfile?.LastLogin != null)
+                    @if (Model.CanViewFriendInfo)
                     {
-                        <dt>Poslední přihlášení</dt>
-                        <dd>@Model.UserProfile?.LastLogin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+                        @if (@Model.UserProfile?.LastLogin != null)
+                        {
+                            <dt>Poslední přihlášení</dt>
+                            <dd>@Model.UserProfile?.LastLogin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
+                        }
                     }
                 </dl>
             </div>
@@ -67,7 +70,7 @@
         }
 
         <!-- Sekce s přáteli uživatele - viditelná pouze pro přátele -->
-        @if (Model.CanViewFriends)
+        @if (Model.CanViewFriendInfo)
         {
             <h3>Přátelé uživatele @Model.UserProfile?.Nickname</h3>
             <div class="card mb-4">
@@ -81,12 +84,10 @@
                                     <div class="card h-100">
                                         <div class="card-body">
                                             <h5 class="card-title">
-                                                <a href="/Account/Profile/@friend.OtherUserNickname" class="text-decoration-none">
-                                                    <i class="bi bi-person-circle"></i> @friend.OtherUserNickname
-                                                </a>
+                                                <a href="/Account/Profile/@friend.OtherUserNickname" class="text-decoration-none">@friend.OtherUserNickname</a>
                                             </h5>
                                             <p class="card-text small text-muted">
-                                                <i class="bi bi-calendar"></i> Přátelé od: @friend.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                                <i class="bi bi-calendar"></i> Přátelé od:<br />@friend.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
                                             </p>
                                         </div>
                                     </div>

@@ -32,7 +32,7 @@ public class ProfileModel : BasePageModel
     /// Urèuje, zda má pøihlášený uživatel právo vidìt seznam pøátel zobrazeného uživatele
     /// (buï je sám tímto uživatelem, nebo je jeho pøítelem)
     /// </summary>
-    public bool CanViewFriends =>
+    public bool CanViewFriendInfo =>
         (IsUserLoggedIn && UserProfile?.Id == CurrentUserId) || // Je to jeho vlastní profil
         (FriendshipStatus == Zodpovedne.Contracts.Enums.FriendshipStatus.Approved);  // Nebo jsou pøátelé
 
@@ -117,7 +117,7 @@ public class ProfileModel : BasePageModel
         }
 
         // Naètení pøátel uživatele - pouze pokud jsou pøátelé nebo je to vlastní profil
-        if (CanViewFriends)
+        if (CanViewFriendInfo)
         {
             try
             {
