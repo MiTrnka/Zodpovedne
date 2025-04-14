@@ -42,7 +42,7 @@ public class DiscussionsController : ControllerBase
     /// <summary>
     /// Načte pro zadanou kategorii netrackovaný seznam dostupných diskuzí s možností stránkování.
     /// Poskytuje základní informace o diskuzích včetně počtu komentářů a lajků.
-    /// Respektuje viditelnost obsahu podle typu uživatele.
+    /// Respektuje viditelnost obsahu podle typu uživatele a přátelství.
     /// </summary>
     /// <param name="categoryId">Volitelný parametr pro filtrování podle kategorie</param>
     /// <param name="pageSize">Počet diskuzí na stránku</param>
@@ -62,14 +62,34 @@ public class DiscussionsController : ControllerBase
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
 
+            // Získání seznamu ID přátel přihlášeného uživatele (pokud je uživatel přihlášen)
+            // Důležité pro filtrování privátních diskuzí, které vidí jen přátelé autora
+            var friendIds = new List<string>();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                // Vyhledání schválených přátelství, kde je uživatel buď žadatelem nebo schvalovatelem
+                friendIds = await dbContext.Friendships
+                    .AsNoTracking()
+                    .Where(f => (f.ApproverUserId == userId || f.RequesterUserId == userId) &&
+                               f.FriendshipStatus == FriendshipStatus.Approved)
+                    .Select(f => f.ApproverUserId == userId ? f.RequesterUserId : f.ApproverUserId)
+                    .ToListAsync();
+            }
+
             // 1. KROK: Vytvoření základního dotazu pro počet a filtrování diskuzí
             // ----------------------------------------------------------------
             var baseQuery = dbContext.Discussions
-                .AsNoTracking()
+                .AsNoTracking() // Nesledujeme změny entit pro lepší výkon
                 .Where(d => d.Type != DiscussionType.Deleted)  // Smazané diskuze nikdo nevidí
-                .Where(d => d.Type != DiscussionType.Hidden || // Hidden diskuze vidí jen:
-                    isAdmin ||                                  // - admin
-                    d.UserId == userId);                       // - autor diskuze
+                .Where(d =>
+                    d.Type != DiscussionType.Hidden || // Hidden diskuze vidí jen:
+                    isAdmin ||                         // - admin (může vidět vše)
+                    d.UserId == userId)                // - autor diskuze (vidí své diskuze)
+                .Where(d =>
+                    d.Type != DiscussionType.Private || // Private diskuze vidí jen:
+                    isAdmin ||                          // - admin (může vidět vše)
+                    d.UserId == userId ||               // - autor diskuze (vidí své diskuze)
+                    friendIds.Contains(d.UserId));      // - přátelé autora (vidí diskuze svých přátel)
 
             // Aplikace filtru podle kategorie, pokud je zadána
             if (categoryId.HasValue)
@@ -83,7 +103,7 @@ public class DiscussionsController : ControllerBase
 
             // 3. KROK: Získání seznamu diskuzí pro aktuální stránku
             // ---------------------------------------------------
-            // Nejprve vybereme ID diskuzí pro aktuální stránku
+            // Nejprve vybereme ID diskuzí pro aktuální stránku s korektním řazením
             var discussionIds = await baseQuery
                 .OrderByDescending(d => d.Type == DiscussionType.Top)  // 1. TOP diskuze
                 .ThenByDescending(d => d.UpdatedAt)                    // 2. Nejnovější první
@@ -133,7 +153,7 @@ public class DiscussionsController : ControllerBase
 
             // Zjistíme, zda aktuální uživatel dal lajk daným diskuzím
             var userLikes = string.IsNullOrEmpty(userId)
-                ? new Dictionary<int, bool>()
+                ? new Dictionary<int, bool>()  // Pokud uživatel není přihlášen, prázdný slovník
                 : await dbContext.DiscussionLikes
                     .AsNoTracking()
                     .Where(l => discussionIds.Contains(l.DiscussionId) && l.UserId == userId)
@@ -193,8 +213,11 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Vrátí netrackovaný seznam diskuzí požadovaného uživatele
+    /// Vrátí netrackovaný seznam diskuzí požadovaného uživatele.
+    /// Respektuje viditelnost obsahu podle typu uživatele a přátelství.
+    /// Pokud není zadán nickname, vrátí diskuze přihlášeného uživatele.
     /// </summary>
+    /// <param name="nickname">Přezdívka uživatele, jehož diskuze chceme zobrazit (volitelný parametr)</param>
     /// <returns>Seznam základních informací o diskuzích uživatele</returns>
     [HttpGet("user-discussions/{nickname?}")]
     public async Task<ActionResult<IEnumerable<BasicDiscussionInfoDto>>> GetUserDiscussions(string? nickname = null)
@@ -222,14 +245,18 @@ public class DiscussionsController : ControllerBase
                 userIdFromNickname = user.Id;
             }
 
-            // Koukám na svůj profil
+            // Rozhodneme, jestli se jedná o vlastní profil nebo cizí profil
+            // Koukám na svůj profil - pokud jsem přihlášen a buď:
+            // - neuvedl jsem nickname, nebo
+            // - uvedl jsem nickname a je to můj nickname
             if ((userIdFromAutentization != null) && ((userIdFromAutentization == userIdFromNickname) || (userIdFromNickname == null)))
             {
                 userId = userIdFromAutentization;
                 isMyAccount = true;
             }
             else
-            // Koukám na cizí profil (nebo na svůj a nejsem přihlášen), v tom případě musí být vyplněn nickname, abych věděl na jaký koukám
+            // Koukám na cizí profil (nebo na svůj a nejsem přihlášen),
+            // v tom případě musí být vyplněn nickname, abych věděl na jaký koukám
             {
                 if (userIdFromNickname == null)
                     return Unauthorized();
@@ -237,14 +264,33 @@ public class DiscussionsController : ControllerBase
                 isMyAccount = false;
             }
 
+            // Získání seznamu ID přátel přihlášeného uživatele (pokud je uživatel přihlášen)
+            // Důležité pro filtrování privátních diskuzí, které vidí jen přátelé autora
+            var friendIds = new List<string>();
+            if (!string.IsNullOrEmpty(userIdFromAutentization))
+            {
+                // Vyhledání schválených přátelství, kde je uživatel buď žadatelem nebo schvalovatelem
+                friendIds = await dbContext.Friendships
+                    .AsNoTracking()
+                    .Where(f => (f.ApproverUserId == userIdFromAutentization || f.RequesterUserId == userIdFromAutentization) &&
+                               f.FriendshipStatus == FriendshipStatus.Approved)
+                    .Select(f => f.ApproverUserId == userIdFromAutentization ? f.RequesterUserId : f.ApproverUserId)
+                    .ToListAsync();
+            }
 
-            // Získání diskuzí (skryté se mi zobrazí jen pokud jsou mé) uživatele a seřazené podle data aktualizace
+            // Získání diskuzí uživatele a seřazené podle data aktualizace
+            // Respektujeme pravidla viditelnosti diskuzí:
+            // - Smazané diskuze nikdo nevidí
+            // - Hidden diskuze vidí jen autor sám nebo admin
+            // - Private diskuze vidí autor, admin nebo přátelé autora
             var discussions = await dbContext.Discussions
                 .AsNoTracking()
-                .Where(d => d.UserId == userId)
-                .Where(d => d.Type != DiscussionType.Deleted && ((d.Type != DiscussionType.Hidden) || isMyAccount || isAdmin))
-                .Include(d => d.Category)
-                .OrderByDescending(d => d.UpdatedAt)
+                .Where(d => d.UserId == userId) // Filtrujeme diskuze daného uživatele
+                .Where(d => d.Type != DiscussionType.Deleted) // Smazané diskuze nevidí nikdo
+                .Where(d => d.Type != DiscussionType.Hidden || isMyAccount || isAdmin) // Hidden diskuze vidí jen autor nebo admin
+                .Where(d => d.Type != DiscussionType.Private || isMyAccount || isAdmin || friendIds.Contains(d.UserId)) // Private diskuze vidí autor, admin nebo přátelé autora
+                .Include(d => d.Category) // Načteme i kategorii pro zobrazení
+                .OrderByDescending(d => d.UpdatedAt) // Řazení od nejnovějších
                 .Select(d => new BasicDiscussionInfoDto
                 {
                     Id = d.Id,
