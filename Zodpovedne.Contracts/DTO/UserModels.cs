@@ -28,6 +28,7 @@ public class UserProfileDto
     public DateTime? LastLogin { get; set; }
     public int LoginCount { get; set; }
     public List<string> Roles { get; set; } = new();
+    public UserType UserType { get; set; }
 }
 
 public class LoginModelDto

@@ -129,6 +129,11 @@ public class DiscussionModel : BasePageModel
     public string GetReplyFormId(int commentId) => $"reply-form-{commentId}";
 
     /// <summary>
+    /// Urèuje, zda mùže aktuální uživatel nahrávat soubory do editoru
+    /// </summary>
+    public bool CanUploadFiles { get; private set; } = false;
+
+    /// <summary>
     /// Handler pro získání detailu diskuze z API
     /// Volá se pøi naètení stránky (HTTP GET)
     /// </summary>
@@ -153,8 +158,24 @@ public class DiscussionModel : BasePageModel
         }
         Discussion = d;
 
-            // Získání kategorie, protože potøebujeme zobrazit název kategorie
-            var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/Categories/{CategoryCode}");
+        // Zjištìní typu pøihlášeného uživatele a nastavení oprávnìní pro nahrávání souborù
+        if (IsUserLoggedIn)
+        {
+            var userResponse = await client.GetAsync($"{ApiBaseUrl}/users/authenticated-user");
+            if (userResponse.IsSuccessStatusCode)
+            {
+                var user = await userResponse.Content.ReadFromJsonAsync<UserProfileDto>();
+
+                // Pouze uživatelé typu Normal mohou nahrávat soubory
+                if (user != null && user.UserType == UserType.Normal)
+                {
+                    CanUploadFiles = true;
+                }
+            }
+        }
+
+        // Získání kategorie, protože potøebujeme zobrazit název kategorie
+        var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/Categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
         {
             _logger.Log($"Nenalezena kategorie {CategoryCode}");

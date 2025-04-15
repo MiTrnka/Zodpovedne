@@ -116,6 +116,7 @@ public class UsersController : ControllerBase
                 LastLogin = user.LastLogin,
                 Roles = roles.ToList(),
                 LoginCount = user.LoginCount,
+                UserType = user.Type
             });
         }
         catch (Exception e)
@@ -148,7 +149,8 @@ public class UsersController : ControllerBase
                 Created = user.Created,
                 LastLogin = user.LastLogin,
                 Roles = roles.ToList(),
-                LoginCount = user.LoginCount
+                LoginCount = user.LoginCount,
+                UserType = user.Type
             });
         }
         catch (Exception e)
