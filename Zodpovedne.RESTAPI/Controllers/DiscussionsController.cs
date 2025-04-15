@@ -1637,4 +1637,82 @@ public class DiscussionsController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    /// <summary>
+    /// Vrací seznam diskuzí, které uživatel označil jako "Líbí se mi"
+    /// </summary>
+    /// <param name="userId">ID uživatele</param>
+    /// <param name="limit">Maximum vrácených diskuzí</param>
+    /// <returns>Seznam diskuzí seřazený podle data lajku (nejnovější první)</returns>
+    [HttpGet("user-liked/{userId}")]
+    public async Task<ActionResult<IEnumerable<BasicDiscussionInfoDto>>> GetUserLikedDiscussions(string userId, [FromQuery] int limit = 3)
+    {
+        try
+        {
+            // Získání ID a role přihlášeného uživatele
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            // Ověření, že uživatel existuje
+            var user = await dbContext.Users
+                .FirstOrDefaultAsync(u => u.Id == userId && u.Type != UserType.Deleted);
+
+            if (user == null)
+                return NotFound();
+
+            // Nejdřív získáme ID a datum lajkovaných diskuzí
+            var likedDiscussionIds = await dbContext.DiscussionLikes
+                .AsNoTracking()
+                .Where(dl => dl.UserId == userId)
+                .OrderByDescending(dl => dl.CreatedAt) // Seřadit podle data lajku (nejnovější první)
+                .Take(limit)
+                .Select(dl => dl.DiscussionId)
+                .ToListAsync();
+
+            // Pak načteme detaily diskuzí podle ID
+            var likedDiscussions = await dbContext.Discussions
+                .AsNoTracking()
+                .Where(d => likedDiscussionIds.Contains(d.Id))
+                .Where(d => d.Type != DiscussionType.Deleted) // Ignorovat smazané diskuze
+                .Where(d => d.Type != DiscussionType.Hidden || isAdmin || d.UserId == currentUserId) // Skryté diskuze vidí jen admin nebo autor
+                .Where(d => d.Type != DiscussionType.Private || isAdmin || d.UserId == currentUserId ||
+                       dbContext.Friendships.Any(f =>
+                           ((f.ApproverUserId == currentUserId && f.RequesterUserId == d.UserId) ||
+                            (f.ApproverUserId == d.UserId && f.RequesterUserId == currentUserId)) &&
+                           f.FriendshipStatus == FriendshipStatus.Approved))
+                .Include(d => d.Category) // Include před Select
+                .Include(d => d.User)     // Include před Select
+                .ToListAsync();
+
+            // Nyní mapujeme na DTO a zachováváme pořadí podle data lajku
+            var result = likedDiscussionIds
+                .Select(id => likedDiscussions.FirstOrDefault(d => d.Id == id))
+                .Where(d => d != null) // Filtrujeme případné null hodnoty
+                .Select(d => new BasicDiscussionInfoDto
+                {
+                    Id = d.Id,
+                    Title = d.Title,
+                    Content = d.Content.Length > 100 ? d.Content.Substring(0, 100) + "..." : d.Content,
+                    ImagePath = d.ImagePath,
+                    CategoryName = d.Category.Name,
+                    CategoryId = d.CategoryId,
+                    CategoryCode = d.Category.Code,
+                    DiscussionCode = d.Code,
+                    AuthorNickname = d.User.Nickname,
+                    AuthorId = d.UserId,
+                    CreatedAt = d.CreatedAt,
+                    UpdatedAt = d.UpdatedAt,
+                    ViewCount = d.ViewCount,
+                    Type = d.Type
+                })
+                .ToList();
+
+            return Ok(result);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při získávání lajkovaných diskuzí uživatele", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }

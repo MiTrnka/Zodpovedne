@@ -14,8 +14,16 @@ namespace Zodpovedne.Web.Pages.Account;
 public class ProfileModel : BasePageModel
 {
     public UserProfileDto? UserProfile { get; set; }
-    // Seznam diskuzí uživatele
+
+    /// <summary>
+    /// Seznam diskuzí uživatele
+    /// </summary>
     public List<BasicDiscussionInfoDto> UserDiscussions { get; set; } = new();
+
+    /// <summary>
+    /// Seznam diskuzí, které uživatel oznaèil jako "Líbí se mi"
+    /// </summary>
+    public List<BasicDiscussionInfoDto> LikedDiscussions { get; set; } = new();
 
     /// <summary>
     /// Informace o stavu pøátelství mezi pøihlášeným uživatelem a zobrazeným uživatelem.
@@ -94,6 +102,28 @@ public class ProfileModel : BasePageModel
         {
             _logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
             // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst diskuze
+        }
+
+        // Naètení lajkovaných diskuzí uživatele
+        try
+        {
+            if (UserProfile != null)
+            {
+                var likedDiscussionsResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/user-liked/{UserProfile.Id}?limit=3");
+                if (likedDiscussionsResponse.IsSuccessStatusCode)
+                {
+                    var likedDiscussions = await likedDiscussionsResponse.Content
+                        .ReadFromJsonAsync<List<BasicDiscussionInfoDto>>();
+                    if (likedDiscussions != null)
+                    {
+                        LikedDiscussions = likedDiscussions;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Nepodaøilo se naèíst lajkované diskuze uživatele", ex);
         }
 
         // Zjištìní stavu pøátelství - pouze pokud je uživatel pøihlášen a není to jeho vlastní profil

@@ -103,6 +103,33 @@
             </div>
         }
 
+        <!-- Sekce s lajkovanými diskuzemi uživatele -->
+        @if ((Model.CanViewFriendInfo) && (Model.LikedDiscussions.Any()))
+        {
+            <h3>Naposledy lajkované diskuze uživatelem @Model.UserProfile?.Nickname</h3>
+            <div class="card-body">
+                <div class="list-group">
+                    @foreach (var discussion in Model.LikedDiscussions)
+                    {
+                        <a href="/Categories/@discussion.CategoryCode/@discussion.DiscussionCode" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">@discussion.Title</h5>
+                                <small>@discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                            </div>
+                            <p class="mb-1">Kategorie: @discussion.CategoryName</p>
+                            <small>
+                                <i class="bi bi-eye"></i> @discussion.ViewCount zobrazení
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-person"></i> Autor: @discussion.AuthorNickname
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-calendar"></i> Vytvořeno: @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            </small>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
         <!-- Sekce s diskuzemi uživatele -->
         <h3>Diskuze vytvořené uživatelem @Model.UserProfile?.Nickname</h3>
         <div class="card-body">
