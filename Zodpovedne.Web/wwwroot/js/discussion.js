@@ -521,7 +521,7 @@ poleSmajlikuDiskuse.forEach(smajlik => {
 });
 
 // Funkce pro uložení změn v diskuzi
-async function saveDiscussionChanges(discussionId, discussionType) {
+async function saveDiscussionChanges(discussionId, discussionType, event) {
     const titleEdit = document.getElementById('discussion-title-edit');
     const contentDisplay = document.getElementById('discussion-content-display');
     const apiBaseUrl = document.getElementById('apiBaseUrl').value;
@@ -533,7 +533,9 @@ async function saveDiscussionChanges(discussionId, discussionType) {
             document.getElementById("modalMessage").textContent =
                 `Obsah diskuze nesmí být delší než ${maxContentLength} znaků. Aktuální délka: ${content.length}`;
             new bootstrap.Modal(document.getElementById("errorModal")).show();
-            event.preventDefault();
+            if (event) {
+                event.preventDefault();
+            }
             return false;
         }
 

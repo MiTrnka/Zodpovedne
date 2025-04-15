@@ -287,7 +287,7 @@
                                 <button id="edit-discussion-btn" class="btn btn-primary" onclick="toggleDiscussionEdit(true)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button id="save-discussion-btn" class="btn btn-success d-none" onclick="saveDiscussionChanges(@Model.Discussion.Id, @((int)Model.Discussion.Type))">
+                                <button id="save-discussion-btn" class="btn btn-success d-none" onclick="saveDiscussionChanges(@Model.Discussion.Id, @((int)Model.Discussion.Type), event)">
                                     <i class="bi bi-check"></i> Uložit
                                 </button>
                                 <button id="cancel-discussion-btn" class="btn btn-outline-secondary d-none" onclick="toggleDiscussionEdit(false)">
