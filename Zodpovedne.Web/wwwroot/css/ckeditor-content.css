@@ -47,3 +47,21 @@ figcaption {
     text-align: center;
     margin-top: 5px;
 }
+
+/* Styly pro obrázky v obsahu diskuze */
+.discussion-content img {
+    max-width: 300px;
+    max-height: 200px;
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 3px;
+}
+
+.discussion-content img:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}

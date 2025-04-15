@@ -99,14 +99,14 @@
                         @if (Model.CanEditDiscussion)
                         {
                             <div class="editable-content">
-                                <div id="discussion-content-display">@Html.Raw(Model.Discussion.Content)</div>
+                                <div id="discussion-content-display" class="discussion-content">@Html.Raw(Model.Discussion.Content)</div>
                                 <div id="toolbar-container" class="d-none"></div>
                                 <div id="editor-container" class="d-none">@Html.Raw(Model.Discussion.Content)</div>
                             </div>
                         }
                         else
                         {
-                            @Html.Raw(Model.Discussion.Content)
+                            <div class="discussion-content">@Html.Raw(Model.Discussion.Content)</div>
                         }
                     </div>
 

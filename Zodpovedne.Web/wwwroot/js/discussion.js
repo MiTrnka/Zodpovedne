@@ -10,6 +10,23 @@
 // Inicializace při načtení stránky
 document.addEventListener('DOMContentLoaded', function () {
 
+    //BLOK NÍŽE JE SKRIPT PRO ZOBRAZENÍ OBRÁZKŮ V NOVÉM OKNĚ PO KLIKNUTÍ
+    // Najít všechny obrázky v obsahu diskuze
+    const images = document.querySelectorAll('.discussion-content img');
+    // Přidat event listener pro kliknutí na každý obrázek
+    images.forEach(function (img) {
+        img.addEventListener('click', function () {
+            // Otevřít obrázek v novém okně
+            window.open(this.src, '_blank');
+        });
+
+        // Přidat title pro lepší UX
+        if (!img.title) {
+            img.title = 'Klikněte pro zobrazení v plné velikosti';
+        }
+    });
+
+
     // BLOK KÓDU NÍŽE ZAJISTÍ SKRÝVÁNÍ A ODKRÝVÁNÍ TLAČÍTKA ODESLAT U NOVÉHO ROOR KOMENTÁŘE
     // A TLAČÍTKA ODPOVĚDĚT U REAKČNÍHO KOMENTÁŘ,
     // PŘI KLIKNUTÍ A ODKLIKNUTÍ Z TEXTOVÉHO POLE PRO VYTVIŘENÍ ROOT KOMENTÁŘE A REAKČNÍHO KOMENTÁŘE
@@ -401,6 +418,18 @@ async function toggleDiscussionEdit(show) {
                             'imageStyle:alignLeft',
                             'imageStyle:alignCenter',
                             'imageStyle:alignRight'
+                        ],
+                        resizeOptions: [
+                            {
+                                name: 'original',
+                                value: null,
+                                label: 'Originální velikost'
+                            },
+                            {
+                                name: 'responsive',
+                                value: null,
+                                label: 'Responzivní'
+                            }
                         ],
                         // Definice stylů zarovnání
                         styles: {
