@@ -390,24 +390,29 @@ async function toggleDiscussionEdit(show) {
 
         // Inicializace editoru při prvním zobrazení
         if (!window.discussionEditor) {
+            // Základní konfigurace nástrojové lišty
+            const toolbarItems = [
+                'heading',
+                '|',
+                'bold',
+                'italic',
+                'link',
+                'bulletedList',
+                'numberedList',
+                '|',
+                'undo',
+                'redo'
+            ];
+            // Přidáme tlačítko pro nahrávání obrázků pouze pokud má uživatel na to oprávnění
+            if (canUploadFiles) {
+                toolbarItems.splice(toolbarItems.length - 2, 0, 'imageUpload', '|');
+            }
+
             ClassicEditor
                 .create(document.getElementById('editor-container'), {
                     // Editor configuration
                     toolbar: {
-                        items: [
-                            'heading',
-                            '|',
-                            'bold',
-                            'italic',
-                            'link',
-                            'bulletedList',
-                            'numberedList',
-                            '|',
-                            'imageUpload',
-                            '|',
-                            'undo',
-                            'redo'
-                        ]
+                        items: toolbarItems
                     },
                     language: 'cs',
                     // Konfigurace obrázků
