@@ -445,20 +445,21 @@ async function toggleDiscussionEdit(show) {
                         }
                     },
                     // Důležité: přidání našeho vlastního adaptéru pro nahrávání
-                    extraPlugins: [MyCustomUploadAdapterPlugin]
+                    extraPlugins: [MyCustomUploadAdapterPlugin],
+                    // Přidání vlastních CSS stylů do editoru
+                    contentStyles: [
+                        // Můžete vložit CSS přímo jako řetězec
+                        '.ck-content img { max-width: 300px !important; max-height: 200px !important; object-fit: contain !important; margin: 5px !important; border: 1px solid #ddd !important; border-radius: 4px !important; padding: 3px !important; }'
+                    ]
                 })
                 .then(editor => {
                     window.discussionEditor = editor;
-
                     // Nastavení počáteční hodnoty editoru
                     editor.setData(document.getElementById('discussion-content-display').innerHTML);
-
                     // Přidání kontroly maximální délky
                     const maxContentLength = 3000; // Odpovídá omezení v modelu
-
                     editor.model.document.on('change:data', () => {
                         const currentLength = editor.getData().length;
-
                         if (currentLength > maxContentLength) {
                             // Zobrazení varování
                             document.getElementById("modalMessage").textContent =

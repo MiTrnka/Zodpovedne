@@ -65,3 +65,14 @@ figcaption {
     transform: scale(1.03);
     box-shadow: 0 0 5px rgba(0,0,0,0.2);
 }
+
+/* Styly pro obrázky uvnitř CKEditoru */
+.ck-content img {
+    max-width: 300px !important;
+    max-height: 200px !important;
+    object-fit: contain !important;
+    margin: 5px !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    padding: 3px !important;
+}
