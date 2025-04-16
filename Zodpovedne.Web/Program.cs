@@ -201,6 +201,28 @@ public class Program
         app.MapControllers();
         app.MapRazorPages();
 
+        // Blok níže smaže všechny doèasné adresáøe (zaèínající "temp_") v adresáøi uploads/discussions
+        var env = app.Services.GetRequiredService<IWebHostEnvironment>();
+        string uploadsRoot = Path.Combine(env.WebRootPath, "uploads", "discussions");
+        // Kontrola existence adresáøe
+        if (Directory.Exists(uploadsRoot))
+        {
+            // 1. Smazání všech doèasných adresáøù (zaèínajících "temp_")
+            var tempDirectories = Directory.GetDirectories(uploadsRoot)
+                .Where(dir => Path.GetFileName(dir).StartsWith("temp_"))
+                .ToList();
+            foreach (var tempDir in tempDirectories)
+            {
+                try
+                {
+                    Directory.Delete(tempDir, true); // true = smazat i s obsahem
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+
         app.Run();
     }
 }

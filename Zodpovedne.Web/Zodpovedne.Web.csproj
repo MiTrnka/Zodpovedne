@@ -9,16 +9,12 @@
   <ItemGroup>
     <Compile Remove="Logs\**" />
     <Compile Remove="Pages\Shared\NewFolder\**" />
-    <Compile Remove="Services\**" />
     <Content Remove="Logs\**" />
     <Content Remove="Pages\Shared\NewFolder\**" />
-    <Content Remove="Services\**" />
     <EmbeddedResource Remove="Logs\**" />
     <EmbeddedResource Remove="Pages\Shared\NewFolder\**" />
-    <EmbeddedResource Remove="Services\**" />
     <None Remove="Logs\**" />
     <None Remove="Pages\Shared\NewFolder\**" />
-    <None Remove="Services\**" />
   </ItemGroup>
 
   <ItemGroup>
