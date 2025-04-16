@@ -314,20 +314,30 @@
             });
 
             // Poslouchání kliknutí na tlačítko Zpět
-            backButton.addEventListener('click', function(event) {
-                // Při kliknutí na Zpět smažeme celý adresář s obrázky
-                if (canUploadFiles) {
-                    event.preventDefault();
+                    backButton.addEventListener('click', function(event) {
+            // Při kliknutí na Zpět smažeme celý adresář s obrázky
+            if (canUploadFiles) {
+                event.preventDefault();
 
-                    // Potvrzení opuštění stránky
-                    if (confirm('Opravdu chcete opustit stránku? Všechny vaše změny budou ztraceny.')) {
-                        deleteImagesDirectory().then(() => {
-                            // Po smazání přesměrujeme na stránku kategorie
-                            window.location.href = `/Categories/${document.querySelector('[asp-for="CategoryCode"]').value}`;
-                        });
-                    }
+                // Potvrzení opuštění stránky
+                if (confirm('Opravdu chcete opustit stránku? Všechny vaše změny budou ztraceny.')) {
+                    // Získáme kód kategorie z URL nebo ze skrytého inputu
+                    const categoryCode = document.getElementById('temp-discussion-code').closest('form')
+                                        .querySelector('[name="CategoryCode"]')?.value ||
+                                        window.location.pathname.split('/').slice(-1)[0];
+
+                    deleteImagesDirectory().then(() => {
+                        console.log("Adresář s obrázky byl smazán");
+                        // Explicitní přesměrování na stránku kategorie
+                        window.location.href = `/Categories/${categoryCode}`;
+                    }).catch(err => {
+                        console.error("Chyba při mazání adresáře:", err);
+                        // I v případě chyby při mazání přesměrujeme uživatele
+                        window.location.href = `/Categories/${categoryCode}`;
+                    });
                 }
-            });
+            }
+        });
         });
 
         // Kód pro emoji zůstává stejný
