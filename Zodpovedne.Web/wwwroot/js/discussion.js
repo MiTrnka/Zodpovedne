@@ -662,6 +662,28 @@ async function handleCancelEditDiscussionClick() {
     await cleanupUnusedImages(originalContent);
 }
 
+// Funkce pro změnu viditelnosti diskuze
+async function toggleDiscussionVisibility(discussionId) {
+    try {
+        const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+        const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/toggle-visibility`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+            }
+        });
+
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Nepodařilo se změnit viditelnost diskuze.');
+        }
+    } catch (error) {
+        console.error('Chyba při změně viditelnosti:', error);
+        alert('Došlo k chybě při změně viditelnosti diskuze.');
+    }
+}
+
 // Funkce pro změnu viditelnosti komentáře
 async function toggleCommentVisibility(discussionId, commentId) {
     try {
