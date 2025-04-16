@@ -340,4 +340,102 @@ public class FileUploadController : ControllerBase
         public string NewCode { get; set; }
     }
 
+    /// <summary>
+    /// Endpoint pro smazání celého adresáře s obrázky diskuze
+    /// </summary>
+    /// <param name="discussionCode">Kód diskuze</param>
+    [HttpPost("delete-directory")]
+    public IActionResult DeleteDirectory([FromBody] DeleteDirectoryModel model)
+    {
+        try
+        {
+            // Kontrola vstupních parametrů
+            if (string.IsNullOrEmpty(model.Code))
+            {
+                return BadRequest(new { error = "Chybí kód diskuze" });
+            }
+
+            // Validace kódu diskuze
+            if (!IsValidDiscussionCode(model.Code))
+            {
+                _logger.Log($"Neplatný kód diskuze při mazání adresáře: {model.Code}");
+                return BadRequest(new { error = "Neplatný kód diskuze" });
+            }
+
+            string directoryPath = Path.Combine(_environment.WebRootPath, "uploads", "discussions", model.Code);
+
+            // Kontrola, zda adresář existuje
+            if (!Directory.Exists(directoryPath))
+            {
+                return Ok(new { success = true, message = "Adresář neexistuje, není co mazat." });
+            }
+
+            // Smazání adresáře a všech jeho souborů
+            Directory.Delete(directoryPath, true);
+
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Chyba při mazání adresáře", ex);
+            return StatusCode(500, new { error = "Chyba při mazání adresáře" });
+        }
+    }
+
+    // Třída pro model mazání adresáře
+    public class DeleteDirectoryModel
+    {
+        public string Code { get; set; }
+    }
+
+    /// <summary>
+    /// Endpoint pro smazání jednoho souboru v adresáři diskuze
+    /// </summary>
+    /// <param name="discussionCode">Kód diskuze</param>
+    /// <param name="fileName">Název souboru</param>
+    [HttpPost("delete-file")]
+    public IActionResult DeleteFile([FromBody] DeleteFileModel model)
+    {
+        try
+        {
+            // Kontrola vstupních parametrů
+            if (string.IsNullOrEmpty(model.DiscussionCode) || string.IsNullOrEmpty(model.FileName))
+            {
+                return BadRequest(new { error = "Chybí kód diskuze nebo název souboru" });
+            }
+
+            // Validace kódu diskuze a názvu souboru
+            if (!IsValidDiscussionCode(model.DiscussionCode) || !IsValidFileName(model.FileName))
+            {
+                _logger.Log($"Neplatný kód diskuze nebo název souboru při mazání: {model.DiscussionCode}/{model.FileName}");
+                return BadRequest(new { error = "Neplatný kód diskuze nebo název souboru" });
+            }
+
+            string filePath = Path.Combine(_environment.WebRootPath, "uploads", "discussions", model.DiscussionCode, model.FileName);
+
+            // Kontrola, zda soubor existuje
+            if (!System.IO.File.Exists(filePath))
+            {
+                return Ok(new { success = true, message = "Soubor neexistuje, není co mazat." });
+            }
+
+            // Smazání souboru
+            System.IO.File.Delete(filePath);
+
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Chyba při mazání souboru", ex);
+            return StatusCode(500, new { error = "Chyba při mazání souboru" });
+        }
+    }
+
+    // Třída pro model mazání souboru
+    public class DeleteFileModel
+    {
+        public string DiscussionCode { get; set; }
+        public string FileName { get; set; }
+    }
+
 }

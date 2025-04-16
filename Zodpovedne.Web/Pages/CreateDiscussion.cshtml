@@ -32,7 +32,7 @@
     <div class="create-disscussion-wrapper shadow">
         <!-- Formulář pro vytvoření diskuze -->
         <div class="col-md-8 w-100">
-            <form method="post">
+            <form method="post" id="create-discussion-form">
                 <!-- Validační zprávy pro celý formulář -->
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                 <input type="hidden" asp-for="Input.CategoryId" />
@@ -64,10 +64,10 @@
                 <!-- Tlačítka pro ovládání formuláře -->
                 <div class="mb-3 create-discusssion-btn-wrapper">
                     <div class="create-discussion-back-wrapper">
-                        <a href="/Categories/@Model.CategoryCode" class="btn btn-secondary shadow">Zpět</a>
+                        <a href="/Categories/@Model.CategoryCode" class="btn btn-secondary shadow" id="back-button">Zpět</a>
                         <button type="button" id="emoji-btn">&#128512;</button>
                     </div>
-                    <button type="submit" class="btn btn-primary create-discussion-btn shadow" onclick="updateContent()">Vytvořit diskuzi</button>
+                    <button type="submit" class="btn btn-primary create-discussion-btn shadow" id="submit-button">Vytvořit diskuzi</button>
                 </div>
                 <div id="emoji-list">
                     <!-- Emoji zůstávají stejné -->
@@ -79,7 +79,7 @@
 </div>
 
 <!-- Přidáme skrytý element pro nastavení, zda uživatel může nahrávat soubory -->
-<div id="discussion-settings" data-can-upload="@Model.CanUploadFiles.ToString().ToLower()"></div>
+<div id="discussion-settings" data-can-upload="@Model.CanUploadFiles.ToString().ToLower()" data-base-url="@Model.BaseUrl"></div>
 
 @section Scripts {
     <!-- Načtení CKEditoru z CDN -->
@@ -100,9 +100,12 @@
 
         // Získání informace, zda uživatel může nahrávat soubory
         const canUploadFiles = document.getElementById("discussion-settings").dataset.canUpload === "true";
+        const baseUrl = document.getElementById("discussion-settings").dataset.baseUrl;
 
         // Globální proměnná pro přístup k editoru
         let editor;
+        // Proměnná pro sledování nahraných obrázků
+        let uploadedImages = [];
 
         // Inicializace CKEditoru
         DecoupledEditor
@@ -168,10 +171,110 @@
                 // Připojení toolbaru do příslušného containeru
                 const toolbarContainer = document.querySelector('#toolbar-container');
                 toolbarContainer.appendChild(editor.ui.view.toolbar.element);
+
+                // Sledování nahraných obrázků
+                if (canUploadFiles) {
+                    // Poslouchání události 'change:data', která se spustí při změně obsahu
+                    editor.model.document.on('change:data', () => {
+                        trackUploadedImages();
+                    });
+                }
             })
             .catch(error => {
                 console.error('Chyba při inicializaci editoru:', error);
             });
+
+        // Funkce pro sledování nahraných obrázků
+        function trackUploadedImages() {
+            if (!editor) return;
+
+            const content = editor.getData();
+            const tempCode = document.getElementById('temp-discussion-code').value;
+            const uploadFolder = `/uploads/discussions/${tempCode}/`;
+
+            // Najdeme všechny obrázky v obsahu
+            const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/g;
+            const currentImages = new Set();
+
+            let match;
+            // Extrahujeme URL všech obrázků z obsahu
+            while ((match = imgRegex.exec(content)) !== null) {
+                const imageUrl = match[1];
+                // Zpracujeme pouze obrázky patřící k této diskuzi
+                if (imageUrl.includes(uploadFolder)) {
+                    const fileName = imageUrl.split('/').pop();
+                    if (fileName) {
+                        currentImages.add(fileName);
+                    }
+                }
+            }
+
+            // Aktualizujeme seznam nahraných obrázků
+            uploadedImages = Array.from(currentImages);
+        }
+
+        // Funkce pro čištění nepoužitých obrázků
+        async function cleanupUnusedImages() {
+            if (!canUploadFiles) return;
+
+            const tempCode = document.getElementById('temp-discussion-code').value;
+
+            try {
+                // Získání seznamu všech nahraných obrázků pro tuto diskuzi
+                const response = await fetch(`/upload/list?discussionCode=${tempCode}`, {
+                    headers: {
+                        'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.files && data.files.length > 0) {
+                        // Pro každý soubor zkontrolujeme, zda je v seznamu aktuálně používaných
+                        for (const file of data.files) {
+                            if (!uploadedImages.includes(file.name)) {
+                                // Pokud soubor není používán, smažeme ho
+                                await fetch(`/upload/delete-file`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+                                    },
+                                    body: JSON.stringify({
+                                        discussionCode: tempCode,
+                                        fileName: file.name
+                                    })
+                                });
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Chyba při čištění nepoužitých obrázků:', error);
+            }
+        }
+
+        // Funkce pro smazání adresáře s obrázky
+        async function deleteImagesDirectory() {
+            if (!canUploadFiles) return;
+
+            const tempCode = document.getElementById('temp-discussion-code').value;
+
+            try {
+                await fetch(`${baseUrl}upload/delete-directory`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+                    },
+                    body: JSON.stringify({
+                        code: tempCode
+                    })
+                });
+            } catch (error) {
+                console.error('Chyba při mazání adresáře s obrázky:', error);
+            }
+        }
 
         // Funkce pro přenos obsahu z editoru do skrytého textarea před odesláním formuláře
         function updateContent() {
@@ -187,9 +290,45 @@
                     event.preventDefault(); // Zabrání odeslání formuláře
                     return false; // Zabránit odeslání formuláře
                 }
+
+                // Aktualizace seznamu nahraných obrázků
+                trackUploadedImages();
+                // Vyčištění nepoužitých obrázků před odesláním formuláře
+                cleanupUnusedImages();
+
                 document.querySelector('#editor-content').value = editor.getData();
             }
         }
+
+        // Přidání event listenerů pro tlačítka
+        document.addEventListener('DOMContentLoaded', function() {
+            // Získání formuláře a tlačítek
+            const form = document.getElementById('create-discussion-form');
+            const backButton = document.getElementById('back-button');
+            const submitButton = document.getElementById('submit-button');
+
+            // Poslouchání události odeslání formuláře
+            form.addEventListener('submit', function(event) {
+                updateContent();
+                // Čištění se provede v updateContent
+            });
+
+            // Poslouchání kliknutí na tlačítko Zpět
+            backButton.addEventListener('click', function(event) {
+                // Při kliknutí na Zpět smažeme celý adresář s obrázky
+                if (canUploadFiles) {
+                    event.preventDefault();
+
+                    // Potvrzení opuštění stránky
+                    if (confirm('Opravdu chcete opustit stránku? Všechny vaše změny budou ztraceny.')) {
+                        deleteImagesDirectory().then(() => {
+                            // Po smazání přesměrujeme na stránku kategorie
+                            window.location.href = `/Categories/${document.querySelector('[asp-for="CategoryCode"]').value}`;
+                        });
+                    }
+                }
+            });
+        });
 
         // Kód pro emoji zůstává stejný
     </script>
