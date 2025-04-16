@@ -30,8 +30,14 @@
 
     // Inicializace XHR requestu
     _initRequest() {
-        // Získáme kód diskuze z URL
-        const discussionCode = window.location.pathname.split('/').pop();
+        // Nejprve zkusíme získat kód diskuze z URL
+        let discussionCode = window.location.pathname.split('/').pop();
+
+        // Kontrola, zda jsme na stránce pro vytvoření nové diskuze
+        if (window.location.pathname.includes('/discussion/create/')) {
+            // Jsme na stránce vytváření diskuze, použijeme dočasný kód
+            discussionCode = document.getElementById('temp-discussion-code').value;
+        }
 
         const xhr = this.xhr = new XMLHttpRequest();
 
@@ -100,7 +106,7 @@
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
             this.xhr.abort();
-            throw new Error('Nepodporovaný typ souboru. Povolené jsou pouze JPG, PNG a GIF.');
+            throw new Error('Nepodporovaný typ souboru. Povolené jsou pouze JPG, PNG, GIF a WEBP.');
         }
 
         // Vytvoření FormData objektu a přidání souboru

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Ganss.Xss;
 using Zodpovedne.Logging;
 using Zodpovedne.Logging.Services;
+using System.Text.RegularExpressions;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
@@ -1714,5 +1715,68 @@ public class DiscussionsController : ControllerBase
             _logger.Log("Chyba při získávání lajkovaných diskuzí uživatele", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
+    }
+
+    /// <summary>
+    /// Aktualizuje cesty k obrázkům v obsahu diskuze
+    /// </summary>
+    /// <param name="discussionId">ID diskuze</param>
+    /// <param name="oldPrefix">Původní prefix cesty k obrázkům (dočasný kód)</param>
+    /// <param name="newPrefix">Nový prefix cesty k obrázkům (finální kód)</param>
+    /// <returns>OK pokud aktualizace proběhla úspěšně</returns>
+    [HttpPost("update-image-paths")]
+    public async Task<IActionResult> UpdateImagePaths([FromBody] UpdateImagePathsModel model)
+    {
+        try
+        {
+            // Najít diskuzi podle ID
+            var discussion = await dbContext.Discussions.FindAsync(model.DiscussionId);
+            if (discussion == null)
+            {
+                return NotFound("Diskuze nebyla nalezena.");
+            }
+
+            // Kontrola oprávnění - pouze autor nebo admin může upravovat diskuzi
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            if (!isAdmin && discussion.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            // Nahradit cesty k obrázkům v obsahu diskuze
+            string oldPath = $"/uploads/discussions/{model.OldPrefix}/";
+            string newPath = $"/uploads/discussions/{model.NewPrefix}/";
+
+            // Použití Regex pro nahrazení všech výskytů cest
+            string updatedContent = Regex.Replace(
+                discussion.Content,
+                Regex.Escape(oldPath),
+                newPath,
+                RegexOptions.IgnoreCase
+            );
+
+            // Aktualizace obsahu diskuze
+            discussion.Content = updatedContent;
+
+            // Uložení změn
+            await dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při aktualizaci cest k obrázkům", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    // Třída pro model aktualizace cest k obrázkům
+    public class UpdateImagePathsModel
+    {
+        public int DiscussionId { get; set; }
+        public string OldPrefix { get; set; }
+        public string NewPrefix { get; set; }
     }
 }

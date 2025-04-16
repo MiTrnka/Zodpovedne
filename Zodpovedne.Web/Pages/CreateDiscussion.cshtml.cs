@@ -6,16 +6,13 @@ using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Ganss.Xss;
 using Zodpovedne.Logging.Services;
+using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Web.Pages;
 
-/// <summary>
-/// Model pro stránku vytváøení nové diskuze
-/// </summary>
 [AuthenticationFilter]
 public class CreateDiscussionModel : BasePageModel
 {
-
     public CreateDiscussionModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator) : base(clientFactory, configuration, logger, sanitizer, translator)
     {
     }
@@ -28,8 +25,21 @@ public class CreateDiscussionModel : BasePageModel
 
     public string CategoryName { get; set; } = "";
 
+    // Pøidáme novou vlastnost pro doèasný kód diskuze
+    public string TempDiscussionCode { get; set; } = "";
+
+    // Pøidáme vlastnost, která urèuje, zda uživatel mùže nahrávat obrázky
+    public bool CanUploadFiles { get; private set; } = false;
+
+    // Pøidáme vlastnost pro checkbox "Diskuze jen pro kamarády"
+    [BindProperty]
+    public bool IsPrivate { get; set; } = false;
+
     public async Task<IActionResult> OnGetAsync()
     {
+        // Generování doèasného kódu pro diskuzi
+        TempDiscussionCode = $"temp_{Guid.NewGuid().ToString("N")}";
+
         // Získání detailù kategorie
         var client = _clientFactory.CreateBearerClient(HttpContext);
         var response = await client.GetAsync($"{ApiBaseUrl}/Categories/{CategoryCode}");
@@ -51,12 +61,32 @@ public class CreateDiscussionModel : BasePageModel
 
         CategoryName = category.Name;
         Input.CategoryId = category.Id;
+
+        // Uložíme doèasný kód do session, aby byl k dispozici i po odeslání formuláøe
+        HttpContext.Session.SetString("TempDiscussionCode", TempDiscussionCode);
+
+        // Zjištìní typu pøihlášeného uživatele a nastavení oprávnìní pro nahrávání souborù
+        if (IsUserLoggedIn)
+        {
+            var userResponse = await client.GetAsync($"{ApiBaseUrl}/users/authenticated-user");
+            if (userResponse.IsSuccessStatusCode)
+            {
+                var user = await userResponse.Content.ReadFromJsonAsync<UserProfileDto>();
+
+                // Pouze uživatelé typu Normal mohou nahrávat soubory
+                if (user != null && user.UserType == UserType.Normal)
+                {
+                    CanUploadFiles = true;
+                }
+            }
+        }
+
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        // Kontrola validaèního stavu - toto je klíèové
+        // Kontrola validaèního stavu
         if (!ModelState.IsValid)
         {
             // Znovu naèteme kategorii pro zobrazení, ale zachováme vyplnìná data
@@ -69,7 +99,23 @@ public class CreateDiscussionModel : BasePageModel
                 if (category != null)
                 {
                     CategoryName = category.Name;
-                    // Zachováváme ID kategorie, které již bylo nastaveno v Input objektu
+                }
+            }
+
+            // Obnovíme doèasný kód ze session
+            TempDiscussionCode = HttpContext.Session.GetString("TempDiscussionCode") ?? $"temp_{Guid.NewGuid().ToString("N")}";
+
+            // Zjištìní typu pøihlášeného uživatele a nastavení oprávnìní pro nahrávání souborù
+            if (IsUserLoggedIn)
+            {
+                var userResponse = await client.GetAsync($"{ApiBaseUrl}/users/authenticated-user");
+                if (userResponse.IsSuccessStatusCode)
+                {
+                    var user = await userResponse.Content.ReadFromJsonAsync<UserProfileDto>();
+                    if (user != null && user.UserType == UserType.Normal)
+                    {
+                        CanUploadFiles = true;
+                    }
                 }
             }
 
@@ -79,15 +125,60 @@ public class CreateDiscussionModel : BasePageModel
 
         try
         {
+            // Získáme doèasný kód ze session
+            var tempCode = HttpContext.Session.GetString("TempDiscussionCode");
+            if (string.IsNullOrEmpty(tempCode))
+            {
+                // Pokud nìjakým zpùsobem chybí, vygenerujeme nový
+                tempCode = $"temp_{Guid.NewGuid().ToString("N")}";
+            }
+
             // Sanitizace vstupního HTML
             Input.Title = _sanitizer.Sanitize(Input.Title);
             Input.Content = _sanitizer.Sanitize(Input.Content);
 
+            // Nastavíme typ diskuze na Private, pokud byl zaškrtnut checkbox
+            Input.Type = IsPrivate ? DiscussionType.Private : DiscussionType.Normal;
+
             var client = _clientFactory.CreateBearerClient(HttpContext);
+
+            // Vytvoøení diskuze
             var response = await client.PostAsJsonAsync($"{ApiBaseUrl}/discussions", Input);
 
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode && response.Headers.Location != null)
+            {
+                // Diskuze byla úspìšnì vytvoøena, obdržíme URL s ID vytvoøené diskuze
+                var locationUrl = response.Headers.Location.ToString();
+                var discussionId = int.Parse(locationUrl.Split('/').Last());
+
+                // Získáme informace o vytvoøené diskuzi
+                var discussionResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/{discussionId}/basic-info");
+                if (discussionResponse.IsSuccessStatusCode)
+                {
+                    var discussionInfo = await discussionResponse.Content.ReadFromJsonAsync<BasicDiscussionInfoDto>();
+                    if (discussionInfo != null)
+                    {
+                        // Zavoláme API pro pøejmenování odkazù na obrázky v obsahu diskuze
+                        await client.PostAsJsonAsync($"{ApiBaseUrl}/discussions/update-image-paths",
+                            new
+                            {
+                                DiscussionId = discussionId,
+                                OldPrefix = tempCode,
+                                NewPrefix = discussionInfo.DiscussionCode
+                            });
+
+                        // Pøejmenování adresáøe s obrázky
+                        await client.PostAsJsonAsync($"{BaseUrl}upload/rename-directory",
+                            new
+                            {
+                                OldCode = tempCode,
+                                NewCode = discussionInfo.DiscussionCode
+                            });
+                    }
+                }
+
                 return RedirectToPage("/Category", new { categoryCode = CategoryCode });
+            }
 
             ModelState.AddModelError("", "Nepodaøilo se vytvoøit diskuzi.");
         }
