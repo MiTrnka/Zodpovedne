@@ -127,12 +127,12 @@ public class ProfileModel : BasePageModel
         }
 
         // Zjištìní stavu pøátelství - pouze pokud je uživatel pøihlášen a není to jeho vlastní profil
-        if (IsUserLoggedIn && UserProfile.Id != CurrentUserId)
+        if (IsUserLoggedIn && UserProfile?.Id != CurrentUserId)
         {
             try
             {
                 // Volání API pro zjištìní stavu pøátelství
-                var friendshipResponse = await client.GetAsync($"{ApiBaseUrl}/users/friendship-status/{UserProfile.Id}");
+                var friendshipResponse = await client.GetAsync($"{ApiBaseUrl}/users/friendship-status/{UserProfile?.Id}");
                 if (friendshipResponse.IsSuccessStatusCode)
                 {
                     // Naètení stavu pøátelství z odpovìdi
@@ -151,7 +151,7 @@ public class ProfileModel : BasePageModel
         {
             try
             {
-                var friendsResponse = await client.GetAsync($"{ApiBaseUrl}/users/user-friends/{UserProfile.Id}");
+                var friendsResponse = await client.GetAsync($"{ApiBaseUrl}/users/user-friends/{UserProfile?.Id}");
                 if (friendsResponse.IsSuccessStatusCode)
                 {
                     UserFriends = await friendsResponse.Content.ReadFromJsonAsync<List<FriendshipItem>>() ?? new();

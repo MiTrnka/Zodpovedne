@@ -42,14 +42,14 @@ namespace Zodpovedne.Web.Pages.Api
                     return BadRequest(new { error = "Chybí soubor nebo kód diskuze" });
                 }
 
-                // Kontrola velikosti souboru (omezení na 2MB)
-                const int maxFileSize = 2 * 1024 * 1024; // 2MB
+                // Kontrola velikosti souboru (omezení na 5MB)
+                const int maxFileSize = 5 * 1024 * 1024; // 5MB
                 if (upload.Length > maxFileSize)
                 {
                     return BadRequest(new
                     {
                         uploaded = 0,
-                        error = new { message = "Soubor je příliš velký. Maximální velikost je 2MB." }
+                        error = new { message = "Soubor je příliš velký. Maximální velikost je 5MB." }
                     });
                 }
 
@@ -118,58 +118,81 @@ namespace Zodpovedne.Web.Pages.Api
         }
 
         /// <summary>
-        /// Endpoint pro smazání souboru s čištěním prázdných adresářů
+        /// Endpoint pro mazání souborů, které nejsou v dané diskuzi již používány
         /// </summary>
-        [HttpDelete("file")]
-        public IActionResult DeleteImage([FromQuery] string discussionCode, [FromQuery] string fileName)
+        /// <param name="discussionCode"></param>
+        /// <param name="currentImages"></param>
+        /// <returns></returns>
+        [HttpPost("delete-files")]
+        public IActionResult DeleteImage([FromQuery] string discussionCode, [FromBody] string[] currentImages)
         {
+            if (currentImages == null)
+            {
+                return BadRequest(new { error = "Chybí seznam aktuálních obrázků v těle požadavku" });
+            }
+
             try
             {
-                // Kontrola zda byly předány všechny potřebné parametry
-                if (string.IsNullOrEmpty(discussionCode) || string.IsNullOrEmpty(fileName))
+                // Kontrola zda byl předán kód diskuze
+                if (string.IsNullOrEmpty(discussionCode))
                 {
-                    return BadRequest(new { error = "Chybí kód diskuze nebo název souboru" });
+                    return BadRequest(new { error = "Chybí kód diskuze" });
                 }
 
                 // Validace kódu diskuze - pro bezpečnost
                 if (!IsValidDiscussionCode(discussionCode))
                 {
-                    _logger.Log($"Neplatný kód diskuze při mazání souboru: {discussionCode}");
+                    _logger.Log($"Neplatný kód diskuze při promazávání souborů: {discussionCode}");
                     return BadRequest(new { error = "Neplatný kód diskuze" });
                 }
 
-                // Validace názvu souboru - pro bezpečnost
-                if (!IsValidFileName(fileName))
+                string directoryPath = Path.Combine(_environment.WebRootPath, "uploads", "discussions", discussionCode);
+
+                if (!Directory.Exists(directoryPath))
                 {
-                    _logger.Log($"Neplatný název souboru při mazání: {fileName}");
-                    return BadRequest(new { error = "Neplatný název souboru" });
+                    return Ok(new { success = true, message = "Adresář s obrázky neexistuje, není co mazat." });
                 }
 
-                // Cesta k souboru
-                string filePath = Path.Combine(_environment.WebRootPath, "uploads", "discussions", discussionCode, fileName);
+                var currentImagesSet = new HashSet<string>(currentImages);
+                var deletedFilesCount = 0;
 
-                // Kontrola, zda soubor existuje
-                if (!System.IO.File.Exists(filePath))
+                foreach (var file in Directory.GetFiles(directoryPath))
                 {
-                    return NotFound(new { error = "Soubor nebyl nalezen" });
+                    var fileName = Path.GetFileName(file);
+                    if (!currentImagesSet.Contains(fileName))
+                    {
+                        try
+                        {
+                            System.IO.File.Delete(file);
+                            deletedFilesCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Log($"Chyba při mazání souboru {fileName} v diskuzi {discussionCode}: {ex.Message}");
+                            // Nepřerušujeme proces mazání, ale logujeme chybu
+                        }
+                    }
                 }
-
-                // Smazání souboru
-                System.IO.File.Delete(filePath);
 
                 // Kontrola, zda je adresář prázdný a případné jeho smazání
-                string directoryPath = Path.Combine(_environment.WebRootPath, "uploads", "discussions", discussionCode);
                 if (Directory.Exists(directoryPath) && !Directory.EnumerateFileSystemEntries(directoryPath).Any())
                 {
-                    Directory.Delete(directoryPath);
+                    try
+                    {
+                        Directory.Delete(directoryPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Log($"Chyba při mazání prázdného adresáře diskuze {discussionCode}: {ex.Message}");
+                    }
                 }
 
-                return Ok(new { success = true });
+                return Ok(new { success = true, deletedCount = deletedFilesCount });
             }
             catch (Exception ex)
             {
-                _logger.Log("Chyba při mazání souboru", ex);
-                return StatusCode(500, new { error = "Chyba při mazání souboru" });
+                _logger.Log("Chyba při promazávání nepoužívaných obrázků", ex);
+                return StatusCode(500, new { error = "Chyba při promazávání nepoužívaných obrázků" });
             }
         }
 

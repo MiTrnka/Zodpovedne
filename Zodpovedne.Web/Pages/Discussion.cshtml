@@ -290,7 +290,7 @@
                                 <button id="save-discussion-btn" class="btn btn-success d-none" onclick="saveDiscussionChanges(@Model.Discussion.Id, @((int)Model.Discussion.Type), event)">
                                     <i class="bi bi-check"></i> Uložit
                                 </button>
-                                <button id="cancel-discussion-btn" class="btn btn-outline-secondary d-none" onclick="toggleDiscussionEdit(false)">
+                                <button id="cancel-discussion-btn" class="btn btn-outline-secondary d-none" onclick="handleCancelEditDiscussionClick()">
                                     <i class="bi bi-x"></i> Zrušit
                                 </button>
                                 <form method="post" asp-page-handler="DeleteDiscussion" class="d-inline">
@@ -747,9 +747,10 @@
             sessionStorage.setItem('JWTToken', '@Model.JwtToken');
         </script>
     }
+    <div id="discussion-settings" data-can-upload="@Model.CanUploadFiles.ToString().ToLower()"></div>
     <script>
         // Nastavení proměnné s informací, zda uživatel může nahrávat soubory
-        const canUploadFiles = @Json.Serialize(Model.CanUploadFiles);
+        const canUploadFiles = document.getElementById("discussion-settings").dataset.canUpload === "true";
     </script>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">

@@ -1690,7 +1690,7 @@ public class DiscussionsController : ControllerBase
                 .Where(d => d != null) // Filtrujeme případné null hodnoty
                 .Select(d => new BasicDiscussionInfoDto
                 {
-                    Id = d.Id,
+                    Id = d!.Id,
                     Title = d.Title,
                     Content = d.Content.Length > 100 ? d.Content.Substring(0, 100) + "..." : d.Content,
                     ImagePath = d.ImagePath,

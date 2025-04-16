@@ -241,6 +241,8 @@ public class MessagesController : ControllerBase
 
             // 1. KROK: Získání seznamu ID přátel pro filtrování
             var friendIds = await _dbContext.Friendships
+                .Include(f => f.ApproverUser)
+                .Where(f => f.ApproverUser.Type == UserType.Normal)
                 .Where(f => (f.ApproverUserId == currentUserId || f.RequesterUserId == currentUserId) &&
                        f.FriendshipStatus == FriendshipStatus.Approved)
                 .Select(f => f.ApproverUserId == currentUserId ? f.RequesterUserId : f.ApproverUserId)

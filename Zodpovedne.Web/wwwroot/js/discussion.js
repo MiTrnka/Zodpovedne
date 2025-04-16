@@ -599,80 +599,67 @@ async function saveDiscussionChanges(discussionId, discussionType, event) {
     }
 }
 
-// Funkce pro kontrolu a mazání nepoužívaných obrázků
+// Funkce pro kontrolu a mazání nepoužívaných obrázků (úprava pro zasílání seznamu aktivních obrázků)
 async function cleanupUnusedImages(newContent) {
     try {
         // Získání kódu diskuze z URL
         const discussionCode = window.location.pathname.split('/').pop();
 
-        // Načtení původního obsahu diskuze
-        const originalContent = document.getElementById('discussion-content-display').innerHTML;
-
         // Optimalizovaná regex pro nalezení všech obrázků
         const imagesRegex = /<img[^>]+src="([^"]+)"[^>]*>/g;
+        let match;
+        const currentImages = new Set();
 
-        // Pomocná funkce pro extrakci URL obrázků z obsahu
-        function extractImageUrls(content) {
-            let images = new Set();
-            let match;
-
-            // Reset regex - důležité pro opakované použití
-            imagesRegex.lastIndex = 0;
-
-            while ((match = imagesRegex.exec(content)) !== null) {
-                const imageUrl = match[1];
-                // Zpracuj pouze obrázky patřící k této diskuzi
-                if (imageUrl.includes(`/uploads/discussions/${discussionCode}/`)) {
-                    const fileName = imageUrl.split('/').pop();
-                    if (fileName) {
-                        images.add(fileName);
-                    }
+        // Extrahujeme URL všech obrázků z nového obsahu
+        while ((match = imagesRegex.exec(newContent)) !== null) {
+            const imageUrl = match[1];
+            // Zpracuj pouze obrázky patřící k této diskuzi
+            if (imageUrl.includes(`/uploads/discussions/${discussionCode}/`)) {
+                const fileName = imageUrl.split('/').pop();
+                if (fileName) {
+                    currentImages.add(fileName);
                 }
             }
-
-            return images;
         }
 
-        // Extrahujeme URL všech obrázků z obou obsahů
-        const originalImages = extractImageUrls(originalContent);
-        const newImages = extractImageUrls(newContent);
+        // Převedeme Set na pole pro odeslání v těle požadavku
+        const currentImagesArray = Array.from(currentImages);
 
-        // Najdeme obrázky, které jsou v původním obsahu, ale ne v novém (byly smazány)
-        let deletedImages = [];
-        originalImages.forEach(img => {
-            if (!newImages.has(img)) {
-                deletedImages.push(img);
-            }
+        // Pošleme seznam aktuálních obrázků na server k promazání ostatních
+        const response = await fetch(`/upload/delete-files?discussionCode=${discussionCode}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+            },
+            body: JSON.stringify(currentImagesArray) // Odesíláme přímo pole
         });
 
-        console.log(`Nalezeno ${deletedImages.length} obrázků ke smazání.`);
-
-        // Smažeme tyto obrázky ze serveru
-        for (const fileName of deletedImages) {
-            try {
-                const response = await fetch(`/upload/file?discussionCode=${discussionCode}&fileName=${encodeURIComponent(fileName)}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
-                    }
-                });
-
-                if (response.ok) {
-                    console.log(`Úspěšně smazán obrázek: ${fileName}`);
-                } else {
-                    console.warn(`Nepodařilo se smazat obrázek: ${fileName}`);
-                }
-            } catch (deleteError) {
-                console.error(`Chyba při mazání obrázku ${fileName}:`, deleteError);
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                console.log('Nepoužívané obrázky byly úspěšně smazány.');
+                return true;
+            } else {
+                console.warn('Při mazání nepoužívaných obrázků došlo k chybě:', result.error);
+                return true; // Pokračujeme i když mazání selže
             }
+        } else {
+            console.warn('Chyba při komunikaci se serverem pro mazání obrázků:', response.status);
+            return true; // Pokračujeme i když mazání selže
         }
 
-        return true;
     } catch (error) {
-        console.error('Chyba při mazání nepoužívaných obrázků:', error);
-        // Pokračujeme i když mazání selže
-        return true;
+        console.error('Chyba při kontrole a mazání nepoužívaných obrázků:', error);
+        return true; // Pokračujeme i když mazání selže
     }
+}
+
+// Obsluha události při zrušení editace diskuze
+async function handleCancelEditDiscussionClick() {
+    const originalContent = document.getElementById('discussion-content-display').innerHTML;
+    toggleDiscussionEdit(false);
+    await cleanupUnusedImages(originalContent);
 }
 
 // Funkce pro změnu viditelnosti komentáře

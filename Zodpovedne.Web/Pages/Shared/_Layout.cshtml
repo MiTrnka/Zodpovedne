@@ -176,7 +176,7 @@
     </nav>
 
     <div class="container">
-        @if (false/*!Environment.IsDevelopment()*/)
+        @if (/*!Environment.IsDevelopment()*/ Environment.ApplicationName=="blabla")
         {
             // Zobrazení upozornění o údržbě webu
             <div class="maintenanceNotification">
