@@ -136,7 +136,19 @@ public class ProfileModel : BasePageModel
                 if (friendshipResponse.IsSuccessStatusCode)
                 {
                     // Naètení stavu pøátelství z odpovìdi
-                    FriendshipStatus = await friendshipResponse.Content.ReadFromJsonAsync<FriendshipStatus?>();
+                    var responseContent = await friendshipResponse.Content.ReadAsStringAsync();
+
+                    // Kontrola, zda response není prázdný
+                    if (!string.IsNullOrWhiteSpace(responseContent))
+                    {
+                        // Deserializace pouze neprázdného obsahu
+                        FriendshipStatus = await friendshipResponse.Content.ReadFromJsonAsync<FriendshipStatus?>();
+                    }
+                    else
+                    {
+                        // Prázdná odpovìï znamená null
+                        FriendshipStatus = null;
+                    }
                 }
             }
             catch (Exception ex)
