@@ -1779,4 +1779,29 @@ public class DiscussionsController : ControllerBase
         public string OldPrefix { get; set; }
         public string NewPrefix { get; set; }
     }
+
+    /// <summary>
+    /// Vrátí seznam kódů všech diskuzí, které nejsou označeny jako smazané
+    /// </summary>
+    /// <returns>Seznam stringů reprezentujících kódy diskuzí</returns>
+    [HttpGet("codes")]
+    public async Task<ActionResult<IEnumerable<string>>> GetDiscussionCodes()
+    {
+        try
+        {
+            // Vytvoření efektivního dotazu, který vrátí pouze kódy diskuzí
+            var discussionCodes = await dbContext.Discussions
+                .AsNoTracking() // Pro lepší výkon, protože nepotřebujeme sledovat entity
+                .Where(d => d.Type != DiscussionType.Deleted) // Pouze nesmazané diskuze
+                .Select(d => d.Code) // Vybereme pouze vlastnost Code
+                .ToListAsync();
+
+            return Ok(discussionCodes);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce GetDiscussionCodes endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }

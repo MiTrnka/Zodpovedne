@@ -306,13 +306,6 @@ public class FileUploadController : ControllerBase
     {
         try
         {
-            // Kontrola, jestli požadavek jde z platného odkazu
-            var referer = Request.Headers.Referer.ToString();
-            if (!referer.Contains("/discussion/create/"))
-            {
-                return Forbid("Neoprávněný přístup");
-            }
-
             // Kontrola vstupních parametrů
             if (string.IsNullOrEmpty(model.OldCode) || string.IsNullOrEmpty(model.NewCode))
             {
