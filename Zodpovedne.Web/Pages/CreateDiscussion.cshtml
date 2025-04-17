@@ -529,7 +529,6 @@
                                         window.location.pathname.split('/').slice(-1)[0];
 
                     deleteImagesDirectory().then(() => {
-                        console.log("Adresář s obrázky byl smazán");
                         // Explicitní přesměrování na stránku kategorie
                         window.location.href = `/Categories/${categoryCode}`;
                     }).catch(err => {

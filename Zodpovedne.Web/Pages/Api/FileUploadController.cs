@@ -6,6 +6,7 @@ using Zodpovedne.Logging;
 using Zodpovedne.Logging.Services;
 using Ganss.Xss;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Zodpovedne.Web.Pages.Api;
 
@@ -31,11 +32,19 @@ public class FileUploadController : ControllerBase
     /// <summary>
     /// Endpoint pro nahrání souboru s limitem velikosti
     /// </summary>
+    [Authorize]
     [HttpPost("file")]
     public async Task<IActionResult> UploadImage(IFormFile upload, [FromQuery] string discussionCode)
     {
         try
         {
+            // Kontrola, jestli požadavek jde z platného odkazu
+            var referer = Request.Headers.Referer.ToString();
+            if (!(referer.Contains("/discussion/create/") || (referer.Contains("/Categories"))))
+            {
+                return Forbid("Neoprávněný přístup");
+            }
+
             // Kontrola zda byly předány všechny potřebné parametry
             if (upload == null || string.IsNullOrEmpty(discussionCode))
             {
@@ -123,6 +132,7 @@ public class FileUploadController : ControllerBase
     /// <param name="discussionCode"></param>
     /// <param name="currentImages"></param>
     /// <returns></returns>
+    [Authorize]
     [HttpPost("delete-files")]
     public IActionResult DeleteImage([FromQuery] string discussionCode, [FromBody] string[] currentImages)
     {
@@ -133,6 +143,14 @@ public class FileUploadController : ControllerBase
 
         try
         {
+            // Kontrola, jestli požadavek jde z platného odkazu
+            var referer = Request.Headers.Referer.ToString();
+            if (!(referer.Contains("/discussion/create/")||(referer.Contains("/Categories"))))
+            {
+                return Forbid("Neoprávněný přístup");
+            }
+
+
             // Kontrola zda byl předán kód diskuze
             if (string.IsNullOrEmpty(discussionCode))
             {
@@ -288,6 +306,13 @@ public class FileUploadController : ControllerBase
     {
         try
         {
+            // Kontrola, jestli požadavek jde z platného odkazu
+            var referer = Request.Headers.Referer.ToString();
+            if (!referer.Contains("/discussion/create/"))
+            {
+                return Forbid("Neoprávněný přístup");
+            }
+
             // Kontrola vstupních parametrů
             if (string.IsNullOrEmpty(model.OldCode) || string.IsNullOrEmpty(model.NewCode))
             {
@@ -344,11 +369,19 @@ public class FileUploadController : ControllerBase
     /// Endpoint pro smazání celého adresáře s obrázky diskuze
     /// </summary>
     /// <param name="discussionCode">Kód diskuze</param>
+    [Authorize]
     [HttpPost("delete-directory")]
     public IActionResult DeleteDirectory([FromBody] DeleteDirectoryModel model)
     {
         try
         {
+            // Kontrola, jestli požadavek jde z platného odkazu
+            var referer = Request.Headers.Referer.ToString();
+            if (!referer.Contains("/discussion/create/"))
+            {
+                return Forbid("Neoprávněný přístup");
+            }
+
             // Kontrola vstupních parametrů
             if (string.IsNullOrEmpty(model.Code))
             {
@@ -393,11 +426,19 @@ public class FileUploadController : ControllerBase
     /// </summary>
     /// <param name="discussionCode">Kód diskuze</param>
     /// <param name="fileName">Název souboru</param>
+    [Authorize]
     [HttpPost("delete-file")]
     public IActionResult DeleteFile([FromBody] DeleteFileModel model)
     {
         try
         {
+            // Kontrola, jestli požadavek jde z platného odkazu
+            var referer = Request.Headers.Referer.ToString();
+            if (!referer.Contains("/discussion/create/"))
+            {
+                return Forbid("Neoprávněný přístup");
+            }
+
             // Kontrola vstupních parametrů
             if (string.IsNullOrEmpty(model.DiscussionCode) || string.IsNullOrEmpty(model.FileName))
             {
