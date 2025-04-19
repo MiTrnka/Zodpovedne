@@ -76,15 +76,18 @@
                         @* Metadata diskuze *@
                         <div class="text-muted small ">
                             <span title="Autor" >
-                                <i class="bi bi-person"></i> <a asp-page="/Account/Profile" asp-route-nickname="@Model.Discussion!.AuthorNickname">@Model.Discussion!.AuthorNickname</a>
+                                <i class="bi bi-person"></i>
+                                <span>
+                                    <a class="texty-ikon-diskuse" asp-page="/Account/Profile" asp-route-nickname="@Model.Discussion!.AuthorNickname">@Model.Discussion!.AuthorNickname</a>
+                                </span>
                             </span>
                             <span>&nbsp;</span>
                             <span title="Datum vytvoření">
-                                <i class="bi bi-calendar-plus"></i> @Model.Discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                <i class="bi bi-calendar-plus"></i><span>&nbsp;</span><span class="texty-ikon-diskuse">@Model.Discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
                             </span>
-                            <span>&nbsp;|&nbsp;</span>
+                            <span class="texty-ikon-diskuse">&nbsp;|&nbsp;</span>
                             <span title="Datum aktualizace"> <!-- Tady je potřeba udělat podmínku pro zobrazení hodnoty ohledně upraveno -->
-                                <i class="bi bi-pencil"></i> <span id="discussionUpdatedAtValue">@Model.Discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                                <i class="bi bi-pencil"></i> <span class="texty-ikon-diskuse" id="discussionUpdatedAtValue">@Model.Discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
                             </span>
 
                             @if (Model.Discussion.Type == DiscussionType.Hidden)
@@ -112,7 +115,7 @@
 
                     @* Panel s tlačítky pro like, editaci a změnu viditelnosti *@
                     <div class="card-footer text-editor-footer d-flex align-items-center">
-                        <div class="d-flex w-100 gap-1 detail-diskuse-dolni-btn-wrapper">
+                        <div class="d-flex gap-1 detail-diskuse-dolni-btn-wrapper">
                             @* Tlačítko Like *@
                             @if (Model.CanLikeDiscussion)
                             {
@@ -122,10 +125,10 @@
                                     @* Pokud okud uživatle může likovat vloží se nevyplněné srdce, pokud nemůže likovat srdce bude vyplněné *@
                                     @if (Model.Discussion.Likes.CanUserLike)
                                     {
-                                        <text><i class="bi bi-heart"></i></text>
+                                        <text><i title="Přidat srdce" class="bi bi-heart"></i></text>
                                     }
                                     else{
-                                        <text><i class="bi bi-heart-fill"></i></text>
+                                        <text><i title="Počet srdcí od uživatelů" class="bi bi-heart-fill"></i></text>
                                     }
                                     <span id="discussion-likes-count">@Model.Discussion.Likes.LikeCount</span>
                                 </button>
@@ -136,7 +139,7 @@
                             else
                             {
                                 <span class="text-muted like-btn-disable">
-                                    <i class="bi bi-heart-fill"></i>
+                                    <i title="Počet srdcí od uživatelů" class="bi bi-heart-fill"></i>
                                     @Model.Discussion.Likes.LikeCount
                                 </span>
                                 <span title="Počet zobrazení" class="d-flex align-items-center pocetZobrazeni">
@@ -145,7 +148,7 @@
                             }
                             @if (Model.Discussion.Type == DiscussionType.Top)
                             {
-                                <span class="top-star">@*TOP*@
+                                <span class="top-star" title="Top hodnocená diskuse">@*TOP*@
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
 
                                         <path d="M12,2 L15.09,8.26 L22,9.27 L17,14.14 L18.18,21.02 L12,17.77 L5.82,21.02 L7,14.14 L2,9.27 L8.91,8.26 Z"
@@ -172,55 +175,7 @@
                                 </button>
                             }
 
-                            @* Tlačítko pro přepínání typu diskuze mezi Private a Normal (pouze pro autory diskuze a adminy) *@
-                            @if ((Model.CanEditDiscussion) && (Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Private))
-                            {
-                                <button class="btn @(Model.Discussion.Type == DiscussionType.Private ? "btn-outline-primary prepniVlastnostBtn" : "btn-outline-primary prepniVlastnostBtn")"
-                                        onclick="togglePrivateStatus(@Model.Discussion.Id)">
-                                    @if (Model.Discussion.Type == DiscussionType.Private)
-                                    {
-                                        <text>
-                                            <span>
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
-                                                    <circle cx="12" cy="12" r="3" />
-
-                                                    <text x="12" y="14"
-                                                          font-family="Arial, sans-serif"
-                                                          font-weight="bold"
-                                                          font-size="4.5"
-                                                          text-anchor="middle"
-                                                          fill="#d15657">Private</text>
-
-                                                    <line x1="2" y1="2" x2="22" y2="22"
-                                                          stroke="#e06f70"
-                                                          stroke-width="1"
-                                                          stroke-linecap="round" />
-                                                </svg>
-                                            </span>
-                                        </text>
-                                    }
-                                    else
-                                    {
-                                        <text>
-                                            <span class="top-star">
-                                                @*Private*@
-                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
-                                                    <circle cx="12" cy="12" r="3" />
-
-                                                    <text x="12" y="14"
-                                                          font-family="Arial, sans-serif"
-                                                          font-weight="bold"
-                                                          font-size="4.5"
-                                                          text-anchor="middle"
-                                                          fill="#d15657">Private</text>
-                                                </svg>
-                                            </span>
-                                        </text>
-                                    }
-                                </button>
-                            }
+                          
 
                             @* Tlačítko pro přepínání typu diskuze mezi Top a Normal (pouze pro adminy) *@
                             @if (Model.IsAdmin && (Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Top))
@@ -283,20 +238,96 @@
                         @* Tlačítka pro editaci *@
                         @if (Model.CanEditDiscussion)
                         {
-                            <div class="btn-group">
+                            <div class="btn-group d-flex gap-1">
+                                @* Tlačítko pro přepínání typu diskuze mezi Private a Normal (pouze pro autory diskuze a adminy) *@
+                                @if ((Model.CanEditDiscussion) && (Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Private))
+                                {
+                                    <button style="border-radius: 5px;" class="btn btn-outline-primary @(Model.Discussion.Type == DiscussionType.Private ? "btn-outline-primary prepniVlastnostBtn" : "btn-outline-primary prepniVlastnostBtn")"
+                                            onclick="togglePrivateStatus(@Model.Discussion.Id)">
+                                        @if (Model.Discussion.Type == DiscussionType.Private)
+                                        {
+                                            <text>
+                                                <span title="Nastavit režim jen pro přátele. Diskusi uvidí pouze vaši přátelé.">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <!-- Kulaté pozadí -->
+                                                        <circle cx="12" cy="12" r="12" fill="var(--light-primary-color-ultra-light)" />
+                                                        <!-- Tělo zámku -->
+                                                        <rect x="6" y="10" width="12" height="10" rx="2" fill="var(--light-primary-color-ultra-light)" stroke="var(--primary-color, #4A90E2)" stroke-width="1.5" />
+
+                                                        <!-- Horní část zámku -->
+                                                        <path d="M9,10 L9,7 C9,5.34315 10.3431,4 12,4 C13.6569,4 15,5.34315 15,7 L15,10" fill="none" stroke="var(--primary-color, #4A90E2)" stroke-width="1.5" stroke-linecap="round" />
+
+                                                        <!-- Klíčová dírka -->
+                                                        <circle cx="12" cy="14" r="1.5" fill="var(--primary-color)" />
+                                                        <rect x="11.25" y="14" width="1.5" height="3" fill="var(--primary-color)" />
+                                                    </svg>
+                                                    <span style="font-size: 12px;">Jen pro přátele</span>
+                                                </span>
+                                            </text>
+                                        }
+                                        else
+                                        {
+                                            <text>
+                                                <span title="Zrušit režim jen pro přátele. Diskuse bude veřejně dostupná.">
+                                                    @*Private*@
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <!-- Kulaté pozadí -->
+                                                        <circle cx="12" cy="12" r="12" fill="var(--light-primary-color-ultra-light)" />
+                                                        <!-- Tělo zámku -->
+                                                        <rect x="6" y="10" width="12" height="10" rx="2" fill="var(--light-primary-color-ultra-light, #e6f0fa)" stroke="var(--primary-color, #4A90E2)" stroke-width="1.5" />
+
+                                                        <!-- Horní část zámku -->
+                                                        <path d="M9,10 L9,7 C9,5.34315 10.3431,4 12,4 C13.6569,4 15,5.34315 15,7 L15,10" fill="none" stroke="var(--primary-color, #4A90E2)" stroke-width="1.5" stroke-linecap="round" />
+
+                                                        <!-- Klíčová dírka -->
+                                                        <circle cx="12" cy="14" r="1.5" fill="var(--primary-color, #4A90E2)" />
+                                                        <rect x="11.25" y="14" width="1.5" height="3" fill="var(--primary-color, #4A90E2)" />
+
+                                                        <!-- Přeškrtnutí -->
+                                                        <line x1="4" y1="4" x2="20" y2="20" stroke="var(--primary-color, #4A90E2)" stroke-width="2" stroke-linecap="round" />
+                                                    </svg>
+                                                    <span style="font-size: 12px;">Veřejné</span>
+
+                                                </span>
+                                            </text>
+                                        }
+                                    </button>
+                                }
                                 <button id="edit-discussion-btn" class="btn btn-primary" onclick="toggleDiscussionEdit(true)">
-                                    <i class="bi bi-pencil"></i>
+                                    <i title="Upravit diskusi" class="bi bi-pencil"></i>
                                 </button>
-                                <button id="save-discussion-btn" class="btn btn-success d-none" onclick="saveDiscussionChanges(@Model.Discussion.Id, @((int)Model.Discussion.Type), event)">
-                                    <i class="bi bi-check"></i> Uložit
+                                <button id="save-discussion-btn" style="border-radius:5px;" class="btn btn-outline-primary d-none" onclick="saveDiscussionChanges(@Model.Discussion.Id, @((int)Model.Discussion.Type), event)">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <!-- Kulaté pozadí -->
+                                        <circle cx="10" cy="10" r="10" fill="#99cc33" />
+
+                                        <!-- Ikona fajfky -->
+                                        <path d="M6,10.2 L8.5,12.7 L14,7.2"
+                                              fill="none"
+                                              stroke="#006633"
+                                              stroke-width="2"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round" />
+                                    </svg> Uložit
                                 </button>
-                                <button id="cancel-discussion-btn" class="btn btn-outline-secondary d-none" onclick="handleCancelEditDiscussionClick()">
-                                    <i class="bi bi-x"></i> Zrušit
+                                <button id="cancel-discussion-btn" style="border-radius:5px;" class="btn btn-outline-primary d-none" onclick="handleCancelEditDiscussionClick()">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                        <!-- Kulaté pozadí -->
+                                        <circle cx="10" cy="10" r="10" fill="#dc3545" />
+
+                                        <!-- Ikona křížku -->
+                                        <path d="M7,7 L13,13 M13,7 L7,13"
+                                              fill="none"
+                                              stroke="white"
+                                              stroke-width="2"
+                                              stroke-linecap="round"
+                                              stroke-linejoin="round" />
+                                    </svg> Zrušit
                                 </button>
                                 <form method="post" asp-page-handler="DeleteDiscussion" class="d-inline">
                                     <button type="submit" class="btn btn-danger"
                                             onclick="return confirm('Opravdu chcete smazat tuto diskuzi včetně všech komentářů?')">
-                                        <i class="bi bi-trash"></i>@* Smazat *@
+                                        <i title="Smazat diskusi" class="bi bi-trash"></i>@* Smazat *@
                                     </button>
                                 </form>
                             </div>

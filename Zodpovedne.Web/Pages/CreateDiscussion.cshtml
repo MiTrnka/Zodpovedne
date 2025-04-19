@@ -29,7 +29,7 @@
             <h5>Kategorie: @Model.CategoryName</h5>
         </div>
     </div>
-    <div class="create-disscussion-wrapper shadow">
+    <div class="create-disscussion-wrapper shadow mt-2">
         <!-- Formulář pro vytvoření diskuze -->
         <div class="col-md-8 w-100">
             <form method="post" id="create-discussion-form">
@@ -58,7 +58,7 @@
                 <!-- Přidáme checkbox pro soukromou diskuzi -->
                 <div class="mb-3 form-check">
                     <input type="checkbox" asp-for="IsPrivate" class="form-check-input" id="isPrivate" />
-                    <label class="form-check-label" for="isPrivate">Diskuze jen pro kamarády</label>
+                    <label class="form-check-label" for="isPrivate">Diskuze jen pro přátele</label>
                 </div>
 
                 <!-- Tlačítka pro ovládání formuláře -->

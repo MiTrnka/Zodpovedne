@@ -21,16 +21,16 @@
 }
 
 <div class="container">
-    <div class="col-md-6">
-        <h2>Profil uživatele</h2>
+    <div class="col-md-6 profile-wrapper">
+        <h2 class="text-center" >Můj účet</h2>
 
-        <div class="card mb-4">
+        <div class="card mb-4 profile-info-box">
             <div class="card-body">
                 <dl>
                     <dt>Email</dt>
-                    <dd>@Model.UserProfile?.Email</dd>
-                    <dt>Přezdívka</dt>
-                    <dd>@Model.UserProfile?.Nickname</dd>
+                    <dd>@Model.UserProfile?.Email <button class="edit-account-btn" onclick="toggleEditEmail()">&nbsp;<i title="Upravit přezdívku" class="bi bi-pencil"></i></button></dd>
+                    <dt>Přezdívka </dt>
+                    <dd>@Model.UserProfile?.Nickname <button class="edit-account-btn" onclick="toggleEditPrezdivka()">&nbsp;<i title="Upravit přezdívku" class="bi bi-pencil"></i></button></dd>
                     <dt>Registrován</dt>
                     <dd>@Model.UserProfile?.Created.ToString("dd.MM.yyyy HH:mm")</dd>
                     @if (@Model.UserProfile?.LastLogin != null)
@@ -38,7 +38,8 @@
                         <dt>Poslední přihlášení</dt>
                         <dd>@Model.UserProfile?.LastLogin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
                     }
-
+                    <dt>Heslo</dt>
+                    <dd><button class="edit-account-btn" onclick="toggleEditPassword()"> Změnit heslo</button></dd>
                 </dl>
 
                 <!-- Sekce pro administrátory -->
@@ -104,22 +105,21 @@
         </div>
 
         <!-- Sekce s přáteli -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <button class="btn btn-link" type="button" id="toggle-friends">
-                        Přátelé
-                        <i class="bi bi-chevron-down" id="friends-chevron"></i>
-                        @if (Model.HasFriendshipRequests)
-                        {
-                            <span class="badge bg-primary">
-                                @Model.Friendships.Count(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && !f.IsRequester)
-                            </span>
-                        }
-                    </button>
-                </h5>
-            </div>
-            <div class="card-body" id="friends-list" style="display: none;">
+        <div class="card mb-4" style="border:none;">
+
+            <button class="d-flex justify-content-between w-100 account-toggle-wrapper" type="button" id="toggle-friends">
+                   <div> <span>Přátelé</span>
+                @if (Model.HasFriendshipRequests)
+                {
+                    <span class="badge bg-primary">
+                        @Model.Friendships.Count(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && !f.IsRequester)
+                    </span>
+                }
+                </div>
+                    <i class="bi bi-chevron-down" id="friends-chevron"></i>
+            </button>
+
+            <div class="card-body" id="friends-list">
                 @if (Model.Friendships.Any())
                 {
                     <div class="table-responsive">
@@ -130,25 +130,47 @@
                                .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && !f.IsRequester)
                                .OrderBy(f => f.OtherUserNickname))
                                 {
-                                    <tr>
-                                        <td>
+                                    <tr class="toggle-row">
+                                        <td class="toggle-content-row">
                                             <a href="/Account/Profile/@friendship.OtherUserNickname" class="text-decoration-none">
-                                                @friendship.OtherUserNickname <span class="badge bg-warning">žádá o přátelství</span>
+                                                @friendship.OtherUserNickname <span class="badge bg-danger" >žádá o přátelství</span>
                                             </a>
                                         </td>
-                                        <td class="text-end">
-                                            <div class="btn-group" role="group">
+                                        <td class="text-end toggle-content-row">
                                                 <form method="post" asp-page-handler="ApproveFriendship" asp-route-friendshipId="@friendship.FriendshipId" class="d-inline">
-                                                    <button type="submit" class="btn btn-success btn-sm">
-                                                        <i class="bi bi-check-lg"></i> Potvrdit
+
+                                                <button type="submit" class=" btn-outline-primary" style="height: 25px;vertical-align:bottom; background-color:transparent; border-radius: 5px;">
+                                                    <svg width="15" height="15" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                                            <!-- Kulaté pozadí -->
+                                                            <circle cx="10" cy="10" r="10" fill="#99cc33" />
+
+                                                            <!-- Ikona fajfky -->
+                                                            <path d="M6,10.2 L8.5,12.7 L14,7.2"
+                                                                  fill="none"
+                                                                  stroke="#006633"
+                                                                  stroke-width="2"
+                                                                  stroke-linecap="round"
+                                                                  stroke-linejoin="round" />
+                                                    </svg> <span style="font-size: 14px;">Potvrdit</span>
                                                     </button>
                                                 </form>
                                                 <form method="post" asp-page-handler="DenyFriendship" asp-route-friendshipId="@friendship.FriendshipId" class="d-inline ms-1">
-                                                    <button type="submit" class="btn btn-danger btn-sm">
-                                                        <i class="bi bi-x-lg"></i> Zamítnout
+                                                <button type="submit" class="btn-outline-primary" style="height: 25px;vertical-align:bottom; background-color:transparent; border-radius: 5px;">
+                                                    &nbsp;
+                                                    <svg width="15" height="15" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                                            <!-- Kulaté pozadí -->
+                                                            <circle cx="10" cy="10" r="10" fill="#dc3545" />
+
+                                                            <!-- Ikona křížku -->
+                                                            <path d="M7,7 L13,13 M13,7 L7,13"
+                                                                  fill="none"
+                                                                  stroke="white"
+                                                                  stroke-width="2"
+                                                                  stroke-linecap="round"
+                                                                  stroke-linejoin="round" />
+                                                    </svg> <span style="font-size: 14px;">Zrušit  &nbsp;</span>
                                                     </button>
                                                 </form>
-                                            </div>
                                         </td>
                                     </tr>
                                 }
@@ -158,16 +180,16 @@
                                .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Approved)
                                .OrderBy(f => f.OtherUserNickname))
                                 {
-                                    <tr>
-                                        <td>
+                                    <tr class="toggle-row">
+                                        <td class="toggle-content-row">
                                             <a href="/Account/Profile/@friendship.OtherUserNickname" class="text-decoration-none">
                                                 @friendship.OtherUserNickname
                                             </a>
                                         </td>
-                                        <td class="text-end">
+                                        <td class="text-end toggle-content-row" style="vertical-align: bottom;">
                                             <form method="post" asp-page-handler="RemoveFriendship" asp-route-friendshipId="@friendship.FriendshipId"
                                                   onsubmit="return confirm('Opravdu chcete odebrat tohoto přítele?');">
-                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <button type="submit" class="btn btn-outline-danger btn-odebrat">
                                                     <i class="bi bi-person-dash"></i> Odebrat
                                                 </button>
                                             </form>
@@ -180,17 +202,17 @@
                                .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && f.IsRequester)
                                .OrderBy(f => f.OtherUserNickname))
                                 {
-                                    <tr>
-                                        <td>
+                                    <tr class="toggle-row">
+                                        <td class="toggle-content-row">
                                             <a href="/Account/Profile/@friendship.OtherUserNickname" class="text-decoration-none">
                                                 @friendship.OtherUserNickname <span class="badge bg-secondary">čeká na potvrzení</span>
                                             </a>
                                         </td>
-                                        <td class="text-end">
+                                        <td class="text-end toggle-content-row">
                                             <form method="post" asp-page-handler="RemoveFriendship" asp-route-friendshipId="@friendship.FriendshipId"
                                                   onsubmit="return confirm('Opravdu chcete zrušit tuto žádost o přátelství?');">
-                                                <button type="submit" class="btn btn-outline-secondary btn-sm">
-                                                    <i class="bi bi-x-circle"></i> Zrušit žádost
+                                                <button type="submit" class="btn-outline-primary" style="height: 25px;vertical-align:bottom; background-color:transparent; border-radius: 5px;">
+                                                    <span style="font-size: 14px;">Zrušit žádost</span>
                                                 </button>
                                             </form>
                                         </td>
@@ -202,13 +224,13 @@
                                .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Denied)
                                .OrderBy(f => f.OtherUserNickname))
                                 {
-                                    <tr>
-                                        <td>
+                                    <tr class="toggle-row">
+                                        <td class="toggle-content-row">
                                             <a href="/Account/Profile/@friendship.OtherUserNickname" class="text-decoration-none text-secondary">
                                                 @friendship.OtherUserNickname <span class="badge bg-light text-secondary">zamítnuto</span>
                                             </a>
                                         </td>
-                                        <td class="text-end">
+                                        <td class="text-end toggle-content-row">
                                             <form method="post" asp-page-handler="RemoveFriendship" asp-route-friendshipId="@friendship.FriendshipId"
                                                   onsubmit="return confirm('Opravdu chcete odstranit tohoto uživatele ze seznamu zamítnutých?');">
                                                 <button type="submit" class="btn btn-outline-secondary btn-sm">
@@ -230,30 +252,29 @@
         </div>
 
         <!-- Sekce s diskuzemi uživatele -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <button class="btn btn-link" type="button" id="toggle-discussions">
-                        Moje diskuze <i class="bi bi-chevron-down" id="discussions-chevron"></i>
-                    </button>
-                </h5>
-            </div>
+        <div class="card mb-4" style="border:none;">
+
+            <button class="d-flex justify-content-between w-100 account-toggle-wrapper" type="button" id="toggle-discussions">
+                Moje diskuze <i class="bi bi-chevron-down" id="discussions-chevron"></i>
+            </button>
+
             <div class="card-body" id="user-discussions" style="display: none;">
                 @if (Model.UserDiscussions.Any())
                 {
-                    <div class="list-group">
+                    <div class="list-group ">
                         @foreach (var discussion in Model.UserDiscussions)
                         {
-                            <a href="/Categories/@discussion.CategoryCode/@discussion.DiscussionCode" class="list-group-item list-group-item-action">
+                            <a href="/Categories/@discussion.CategoryCode/@discussion.DiscussionCode" class="list-group-item toggle-list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">@discussion.Title</h5>
-                                    <small>@discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
+                                    <p class="mb-1 fw-bold" style="font-size: 12px;">@discussion.Title</p>
+                                    <span style="font-size: 12px;">@discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
                                 </div>
-                                <p class="mb-1">Kategorie: @discussion.CategoryName</p>
+                                <p class="mb-1" style="font-size: 11px;">Kategorie: @discussion.CategoryName</p>
                                 <small>
-                                    <i class="bi bi-eye"></i> @discussion.ViewCount zobrazení
-                                    <span class="mx-2">•</span>
-                                    <i class="bi bi-calendar"></i> Vytvořeno: @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                    <i class="bi bi-eye"></i><span style="font-size: 11px;">
+                                        @discussion.ViewCount </span>
+                                    <span>&nbsp;</span>
+                                    <i class="bi bi-calendar-plus"></i><span style="font-size: 11px;"> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") </span>
                                 </small>
                             </a>
                         }
@@ -267,18 +288,20 @@
         </div>
 
         <!-- Sekce s notifikacemi o nových odpovědích -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <button class="btn btn-link" type="button" id="toggle-notifications">
-                        Nové odpovědi <i class="bi bi-chevron-down" id="notifications-chevron"></i>
-                        @if (Model.NewRepliesNotifications.Any())
-                        {
-                            <span class="badge bg-primary">@Model.NewRepliesNotifications.Count</span>
-                        }
-                    </button>
-                </h5>
-            </div>
+        <div class="card mb-4" style="border:none;">
+
+            <button class="d-flex justify-content-between w-100 account-toggle-wrapper" type="button" id="toggle-notifications">
+                <div>
+                Nové odpovědi
+                @if (Model.NewRepliesNotifications.Any())
+                {
+                    <span class="badge bg-primary">@Model.NewRepliesNotifications.Count</span>
+                }
+                </div>
+                <i class="bi bi-chevron-down" id="notifications-chevron"></i>
+       
+            </button>
+
             <div class="card-body" id="new-replies-notifications" style="display: none;">
                 @if (Model.NewRepliesNotifications.Any())
                 {
@@ -308,9 +331,14 @@
         </div>
 
         <!-- Sekce pro změnu emailu -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Změna emailu</h5>
+        <dialog class="card mb-4" id="change-email-account">
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn-dialog-close btn-close" onClick="closeEditEmail()" aria-label="Close">
+                </button>
+            </div>
+    
+            <div>
+                <h5 class="mb-0 mt-1 text-center">Změna emailu</h5>
             </div>
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(Model.EmailErrorMessage))
@@ -325,13 +353,15 @@
                     <button type="submit" class="btn btn-primary">Změnit email</button>
                 </form>
             </div>
-        </div>
+        </dialog>
 
         <!-- Sekce pro změnu přezdívky -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Změna přezdívky</h5>
+        <dialog class="card mb-4" id="change-prezdivka-account">
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn-dialog-close btn-close" onClick="closeEditPrezdivka()" aria-label="Close">
+                </button>
             </div>
+            <h5 class="mb-0 text-center">Změna přezdívky</h5>
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(Model.NicknameErrorMessage))
                 {
@@ -345,13 +375,15 @@
                     <button type="submit" class="btn btn-primary">Změnit přezdívku</button>
                 </form>
             </div>
-        </div>
+        </dialog>
 
         <!-- Sekce pro změnu hesla -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Změna hesla</h5>
+        <dialog class="card" id="change-password-account">
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn-dialog-close btn-close" onClick="closeEditPassword()" aria-label="Close">
+                </button>
             </div>
+            <h5 class="mb-0 text-center">Změna hesla</h5>
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(Model.PasswordErrorMessage))
                 {
@@ -369,14 +401,51 @@
                     <button type="submit" class="btn btn-primary">Změnit heslo</button>
                 </form>
             </div>
-        </div>
+        </dialog>
     </div>
 </div>
 
 @section Scripts {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <script>
+    <script defer>
+        let changeEmailAccount = document.getElementById('change-email-account');
+        let changePrezdivkaAccount = document.getElementById('change-prezdivka-account');
+        let changePasswordAccount = document.getElementById('change-password-account');
+
+        function toggleEditEmail() {
+            if (changeEmailAccount) {
+                changeEmailAccount.showModal();
+            }
+        }
+        function closeEditEmail() {
+            if (changeEmailAccount) {
+                changeEmailAccount.close();
+            }
+        }    
+        function toggleEditPrezdivka() {
+            if (changeEmailAccount) {
+                changePrezdivkaAccount.showModal();
+            }
+        }
+
+        function closeEditPrezdivka() {
+            if (changeEmailAccount) {
+               changePrezdivkaAccount.close();
+            }
+        }
+        function toggleEditPassword() {
+            if (changeEmailAccount) {
+                changePasswordAccount.showModal();
+            }
+        }
+
+        function closeEditPassword() {
+            if (changeEmailAccount) {
+               changePasswordAccount.close();
+            }
+        }
+
         // Funkce pro rozbalení/sbalení sekce s diskuzemi
         document.addEventListener('DOMContentLoaded', function () {
             const toggleButton = document.getElementById('toggle-discussions');
@@ -428,6 +497,57 @@
                     friendsChevron.classList.add('bi-chevron-down');
                 }
             });
+
+        // Pokud element existuje, nastavíme event listenery
+        if (changeEmailAccount) {
+       
+            changeEmailAccount.addEventListener("click", function(e) {
+                // Uložíme si souřadnice dialogového okna
+                let souradniceDialogOkna = changeEmailAccount.getBoundingClientRect();
+
+                if (
+                    e.clientX < souradniceDialogOkna.left ||
+                    e.clientX > souradniceDialogOkna.right ||
+                    e.clientY < souradniceDialogOkna.top ||
+                    e.clientY > souradniceDialogOkna.bottom
+                ) {
+                    changeEmailAccount.close(); // Zavře dialogové okno
+                }
+            });
+        }
+        // Pokud element existuje, nastavíme event listenery
+        if (changePrezdivkaAccount) {
+            changePrezdivkaAccount.addEventListener("click", function(e) {
+                // Uložíme si souřadnice dialogového okna
+                let souradniceDialogOkna = changeEmailAccount.getBoundingClientRect();
+
+                if (
+                    e.clientX < souradniceDialogOkna.left ||
+                    e.clientX > souradniceDialogOkna.right ||
+                    e.clientY < souradniceDialogOkna.top ||
+                    e.clientY > souradniceDialogOkna.bottom
+                ) {
+                    changePrezdivkaAccount.close(); // Zavře dialogové okno
+                }
+            });
+        }
+        // Pokud element existuje, nastavíme event listenery
+        if (changePasswordAccount) {
+            changePasswordAccount.addEventListener("click", function(e) {
+                // Uložíme si souřadnice dialogového okna
+                let souradniceDialogOkna = changeEmailAccount.getBoundingClientRect();
+
+                if (
+                    e.clientX < souradniceDialogOkna.left ||
+                    e.clientX > souradniceDialogOkna.right ||
+                    e.clientY < souradniceDialogOkna.top ||
+                    e.clientY > souradniceDialogOkna.bottom
+                ) {
+                    changePasswordAccount.close(); // Zavře dialogové okno
+                }
+            });
+        }
+
         });
     </script>
 }
