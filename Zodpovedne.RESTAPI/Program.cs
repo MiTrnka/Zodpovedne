@@ -15,6 +15,7 @@ using Zodpovedne.Data.Data;
 using Zodpovedne.Data.Models;
 using Zodpovedne.Logging.Services;
 using Microsoft.AspNetCore.DataProtection;
+using Zodpovedne.Data.Services;
 
 namespace Zodpovedne.RESTAPI
 {
