@@ -88,15 +88,17 @@ public class SearchModel : BasePageModel
         if (string.IsNullOrEmpty(content) || string.IsNullOrEmpty(Query))
             return content;
 
+        // Nejprve odstraníme všechny HTML tagy
+        var plainText = Regex.Replace(content, "<.*?>", string.Empty);
+
         // Omezení délky obsahu pro pøehlednìjší zobrazení
-        if (content.Length > 300)
+        if (plainText.Length > 300)
         {
-            content = content.Substring(0, 300) + "...";
+            plainText = plainText.Substring(0, 300) + "...";
         }
 
-        // Aplikace HTML sanitizeru pro bezpeèné zobrazení
-        // Odstraní potenciálnì nebezpeèné HTML tagy a atributy
-        content = _sanitizer.Sanitize(content);
+        // Sanitizace je stále vhodná pro pøípadné zbývající HTML-like obsah
+        plainText = _sanitizer.Sanitize(plainText);
 
         // Rozdìlení vyhledávacího dotazu na jednotlivá slova
         // Ignorujeme slova kratší než 2 znaky (pøíliš obecná)
@@ -105,9 +107,9 @@ public class SearchModel : BasePageModel
             .Select(w => Regex.Escape(w))  // Escapování speciálních znakù pro bezpeèné použití v regex
             .ToList();
 
-        // Pokud nezùstala žádná platná slova, vrátíme pùvodní obsah
+        // Pokud nezùstala žádná platná slova, vrátíme text bez HTML tagù
         if (!queryWords.Any())
-            return content;
+            return plainText;
 
         // Vytvoøení regex vzoru pro zvýraznìní - case insensitive
         // Vzor bude hledat všechna zadaná slova oddìlená operátorem |
@@ -116,7 +118,7 @@ public class SearchModel : BasePageModel
         // Nahrazení nalezených slov zvýraznìným HTML
         // Parametr RegexOptions.IgnoreCase zajistí, že nezáleží na velikosti písmen
         var highlighted = Regex.Replace(
-            content,
+            plainText,
             pattern,
             "<span class=\"bg-warning\">$1</span>",  // Použití Bootstrap tøídy bg-warning pro žluté zvýraznìní
             RegexOptions.IgnoreCase);
