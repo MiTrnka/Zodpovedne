@@ -213,7 +213,7 @@ namespace Zodpovedne.Data.Services
                         Code = categoryData.Code,  // Přidáno
                         Description = categoryData.Description,
                         DisplayOrder = createdCategories.Count + 1,
-                        ImagePath = "kolecko12.webp"
+                        ImagePath = "category-img.svg"
                     };
                     try
                     {

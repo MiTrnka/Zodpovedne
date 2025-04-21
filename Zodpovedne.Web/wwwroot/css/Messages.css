@@ -84,7 +84,6 @@
 
 /* Styl pro zvýraznění vybraného přítele */
 .selected-friend {
-    background-color: var(--light-primary-color-ultra-light) !important;
     border-left: 3px solid var(--primary-color) !important;
 }
 

@@ -3,8 +3,7 @@
     --primary-color: #3a7cd5; /* #e06f70; /* tmavě růžová MZ */
     --primary-color-hover: #1e5aaa; /* #d15657; /* tmavější růžová */
     --light-primary-color: #5b9ae5; /* #FFB5B5; /* světle růžová */
-    --light-primary-color-ultra-light:  /* #FFF9F9; /* bila barva s nadechem ruzove */
-
+    --light-primary-color-ultra-light: #F7FBFF; /* #FFF9F9; /* bila barva s nadechem ruzove */
     --secondary-color: #D8B2D8; /* fialova barva */
     --light-secondary-color: #ECD9EC; /* světle fialová barva */
 
@@ -322,8 +321,8 @@ a {
 .btn-group{
     align-items: stretch;
 }
-/* Navigace */
 
+/* Navigace */
 .nav-link:hover {
     position: relative;
 }

@@ -189,7 +189,7 @@
                                         <td class="text-end toggle-content-row" style="vertical-align: bottom;">
                                             <form method="post" asp-page-handler="RemoveFriendship" asp-route-friendshipId="@friendship.FriendshipId"
                                                   onsubmit="return confirm('Opravdu chcete odebrat tohoto přítele?');">
-                                                <button type="submit" class="btn btn-outline-danger btn-odebrat">
+                                                <button type="submit" style="font-size: 14px;" class="btn btn-outline-danger btn-odebrat pb-4">
                                                     <i class="bi bi-person-dash"></i> Odebrat
                                                 </button>
                                             </form>
@@ -350,7 +350,7 @@
                         <label class="form-label">Nový email</label>
                         <input type="email" asp-for="NewEmail" class="form-control" required />
                     </div>
-                    <button type="submit" class="btn btn-primary">Změnit email</button>
+                    <button type="submit" class="btn btn-primary w-100">Změnit email</button>
                 </form>
             </div>
         </dialog>
@@ -372,7 +372,7 @@
                         <label class="form-label">Nová přezdívka</label>
                         <input type="text" asp-for="NewNickname" class="form-control" required />
                     </div>
-                    <button type="submit" class="btn btn-primary">Změnit přezdívku</button>
+                    <button type="submit" class="btn btn-primary w-100">Změnit přezdívku</button>
                 </form>
             </div>
         </dialog>
@@ -398,7 +398,7 @@
                         <label class="form-label">Nové heslo</label>
                         <input type="password" asp-for="NewPassword" class="form-control" required />
                     </div>
-                    <button type="submit" class="btn btn-primary">Změnit heslo</button>
+                    <button type="submit" class="btn btn-primary w-100">Změnit heslo</button>
                 </form>
             </div>
         </dialog>
