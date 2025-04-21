@@ -87,6 +87,11 @@
     border-left: 3px solid var(--primary-color) !important;
 }
 
+/* Pro podporu odřádkovávání v bublinách konverzace */
+.message-content {
+    white-space: pre-wrap; /* Zachovává odřádkování */
+}
+
 /* Styly pro tablet a větší obrazovky (≥768px) */
 @media (min-width: 768px) {
     /* Na větších obrazovkách měníme na řádkové rozložení */

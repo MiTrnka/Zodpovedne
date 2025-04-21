@@ -485,9 +485,12 @@ function displayMessages(messages, clearContainer = false) {
         const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateFormatted = new Date(message.sentAt).toLocaleDateString();
 
+        // Nahrazení znaku nového řádku za <br> tag pro HTML zobrazení
+        const formattedContent = message.content.replace(/\n/g, '<br>');
+
         return `
             <div class="message ${messageClass}" ${debugInfo}>
-                <div class="message-content">${message.content}</div>
+                <div class="message-content">${formattedContent}</div>
                 <div class="message-time">${timeFormatted} | ${dateFormatted}</div>
             </div>
         `;
@@ -530,11 +533,14 @@ function addMessageToUI(message, isFromCurrentUser) {
     const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const dateFormatted = new Date(message.sentAt).toLocaleDateString();
 
+    // Náhrada znaku nového řádku za <br> tag
+    const formattedContent = message.content.replace(/\n/g, '<br>');
+
     // Nastavení obsahu zprávy
     messageElement.innerHTML = `
-        <div class="message-content">${message.content}</div>
-        <div class="message-time">${timeFormatted} | ${dateFormatted}</div>
-    `;
+    <div class="message-content">${formattedContent}</div>
+    <div class="message-time">${timeFormatted} | ${dateFormatted}</div>
+`;
 
     // Přidání na konec kontejneru
     messagesContainer.appendChild(messageElement);
