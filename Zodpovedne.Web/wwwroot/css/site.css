@@ -685,16 +685,19 @@ h1 {
     background-color: var(--secondary-color); /* iii */
     padding: 2px;
     border-radius: 2px;
-    color: white;
+    color: var(--primary-color);
     clip-path: polygon(10% 0%, 100% 0%, 100% 100%, 10% 100%, 0% 50%);
 }
-.title-autor-wrapper{
+.popisky .autor a {
+    color: var(--primary-color);
+}
+.title-autor-wrapper {
     justify-content: space-between;
     gap: 5px;
     align-items: center;
     flex-direction: row;
     width: 100%;
-    flex-wrap:wrap;
+    flex-wrap: wrap;
     position: relative;
 }
 .card-title {
