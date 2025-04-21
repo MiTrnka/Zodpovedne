@@ -104,6 +104,25 @@
             </div>
         </div>
 
+        <!-- Sekce pro hledání uživatelů -->
+        <div class="mt-3 mb-4 p-3 border rounded" style="background-color: #f9f9f9;">
+            <h5 class="mb-3">Vyhledat uživatele</h5>
+            <form method="post" asp-page-handler="SearchUser" class="d-flex">
+                <div class="flex-grow-1 me-2">
+                    <input type="text" asp-for="SearchNickname" class="form-control" placeholder="Zadejte přezdívku uživatele" required />
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: auto;">
+                    <i class="bi bi-search"></i> Vyhledat
+                </button>
+            </form>
+            @if (!string.IsNullOrEmpty(Model.SearchErrorMessage))
+            {
+                <div class="alert alert-warning mt-2 mb-0 py-2">
+                    <i class="bi bi-exclamation-triangle-fill"></i> @Model.SearchErrorMessage
+                </div>
+            }
+        </div>
+
         <!-- Sekce s přáteli -->
         <div class="card mb-4" style="border:none;">
 
