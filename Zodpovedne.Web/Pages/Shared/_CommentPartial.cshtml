@@ -6,9 +6,8 @@
         @* Levá část - informace o autorovi a času *@
         <div class="text-muted hlavicka-komentare-leva-cast small">
             <i class="bi bi-person"></i> <a asp-page="/Account/Profile" asp-route-nickname="@Model.AuthorNickname">@Model.AuthorNickname</a>
-            <span class="mx-2">•</span>
+            <span class="mx-1"><i class="bi bi-calendar-plus"></i> </span>
             @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
-            (@Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
             @if (Model.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden)
             {
                 @* <span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span> *@
@@ -29,7 +28,7 @@
             {
                 <button class="btn btn-sm like-btn"
                         onclick="likeComment(@Model.DiscussionId, @Model.Id)">
-                    <i class="bi bi-heart"></i>
+                    <i class="bi bi-heart" title="Přidat srdce"></i>
                     <span id="comment-@Model.Id-likes-count">@Model.Likes.LikeCount</span>
                 </button>
             }
@@ -37,7 +36,7 @@
             {
                 <button class="btn btn-sm like-btn-disable">
                     <span class="text-muted">
-                        <i class="bi bi-heart-fill"></i>
+                        <i class="bi bi-heart-fill" title="Počet srdcí od uživatelů"></i>
                         @Model.Likes.LikeCount
                     </span>
                 </button>
@@ -58,7 +57,7 @@
             {
                 <button class="btn btn-sm btn-outline-danger"
                         onclick="deleteComment(@Model.DiscussionId, @Model.Id)">
-                    <i class="bi bi-trash"></i>@* Smazat *@
+                    <i class="bi bi-trash" title="Smazat komentář"></i>@* Smazat *@
                 </button>
             }
         </div>
@@ -277,9 +276,8 @@
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <div class="text-muted small">
                     <i class="bi bi-person"></i> <a asp-page="/Account/Profile" asp-route-nickname="@reply.AuthorNickname">@reply.AuthorNickname</a>
-                    <span class="mx-1">•</span>
+                    <span class="mx-1"><i class="bi bi-calendar-plus"></i> </span>
                     @reply.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
-                    (@reply.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm"))
                     @if (reply.Type == Zodpovedne.Contracts.Enums.CommentType.Hidden)
                     {
                         @* <span class="badge bg-warning ms-2">Tvůj komentář je skrytý</span> *@
@@ -293,14 +291,14 @@
                     {
                         <button class="btn btn-sm like-btn"
                                 onclick="likeComment(@Model.DiscussionId, @reply.Id)">
-                            <i class="bi bi-heart"></i>
+                            <i class="bi bi-heart" title="Přidat srdce"></i>
                             <span id="comment-@reply.Id-likes-count">@reply.Likes.LikeCount</span>
                         </button>
                     }
                     else
                     {
                         <span class="text-muted like-btn-disable">
-                            <i class="bi bi-heart-fill"></i>
+                            <i class="bi bi-heart-fill" title="Počet srdcí od uživatelů"></i>
                             @reply.Likes.LikeCount
                         </span>
                     }
@@ -320,7 +318,7 @@
                     {
                         <button class="btn btn-sm btn-outline-danger"
                                 onclick="deleteComment(@Model.DiscussionId, @reply.Id)">
-                            <i class="bi bi-trash"></i>
+                            <i class="bi bi-trash" title="Smazat reakci"></i>
                         </button>
                     }
                 </div>

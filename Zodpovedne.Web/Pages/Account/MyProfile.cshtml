@@ -105,20 +105,20 @@
         </div>
 
         <!-- Sekce pro hledání uživatelů -->
-        <div class="mt-3 mb-4 p-3 border rounded" style="background-color: #f9f9f9;">
+        <div class="mt-3 mb-4 p-3 vyhledat-uzivatele">
             <h5 class="mb-3">Vyhledat uživatele</h5>
             <form method="post" asp-page-handler="SearchUser" class="d-flex">
                 <div class="flex-grow-1 me-2">
                     <input type="text" asp-for="SearchNickname" class="form-control" placeholder="Zadejte přezdívku uživatele" required />
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: auto;">
-                    <i class="bi bi-search"></i> Vyhledat
+                    Najít profil
                 </button>
             </form>
             @if (!string.IsNullOrEmpty(Model.SearchErrorMessage))
             {
                 <div class="alert alert-warning mt-2 mb-0 py-2">
-                    <i class="bi bi-exclamation-triangle-fill"></i> @Model.SearchErrorMessage
+                    <i class="bi bi-exclamation-triangle-fill"></i>&nbsp; @Model.SearchErrorMessage
                 </div>
             }
         </div>
@@ -130,7 +130,7 @@
                    <div> <span>Přátelé</span>
                 @if (Model.HasFriendshipRequests)
                 {
-                    <span class="badge bg-primary">
+                        <span class="badge bg-danger rounded-pill">
                         @Model.Friendships.Count(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && !f.IsRequester)
                     </span>
                 }
@@ -152,7 +152,7 @@
                                     <tr class="toggle-row">
                                         <td class="toggle-content-row">
                                             <a href="/Account/Profile/@friendship.OtherUserNickname" class="text-decoration-none">
-                                                @friendship.OtherUserNickname <span class="badge bg-danger" >žádá o přátelství</span>
+                                                @friendship.OtherUserNickname <span class="badge bg-danger">žádá o přátelství</span>
                                             </a>
                                         </td>
                                         <td class="text-end toggle-content-row">
@@ -224,7 +224,7 @@
                                     <tr class="toggle-row">
                                         <td class="toggle-content-row">
                                             <a href="/Account/Profile/@friendship.OtherUserNickname" class="text-decoration-none">
-                                                @friendship.OtherUserNickname <span class="badge bg-secondary">čeká na potvrzení</span>
+                                                @friendship.OtherUserNickname <span class="badge bg-primary">čeká na potvrzení</span>
                                             </a>
                                         </td>
                                         <td class="text-end toggle-content-row">
@@ -252,7 +252,7 @@
                                         <td class="text-end toggle-content-row">
                                             <form method="post" asp-page-handler="RemoveFriendship" asp-route-friendshipId="@friendship.FriendshipId"
                                                   onsubmit="return confirm('Opravdu chcete odstranit tohoto uživatele ze seznamu zamítnutých?');">
-                                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm pb-4" style="font-size: 14px;height: 25px;vertical-align:bottom;">
                                                     <i class="bi bi-trash"></i> Odstranit ze zamítnutých
                                                 </button>
                                             </form>
@@ -314,7 +314,7 @@
                 Nové odpovědi
                 @if (Model.NewRepliesNotifications.Any())
                 {
-                    <span class="badge bg-primary">@Model.NewRepliesNotifications.Count</span>
+                    <span class="badge bg-danger rounded-pill">@Model.NewRepliesNotifications.Count</span>
                 }
                 </div>
                 <i class="bi bi-chevron-down" id="notifications-chevron"></i>

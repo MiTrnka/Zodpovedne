@@ -51,7 +51,7 @@
 /* Zpráva od přihlášeného uživatele */
 .message-sent {
     align-self: flex-end;
-    background-color: var(--light-primary-color);
+    background-color: var(--secondary-color);
     color: #333;
     border-bottom-right-radius: 0.25rem;
 }
