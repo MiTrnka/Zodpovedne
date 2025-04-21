@@ -29,6 +29,17 @@ public class MyProfileModel : BasePageModel
     }
 
     /// <summary>
+    /// Pøezdívka uživatele pro vyhledávání
+    /// </summary>
+    [BindProperty]
+    public string? SearchNickname { get; set; }
+
+    /// <summary>
+    /// Chybová zpráva pøi vyhledávání uživatele
+    /// </summary>
+    public string? SearchErrorMessage { get; set; }
+
+    /// <summary>
     /// Seznam pøátelství pøihlášeného uživatele
     /// </summary>
     public List<FriendshipItem> Friendships { get; private set; } = new();
@@ -75,10 +86,13 @@ public class MyProfileModel : BasePageModel
     /// Pøi naètení stránky se naètou data pøihlášeného uživatele
     /// </summary>
     /// <returns></returns>
-    public async Task<IActionResult> OnGetAsync(string? statusMessage = null)
+    public async Task<IActionResult> OnGetAsync(string? statusMessage = null, string? searchErrorMessage = null)
     {
         if (!string.IsNullOrEmpty(statusMessage))
             this.StatusMessage = statusMessage;
+
+        if (!string.IsNullOrEmpty(searchErrorMessage))
+            this.SearchErrorMessage = searchErrorMessage;
 
         if (!IsUserLoggedIn)
             return RedirectToPage("/Account/Login");
@@ -154,6 +168,40 @@ public class MyProfileModel : BasePageModel
         }
 
         return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
+    }
+
+    /// <summary>
+    /// Handler pro vyhledání uživatele podle pøezdívky
+    /// </summary>
+    public async Task<IActionResult> OnPostSearchUserAsync()
+    {
+        if (string.IsNullOrWhiteSpace(SearchNickname))
+        {
+            return RedirectToPage(new { searchErrorMessage = "Zadejte pøezdívku uživatele" });
+        }
+
+        try
+        {
+            // Ovìøení, zda uživatel s danou pøezdívkou existuje
+            var client = _clientFactory.CreateBearerClient(HttpContext);
+            var response = await client.GetAsync($"{ApiBaseUrl}/users/{SearchNickname}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Uživatel existuje, pøesmìrujeme na jeho profil
+                return RedirectToPage("/Account/Profile", new { nickname = SearchNickname });
+            }
+            else
+            {
+                // Uživatel nebyl nalezen
+                return RedirectToPage(new { searchErrorMessage = "Uživatel s touto pøezdívkou neexistuje" });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Chyba pøi vyhledávání uživatele", ex);
+            return RedirectToPage(new { searchErrorMessage = "Pøi vyhledávání uživatele došlo k chybì" });
+        }
     }
 
     /// <summary>

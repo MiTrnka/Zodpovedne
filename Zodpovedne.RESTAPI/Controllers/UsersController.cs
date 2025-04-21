@@ -135,7 +135,11 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var user = dbContext.Users.Where(u => u.Nickname == nickname).FirstOrDefault();
+            // Case-insensitive vyhledávání uživatele pomocí EF.Functions.ILike
+            // EF Core přeloží toto na SQL dotaz používající ILIKE operátor v PostgreSQL
+            var user = await dbContext.Users
+                .Where(u => EF.Functions.ILike(u.Nickname, nickname))
+                .FirstOrDefaultAsync();
 
             if (user == null) return NotFound();
 
