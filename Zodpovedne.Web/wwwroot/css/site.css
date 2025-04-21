@@ -1,9 +1,9 @@
 ﻿/* Základní CSS proměnné */
 :root {
-    --primary-color: #e06f70; /* tmavě růžová */
-    --primary-color-hover: #d15657; /* tmavější růžová */
-    --light-primary-color: #FFB5B5; /* světle růžová */
-    --light-primary-color-ultra-light: #FFF9F9; /* bila barva s nadechem ruzove */
+    --primary-color: #3a7cd5; /* #e06f70; /* tmavě růžová MZ */
+    --primary-color-hover: #1e5aaa; /* #d15657; /* tmavější růžová */
+    --light-primary-color: #5b9ae5; /* #FFB5B5; /* světle růžová */
+    --light-primary-color-ultra-light:  /* #FFF9F9; /* bila barva s nadechem ruzove */
 
     --secondary-color: #D8B2D8; /* fialova barva */
     --light-secondary-color: #ECD9EC; /* světle fialová barva */

@@ -258,7 +258,7 @@
                 Moje diskuze <i class="bi bi-chevron-down" id="discussions-chevron"></i>
             </button>
 
-            <div class="card-body" id="user-discussions" style="display: none;">
+            <div class="card-body" id="user-discussions" ">
                 @if (Model.UserDiscussions.Any())
                 {
                     <div class="list-group ">
@@ -302,7 +302,7 @@
        
             </button>
 
-            <div class="card-body" id="new-replies-notifications" style="display: none;">
+            <div class="card-body" id="new-replies-notifications">
                 @if (Model.NewRepliesNotifications.Any())
                 {
                     <div class="list-group">
