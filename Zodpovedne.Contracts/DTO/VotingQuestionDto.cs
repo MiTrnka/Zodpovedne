@@ -145,11 +145,6 @@ public class SubmitVotesDto
 public class DiscussionDetailWithVotingDto : DiscussionDetailDto
 {
     /// <summary>
-    /// Typ hlasování v diskuzi
-    /// </summary>
-    public VoteType VoteType { get; set; }
-
-    /// <summary>
     /// Hlasování v diskuzi (null pokud diskuze nemá hlasování)
     /// </summary>
     public VotingDto? Voting { get; set; }

@@ -181,6 +181,7 @@ public class DiscussionsController : ControllerBase
                     ViewCount = d.ViewCount,
                     Type = d.Type,
                     Code = d.Code,
+                    VoteType = d.VoteType,
                     // Informace o lajcích
                     Likes = new LikeInfoDto
                     {
@@ -307,7 +308,8 @@ public class DiscussionsController : ControllerBase
                     CreatedAt = d.CreatedAt,
                     UpdatedAt = d.UpdatedAt,
                     ViewCount = d.ViewCount,
-                    Type = d.Type
+                    Type = d.Type,
+                    VoteType = d.VoteType
                 })
                 .ToListAsync();
 
@@ -462,6 +464,7 @@ public class DiscussionsController : ControllerBase
                 UpdatedAt = discussion.UpdatedAt,
                 ViewCount = discussion.ViewCount,
                 Type = discussion.Type,
+                VoteType = discussion.VoteType,
 
                 // Informace o lajcích
                 Likes = new LikeInfoDto
@@ -562,7 +565,8 @@ public class DiscussionsController : ControllerBase
                     CreatedAt = d.CreatedAt,
                     UpdatedAt = d.UpdatedAt,
                     ViewCount = d.ViewCount,
-                    Type = d.Type
+                    Type = d.Type,
+                    VoteType = d.VoteType
                 })
                 .FirstOrDefaultAsync();
 
@@ -657,7 +661,8 @@ public class DiscussionsController : ControllerBase
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 Type = user.Type == UserType.Hidden ? DiscussionType.Hidden : model.Type,
-                Code = code
+                Code = code,
+                VoteType = model.VoteType
             };
             dbContext.Discussions.Add(discussion);
             await dbContext.SaveChangesAsync();
@@ -703,6 +708,7 @@ public class DiscussionsController : ControllerBase
             // Přidaná sanitizace
             discussion.Title = _sanitizer.Sanitize(model.Title);
             discussion.Content = _sanitizer.Sanitize(model.Content);
+            discussion.VoteType = model.VoteType;
             discussion.UpdatedAt = DateTime.UtcNow;
             // Typ diskuze může měnit pouze admin
             if (isAdmin)
@@ -1484,7 +1490,8 @@ public class DiscussionsController : ControllerBase
                     d.UserId,
                     CategoryName = d.Category.Name,
                     CategoryCode = d.Category.Code,
-                    AuthorNickname = d.User.Nickname
+                    AuthorNickname = d.User.Nickname,
+                    d.VoteType
                 })
                 .ToListAsync();
 
@@ -1514,7 +1521,8 @@ public class DiscussionsController : ControllerBase
                         CreatedAt = discussion.CreatedAt,
                         UpdatedAt = discussion.UpdatedAt,
                         ViewCount = discussion.ViewCount,
-                        Type = discussion.Type
+                        Type = discussion.Type,
+                        VoteType = discussion.VoteType
                     });
                 }
             }
@@ -1619,6 +1627,7 @@ public class DiscussionsController : ControllerBase
                 ViewCount = d.ViewCount,
                 Type = d.Type,
                 Code = d.Code,
+                VoteType = d.VoteType,
                 Likes = new LikeInfoDto
                 {
                     LikeCount = d.Likes.Count,
@@ -1704,7 +1713,8 @@ public class DiscussionsController : ControllerBase
                     CreatedAt = d.CreatedAt,
                     UpdatedAt = d.UpdatedAt,
                     ViewCount = d.ViewCount,
-                    Type = d.Type
+                    Type = d.Type,
+                    VoteType = d.VoteType
                 })
                 .ToList();
 
