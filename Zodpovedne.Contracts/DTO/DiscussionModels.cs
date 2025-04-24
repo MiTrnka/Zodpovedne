@@ -23,6 +23,15 @@ public class CreateDiscussionDto
 
     // Typ diskuze nastavujeme jen při vytvoření, výchozí hodnota Normal
     public DiscussionType Type { get; set; } = DiscussionType.Normal;
+    /// <summary>
+    /// Typ hlasování v diskuzi - výchozí hodnota None (bez hlasování)
+    /// </summary>
+    public VoteType VoteType { get; set; } = VoteType.None;
+
+    /// <summary>
+    /// Seznam hlasovacích otázek (pokud má diskuze hlasování)
+    /// </summary>
+    public List<VotingQuestionDto>? VotingQuestions { get; set; }
 }
 
 // Pro editaci diskuze
@@ -38,6 +47,11 @@ public class UpdateDiscussionDto
 
     // Typ diskuze může měnit jen admin
     public DiscussionType Type { get; set; }
+
+    /// <summary>
+    /// Typ hlasování v diskuzi
+    /// </summary>
+    public VoteType VoteType { get; set; }
 }
 
 // Pro výpis v seznamu diskuzí
@@ -55,6 +69,7 @@ public class DiscussionListDto
     public DiscussionType Type { get; set; }
     public string Code { get; set; } = "";
     public LikeInfoDto Likes { get; set; } = new();
+    public VoteType VoteType { get; set; } = VoteType.None;
 }
 
 // Pro detail diskuze včetně komentářů
@@ -77,6 +92,7 @@ public class DiscussionDetailDto
     public ICollection<CommentDto> Comments { get; set; } = new List<CommentDto>();
     public LikeInfoDto Likes { get; set; } = new();
     public bool HasMoreComments { get; set; }
+    public VoteType VoteType { get; set; } = VoteType.None;
 }
 
 public class BasicDiscussionInfoDto
@@ -95,6 +111,7 @@ public class BasicDiscussionInfoDto
     public DateTime UpdatedAt { get; set; }
     public int ViewCount { get; set; }
     public DiscussionType Type { get; set; }
+    public VoteType VoteType { get; set; } = VoteType.None;
 }
 
 // Pro komentáře

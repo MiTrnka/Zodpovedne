@@ -30,6 +30,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Message> Messages { get; set; }
     public DbSet<Translation> Translations { get; set; }
     public DbSet<SiteInstance> SiteInstances { get; set; }
+    public DbSet<VotingQuestion> VotingQuestions { get; set; }
+    public DbSet<Vote> Votes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -231,6 +233,49 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Unikátní index na kombinaci SiteInstanceId a Code
             entity.HasIndex(e => new { e.SiteInstanceId, e.Code })
                 .IsUnique();
+        });
+
+        // Konfigurace VotingQuestion
+        builder.Entity<VotingQuestion>(entity =>
+        {
+            entity.ToTable("VotingQuestions");
+
+            // Vztah k Discussion (N:1)
+            entity.HasOne(vq => vq.Discussion)
+                .WithMany(d => d.VotingQuestions)
+                .HasForeignKey(vq => vq.DiscussionId)
+                .OnDelete(DeleteBehavior.Cascade); // Při smazání diskuze se smažou i všechny otázky
+
+            // Index pro rychlejší vyhledávání otázek podle diskuze
+            entity.HasIndex(vq => vq.DiscussionId);
+
+            // Index pro řazení otázek podle DisplayOrder
+            entity.HasIndex(vq => new { vq.DiscussionId, vq.DisplayOrder });
+        });
+
+        // Konfigurace Vote
+        builder.Entity<Vote>(entity =>
+        {
+            entity.ToTable("Votes");
+
+            // Vztah k VotingQuestion (N:1)
+            entity.HasOne(v => v.VotingQuestion)
+                .WithMany(vq => vq.Votes)
+                .HasForeignKey(v => v.VotingQuestionId)
+                .OnDelete(DeleteBehavior.Cascade); // Při smazání otázky se smažou i všechny hlasy
+
+            // Vztah k User (N:1)
+            entity.HasOne(v => v.User)
+                .WithMany()
+                .HasForeignKey(v => v.UserId)
+                .OnDelete(DeleteBehavior.Cascade); // Při smazání uživatele se smažou i všechny jeho hlasy
+
+            // Unikátní index pro kombinaci VotingQuestionId a UserId,
+            // aby jeden uživatel mohl hlasovat pro jednu otázku pouze jednou
+            entity.HasIndex(v => new { v.VotingQuestionId, v.UserId }).IsUnique();
+
+            // Index pro rychlejší vyhledávání hlasů podle uživatele
+            entity.HasIndex(v => v.UserId);
         });
 
     }

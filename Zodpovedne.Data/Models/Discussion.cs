@@ -34,9 +34,19 @@ public class Discussion
     [MaxLength(200)]  // Dostatečně dlouhé pro title + suffix
     public string Code { get; set; } = "";
 
+    /// <summary>
+    /// Typ hlasování v diskuzi - určuje stav a viditelnost hlasování
+    /// </summary>
+    public VoteType VoteType { get; set; } = VoteType.None;
+
     // Navigační vlastnosti
     public virtual Category Category { get; set; } = null!;
     public virtual ApplicationUser User { get; set; } = null!;
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public virtual ICollection<DiscussionLike> Likes { get; set; } = new List<DiscussionLike>();
+
+    /// <summary>
+    /// Navigační vlastnost - kolekce hlasovacích otázek v této diskuzi
+    /// </summary>
+    public virtual ICollection<VotingQuestion> VotingQuestions { get; set; } = new List<VotingQuestion>();
 }
