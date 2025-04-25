@@ -317,7 +317,7 @@ public class VotingsController : ControllerBase
             using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
-                // Získáme existující hlasy uživatele pro tuto diskuzi
+                // Získáme všechny existující hlasy uživatele pro tuto diskuzi
                 var existingVotes = await _dbContext.Votes
                     .Where(v => v.UserId == userId && v.VotingQuestion.DiscussionId == model.DiscussionId)
                     .ToListAsync();
@@ -325,14 +325,19 @@ public class VotingsController : ControllerBase
                 // Vytvoříme slovník existujících hlasů podle ID otázky
                 var existingVotesByQuestionId = existingVotes.ToDictionary(v => v.VotingQuestionId);
 
-                // Pro každou otázku v požadavku
+                // Vytvoříme seznam všech dostupných otázek pro tuto diskuzi
+                var allQuestionsForDiscussion = await _dbContext.VotingQuestions
+                    .Where(q => q.DiscussionId == model.DiscussionId)
+                    .ToListAsync();
+
+                // Nejprve zpracujeme hlasy, které JSOU v model.Votes
                 foreach (var questionVote in model.Votes)
                 {
                     var questionId = questionVote.Key;
                     var voteValue = questionVote.Value;
 
                     // Načteme otázku, se kterou budeme pracovat
-                    var question = await _dbContext.VotingQuestions.FindAsync(questionId);
+                    var question = allQuestionsForDiscussion.FirstOrDefault(q => q.Id == questionId);
                     if (question == null) continue;
 
                     // Pokud uživatel již hlasoval pro tuto otázku
@@ -357,6 +362,9 @@ public class VotingsController : ControllerBase
                             existingVote.VoteValue = voteValue;
                             existingVote.UpdatedAt = DateTime.UtcNow;
                         }
+
+                        // Označíme tuto otázku jako zpracovanou, aby se nevyhodnotila v druhém kroku (mazání)
+                        existingVotesByQuestionId.Remove(questionId);
                     }
                     else
                     {
@@ -381,6 +389,28 @@ public class VotingsController : ControllerBase
 
                     // Aktualizujeme časovou značku poslední aktualizace otázky
                     question.UpdatedAt = DateTime.UtcNow;
+                }
+
+                // V druhém kroku zpracujeme otázky, na které uživatel dříve hlasoval, ale nyní jsou
+                // nastaveny na "Nehlasuji" (tzn. nejsou v model.Votes)
+                // Všechny zbývající záznamy v existingVotesByQuestionId jsou ty, které by měly být smazány
+                foreach (var voteToDelete in existingVotesByQuestionId.Values)
+                {
+                    // Najdeme odpovídající otázku
+                    var question = allQuestionsForDiscussion.FirstOrDefault(q => q.Id == voteToDelete.VotingQuestionId);
+                    if (question == null) continue;
+
+                    // Snížíme počet hlasů podle typu původního hlasu
+                    if (voteToDelete.VoteValue) // Bylo Ano
+                        question.YesVotes--;
+                    else // Bylo Ne
+                        question.NoVotes--;
+
+                    // Aktualizujeme časovou značku
+                    question.UpdatedAt = DateTime.UtcNow;
+
+                    // Smažeme hlas
+                    _dbContext.Votes.Remove(voteToDelete);
                 }
 
                 // Uložíme změny
