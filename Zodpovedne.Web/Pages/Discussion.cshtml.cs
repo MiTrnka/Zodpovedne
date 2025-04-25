@@ -158,6 +158,9 @@ public class DiscussionModel : BasePageModel
         }
         Discussion = d;
 
+        // Pøedáváme ID diskuze do JavaScriptu pro použití v hlasovacím skriptu
+        ViewData["DiscussionId"] = Discussion.Id;
+
         // Zjištìní typu pøihlášeného uživatele a nastavení oprávnìní pro nahrávání souborù
         if (IsUserLoggedIn)
         {

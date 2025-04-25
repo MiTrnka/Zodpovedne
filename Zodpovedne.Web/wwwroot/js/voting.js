@@ -3,17 +3,28 @@
  *
  * Tento soubor obsluhuje funkcionalitu přidávání, editace a mazání
  * hlasovacích otázek při vytváření nebo úpravě diskuze.
+ * Zároveň obsahuje funkce pro zobrazení a hlasování na stránce detailu diskuze.
  *
- * Funkce:
+ * Funkce pro stránku CreateDiscussion:
  * - Přidání nové otázky
  * - Mazání otázek
  * - Aktualizace číslování otázek
  * - Počítání znaků v textu otázky
  * - Validace hlasovacích formulářů
+ *
+ * Funkce pro stránku Discussion:
+ * - Načtení hlasování pro aktuální diskuzi
+ * - Zobrazení otázek a výsledků hlasování
+ * - Odeslání hlasů uživatele
+ * - Aktualizace UI podle stavu hlasování
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Základní prvky pro práci s hlasováním
+    // ========================================================================
+    // ČÁST 1: Funkce pro stránku CreateDiscussion - vytváření hlasovacích otázek
+    // ========================================================================
+
+    // Základní prvky pro práci s hlasováním na stránce CreateDiscussion
     const hasVotingCheckbox = document.getElementById('hasVoting');
     const votingSection = document.getElementById('voting-section');
     const addQuestionBtn = document.getElementById('add-question-btn');
@@ -25,8 +36,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Sledování globálního stavu otázek
     let questionCounter = 0;
 
-    // Inicializace - zobrazení/skrytí sekce hlasování podle výchozího stavu checkboxu
-    if (hasVotingCheckbox) {
+    // Inicializace pro CreateDiscussion - zobrazení/skrytí sekce hlasování podle výchozího stavu checkboxu
+    if (hasVotingCheckbox && votingSection) {
         votingSection.style.display = hasVotingCheckbox.checked ? 'block' : 'none';
         if (hasVotingCheckbox.checked) {
             // Pokud je výchozí stav zapnutý, inicializujeme existující otázky
@@ -34,8 +45,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Přidání posluchače událostí pro přepínač hlasování
-    if (hasVotingCheckbox) {
+    // Přidání posluchače událostí pro přepínač hlasování na stránce CreateDiscussion
+    if (hasVotingCheckbox && votingSection) {
         hasVotingCheckbox.addEventListener('change', function () {
             votingSection.style.display = this.checked ? 'block' : 'none';
 
@@ -49,12 +60,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Přidání posluchače události pro tlačítko "Přidat otázku"
+    // Přidání posluchače události pro tlačítko "Přidat otázku" na stránce CreateDiscussion
     if (addQuestionBtn) {
         addQuestionBtn.addEventListener('click', addNewQuestion);
     }
 
-    // Inicializace existujících otázek (pokud existují)
+    // Inicializace existujících otázek (pokud existují) na stránce CreateDiscussion
     function initExistingQuestions() {
         // Tento kód by načetl existující otázky z modelu
         // Pro první verzi implementace předpokládáme, že vytváříme novou diskuzi bez otázek
@@ -70,15 +81,17 @@ document.addEventListener('DOMContentLoaded', function () {
         updateNoQuestionsMessage();
     }
 
-    // Funkce pro přidání nové otázky
+    // Funkce pro přidání nové otázky na stránce CreateDiscussion
     function addNewQuestion(event, questionData = null) {
         // Zvýšení počítadla pro unikátní ID
         questionCounter++;
 
         // Skrytí zprávy "Žádné otázky"
-        noQuestionsMessage.style.display = 'none';
+        if (noQuestionsMessage) noQuestionsMessage.style.display = 'none';
 
         // Klonování šablony otázky
+        if (!questionTemplate) return;
+
         const template = questionTemplate.content.cloneNode(true);
         const questionElement = template.querySelector('.voting-question');
 
@@ -121,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
         updateCharCount(textArea, charCount);
 
         // Přidání otázky do kontejneru
-        questionsContainer.appendChild(questionElement);
+        if (questionsContainer) questionsContainer.appendChild(questionElement);
 
         // Aktualizace číslování všech otázek
         updateQuestionNumbers();
@@ -139,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return questionElement;
     }
 
-    // Funkce pro odstranění otázky
+    // Funkce pro odstranění otázky na stránce CreateDiscussion
     function removeQuestion(questionElement) {
         if (confirm('Opravdu chcete odstranit tuto otázku?')) {
             questionElement.remove();
@@ -156,8 +169,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Funkce pro aktualizaci počítadla znaků
+    // Funkce pro aktualizaci počítadla znaků na stránce CreateDiscussion
     function updateCharCount(textarea, countElement) {
+        if (!textarea || !countElement) return;
+
         const maxLength = parseInt(textarea.getAttribute('maxlength') || '400');
         const currentLength = textarea.value.length;
 
@@ -171,8 +186,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Funkce pro aktualizaci číslování otázek
+    // Funkce pro aktualizaci číslování otázek na stránce CreateDiscussion
     function updateQuestionNumbers() {
+        if (!document.querySelector('.voting-question')) return;
+
         const questions = document.querySelectorAll('.voting-question');
 
         questions.forEach((question, index) => {
@@ -189,13 +206,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Funkce pro zjištění počtu otázek
+    // Funkce pro zjištění počtu otázek na stránce CreateDiscussion
     function getQuestionCount() {
         return document.querySelectorAll('.voting-question').length;
     }
 
-    // Funkce pro zobrazení/skrytí zprávy "Žádné otázky"
+    // Funkce pro zobrazení/skrytí zprávy "Žádné otázky" na stránce CreateDiscussion
     function updateNoQuestionsMessage() {
+        if (!noQuestionsMessage) return;
+
         if (getQuestionCount() === 0) {
             noQuestionsMessage.style.display = 'block';
         } else {
@@ -203,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Funkce pro přípravu dat hlasovacích otázek před odesláním formuláře
+    // Funkce pro přípravu dat hlasovacích otázek před odesláním formuláře na stránce CreateDiscussion
     function prepareVotingData() {
         if (!hasVotingCheckbox || !hasVotingCheckbox.checked) {
             return null;
@@ -231,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return votingData;
     }
 
-    // Funkce pro validaci dat hlasování
+    // Funkce pro validaci dat hlasování na stránce CreateDiscussion
     function validateVotingData() {
         if (!hasVotingCheckbox || !hasVotingCheckbox.checked) {
             return true; // Hlasování není aktivní, validace není potřeba
@@ -274,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return isValid;
     }
 
-    // Připojení validace k odesílání formuláře
+    // Připojení validace k odesílání formuláře na stránce CreateDiscussion
     const discussionForm = document.getElementById('create-discussion-form');
     if (discussionForm) {
         discussionForm.addEventListener('submit', function (event) {
@@ -304,5 +323,421 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+    }
+
+    // ========================================================================
+    // ČÁST 2: Funkce pro stránku Discussion - zobrazení hlasování a hlasování
+    // ========================================================================
+
+    // Zjištění, zda je na stránce sekce hlasování pro stránku Discussion
+    const discussionVotingSection = document.getElementById('voting-section');
+    if (discussionVotingSection) {
+        // Základní elementy pro stránku Discussion
+        const loadingElement = document.getElementById('voting-loading');
+        const discussionQuestionsContainer = document.getElementById('voting-questions-container');
+        const submitButton = document.getElementById('submit-votes-btn');
+
+        // Získání ID diskuze z URL nebo z JavaScriptu
+        const discussionId = getDiscussionIdFromPage();
+
+        // Načtení hlasování při načtení stránky, pokud máme ID diskuze
+        if (discussionId) {
+            loadVoting(discussionId);
+        }
+
+        // Event listener pro odeslání hlasů
+        if (submitButton) {
+            submitButton.addEventListener('click', function () {
+                submitVotes(discussionId);
+            });
+        }
+    }
+
+    /**
+     * Načtení hlasování pro danou diskuzi
+     * @param {number} discussionId - ID diskuze
+     */
+    async function loadVoting(discussionId) {
+        try {
+            const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+            const url = `${apiBaseUrl}/votings/discussion/${discussionId}`;
+
+            const headers = {};
+            const token = sessionStorage.getItem('JWTToken');
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: headers
+            });
+
+            if (!response.ok) {
+                // Pokud se nepodařilo načíst hlasování, skryjeme sekci
+                const votingSection = document.getElementById('voting-section');
+                if (votingSection) votingSection.style.display = 'none';
+                console.error('Nepodařilo se načíst hlasování');
+                return;
+            }
+
+            const votingData = await response.json();
+
+            // Zobrazení dat hlasování
+            displayVoting(votingData);
+
+        } catch (error) {
+            console.error('Chyba při načítání hlasování:', error);
+            const votingSection = document.getElementById('voting-section');
+            if (votingSection) votingSection.style.display = 'none';
+        }
+    }
+
+    /**
+     * Zobrazení hlasování v UI
+     * @param {object} votingData - Data hlasování z API
+     */
+    function displayVoting(votingData) {
+        const loadingElement = document.getElementById('voting-loading');
+        const questionsContainer = document.getElementById('voting-questions-container');
+
+        if (!loadingElement || !questionsContainer) return;
+
+        // Skrytí načítacího indikátoru
+        loadingElement.classList.add('d-none');
+
+        // Zobrazení kontejneru otázek
+        questionsContainer.classList.remove('d-none');
+
+        // Vyprázdnění kontejneru otázek
+        questionsContainer.innerHTML = '';
+
+        // Výběr šablony podle typu hlasování
+        const canVote = votingData.voteType === 1; // VoteType.Visible = 1
+
+        // Vytvoření HTML pro každou otázku
+        votingData.questions.forEach((question, index) => {
+            const questionElement = document.createElement('div');
+            questionElement.className = 'mb-4 pb-3 border-bottom';
+
+            // Přidání číslování otázek
+            const questionNumber = index + 1;
+
+            // Vytvoření nadpisu otázky
+            const questionTitle = document.createElement('h5');
+            questionTitle.className = 'mb-3';
+            questionTitle.textContent = `${questionNumber}. ${question.text}`;
+            questionElement.appendChild(questionTitle);
+
+            if (canVote) {
+                // Vytvoření formuláře pro hlasování (radio buttony)
+                questionElement.appendChild(createVotingForm(question));
+            } else {
+                // Vytvoření zobrazení výsledku hlasování (progress bary)
+                questionElement.appendChild(createVotingResults(question));
+            }
+
+            // Přidání otázky do kontejneru
+            questionsContainer.appendChild(questionElement);
+        });
+    }
+
+    /**
+     * Vytvoření formuláře pro hlasování k otázce
+     * @param {object} question - Data otázky
+     * @returns {HTMLElement} - Element formuláře s radio buttony
+     */
+    function createVotingForm(question) {
+        const formContainer = document.createElement('div');
+        formContainer.className = 'voting-options';
+
+        // Unikátní jméno skupiny radio buttonů pro tuto otázku
+        const radioGroupName = `vote-question-${question.id}`;
+
+        // Vytvoření radio buttonů pro možnosti Ano, Ne, Nehlasuji
+        const options = [
+            { value: 'true', label: 'Ano', checked: question.currentUserVote === true },
+            { value: 'false', label: 'Ne', checked: question.currentUserVote === false },
+            { value: 'null', label: 'Nehlasuji', checked: question.currentUserVote === null }
+        ];
+
+        options.forEach(option => {
+            const optionContainer = document.createElement('div');
+            optionContainer.className = 'form-check mb-2';
+
+            const radioInput = document.createElement('input');
+            radioInput.className = 'form-check-input';
+            radioInput.type = 'radio';
+            radioInput.name = radioGroupName;
+            radioInput.id = `${radioGroupName}-${option.value}`;
+            radioInput.value = option.value;
+            radioInput.checked = option.checked;
+            radioInput.setAttribute('data-question-id', question.id);
+
+            const radioLabel = document.createElement('label');
+            radioLabel.className = 'form-check-label';
+            radioLabel.htmlFor = `${radioGroupName}-${option.value}`;
+            radioLabel.textContent = option.label;
+
+            optionContainer.appendChild(radioInput);
+            optionContainer.appendChild(radioLabel);
+            formContainer.appendChild(optionContainer);
+        });
+
+        // Přidání aktuálních výsledků pod radio buttony
+        const resultsContainer = document.createElement('div');
+        resultsContainer.className = 'voting-results mt-3';
+        resultsContainer.appendChild(createVotingResults(question));
+        formContainer.appendChild(resultsContainer);
+
+        return formContainer;
+    }
+
+    /**
+     * Vytvoření zobrazení výsledků hlasování k otázce
+     * @param {object} question - Data otázky
+     * @returns {HTMLElement} - Element s progress bary výsledků
+     */
+    function createVotingResults(question) {
+        const resultsContainer = document.createElement('div');
+        resultsContainer.className = 'voting-results';
+
+        // Vytvoření progress barů pro zobrazení výsledků
+        // Progress bar pro Ano
+        const yesContainer = document.createElement('div');
+        yesContainer.className = 'mb-2';
+
+        const yesLabel = document.createElement('div');
+        yesLabel.className = 'd-flex justify-content-between mb-1';
+
+        const yesLabelText = document.createElement('span');
+        yesLabelText.textContent = 'Ano';
+
+        const yesLabelCount = document.createElement('span');
+        yesLabelCount.textContent = `${question.yesVotes} (${question.yesPercentage}%)`;
+
+        yesLabel.appendChild(yesLabelText);
+        yesLabel.appendChild(yesLabelCount);
+        yesContainer.appendChild(yesLabel);
+
+        const yesProgressBarOuter = document.createElement('div');
+        yesProgressBarOuter.className = 'progress';
+        yesProgressBarOuter.style.height = '20px';
+
+        const yesProgressBar = document.createElement('div');
+        yesProgressBar.className = 'progress-bar bg-success';
+        yesProgressBar.style.width = `${question.yesPercentage}%`;
+        yesProgressBar.setAttribute('role', 'progressbar');
+        yesProgressBar.setAttribute('aria-valuenow', question.yesPercentage);
+        yesProgressBar.setAttribute('aria-valuemin', '0');
+        yesProgressBar.setAttribute('aria-valuemax', '100');
+
+        yesProgressBarOuter.appendChild(yesProgressBar);
+        yesContainer.appendChild(yesProgressBarOuter);
+        resultsContainer.appendChild(yesContainer);
+
+        // Progress bar pro Ne
+        const noContainer = document.createElement('div');
+        noContainer.className = 'mb-2';
+
+        const noLabel = document.createElement('div');
+        noLabel.className = 'd-flex justify-content-between mb-1';
+
+        const noLabelText = document.createElement('span');
+        noLabelText.textContent = 'Ne';
+
+        const noLabelCount = document.createElement('span');
+        noLabelCount.textContent = `${question.noVotes} (${question.noPercentage}%)`;
+
+        noLabel.appendChild(noLabelText);
+        noLabel.appendChild(noLabelCount);
+        noContainer.appendChild(noLabel);
+
+        const noProgressBarOuter = document.createElement('div');
+        noProgressBarOuter.className = 'progress';
+        noProgressBarOuter.style.height = '20px';
+
+        const noProgressBar = document.createElement('div');
+        noProgressBar.className = 'progress-bar bg-danger';
+        noProgressBar.style.width = `${question.noPercentage}%`;
+        noProgressBar.setAttribute('role', 'progressbar');
+        noProgressBar.setAttribute('aria-valuenow', question.noPercentage);
+        noProgressBar.setAttribute('aria-valuemin', '0');
+        noProgressBar.setAttribute('aria-valuemax', '100');
+
+        noProgressBarOuter.appendChild(noProgressBar);
+        noContainer.appendChild(noProgressBarOuter);
+        resultsContainer.appendChild(noContainer);
+
+        // Informace o celkovém počtu hlasů
+        const totalVotesInfo = document.createElement('div');
+        totalVotesInfo.className = 'small text-muted mt-1';
+        totalVotesInfo.textContent = `Celkový počet hlasů: ${question.totalVotes}`;
+        resultsContainer.appendChild(totalVotesInfo);
+
+        return resultsContainer;
+    }
+
+    /**
+     * Odeslání hlasů uživatele
+     * @param {number} discussionId - ID diskuze
+     */
+    async function submitVotes(discussionId) {
+        const submitButton = document.getElementById('submit-votes-btn');
+
+        try {
+            // Zobrazení načítacího stavu tlačítka
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Odesílání...';
+            }
+
+            // Získání všech radio buttonů
+            const radioButtons = document.querySelectorAll('[data-question-id]:checked');
+
+            // Vytvoření objektu s hlasy
+            const votes = {};
+
+            // Procházení všech zaškrtnutých radio buttonů
+            radioButtons.forEach(radio => {
+                const questionId = parseInt(radio.getAttribute('data-question-id'));
+                const value = radio.value;
+
+                // Přidání hlasu do objektu votes pouze pro odpovědi Ano nebo Ne
+                if (value === 'true') {
+                    votes[questionId] = true;
+                } else if (value === 'false') {
+                    votes[questionId] = false;
+                }
+                // Hodnotu "Nehlasuji" (null) ignorujeme, protože se nemá ukládat
+            });
+
+            // Příprava dat pro odeslání
+            const votingData = {
+                discussionId: discussionId,
+                votes: votes
+            };
+
+            // Odeslání hlasů na server
+            const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+            const response = await fetch(`${apiBaseUrl}/votings/submit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+                },
+                body: JSON.stringify(votingData)
+            });
+
+            if (!response.ok) {
+                throw new Error('Nepodařilo se odeslat hlasy');
+            }
+
+            // Zpracování odpovědi
+            const result = await response.json();
+
+            // Aktualizace UI s novými výsledky
+            displayVoting(result);
+
+            // Zobrazení úspěšné zprávy
+            showSuccessMessage();
+
+        } catch (error) {
+            console.error('Chyba při odesílání hlasů:', error);
+            showErrorMessage();
+        } finally {
+            // Obnovení stavu tlačítka
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Hlasovat';
+            }
+        }
+    }
+
+    /**
+     * Zobrazení zprávy o úspěšném hlasování
+     */
+    function showSuccessMessage() {
+        const submitButton = document.getElementById('submit-votes-btn');
+
+        // Vytvoření zprávy
+        const messageContainer = document.createElement('div');
+        messageContainer.className = 'alert alert-success mt-3';
+        messageContainer.setAttribute('role', 'alert');
+        messageContainer.textContent = 'Váš hlas byl úspěšně zaznamenán. Děkujeme za účast v hlasování!';
+
+        // Přidání zprávy nad tlačítko
+        if (submitButton && submitButton.parentNode) {
+            submitButton.parentNode.insertBefore(messageContainer, submitButton);
+
+            // Automatické skrytí zprávy po 5 sekundách
+            setTimeout(() => {
+                messageContainer.remove();
+            }, 5000);
+        }
+    }
+
+    /**
+     * Zobrazení chybové zprávy při selhání hlasování
+     */
+    function showErrorMessage() {
+        const submitButton = document.getElementById('submit-votes-btn');
+
+        // Vytvoření zprávy
+        const messageContainer = document.createElement('div');
+        messageContainer.className = 'alert alert-danger mt-3';
+        messageContainer.setAttribute('role', 'alert');
+        messageContainer.textContent = 'Nepodařilo se zaznamenat váš hlas. Zkuste to prosím znovu.';
+
+        // Přidání zprávy nad tlačítko
+        if (submitButton && submitButton.parentNode) {
+            submitButton.parentNode.insertBefore(messageContainer, submitButton);
+
+            // Automatické skrytí zprávy po 5 sekundách
+            setTimeout(() => {
+                messageContainer.remove();
+            }, 5000);
+        }
+    }
+
+    /**
+     * Získání ID diskuze ze stránky
+     * @returns {number} ID diskuze
+     */
+    function getDiscussionIdFromPage() {
+        // Různé způsoby, jak získat ID diskuze
+
+        // 1. Z globální proměnné window.discussionId
+        if (typeof window.discussionId !== 'undefined' && window.discussionId) {
+            return parseInt(window.discussionId);
+        }
+
+        // 2. Z ID v elementu
+        const discussionIdInput = document.querySelector('[name="discussionId"]');
+        if (discussionIdInput && discussionIdInput.value) {
+            return parseInt(discussionIdInput.value);
+        }
+
+        // 3. Z URL parametru
+        const urlMatch = window.location.href.match(/discussionId=(\d+)/);
+        if (urlMatch && urlMatch[1]) {
+            return parseInt(urlMatch[1]);
+        }
+
+        // 4. Z objektu v diskuzi
+        if (typeof Discussion !== 'undefined' && Discussion.Id) {
+            return parseInt(Discussion.Id);
+        }
+
+        // 5. Z URL cesty
+        const pathParts = window.location.pathname.split('/');
+        const lastPart = pathParts[pathParts.length - 1];
+        if (/^\d+$/.test(lastPart)) {
+            return parseInt(lastPart);
+        }
+
+        // Pokud nic nenajdeme, vrátíme null
+        console.warn('Nepodařilo se najít ID diskuze');
+        return null;
     }
 });

@@ -512,6 +512,63 @@
                     </div>
                 </div>
 
+                <!-- Sekce pro hlasování - zobrazí se, jen pokud diskuze má hlasování -->
+                @if (Model.Discussion.VoteType != VoteType.None)
+                {
+                    <div class="card mt-4 shadow" id="voting-section">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0">Hlasování</h3>
+                            @if (Model.Discussion.VoteType == VoteType.Closed)
+                            {
+                                <span class="badge bg-secondary">Hlasování uzavřeno</span>
+                            }
+                            else if (Model.Discussion.VoteType == VoteType.Hidden)
+                            {
+                                <span class="badge bg-warning">Hlasování skryto</span>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-3">@GetVotingStatusText(Model.Discussion.VoteType)</p>
+
+                            <!-- Inicializace načítání hlasování -->
+                            <div id="voting-loading" class="text-center py-3">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">Načítání hlasování...</span>
+                                </div>
+                                <span class="ms-2">Načítání hlasování...</span>
+                            </div>
+
+                            <!-- Kontejner pro otázky hlasování, naplní se JavaScriptem -->
+                            <div id="voting-questions-container" class="d-none">
+                                <!-- Sem se dynamicky přidají otázky hlasování -->
+                            </div>
+
+                            <!-- Tlačítko pro odeslání hlasů (viditelné jen když lze hlasovat) -->
+                            @if (Model.Discussion.VoteType == VoteType.Visible && Model.IsUserLoggedIn)
+                            {
+                                <div class="mt-3 text-center">
+                                    <button id="submit-votes-btn" class="btn btn-primary">
+                                        Hlasovat
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @functions {
+                public string GetVotingStatusText(VoteType voteType)
+                {
+                    return voteType switch
+                    {
+                        VoteType.Visible => "V tomto hlasování můžete vyjádřit svůj názor ke každé otázce. Zvolte Ano, Ne, nebo Nehlasuji.",
+                        VoteType.Closed => "Hlasování je uzavřeno. Můžete vidět výsledky, ale již nelze hlasovat.",
+                        VoteType.Hidden => "Toto hlasování je nyní skryté. Vidíte ho, protože jste správce nebo autor diskuze.",
+                        _ => "Neplatný stav hlasování"
+                    };
+                }
+            }
+
                 @* Sekce komentářů *@
                 <div class="mt-5">
                     <h3>Komentáře</h3>
@@ -786,4 +843,6 @@
 
     <!-- Import javascriptu -->
     <script src="~/js/discussion.js" asp-append-version="true"></script>
+    <script>window.discussionId = @(ViewData["DiscussionId"] ?? 0);</script>
+    <script src="~/js/voting.js" asp-append-version="true"></script>
 }
