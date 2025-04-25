@@ -55,10 +55,83 @@
                     <span asp-validation-for="Input.Content" class="text-danger"></span>
                 </div>
 
-                <!-- Přidáme checkbox pro soukromou diskuzi -->
-                <div class="mb-3 form-check">
-                    <input type="checkbox" asp-for="IsPrivate" class="form-check-input" id="isPrivate" />
-                    <label class="form-check-label" for="isPrivate">Diskuze jen pro přátele</label>
+                <!-- Přidání sekce pro volby diskuze -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <!-- Přidáme checkbox pro soukromou diskuzi -->
+                        <div class="form-check mb-2">
+                            <input type="checkbox" asp-for="IsPrivate" class="form-check-input" id="isPrivate" />
+                            <label class="form-check-label" for="isPrivate">Diskuze jen pro přátele</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- Přidáme checkbox pro vytvoření hlasování -->
+                        <div class="form-check mb-2">
+                            <input type="checkbox" asp-for="HasVoting" class="form-check-input" id="hasVoting" />
+                            <label class="form-check-label" for="hasVoting">Vytvořit hlasování</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sekce pro hlasování - skrytá, dokud uživatel neaktivuje vytvoření hlasování -->
+                <div id="voting-section" class="mb-3 p-3 border rounded bg-light" style="display: none;">
+                    <h5 class="mb-3">Hlasování</h5>
+
+                    <!-- Přepínač typu hlasování -->
+                    <div class="mb-3">
+                        <label class="form-label">Stav hlasování</label>
+                        <select asp-for="Input.VoteType" class="form-select" id="voting-type">
+                            <option value="0">Žádné hlasování</option>
+                            <option value="1" selected>Viditelné a aktivní</option>
+                            <option value="2">Uzavřené (pouze zobrazení výsledků)</option>
+                            <option value="3">Skryté (viditelné pouze pro autora a adminy)</option>
+                        </select>
+                        <div class="form-text">Určuje, zda a jak bude hlasování zobrazeno uživatelům.</div>
+                    </div>
+
+                    <!-- Tlačítko pro přidání nové otázky -->
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-sm btn-success" id="add-question-btn">
+                            <i class="bi bi-plus-circle"></i> Přidat novou otázku
+                        </button>
+                    </div>
+
+                    <!-- Seznam otázek hlasování -->
+                    <div id="voting-questions-container">
+                        <!-- Zde budou dynamicky přidávány otázky -->
+                        <div class="text-muted text-center py-3" id="no-questions-message">
+                            Zatím nejsou přidány žádné otázky.
+                        </div>
+                    </div>
+
+                    <!-- Šablona pro novou otázku (skrytá) -->
+                    <template id="question-template">
+                        <div class="voting-question card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span class="question-number">Otázka #</span>
+                                <div>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-question-btn">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Text otázky</label>
+                                    <textarea class="form-control question-text" rows="2" maxlength="400" required></textarea>
+                                    <div class="form-text text-end">
+                                        <span class="char-count">0</span>/400 znaků
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Pořadí zobrazení</label>
+                                    <input type="number" class="form-control question-order" min="1" value="1" required>
+                                </div>
+                                <!-- Skrytý input pro ID otázky (při editaci) -->
+                                <input type="hidden" class="question-id" value="">
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Tlačítka pro ovládání formuláře -->
@@ -69,7 +142,6 @@
                     </div>
                     <button type="submit" class="btn btn-primary create-discussion-btn shadow" id="submit-button">Vytvořit diskuzi</button>
                 </div>
-
                 <div id="emoji-list">
                     <!-- Srdce a like emoji -->
                     <span class="emoji">&#x2764;&#xFE0F;</span>     <!-- červené srdce -->
@@ -252,7 +324,6 @@
             </form>
         </div>
     </div>
-
 </div>
 
 <!-- Přidáme skrytý element pro nastavení, zda uživatel může nahrávat soubory -->
@@ -265,6 +336,8 @@
     @await Html.PartialAsync("_ValidationScriptsPartial")
     <!-- Import adaptéru pro nahrávání souborů -->
     <script src="~/js/ckeditor-upload-adapter.js"></script>
+    <!-- Import skriptu pro hlasování -->
+    <script src="~/js/voting.js" asp-append-version="true"></script>
 
     <script>
         // Pro přihlášeného uživatele uložíme jeho JWT do sessionStorage prohlížeče pro použití v upload adaptéru
@@ -477,71 +550,108 @@
             }
         }
 
-         // Vkladani smajliku do editoru
-        const textareaDiskuse = editor; // CK Editor nahrazuje skrytou textareu
-        const emojiBtn = document.getElementById("emoji-btn"); // btn smajlika
-        const poleSmajliku = document.querySelectorAll("#emoji-list .emoji"); // pole vsech smajliku v nabidce
-        const emojiList = document.getElementById("emoji-list");
-
-        emojiBtn.addEventListener("click", () => {
-            emojiList.style.display = emojiList.style.display === "block" ? "none" : "block";
-        });
-        // Vložení smajlíka do editoru při kliknutí
-        poleSmajliku.forEach(smajlik => {
-            smajlik.addEventListener("click", () => {
-                // Kontrola, zda globální instance CKEditoru existuje
-                if (editor) {
-                    const emoji = smajlik.textContent;
-
-                    // Použití API CKEditoru 5 pro vložení emoji
-                    editor.model.change(writer => {
-                        editor.model.insertContent(writer.createText(emoji));
-                    });
-
-                }
-            });
-        });
-
         // Přidání event listenerů pro tlačítka
         document.addEventListener('DOMContentLoaded', function() {
             // Získání formuláře a tlačítek
             const form = document.getElementById('create-discussion-form');
             const backButton = document.getElementById('back-button');
             const submitButton = document.getElementById('submit-button');
+            const hasVotingCheckbox = document.getElementById('hasVoting');
+            const votingSection = document.getElementById('voting-section');
+            const votingTypeSelect = document.getElementById('voting-type');
+
+            // Obsluha změny checkboxu pro hlasování
+            hasVotingCheckbox.addEventListener('change', function() {
+                votingSection.style.display = this.checked ? 'block' : 'none';
+                if (this.checked) {
+                    // Pokud je hlasování zapnuto, nastavit hodnotu VoteType na "Visible" (1)
+                    votingTypeSelect.value = "1";
+                } else {
+                    // Pokud je hlasování vypnuto, nastavit hodnotu VoteType na "None" (0)
+                    votingTypeSelect.value = "0";
+                }
+            });
 
             // Poslouchání události odeslání formuláře
             form.addEventListener('submit', function(event) {
+                // Aktualizujeme obsah z editoru
                 updateContent();
-                // Čištění se provede v updateContent
+
+                // Pokud je povoleno hlasování, validujeme otázky
+                if (hasVotingCheckbox.checked) {
+                    const questions = document.querySelectorAll('.voting-question');
+
+                    // Ověříme, že existují nějaké otázky
+                    if (questions.length === 0 && votingTypeSelect.value !== "0") {
+                        event.preventDefault();
+                        document.getElementById("modalMessage").textContent =
+                            "Pro vytvoření hlasování je potřeba přidat alespoň jednu otázku.";
+                        new bootstrap.Modal(document.getElementById("errorModal")).show();
+                        return false;
+                    }
+
+                    // Připravíme data o hlasování pro odeslání
+                    const votingQuestions = [];
+                    let hasError = false;
+
+                    questions.forEach((question, index) => {
+                        const questionText = question.querySelector('.question-text').value.trim();
+                        const questionOrder = parseInt(question.querySelector('.question-order').value);
+
+                        if (!questionText) {
+                            hasError = true;
+                            document.getElementById("modalMessage").textContent =
+                                `Otázka #${index + 1} nemá vyplněný text.`;
+                            new bootstrap.Modal(document.getElementById("errorModal")).show();
+                            return;
+                        }
+
+                        votingQuestions.push({
+                            id: null, // Pro nové otázky je ID null
+                            text: questionText,
+                            displayOrder: questionOrder
+                        });
+                    });
+
+                    if (hasError) {
+                        event.preventDefault();
+                        return false;
+                    }
+
+                    // Přidáme otázky do skrytého pole formuláře
+                    const questionsInput = document.createElement('input');
+                    questionsInput.type = 'hidden';
+                    questionsInput.name = 'VotingQuestions';
+                    questionsInput.value = JSON.stringify(votingQuestions);
+                    form.appendChild(questionsInput);
+                }
             });
 
             // Poslouchání kliknutí na tlačítko Zpět
-                    backButton.addEventListener('click', function(event) {
-            // Při kliknutí na Zpět smažeme celý adresář s obrázky
-            if (canUploadFiles) {
-                event.preventDefault();
+            backButton.addEventListener('click', function(event) {
+                // Při kliknutí na Zpět smažeme celý adresář s obrázky
+                if (canUploadFiles) {
+                    event.preventDefault();
 
-                // Potvrzení opuštění stránky
-                if (confirm('Opravdu chcete opustit stránku? Všechny vaše změny budou ztraceny.')) {
-                    // Získáme kód kategorie z URL nebo ze skrytého inputu
-                    const categoryCode = document.getElementById('temp-discussion-code').closest('form')
+                    // Potvrzení opuštění stránky
+                    if (confirm('Opravdu chcete opustit stránku? Všechny vaše změny budou ztraceny.')) {
+                        // Získáme kód kategorie z URL nebo ze skrytého inputu
+                        const categoryCode = document.getElementById('temp-discussion-code').closest('form')
                                         .querySelector('[name="CategoryCode"]')?.value ||
                                         window.location.pathname.split('/').slice(-1)[0];
 
-                    deleteImagesDirectory().then(() => {
-                        // Explicitní přesměrování na stránku kategorie
-                        window.location.href = `/Categories/${categoryCode}`;
-                    }).catch(err => {
-                        console.error("Chyba při mazání adresáře:", err);
-                        // I v případě chyby při mazání přesměrujeme uživatele
-                        window.location.href = `/Categories/${categoryCode}`;
-                    });
+                        deleteImagesDirectory().then(() => {
+                            // Explicitní přesměrování na stránku kategorie
+                            window.location.href = `/Categories/${categoryCode}`;
+                        }).catch(err => {
+                            console.error("Chyba při mazání adresáře:", err);
+                            // I v případě chyby při mazání přesměrujeme uživatele
+                            window.location.href = `/Categories/${categoryCode}`;
+                        });
+                    }
                 }
-            }
+            });
         });
-    });
-
-        // Kód pro emoji zůstává stejný
     </script>
     <script src="~/js/new-discussion.js"></script>
 }

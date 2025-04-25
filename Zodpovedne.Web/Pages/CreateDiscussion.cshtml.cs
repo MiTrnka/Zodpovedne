@@ -7,6 +7,7 @@ using Zodpovedne.Logging;
 using Ganss.Xss;
 using Zodpovedne.Logging.Services;
 using Zodpovedne.Contracts.Enums;
+using System.Text.Json;
 
 namespace Zodpovedne.Web.Pages;
 
@@ -25,15 +26,23 @@ public class CreateDiscussionModel : BasePageModel
 
     public string CategoryName { get; set; } = "";
 
-    // Pøidáme novou vlastnost pro doèasný kód diskuze
+    // Doèasný kód diskuze pro práci s obrázky a následnými referencemi v obsahu
     public string TempDiscussionCode { get; set; } = "";
 
-    // Pøidáme vlastnost, která urèuje, zda uživatel mùže nahrávat obrázky
+    // Vlastnost urèující, zda uživatel mùže nahrávat obrázky
     public bool CanUploadFiles { get; private set; } = false;
 
-    // Pøidáme vlastnost pro checkbox "Diskuze jen pro kamarády"
+    // Vlastnost pro checkbox "Diskuze jen pro pøátele"
     [BindProperty]
     public bool IsPrivate { get; set; } = false;
+
+    // Nová vlastnost pro checkbox "Vytvoøit hlasování"
+    [BindProperty]
+    public bool HasVoting { get; set; } = false;
+
+    // Vlastnost pro uložení hlasovacích otázek
+    [BindProperty]
+    public string VotingQuestions { get; set; } = "";
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -62,7 +71,10 @@ public class CreateDiscussionModel : BasePageModel
         CategoryName = category.Name;
         Input.CategoryId = category.Id;
 
-        // Uložíme doèasný kód do session, aby byl k dispozici i po odeslání formuláøe
+        // Nastavení výchozí hodnoty VoteType na None (žádné hlasování)
+        Input.VoteType = VoteType.None;
+
+        // Uložení doèasného kódu do session pro pozdìjší použití
         HttpContext.Session.SetString("TempDiscussionCode", TempDiscussionCode);
 
         // Zjištìní typu pøihlášeného uživatele a nastavení oprávnìní pro nahrávání souborù
@@ -144,8 +156,25 @@ public class CreateDiscussionModel : BasePageModel
             Input.Title = _sanitizer.Sanitize(Input.Title);
             Input.Content = _sanitizer.Sanitize(Input.Content);
 
-            // Nastavíme typ diskuze na Private, pokud byl zaškrtnut checkbox
+            // Nastavení typu diskuze na Private, pokud byl zaškrtnut checkbox
             Input.Type = IsPrivate ? DiscussionType.Private : DiscussionType.Normal;
+
+            // Nastavení typu hlasování podle hodnoty v checkboxu a vybraného typu
+            if (HasVoting)
+            {
+                // Pokud je hlasování povoleno, zkontrolujeme, zda je typ nastaven na nìco jiného než None
+                // Pokud by typ zùstal None, nastavíme výchozí hodnotu Visible
+                if (Input.VoteType == VoteType.None)
+                {
+                    Input.VoteType = VoteType.Visible;
+                }
+                // Jinak ponecháme vybraný typ (z formuláøe pøijde v Input.VoteType)
+            }
+            else
+            {
+                // Pokud není hlasování povoleno, nastavíme typ na None
+                Input.VoteType = VoteType.None;
+            }
 
             var client = _clientFactory.CreateBearerClient(HttpContext);
 
@@ -181,6 +210,43 @@ public class CreateDiscussionModel : BasePageModel
                                 OldCode = tempCode,
                                 NewCode = discussionInfo.DiscussionCode
                             });
+
+                        // Vytvoøení hlasování, pokud je povoleno
+                        if (HasVoting && discussionInfo.VoteType != VoteType.None && !string.IsNullOrEmpty(VotingQuestions))
+                        {
+                            try
+                            {
+                                // Deserializace otázek s ignorováním velikosti písmen
+                                var options = new JsonSerializerOptions
+                                {
+                                    PropertyNameCaseInsensitive = true
+                                };
+                                var votingQuestionsData = JsonSerializer.Deserialize<List<VotingQuestionDto>>(VotingQuestions, options);
+
+                                if (votingQuestionsData != null && votingQuestionsData.Count > 0)
+                                {
+                                    // Vytvoøení hlasování pomocí API
+                                    var createVotingRequest = new CreateOrUpdateVotingDto
+                                    {
+                                        DiscussionId = discussionId,
+                                        VoteType = discussionInfo.VoteType,
+                                        Questions = votingQuestionsData
+                                    };
+
+                                    var votingResponse = await client.PostAsJsonAsync($"{ApiBaseUrl}/votings", createVotingRequest);
+
+                                    if (!votingResponse.IsSuccessStatusCode)
+                                    {
+                                        _logger.Log($"Nepodaøilo se vytvoøit hlasování pro diskuzi ID {discussionId}. Stavový kód: {votingResponse.StatusCode}");
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.Log($"Chyba pøi vytváøení hlasování pro diskuzi ID {discussionId}", ex);
+                                // Pokraèujeme i pøi chybì vytváøení hlasování (diskuze byla úspìšnì vytvoøena)
+                            }
+                        }
                     }
                 }
 
