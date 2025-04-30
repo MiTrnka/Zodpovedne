@@ -257,6 +257,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return true; // Hlasování není aktivní, validace není potřeba
         }
 
+        // Pokud je v selectu hodnota "Žádné hlasování", také validace projde
+        if (votingTypeSelect && votingTypeSelect.value === "0") {
+            return true; // Hlasování je vypnuté
+        }
+
         const questions = document.querySelectorAll('.voting-question');
 
         // Pokud je hlasování aktivní, ale nemá žádné otázky, je to chyba
@@ -298,9 +303,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const discussionForm = document.getElementById('create-discussion-form');
     if (discussionForm) {
         discussionForm.addEventListener('submit', function (event) {
-            if (!validateVotingData()) {
-                event.preventDefault();
-                return false;
+            // Validujeme pouze pokud je checkbox zaškrtnutý a není vybráno "Žádné hlasování"
+            if (hasVotingCheckbox && hasVotingCheckbox.checked &&
+                votingTypeSelect && votingTypeSelect.value !== "0") {
+                if (!validateVotingData()) {
+                    event.preventDefault();
+                    return false;
+                }
             }
 
             // Pokud je hlasování povoleno, připravíme data pro odeslání
@@ -325,7 +334,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
-
     // ========================================================================
     // ČÁST 2: Funkce pro stránku Discussion - zobrazení hlasování a hlasování
     // ========================================================================

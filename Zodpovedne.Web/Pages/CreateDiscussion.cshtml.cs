@@ -98,6 +98,25 @@ public class CreateDiscussionModel : BasePageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // Pokud se nejedná o hlasování, manuálnì oèistíme ModelState od chyb spojených s hlasováním
+        if (!HasVoting)
+        {
+            // Resetujeme VoteType na None (žádné hlasování) bez ohledu na to, co pøišlo z formuláøe
+            Input.VoteType = VoteType.None;
+
+            // Vyèistíme hodnotu VotingQuestions
+            VotingQuestions = "";
+
+            // Odstraníme všechny chyby validace spojené s hlasováním
+            foreach (var key in ModelState.Keys.ToList())
+            {
+                if (key.StartsWith("VotingQuestions") || key.StartsWith("Input.VoteType"))
+                {
+                    ModelState.Remove(key);
+                }
+            }
+        }
+
         // Kontrola, jestli požadavek jde z platného odkazu
         var referer = Request.Headers.Referer.ToString();
         if (!referer.Contains("/discussion/create/"))
@@ -108,6 +127,15 @@ public class CreateDiscussionModel : BasePageModel
         // Kontrola validaèního stavu
         if (!ModelState.IsValid)
         {
+            // Debug informace - vypíšeme si chyby v ModelState, abychom vidìli, co konkrétnì selhává
+            foreach (var state in ModelState)
+            {
+                if (state.Value.Errors.Any())
+                {
+                    _logger.Log($"Validaèní chyba pro {state.Key}: {string.Join(", ", state.Value.Errors.Select(e => e.ErrorMessage))}");
+                }
+            }
+
             // Znovu naèteme kategorii pro zobrazení, ale zachováme vyplnìná data
             var client = _clientFactory.CreateBearerClient(HttpContext);
             var response = await client.GetAsync($"{ApiBaseUrl}/Categories/{CategoryCode}");
@@ -159,7 +187,7 @@ public class CreateDiscussionModel : BasePageModel
             // Nastavení typu diskuze na Private, pokud byl zaškrtnut checkbox
             Input.Type = IsPrivate ? DiscussionType.Private : DiscussionType.Normal;
 
-            // Nastavení typu hlasování podle hodnoty v checkboxu a vybraného typu
+            // Nastavení typu hlasování podle hodnoty v checkboxu a vybranéhotypu
             if (HasVoting)
             {
                 // Pokud je hlasování povoleno, zkontrolujeme, zda je typ nastaven na nìco jiného než None
@@ -172,8 +200,10 @@ public class CreateDiscussionModel : BasePageModel
             }
             else
             {
-                // Pokud není hlasování povoleno, nastavíme typ na None
+                // Pokud není hlasování povoleno, nastavíme typ na None bez ohledu na to, co pøišlo z formuláøe
                 Input.VoteType = VoteType.None;
+                // Vyèistíme pøípadné otázky, které pøišly z formuláøe
+                VotingQuestions = "";
             }
 
             var client = _clientFactory.CreateBearerClient(HttpContext);
