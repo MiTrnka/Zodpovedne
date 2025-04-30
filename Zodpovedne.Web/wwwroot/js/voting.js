@@ -766,12 +766,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (votingTypeSelect_modal) {
             votingTypeSelect_modal.addEventListener('change', function () {
                 const questionsContainer = document.getElementById('voting-questions-modal-container');
-                // Pokud je vybrána hodnota 0 (Žádné hlasování), skryjeme sekci otázek
-                if (this.value === "0") {
-                    questionsContainer.classList.add('d-none');
-                } else {
-                    questionsContainer.classList.remove('d-none');
-                    updateNoQuestionsMessageModal();
+                if (questionsContainer) {
+                    // Pokud je vybrána hodnota 0 (Žádné hlasování), skryjeme sekci otázek
+                    if (this.value === "0") {
+                        questionsContainer.classList.add('d-none');
+                    } else {
+                        questionsContainer.classList.remove('d-none');
+                        updateNoQuestionsMessageModal();
+                    }
                 }
             });
         }
@@ -794,6 +796,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     questionsContainer_modal.innerHTML = '';
                     if (noQuestionsMessage_modal) {
                         questionsContainer_modal.appendChild(noQuestionsMessage_modal);
+                    }
+                }
+
+                // Nastavení počátečního stavu - pro nové hlasování nastavit viditelné
+                if (votingTypeSelect_modal) {
+                    // Pro novou diskuzi přednastavíme Viditelné
+                    if (document.getElementById('create-voting-btn')) {
+                        votingTypeSelect_modal.value = "1"; // Viditelné pro nové hlasování
+
+                        // Ujistíme se, že je container pro otázky viditelný
+                        const questionsContainer = document.getElementById('voting-questions-modal-container');
+                        if (questionsContainer) {
+                            questionsContainer.classList.remove('d-none');
+                        }
                     }
                 }
 
