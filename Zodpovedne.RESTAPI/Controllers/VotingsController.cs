@@ -186,6 +186,15 @@ public class VotingsController : ControllerBase
                 // Odstraníme otázky, které nejsou v modelu
                 if (idsToRemove.Any())
                 {
+                    // Nejprve odstraníme hlasy pro tyto otázky
+                    foreach (var idToRemove in idsToRemove)
+                    {
+                        await _dbContext.Votes
+                            .Where(v => v.VotingQuestionId == idToRemove)
+                            .ExecuteDeleteAsync();
+                    }
+
+                    // Poté odstraníme samotné otázky
                     await _dbContext.VotingQuestions
                         .Where(q => idsToRemove.Contains(q.Id))
                         .ExecuteDeleteAsync();

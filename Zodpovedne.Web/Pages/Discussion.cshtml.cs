@@ -406,4 +406,28 @@ public class DiscussionModel : BasePageModel
 
         return RedirectToPage();
     }
+
+    /// <summary>
+    /// Vrací CSS tøídu pro zobrazení informace o stavu hlasování
+    /// </summary>
+    public string GetVotingStatusBadgeClass(VoteType voteType) =>
+        voteType switch
+        {
+            VoteType.Visible => "bg-success",
+            VoteType.Closed => "bg-secondary",
+            VoteType.Hidden => "bg-warning",
+            _ => "bg-light"
+        };
+
+    /// <summary>
+    /// Vrací textový popis stavu hlasování
+    /// </summary>
+    public string GetVotingStatusText(VoteType voteType) =>
+        voteType switch
+        {
+            VoteType.Visible => "V tomto hlasování mùžete vyjádøit svùj názor ke každé otázce. Zvolte Ano, Ne, nebo Nehlasuji.",
+            VoteType.Closed => "Hlasování je uzavøeno. Mùžete vidìt výsledky, ale již nelze hlasovat.",
+            VoteType.Hidden => "Toto hlasování je nyní skryté. Vidíte ho, protože jste správce nebo autor diskuze.",
+            _ => "Neplatný stav hlasování"
+        };
 }

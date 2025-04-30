@@ -1076,6 +1076,40 @@ tr.toggle-row td {
 .register-btn-wrapper a {
     width: 40%;
 }
+
+
+/* Styly pro správu hlasování v modálním okně */
+.voting-question-modal {
+    border: 1px solid var(--light-text-color);
+    margin-bottom: 15px;
+}
+
+    .voting-question-modal .card-header {
+        background-color: var(--secondary-color);
+        color: var(--text-color);
+        font-weight: bold;
+    }
+
+#voting-questions-modal-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.char-count-modal.text-danger {
+    font-weight: bold;
+}
+
+/* Stav hlasování - odznaky */
+.voting-status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    margin-left: 5px;
+}
+
+
 /* Styly pro tablet a větší obrazovky (≥576px) */
 @media (min-width: 576px) {
     /* Tlačítka na širších obrazovkách */

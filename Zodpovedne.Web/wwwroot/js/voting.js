@@ -17,6 +17,7 @@
  * - Zobrazení otázek a výsledků hlasování
  * - Odeslání hlasů uživatele
  * - Aktualizace UI podle stavu hlasování
+ * - Vytváření a editace hlasování z detailu diskuze
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -739,5 +740,459 @@ document.addEventListener('DOMContentLoaded', function () {
         // Pokud nic nenajdeme, vrátíme null
         console.warn('Nepodařilo se najít ID diskuze');
         return null;
+    }
+
+    // ========================================================================
+    // ČÁST 3: Funkce pro správu hlasování na stránce Discussion - vytváření a editace
+    // ========================================================================
+
+    // Získání elementů pro modální okno hlasování na stránce Discussion
+    const votingModal = document.getElementById('voting-modal');
+    const votingTypeSelect_modal = document.getElementById('voting-type-modal');
+    const questionsContainer_modal = document.getElementById('voting-questions-modal-list');
+    const noQuestionsMessage_modal = document.getElementById('no-questions-message-modal');
+    const questionTemplate_modal = document.getElementById('question-template-modal');
+    const addQuestionBtn_modal = document.getElementById('add-question-btn-modal');
+    const saveVotingBtn = document.getElementById('save-voting-btn');
+    const createVotingBtn = document.getElementById('create-voting-btn');
+    const editVotingBtn = document.getElementById('edit-voting-btn');
+
+    // Počítadlo pro unikátní ID otázek v modálním okně
+    let modalQuestionCounter = 0;
+
+    // Pokud nejsou dostupné elementy pro správu hlasování v modálu, část kódu přeskočíme
+    if (votingModal) {
+        // Event listener pro změnu typu hlasování v modálu
+        if (votingTypeSelect_modal) {
+            votingTypeSelect_modal.addEventListener('change', function () {
+                const questionsContainer = document.getElementById('voting-questions-modal-container');
+                // Pokud je vybrána hodnota 0 (Žádné hlasování), skryjeme sekci otázek
+                if (this.value === "0") {
+                    questionsContainer.classList.add('d-none');
+                } else {
+                    questionsContainer.classList.remove('d-none');
+                    updateNoQuestionsMessageModal();
+                }
+            });
+        }
+
+        // Event listener pro tlačítko přidání otázky v modálu
+        if (addQuestionBtn_modal) {
+            addQuestionBtn_modal.addEventListener('click', addNewQuestionModal);
+        }
+
+        // Event listener pro tlačítko uložení hlasování v modálu
+        if (saveVotingBtn) {
+            saveVotingBtn.addEventListener('click', saveVotingChanges);
+        }
+
+        // Event listener pro otevření modálu - načítá aktuální hlasování, pokud existuje
+        if (votingModal) {
+            votingModal.addEventListener('show.bs.modal', function () {
+                // Resetujeme obsah modálu
+                if (questionsContainer_modal) {
+                    questionsContainer_modal.innerHTML = '';
+                    if (noQuestionsMessage_modal) {
+                        questionsContainer_modal.appendChild(noQuestionsMessage_modal);
+                    }
+                }
+
+                // Načteme aktuální hlasování, pokud existuje
+                const discussionId = getDiscussionIdFromPage();
+                if (discussionId) {
+                    loadVotingForEditing(discussionId);
+                }
+            });
+        }
+    }
+
+    /**
+     * Načtení hlasování pro editaci v modálním okně
+     * @param {number} discussionId - ID diskuze
+     */
+    async function loadVotingForEditing(discussionId) {
+        if (!questionsContainer_modal) return;
+
+        try {
+            const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+            const url = `${apiBaseUrl}/votings/discussion/${discussionId}`;
+
+            const headers = {};
+            const token = sessionStorage.getItem('JWTToken');
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            // Nejprve nastavíme stav načítání
+            questionsContainer_modal.innerHTML = `
+                <div class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Načítání...</span>
+                    </div>
+                    <span class="ms-2">Načítání hlasování...</span>
+                </div>
+            `;
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: headers
+            });
+
+            // Vyčistíme kontejner otázek
+            questionsContainer_modal.innerHTML = '';
+            if (noQuestionsMessage_modal) {
+                questionsContainer_modal.appendChild(noQuestionsMessage_modal);
+            }
+
+            // Pokud je odpověď 404, znamená to, že hlasování neexistuje
+            if (response.status === 404) {
+                // Nastavíme výchozí stav pro nové hlasování
+                if (votingTypeSelect_modal) {
+                    votingTypeSelect_modal.value = "1"; // Výchozí hodnota je "Viditelné"
+                }
+                return;
+            }
+
+            // Pro jiné chyby zobrazíme upozornění
+            if (!response.ok) {
+                alert('Nepodařilo se načíst hlasování pro editaci.');
+                return;
+            }
+
+            const votingData = await response.json();
+
+            // Nastavíme typ hlasování v selectu
+            if (votingTypeSelect_modal) {
+                votingTypeSelect_modal.value = votingData.voteType.toString();
+            }
+
+            // Zobrazíme nebo skryjeme sekci otázek podle typu hlasování
+            const questionsModalContainer = document.getElementById('voting-questions-modal-container');
+            if (questionsModalContainer) {
+                if (votingData.voteType === 0) {
+                    questionsModalContainer.classList.add('d-none');
+                } else {
+                    questionsModalContainer.classList.remove('d-none');
+                }
+            }
+
+            // Přidáme otázky do modálu
+            if (votingData.questions && votingData.questions.length > 0) {
+                // Odstraníme zprávu o žádných otázkách
+                if (noQuestionsMessage_modal) {
+                    noQuestionsMessage_modal.style.display = 'none';
+                }
+
+                // Pro každou otázku vytvoříme element v modálu
+                votingData.questions.forEach(question => {
+                    addNewQuestionModal(null, {
+                        id: question.id,
+                        text: question.text,
+                        displayOrder: question.displayOrder
+                    });
+                });
+            }
+
+        } catch (error) {
+            console.error('Chyba při načítání hlasování pro editaci:', error);
+            alert('Nastala chyba při načítání hlasování.');
+        }
+    }
+
+    /**
+     * Přidání nové otázky do modálního okna
+     * @param {Event} event - Událost kliknutí
+     * @param {Object} questionData - Data otázky pro editaci
+     */
+    function addNewQuestionModal(event, questionData = null) {
+        // Zvýšení počítadla pro unikátní ID
+        modalQuestionCounter++;
+
+        // Skrytí zprávy "Žádné otázky"
+        if (noQuestionsMessage_modal) noQuestionsMessage_modal.style.display = 'none';
+
+        // Klonování šablony otázky
+        if (!questionTemplate_modal) return;
+
+        const template = questionTemplate_modal.content.cloneNode(true);
+        const questionElement = template.querySelector('.voting-question-modal');
+
+        // Přidání ID pro identifikaci v DOM
+        questionElement.id = `question-modal-${modalQuestionCounter}`;
+
+        // Nastavení čísla otázky
+        template.querySelector('.question-number-modal').textContent = `Otázka #${getQuestionCountModal() + 1}`;
+
+        // Nastavení pořadí (automaticky další v pořadí)
+        const orderInput = template.querySelector('.question-order-modal');
+        orderInput.value = getQuestionCountModal() + 1;
+
+        // Nastavení hodnot z existujících dat (pokud existují)
+        if (questionData) {
+            template.querySelector('.question-text-modal').value = questionData.text || '';
+            template.querySelector('.question-order-modal').value = questionData.displayOrder || getQuestionCountModal() + 1;
+
+            // Pokud má otázka ID (při editaci), nastavíme ho do skrytého pole
+            if (questionData.id) {
+                template.querySelector('.question-id-modal').value = questionData.id;
+            }
+        }
+
+        // Přidání posluchačů událostí pro nové prvky
+        const deleteBtn = template.querySelector('.remove-question-btn-modal');
+        deleteBtn.addEventListener('click', function () {
+            removeQuestionModal(questionElement);
+        });
+
+        // Přidání počítadla znaků do textového pole
+        const textArea = template.querySelector('.question-text-modal');
+        const charCount = template.querySelector('.char-count-modal');
+
+        textArea.addEventListener('input', function () {
+            updateCharCountModal(this, charCount);
+        });
+
+        // Inicializace počítadla znaků
+        updateCharCountModal(textArea, charCount);
+
+        // Přidání otázky do kontejneru
+        if (questionsContainer_modal) questionsContainer_modal.appendChild(questionElement);
+
+        // Aktualizace číslování všech otázek
+        updateQuestionNumbersModal();
+
+        // Nastavení fokusu na textové pole nové otázky
+        setTimeout(() => {
+            textArea.focus();
+        }, 0);
+
+        return questionElement;
+    }
+
+    /**
+     * Odstranění otázky z modálního okna
+     * @param {HTMLElement} questionElement - Element otázky
+     */
+    function removeQuestionModal(questionElement) {
+        if (confirm('Opravdu chcete odstranit tuto otázku?')) {
+            questionElement.remove();
+            updateQuestionNumbersModal();
+            updateNoQuestionsMessageModal();
+
+            // Pokud už nejsou žádné otázky a hlasování je stále povoleno,
+            // upozorníme uživatele
+            if (getQuestionCountModal() === 0 && votingTypeSelect_modal && votingTypeSelect_modal.value !== "0") {
+                alert('Pro aktivaci hlasování je potřeba přidat alespoň jednu otázku.');
+            }
+        }
+    }
+
+    /**
+     * Aktualizace počítadla znaků v modálním okně
+     * @param {HTMLTextAreaElement} textarea - Textové pole
+     * @param {HTMLElement} countElement - Element počítadla
+     */
+    function updateCharCountModal(textarea, countElement) {
+        if (!textarea || !countElement) return;
+
+        const maxLength = parseInt(textarea.getAttribute('maxlength') || '400');
+        const currentLength = textarea.value.length;
+
+        countElement.textContent = currentLength;
+
+        // Vizuální indikace blížícího se limitu
+        if (currentLength > maxLength * 0.9) {
+            countElement.classList.add('text-danger');
+        } else {
+            countElement.classList.remove('text-danger');
+        }
+    }
+
+    /**
+     * Aktualizace číslování otázek v modálním okně
+     */
+    function updateQuestionNumbersModal() {
+        if (!document.querySelector('.voting-question-modal')) return;
+
+        const questions = document.querySelectorAll('.voting-question-modal');
+
+        questions.forEach((question, index) => {
+            const numberElement = question.querySelector('.question-number-modal');
+            if (numberElement) {
+                numberElement.textContent = `Otázka #${index + 1}`;
+            }
+
+            // Aktualizace výchozích hodnot pořadí pro nové otázky
+            const orderInput = question.querySelector('.question-order-modal');
+            if (orderInput && orderInput.value === '') {
+                orderInput.value = index + 1;
+            }
+        });
+    }
+
+    /**
+     * Zjištění počtu otázek v modálním okně
+     * @returns {number} Počet otázek
+     */
+    function getQuestionCountModal() {
+        return document.querySelectorAll('.voting-question-modal').length;
+    }
+
+    /**
+     * Aktualizace zprávy "Žádné otázky" v modálním okně
+     */
+    function updateNoQuestionsMessageModal() {
+        if (!noQuestionsMessage_modal) return;
+
+        if (getQuestionCountModal() === 0) {
+            noQuestionsMessage_modal.style.display = 'block';
+        } else {
+            noQuestionsMessage_modal.style.display = 'none';
+        }
+    }
+
+    /**
+     * Příprava dat hlasovacích otázek před odesláním z modálního okna
+     * @returns {Array} Otázky pro odeslání
+     */
+    function prepareVotingDataModal() {
+        const questions = document.querySelectorAll('.voting-question-modal');
+        const votingData = [];
+
+        questions.forEach((question, index) => {
+            const textElement = question.querySelector('.question-text-modal');
+            const orderElement = question.querySelector('.question-order-modal');
+            const idElement = question.querySelector('.question-id-modal');
+
+            if (textElement && orderElement) {
+                const questionData = {
+                    id: idElement && idElement.value ? parseInt(idElement.value) : null,
+                    text: textElement.value.trim(),
+                    displayOrder: parseInt(orderElement.value) || index + 1
+                };
+
+                votingData.push(questionData);
+            }
+        });
+
+        return votingData;
+    }
+
+    /**
+     * Validace dat hlasování v modálním okně
+     * @returns {boolean} True, pokud jsou data validní
+     */
+    function validateVotingDataModal() {
+        if (!votingTypeSelect_modal) return true;
+
+        const voteType = parseInt(votingTypeSelect_modal.value);
+        const questions = document.querySelectorAll('.voting-question-modal');
+
+        // Pokud je hlasování aktivní, ale nemá žádné otázky, je to chyba
+        if (voteType !== 0 && questions.length === 0) {
+            document.getElementById("modalMessage").textContent =
+                "Pro vytvoření hlasování je potřeba přidat alespoň jednu otázku.";
+            new bootstrap.Modal(document.getElementById("errorModal")).show();
+            return false;
+        }
+
+        // Validace každé otázky
+        let isValid = true;
+        questions.forEach((question, index) => {
+            const textElement = question.querySelector('.question-text-modal');
+            const orderElement = question.querySelector('.question-order-modal');
+
+            if (!textElement.value.trim()) {
+                document.getElementById("modalMessage").textContent =
+                    `Otázka #${index + 1} nemá vyplněný text.`;
+                new bootstrap.Modal(document.getElementById("errorModal")).show();
+                isValid = false;
+                return;
+            }
+
+            const orderValue = parseInt(orderElement.value) || 0;
+            if (orderValue <= 0) {
+                document.getElementById("modalMessage").textContent =
+                    `Otázka #${index + 1} má neplatné pořadí. Hodnota musí být kladné číslo.`;
+                new bootstrap.Modal(document.getElementById("errorModal")).show();
+                isValid = false;
+                return;
+            }
+        });
+
+        return isValid;
+    }
+
+    /**
+     * Uložení změn hlasování z modálního okna
+     */
+    async function saveVotingChanges() {
+        try {
+            // Kontrola validity dat
+            if (!validateVotingDataModal()) {
+                return;
+            }
+
+            // Získání ID diskuze
+            const discussionId = getDiscussionIdFromPage();
+            if (!discussionId) {
+                alert('Nepodařilo se zjistit ID diskuze.');
+                return;
+            }
+
+            // Získání typu hlasování
+            const voteType = parseInt(votingTypeSelect_modal.value);
+
+            // Příprava dat pro odeslání
+            const votingData = {
+                discussionId: discussionId,
+                voteType: voteType,
+                questions: voteType !== 0 ? prepareVotingDataModal() : []
+            };
+
+            // Změníme stav tlačítka pro indikaci načítání
+            const saveBtn = document.getElementById('save-voting-btn');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Ukládání...';
+            }
+
+            // Odeslání dat na server
+            const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+            const response = await fetch(`${apiBaseUrl}/votings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
+                },
+                body: JSON.stringify(votingData)
+            });
+
+            // Obnovení původního stavu tlačítka
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = 'Uložit';
+            }
+
+            if (!response.ok) {
+                throw new Error('Nepodařilo se uložit hlasování');
+            }
+
+            // Zavření modálu
+            const modal = bootstrap.Modal.getInstance(document.getElementById('voting-modal'));
+            if (modal) {
+                modal.hide();
+            }
+
+            // Upozornění na úspěšné uložení
+            alert('Hlasování bylo úspěšně uloženo.');
+
+            // Obnovení stránky pro zobrazení změn
+            location.reload();
+
+        } catch (error) {
+            console.error('Chyba při ukládání hlasování:', error);
+            alert('Při ukládání hlasování došlo k chybě.');
+        }
     }
 });

@@ -175,7 +175,7 @@
                                 </button>
                             }
 
-                          
+
 
                             @* Tlačítko pro přepínání typu diskuze mezi Top a Normal (pouze pro adminy) *@
                             @if (Model.IsAdmin && (Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Top))
@@ -567,6 +567,136 @@
                         _ => "Neplatný stav hlasování"
                     };
                 }
+            }
+
+            <!-- Sekce pro editaci/založení hlasování -->
+            @if (Model.CanEditDiscussion && Model.Discussion != null)
+            {
+                <div class="mt-3 mb-4">
+                    @if (Model.Discussion.VoteType == VoteType.None)
+                    {
+                        <!-- Tlačítko pro vytvoření nového hlasování -->
+                        <button type="button" class="btn btn-outline-primary" id="create-voting-btn" data-bs-toggle="modal" data-bs-target="#voting-modal">
+                            <i class="bi bi-bar-chart-fill"></i> Vytvořit hlasování
+                        </button>
+                    }
+                    else
+                    {
+                        <!-- Tlačítko pro editaci existujícího hlasování -->
+                        <button type="button" class="btn btn-outline-primary" id="edit-voting-btn" data-bs-toggle="modal" data-bs-target="#voting-modal">
+                            <i class="bi bi-pencil"></i> Upravit hlasování
+                        </button>
+                    }
+                </div>
+
+                <!-- Modal pro správu hlasování -->
+                <div class="modal fade" id="voting-modal" tabindex="-1" aria-labelledby="voting-modal-label" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="voting-modal-label">
+                                    @(Model.Discussion.VoteType == VoteType.None ? "Vytvořit hlasování" : "Upravit hlasování")
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                            </div>
+                            <div class="modal-body">
+                                <!-- Přepínač stavu hlasování -->
+                                <div class="mb-3">
+                                    <label class="form-label">Stav hlasování</label>
+                                        <select class="form-select" id="voting-type-modal">
+                                            @if (Model.Discussion.VoteType == VoteType.None)
+                                            {
+                                                <option value="0" selected>Žádné hlasování</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="0">Žádné hlasování</option>
+                                            }
+
+                                            @if (Model.Discussion.VoteType == VoteType.Visible)
+                                            {
+                                                <option value="1" selected>Viditelné a aktivní</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="1">Viditelné a aktivní</option>
+                                            }
+
+                                            @if (Model.Discussion.VoteType == VoteType.Closed)
+                                            {
+                                                <option value="2" selected>Uzavřené (pouze zobrazení výsledků)</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="2">Uzavřené (pouze zobrazení výsledků)</option>
+                                            }
+
+                                            @if (Model.Discussion.VoteType == VoteType.Hidden)
+                                            {
+                                                <option value="3" selected>Skryté (viditelné pouze pro autora a adminy)</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="3">Skryté (viditelné pouze pro autora a adminy)</option>
+                                            }
+                                        </select>
+                                    <div class="form-text">Určuje, zda a jak bude hlasování zobrazeno uživatelům.</div>
+                                </div>
+
+                                <!-- Kontejner pro správu otázek (zobrazen pouze pokud je vybráno jiné než "Žádné hlasování") -->
+                                <div id="voting-questions-modal-container" class="@(Model.Discussion.VoteType == VoteType.None ? "d-none" : "")">
+                                    <!-- Tlačítko pro přidání nové otázky -->
+                                    <div class="mb-3">
+                                        <button type="button" class="btn btn-sm btn-success" id="add-question-btn-modal">
+                                            <i class="bi bi-plus-circle"></i> Přidat novou otázku
+                                        </button>
+                                    </div>
+
+                                    <!-- Seznam otázek hlasování -->
+                                    <div id="voting-questions-modal-list">
+                                        <!-- Sem se dynamicky přidají otázky -->
+                                        <div class="text-muted text-center py-3" id="no-questions-message-modal">
+                                            Zatím nejsou přidány žádné otázky.
+                                        </div>
+                                    </div>
+
+                                    <!-- Šablona pro novou otázku (skrytá) -->
+                                    <template id="question-template-modal">
+                                        <div class="voting-question-modal card mb-3">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <span class="question-number-modal">Otázka #</span>
+                                                <div>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-question-btn-modal">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Text otázky</label>
+                                                    <textarea class="form-control question-text-modal" rows="2" maxlength="400" required></textarea>
+                                                    <div class="form-text text-end">
+                                                        <span class="char-count-modal">0</span>/400 znaků
+                                                    </div>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label">Pořadí zobrazení</label>
+                                                    <input type="number" class="form-control question-order-modal" min="1" value="1" required>
+                                                </div>
+                                                <!-- Skrytý input pro ID otázky (při editaci) -->
+                                                <input type="hidden" class="question-id-modal" value="">
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušit</button>
+                                <button type="button" class="btn btn-primary" id="save-voting-btn">Uložit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             }
 
                 @* Sekce komentářů *@
