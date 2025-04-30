@@ -601,19 +601,10 @@
                             </div>
                             <div class="modal-body">
                                 <!-- Přepínač stavu hlasování -->
-                                <div class="mb-3">
-                                    <label class="form-label">Stav hlasování</label>
+                                    <div class="mb-3">
+                                        <label class="form-label">Stav hlasování</label>
                                         <select class="form-select" id="voting-type-modal">
-                                            @if (Model.Discussion.VoteType == VoteType.None)
-                                            {
-                                                <option value="0" selected>Žádné hlasování</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="0">Žádné hlasování</option>
-                                            }
-
-                                            @if (Model.Discussion.VoteType == VoteType.Visible)
+                                            @if (Model.Discussion.VoteType == VoteType.None || Model.Discussion.VoteType == VoteType.Visible)
                                             {
                                                 <option value="1" selected>Viditelné a aktivní</option>
                                             }
@@ -622,26 +613,22 @@
                                                 <option value="1">Viditelné a aktivní</option>
                                             }
 
+                                            @if (Model.Discussion.VoteType == VoteType.Hidden)
+                                            {
+                                                <option value="3" selected>Skryté (viditelné pouze pro autora)</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="3">Skryté (viditelné pouze pro autora)</option>
+                                            }
+
                                             @if (Model.Discussion.VoteType == VoteType.Closed)
                                             {
                                                 <option value="2" selected>Uzavřené (pouze zobrazení výsledků)</option>
                                             }
-                                            else
-                                            {
-                                                <option value="2">Uzavřené (pouze zobrazení výsledků)</option>
-                                            }
-
-                                            @if (Model.Discussion.VoteType == VoteType.Hidden)
-                                            {
-                                                <option value="3" selected>Skryté (viditelné pouze pro autora a adminy)</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="3">Skryté (viditelné pouze pro autora a adminy)</option>
-                                            }
                                         </select>
-                                    <div class="form-text">Určuje, zda a jak bude hlasování zobrazeno uživatelům.</div>
-                                </div>
+                                        <div class="form-text">Určuje, zda a jak bude hlasování zobrazeno uživatelům.</div>
+                                    </div>
 
                                 <!-- Kontejner pro správu otázek (zobrazen pouze pokud je vybráno jiné než "Žádné hlasování") -->
                                 <div id="voting-questions-modal-container">
