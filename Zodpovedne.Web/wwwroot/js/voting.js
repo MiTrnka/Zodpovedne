@@ -1209,7 +1209,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Upozornění na úspěšné uložení
-            alert('Hlasování bylo úspěšně uloženo.');
+            // alert('Hlasování bylo úspěšně uloženo.');
 
             // Obnovení stránky pro zobrazení změn
             location.reload();
