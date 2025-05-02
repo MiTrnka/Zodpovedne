@@ -176,7 +176,14 @@ namespace Zodpovedne.RESTAPI
                                  "https://api.mamazodpovedne.cz",
                                  "https://api.mamouzodpovedne.cz",
                                  "https://api.mamazodpovedne.sk",
-                                 "https://api.mamouzodpovedne.sk"
+                                 "https://api.mamouzodpovedne.sk",
+
+                                 "https://freediscussion.cz",
+                                 "https://www.freediscussion.cz",
+                                 "https://api.freediscussion.cz",
+                                 "https://freediscussions.cz",
+                                 "https://www.freediscussions.cz",
+                                 "https://api.freediscussions.cz"
                              )
                              .AllowAnyMethod()
                              .AllowAnyHeader()
