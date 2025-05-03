@@ -409,6 +409,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function displayVoting(votingData) {
         const loadingElement = document.getElementById('voting-loading');
         const questionsContainer = document.getElementById('voting-questions-container');
+        const isUserLoggedIn = document.getElementById('is-user-logged-in').value === 'true';
 
         if (!loadingElement || !questionsContainer) return;
 
@@ -421,8 +422,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Vyprázdnění kontejneru otázek
         questionsContainer.innerHTML = '';
 
-        // Výběr šablony podle typu hlasování
-        const canVote = votingData.voteType === 1; // VoteType.Visible = 1
+        // Výběr šablony podle typu hlasování a přihlášení uživatele
+        const canVote = votingData.voteType === 1 && isUserLoggedIn; // VoteType.Visible = 1 AND user is logged in
 
         // Vytvoření HTML pro každou otázku
         votingData.questions.forEach((question, index) => {
@@ -439,10 +440,10 @@ document.addEventListener('DOMContentLoaded', function () {
             questionElement.appendChild(questionTitle);
 
             if (canVote) {
-                // Vytvoření formuláře pro hlasování (radio buttony)
+                // Vytvoření formuláře pro hlasování (radio buttony) - pouze pro přihlášené uživatele
                 questionElement.appendChild(createVotingForm(question));
             } else {
-                // Vytvoření zobrazení výsledku hlasování (progress bary)
+                // Vytvoření zobrazení výsledku hlasování (progress bary) - pro všechny
                 questionElement.appendChild(createVotingResults(question));
             }
 

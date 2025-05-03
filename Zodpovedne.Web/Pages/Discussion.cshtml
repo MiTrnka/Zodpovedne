@@ -911,6 +911,7 @@
 @* Skrytý input pro API URL *@
 <input type="hidden" id="apiBaseUrl" value="@Model.PublicApiBaseUrl" />
 <input type="hidden" id="current-page" value="@Model.CurrentPage" />
+<input type="hidden" id="is-user-logged-in" value="@Model.IsUserLoggedIn.ToString().ToLower()" />
 
 @section Scripts {
     <!-- Import CKEditoru s podporou nahrávání obrázků -->
