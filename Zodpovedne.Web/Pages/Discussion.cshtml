@@ -238,11 +238,11 @@
                         {
                             <div class="btn-group d-flex gap-1">
                                 @* Tlačítko pro přepínání typu diskuze mezi Private a Normal (pouze pro autory diskuze a adminy) *@
-                                @if ((Model.CanEditDiscussion) && (Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Private))
+                                @if ((Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Private))
                                 {
                                     <button style="border-radius: 5px;" class="btn btn-outline-primary @(Model.Discussion.Type == DiscussionType.Private ? "btn-outline-primary prepniVlastnostBtn" : "btn-outline-primary prepniVlastnostBtn")"
                                             onclick="togglePrivateStatus(@Model.Discussion.Id)">
-                                        @if (Model.Discussion.Type == DiscussionType.Private)
+                                        @if (Model.Discussion.Type == DiscussionType.Normal)
                                         {
                                             <text>
                                                 <span title="Nastavit režim jen pro přátele. Diskusi uvidí pouze vaši přátelé.">
