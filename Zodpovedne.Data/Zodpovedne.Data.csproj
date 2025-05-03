@@ -26,4 +26,8 @@
     <ProjectReference Include="..\Zodpovedne.Contracts\Zodpovedne.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="SQL Scripts\" />
+  </ItemGroup>
+
 </Project>
