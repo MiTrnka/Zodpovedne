@@ -30,6 +30,14 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/catalogs.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/ckeditor-content.css" asp-append-version="true" />
+    @if ((Configuration["SiteInstance"] != null) && (Configuration["SiteInstance"] == "freediscussion.cz"))
+    {
+        <link rel="icon" type="image/png" href="~/images/faviconfreediscussion.png" sizes="32x32">
+    }
+    @if ((Configuration["SiteInstance"] != null) && (Configuration["SiteInstance"] == "mamouzodpovedne.cz"))
+    {
+        <link rel="icon" type="image/png" href="~/images/faviconmamouzodpovedne.png" sizes="32x32">
+    }
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
