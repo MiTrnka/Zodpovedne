@@ -39,7 +39,7 @@
                         <dd>@Model.UserProfile?.LastLogin?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
                     }
                     <dt>Heslo</dt>
-                    <dd><button class="edit-account-btn" onclick="toggleEditPassword()"> Změnit heslo</button></dd>
+                    <dd>****** <button class="edit-account-btn" onclick="toggleEditPassword()"><i title="Změnit heslo" class="bi bi-pencil"></i></button></dd>
                 </dl>
 
                 <!-- Sekce pro administrátory -->
@@ -443,24 +443,24 @@
             }
         }    
         function toggleEditPrezdivka() {
-            if (changeEmailAccount) {
+            if (changePrezdivkaAccount) {
                 changePrezdivkaAccount.showModal();
             }
         }
 
         function closeEditPrezdivka() {
-            if (changeEmailAccount) {
+            if (changePrezdivkaAccount) {
                changePrezdivkaAccount.close();
             }
         }
         function toggleEditPassword() {
-            if (changeEmailAccount) {
+            if (changePasswordAccount) {
                 changePasswordAccount.showModal();
             }
         }
 
         function closeEditPassword() {
-            if (changeEmailAccount) {
+            if (changePasswordAccount) {
                changePasswordAccount.close();
             }
         }
@@ -538,7 +538,7 @@
         if (changePrezdivkaAccount) {
             changePrezdivkaAccount.addEventListener("click", function(e) {
                 // Uložíme si souřadnice dialogového okna
-                let souradniceDialogOkna = changeEmailAccount.getBoundingClientRect();
+                let souradniceDialogOkna = changePrezdivkaAccount.getBoundingClientRect();
 
                 if (
                     e.clientX < souradniceDialogOkna.left ||
@@ -554,7 +554,7 @@
         if (changePasswordAccount) {
             changePasswordAccount.addEventListener("click", function(e) {
                 // Uložíme si souřadnice dialogového okna
-                let souradniceDialogOkna = changeEmailAccount.getBoundingClientRect();
+                let souradniceDialogOkna = changePasswordAccount.getBoundingClientRect();
 
                 if (
                     e.clientX < souradniceDialogOkna.left ||

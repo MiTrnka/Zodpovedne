@@ -981,9 +981,12 @@ span[title="Autor"] a{
     background: transparent;
     border: none;
     padding: 0px;
+    color: var(--primary-color);
 }
 .edit-account-btn:hover{
-    color:var(--primary-color);
+    color:var(--primary-color-hover);
+    transition:ease-in-out;
+    transform: scale(1.15);
 }
 #change-email-account, #change-prezdivka-account, #change-password-account {
     width: 90%;
