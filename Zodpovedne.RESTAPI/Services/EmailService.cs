@@ -82,6 +82,10 @@ public class EmailService : IEmailService
             // Přiřazení vytvořeného těla k e-mailové zprávě
             message.Body = builder.ToMessageBody();
 
+            // Tyto hlavičky pomohou poskytovatelům e-mailových služeb správně identifikovat zdroj e-mailu a kam mají být zaslány případné odpovědi nebo chybové zprávy
+            message.Headers.Add("Return-Path", fromEmail);
+            message.Headers.Add("Reply-To", fromEmail);
+
             // Vytvoření SMTP klienta pro odeslání zprávy
             // Používáme MailKit.Net.Smtp.SmtpClient, ne zastaralý System.Net.Mail.SmtpClient
             using var client = new MailKit.Net.Smtp.SmtpClient();
