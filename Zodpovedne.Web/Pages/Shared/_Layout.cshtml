@@ -73,18 +73,21 @@
                         <a class="nav-link @(IsMenuItemActive("/Categories") ? "active" : "")"
                         asp-page="/Categories">Diskuze</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(IsMenuItemActive("/Katalog/Hracky") ? "active" : "")"
-                        asp-page="/katalog/hracky">Hračky</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(IsMenuItemActive("/Katalog/Obleceni") ? "active" : "")"
-                        asp-page="/katalog/obleceni">Oblečení</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link @(IsMenuItemActive("/Katalog/Elektronika") ? "active" : "")"
-                        asp-page="/katalog/elektronika">Elektronika</a>
-                    </li>
+                    @if ((Configuration["SiteInstance"] != null) && (Configuration["SiteInstance"] == "mamouzodpovedne.cz"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(IsMenuItemActive("/Katalog/Hracky") ? "active" : "")"
+                            asp-page="/katalog/hracky">Hračky</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(IsMenuItemActive("/Katalog/Obleceni") ? "active" : "")"
+                            asp-page="/katalog/obleceni">Oblečení</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(IsMenuItemActive("/Katalog/Elektronika") ? "active" : "")"
+                            asp-page="/katalog/elektronika">Elektronika</a>
+                        </li>
+                    }
                 </ul>
 
                 <!-- Fulltext search -->
