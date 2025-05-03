@@ -7,6 +7,12 @@
     // Funkce pro určení, zda je položka menu aktivní
     bool IsMenuItemActive(string pagePath)
     {
+        if (pagePath == "/")
+        {
+            // Kořenová cesta nebo Index - aktivní pro úvodní stránku
+            return currentPath == "/Index" || currentPath == "";
+        }
+
         if (pagePath == "/Categories")
         {
             // Pro sekci diskuzí považujeme za aktivní i všechny podstránky kategorií
@@ -81,6 +87,13 @@
                         <a class="nav-link @(IsMenuItemActive("/Categories") ? "active" : "")"
                         asp-page="/Categories">Diskuze</a>
                     </li>
+                    @if (Context.Session.GetString("JWTToken") != null)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link @(currentPath == "/Index" || currentPath == "" ? "active" : "")"
+                               asp-page="/Index">Novinky</a>
+                        </li>
+                    }
                     @if ((Configuration["SiteInstance"] != null) && (Configuration["SiteInstance"] == "mamouzodpovedne.cz"))
                     {
                         <li class="nav-item">
