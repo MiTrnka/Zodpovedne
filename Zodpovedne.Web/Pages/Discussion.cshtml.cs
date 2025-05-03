@@ -427,7 +427,7 @@ public class DiscussionModel : BasePageModel
         {
             VoteType.Visible => "V tomto hlasování mùžete vyjádøit svùj názor ke každé otázce. Zvolte Ano, Ne, nebo Nehlasuji.",
             VoteType.Closed => "Hlasování je uzavøeno. Mùžete vidìt výsledky, ale již nelze hlasovat.",
-            VoteType.Hidden => "Toto hlasování je nyní skryté. Vidíte ho, protože jste správce nebo autor diskuze.",
+            VoteType.Hidden => "Toto hlasování je nyní skryté. Vidíte ho, protože jste autor diskuze.",
             _ => "Neplatný stav hlasování"
         };
 }

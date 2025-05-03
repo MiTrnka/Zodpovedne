@@ -528,8 +528,6 @@
                             }
                         </div>
                         <div class="card-body">
-                            <p class="text-muted mb-3">@GetVotingStatusText(Model.Discussion.VoteType)</p>
-
                             <!-- Inicializace načítání hlasování -->
                             <div id="voting-loading" class="text-center py-3">
                                 <div class="spinner-border spinner-border-sm" role="status">
@@ -563,7 +561,7 @@
                     {
                         VoteType.Visible => "V tomto hlasování můžete vyjádřit svůj názor ke každé otázce. Zvolte Ano, Ne, nebo Nehlasuji.",
                         VoteType.Closed => "Hlasování je uzavřeno. Můžete vidět výsledky, ale již nelze hlasovat.",
-                        VoteType.Hidden => "Toto hlasování je nyní skryté. Vidíte ho, protože jste správce nebo autor diskuze.",
+                        VoteType.Hidden => "Toto hlasování je nyní skryté. Vidíte ho, protože jste autor diskuze.",
                         _ => "Neplatný stav hlasování"
                     };
                 }
