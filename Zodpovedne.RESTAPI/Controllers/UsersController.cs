@@ -279,7 +279,7 @@ public class UsersController : ControllerBase
             // Kontrola znaků v nickname a existence stejného nickname
             if (Regex.IsMatch(model.Nickname, @"[<>&]"))
                 return BadRequest(@"Přezdívka obsahuje některý z nepovolených znaků [<>&]");
-            if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
+            if (await userManager.Users.AnyAsync(u => EF.Functions.ILike(u.Nickname, model.Nickname)))
                 return BadRequest("Tato přezdívka je již používána.");
 
             user.Nickname = model.Nickname;
