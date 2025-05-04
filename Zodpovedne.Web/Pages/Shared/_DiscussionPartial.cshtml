@@ -32,6 +32,37 @@
                                     </svg>
                                 </span>
                                 }
+                                @if (Model.Type == Zodpovedne.Contracts.Enums.DiscussionType.Private)
+                                {
+                                    <span class="private-icon" title="Diskuze viditelná pouze pro přátele autora">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                                            <!-- Kulaté pozadí -->
+                                            <circle cx="12" cy="12" r="11" fill="var(--light-primary-color-ultra-light)"
+                                                    stroke="var(--primary-color)" stroke-width="0.5" />
+
+                                            <!-- Tělo zámku -->
+                                            <rect x="7" y="11" width="10" height="8" rx="1.5"
+                                                  fill="var(--light-primary-color-ultra-light)"
+                                                  stroke="var(--primary-color)" stroke-width="1" />
+
+                                            <!-- Horní část zámku -->
+                                            <path d="M9,11 L9,8 C9,6.34315 10.3431,5 12,5 C13.6569,5 15,6.34315 15,8 L15,11"
+                                                  fill="none" stroke="var(--primary-color)"
+                                                  stroke-width="1" stroke-linecap="round" />
+
+                                            <!-- Klíčová dírka -->
+                                            <circle cx="12" cy="14" r="1" fill="var(--primary-color)" />
+                                            <rect x="11.5" y="14" width="1" height="2.5" fill="var(--primary-color)" />
+
+                                            <!-- Text oznámení -->
+                                            <text x="12" y="21.5"
+                                                  font-family="Arial, sans-serif"
+                                                  font-size="3"
+                                                  text-anchor="middle"
+                                                  fill="var(--primary-color)">SOUKROMÉ</text>
+                                        </svg>
+                                    </span>
+                                }
                                 @* Odkaz na detail diskuze *@
                                 <span class="seznam-diskusi-title-text"> @Model.Title</span>
                             </div>
