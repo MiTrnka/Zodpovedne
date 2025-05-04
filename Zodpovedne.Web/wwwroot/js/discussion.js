@@ -462,7 +462,7 @@ async function toggleDiscussionEdit(show) {
                     // Nastavení počáteční hodnoty editoru
                     editor.setData(document.getElementById('discussion-content-display').innerHTML);
                     // Přidání kontroly maximální délky
-                    const maxContentLength = 3000; // Odpovídá omezení v modelu
+                    const maxContentLength = 10000; // Odpovídá omezení v modelu
                     editor.model.document.on('change:data', () => {
                         const currentLength = editor.getData().length;
                         if (currentLength > maxContentLength) {
@@ -530,7 +530,7 @@ async function saveDiscussionChanges(discussionId, discussionType, event) {
     const titleEdit = document.getElementById('discussion-title-edit');
     const contentDisplay = document.getElementById('discussion-content-display');
     const apiBaseUrl = document.getElementById('apiBaseUrl').value;
-    const maxContentLength = 3000;
+    const maxContentLength = 10000;
 
     try {
         const content = window.discussionEditor ? window.discussionEditor.getData() : '';

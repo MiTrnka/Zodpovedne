@@ -708,7 +708,6 @@ public class DiscussionsController : ControllerBase
             // Přidaná sanitizace
             discussion.Title = _sanitizer.Sanitize(model.Title);
             discussion.Content = _sanitizer.Sanitize(model.Content);
-            discussion.VoteType = model.VoteType;
             discussion.UpdatedAt = DateTime.UtcNow;
             // Typ diskuze může měnit pouze admin
             if (isAdmin)

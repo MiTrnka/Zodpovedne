@@ -1112,6 +1112,40 @@ tr.toggle-row td {
     margin-left: 5px;
 }
 
+/* Zmenšení prostoru kolem hlasování */
+#voting-questions-container .mb-4 {
+    margin-bottom: 0.75rem !important; /* Zmenšení prostoru mezi otázkami */
+    padding-bottom: 0.5rem !important; /* Zmenšení spodního paddingu */
+}
+
+#voting-questions-container h5 {
+    margin-bottom: 0.5rem !important; /* Zmenšení prostoru pod nadpisem otázky */
+    font-size: 1rem !important; /* Menší velikost písma nadpisu */
+}
+
+#voting-questions-container .voting-options .form-check {
+    margin-bottom: 0.2rem !important; /* Zmenšení prostoru mezi radio buttony */
+    padding-left: 1.5rem !important; /* Menší odsazení zleva */
+}
+
+#voting-questions-container .progress {
+    height: 15px !important; /* Nižší progress bary */
+    margin-bottom: 0.25rem !important; /* Menší prostor pod progress bary */
+}
+
+#voting-questions-container .voting-results {
+    margin-top: 0.5rem !important; /* Menší mezera nad výsledky */
+}
+
+#voting-questions-container .small {
+    font-size: 0.75rem !important; /* Menší velikost textu u informací o hlasování */
+    margin-top: 0.25rem !important; /* Menší mezera nad textem */
+}
+
+/* Menší padding kolem všech prvků v hlasování */
+#voting-section .card-body {
+    padding: 0.75rem !important;
+}
 
 /* Styly pro tablet a větší obrazovky (≥576px) */
 @media (min-width: 576px) {
@@ -1193,7 +1227,7 @@ tr.toggle-row td {
         flex-direction: row; /* Na desktopu řadí položky vedle sebe */
         background-color: transparent;
 
-    } 
+    }
 
     .navbar-nav.flex-grow-1 {
         order: 1; /* Levé menu bude první */

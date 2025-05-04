@@ -528,7 +528,7 @@
         function updateContent() {
             if (editor) {
                 const content = editor.getData();
-                const maxContentLength = 3000;
+                const maxContentLength = 10000;
 
                 if (content.length > maxContentLength) {
                     document.getElementById("modalMessage").textContent =

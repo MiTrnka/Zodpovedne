@@ -311,7 +311,7 @@ public class MyProfileModel : BasePageModel
 
         if (response.IsSuccessStatusCode)
         {
-            return RedirectToPage("MyProfile", new { statusMessage = "Pøezdívka byla úspìšnì zmìnìna." }); // Zpùsobí znovunaètení stránky (znovu se novì naplní model)
+            return RedirectToPage("MyProfile", new { statusMessage = "Pøezdívka byla úspìšnì zmìnìna. Zmìna se všude projeví po novém pøihlášení." }); // Zpùsobí znovunaètení stránky (znovu se novì naplní model)
         }
 
         NicknameErrorMessage = await GetErrorFromHttpResponseMessage(response,"Nastala chyba pøi zmìnì pøezdívky.");
