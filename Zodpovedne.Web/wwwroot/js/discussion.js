@@ -400,6 +400,8 @@ async function toggleDiscussionEdit(show) {
                 'bulletedList',
                 'numberedList',
                 '|',
+                'alignment',
+                '|',
                 'undo',
                 'redo'
             ];
@@ -415,14 +417,21 @@ async function toggleDiscussionEdit(show) {
                         items: toolbarItems
                     },
                     language: 'cs',
+                    alignment: {
+                        options: ['left', 'center', 'right', 'justify']
+                    },
                     // Konfigurace obrázků
                     image: {
+                        insert: {
+                            type: 'inline' // Změna výchozího stylu na inline
+                        },
                         toolbar: [
                             'imageTextAlternative',
                             '|',
-                            'imageStyle:alignLeft',
-                            'imageStyle:alignCenter',
-                            'imageStyle:alignRight'
+                            'imageStyle:inline',        // Plovoucí obrázek
+                            'imageStyle:alignLeft',    // Zarovnání vlevo
+                            'imageStyle:alignCenter',  // Zarovnání na střed
+                            'imageStyle:alignRight'   // Zarovnání vpravo
                         ],
                         resizeOptions: [
                             {
@@ -436,12 +445,13 @@ async function toggleDiscussionEdit(show) {
                                 label: 'Responzivní'
                             }
                         ],
-                        // Definice stylů zarovnání
+                        // Definice stylů zarovnání - použití standardních CKEditor stylů
                         styles: {
                             options: [
-                                'alignLeft',
-                                'alignCenter',
-                                'alignRight'
+                                { name: 'inline', title: 'Plovoucí obrázek', icon: 'inline' },
+                                { name: 'alignLeft', title: 'Zarovnat vlevo', icon: 'left' },
+                                { name: 'alignCenter', title: 'Zarovnat na střed', icon: 'center' },
+                                { name: 'alignRight', title: 'Zarovnat vpravo', icon: 'right' }
                             ]
                         },
                         // Nastavení upload URL
@@ -449,13 +459,8 @@ async function toggleDiscussionEdit(show) {
                             types: ['jpeg', 'png', 'gif', 'jpg', 'webp']
                         }
                     },
-                    // Důležité: přidání našeho vlastního adaptéru pro nahrávání
-                    extraPlugins: [MyCustomUploadAdapterPlugin],
-                    // Přidání vlastních CSS stylů do editoru
-                    contentStyles: [
-                        // Můžete vložit CSS přímo jako řetězec
-                        '.ck-content img { max-width: 300px !important; max-height: 200px !important; object-fit: contain !important; margin: 5px !important; border: 1px solid #ddd !important; border-radius: 4px !important; padding: 3px !important; }'
-                    ]
+                    // přidání našeho vlastního adaptéru pro nahrávání
+                    extraPlugins: [MyCustomUploadAdapterPlugin]
                 })
                 .then(editor => {
                     window.discussionEditor = editor;

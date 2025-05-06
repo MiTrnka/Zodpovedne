@@ -19,6 +19,13 @@
     margin-bottom: 10px;
 }
 
+/* Styl pro plovoucí (inline) obrázky */
+.image-style-inline {
+    float: left;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
 /* Styly pro obalový element figure */
 figure {
     margin: 1rem 0;
@@ -38,6 +45,12 @@ figure {
     figure.image-style-align-right {
         float: right;
         margin-left: 20px;
+    }
+
+    figure.image-style-inline {
+        float: left;
+        margin-right: 10px;
+        display: inline-block;
     }
 
 /* Popisky obrázků */
@@ -61,6 +74,13 @@ figcaption {
     padding: 3px;
 }
 
+/* Clearfix pro správné ukončení plovoucích elementů */
+.discussion-content:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
 .discussion-content img:hover {
     transform: scale(1.03);
     box-shadow: 0 0 5px rgba(0,0,0,0.2);
@@ -75,4 +95,11 @@ figcaption {
     border: 1px solid #ddd !important;
     border-radius: 4px !important;
     padding: 3px !important;
+}
+
+/* Clearfix pro CKEditor */
+.ck-content:after {
+    content: "";
+    display: table;
+    clear: both;
 }
