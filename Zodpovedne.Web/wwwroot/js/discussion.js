@@ -378,6 +378,8 @@ async function toggleDiscussionEdit(show) {
     const editBtn = document.getElementById('edit-discussion-btn');
     const saveBtn = document.getElementById('save-discussion-btn');
     const cancelBtn = document.getElementById('cancel-discussion-btn');
+    // Získání informace, zda uživatel může nahrávat soubory
+    const canUploadFiles = document.getElementById("discussion-settings").dataset.canUpload === "true";
 
     if (show) {
         titleDisplay.classList.add('d-none');
@@ -387,6 +389,7 @@ async function toggleDiscussionEdit(show) {
         editBtn.classList.add('d-none');
         saveBtn.classList.remove('d-none');
         cancelBtn.classList.remove('d-none');
+
 
         // Inicializace editoru při prvním zobrazení
         if (!window.discussionEditor) {
