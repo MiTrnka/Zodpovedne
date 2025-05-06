@@ -9,7 +9,7 @@
         return this.loader.file
             .then(file => new Promise((resolve, reject) => {
                 // Kontrola velikosti souboru na straně klienta
-                const maxFileSize = 2 * 1024 * 1024; // 2MB
+                const maxFileSize = 5 * 1024 * 1024; // 2MB
                 if (file.size > maxFileSize) {
                     reject(`Soubor je příliš velký. Maximální velikost je 2MB.`);
                     return;

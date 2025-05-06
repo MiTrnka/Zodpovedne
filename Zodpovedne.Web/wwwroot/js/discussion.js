@@ -454,7 +454,7 @@ async function toggleDiscussionEdit(show) {
                         // Definice stylů zarovnání - použití standardních CKEditor stylů
                         styles: {
                             options: [
-                                { name: 'inline', title: 'Plovoucí obrázek', icon: 'inline' },
+                                { name: 'inline', title: 'Umístit kdekoliv', icon: 'inline' },
                                 { name: 'alignLeft', title: 'Zarovnat vlevo', icon: 'left' },
                                 { name: 'alignCenter', title: 'Zarovnat na střed', icon: 'center' },
                                 { name: 'alignRight', title: 'Zarovnat vpravo', icon: 'right' }
