@@ -380,6 +380,8 @@ async function toggleDiscussionEdit(show) {
     const cancelBtn = document.getElementById('cancel-discussion-btn');
     // Získání informace, zda uživatel může nahrávat soubory
     const canUploadFiles = document.getElementById("discussion-settings").dataset.canUpload === "true";
+    // Získá tlačítko pro přepínání soukromé diskuze
+    const privateToggleBtn = document.querySelector('button[onclick*="togglePrivateStatus"]');
 
     if (show) {
         titleDisplay.classList.add('d-none');
@@ -390,6 +392,7 @@ async function toggleDiscussionEdit(show) {
         saveBtn.classList.remove('d-none');
         cancelBtn.classList.remove('d-none');
 
+        if (privateToggleBtn) privateToggleBtn.classList.add('d-none');
 
         // Inicializace editoru při prvním zobrazení
         if (!window.discussionEditor) {
@@ -493,6 +496,8 @@ async function toggleDiscussionEdit(show) {
         editBtn.classList.remove('d-none');
         saveBtn.classList.add('d-none');
         cancelBtn.classList.add('d-none');
+
+        if (privateToggleBtn) privateToggleBtn.classList.remove('d-none');
 
         // Zrušení instance editoru při zrušení editace
         if (window.discussionEditor) {

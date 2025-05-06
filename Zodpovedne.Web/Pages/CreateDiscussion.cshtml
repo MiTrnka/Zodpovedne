@@ -329,7 +329,7 @@
 
 @section Scripts {
     <!-- Načtení CKEditoru z CDN -->
-    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/decoupled-document/ckeditor.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
     <!-- Přidání validačních skriptů -->
     @await Html.PartialAsync("_ValidationScriptsPartial")
     <!-- Import adaptéru pro nahrávání souborů -->
@@ -356,9 +356,9 @@
         let uploadedImages = [];
 
         // Inicializace CKEditoru
-        DecoupledEditor
+        ClassicEditor
             .create(document.querySelector('#editor-container'), {
-                // Základní konfigurace nástrojů
+                // Základní konfigurace nástrojové lišty
                 toolbar: [
                     'heading',
                     '|',
@@ -368,30 +368,49 @@
                     'bulletedList',
                     'numberedList',
                     '|',
+                    'alignment',
+                    '|',
                     ...(canUploadFiles ? ['imageUpload', '|'] : []), // Podmíněné přidání tlačítka pro nahrávání obrázků
                     'undo',
                     'redo'
                 ],
-
-                // Nastavení jazyka editoru
                 language: 'cs',
-
-                // Konfigurace pro obrázky - pouze pokud uživatel může nahrávat soubory
+                alignment: {
+                    options: ['left', 'center', 'right', 'justify']
+                },
+                // Konfigurace obrázků - pouze pokud uživatel může nahrávat soubory
                 ...(canUploadFiles ? {
                     image: {
+                        insert: {
+                            type: 'inline' // Změna výchozího stylu na inline
+                        },
                         toolbar: [
                             'imageTextAlternative',
                             '|',
-                            'imageStyle:alignLeft',
-                            'imageStyle:alignCenter',
-                            'imageStyle:alignRight'
+                            'imageStyle:inline',        // Plovoucí obrázek
+                            'imageStyle:alignLeft',    // Zarovnání vlevo
+                            'imageStyle:alignCenter',  // Zarovnání na střed
+                            'imageStyle:alignRight'   // Zarovnání vpravo
                         ],
-                        // Definice stylů zarovnání
+                        resizeOptions: [
+                            {
+                                name: 'original',
+                                value: null,
+                                label: 'Originální velikost'
+                            },
+                            {
+                                name: 'responsive',
+                                value: null,
+                                label: 'Responzivní'
+                            }
+                        ],
+                        // Definice stylů zarovnání - použití standardních CKEditor stylů
                         styles: {
                             options: [
-                                'alignLeft',
-                                'alignCenter',
-                                'alignRight'
+                                { name: 'inline', title: 'Plovoucí obrázek', icon: 'inline' },
+                                { name: 'alignLeft', title: 'Zarovnat vlevo', icon: 'left' },
+                                { name: 'alignCenter', title: 'Zarovnat na střed', icon: 'center' },
+                                { name: 'alignRight', title: 'Zarovnat vpravo', icon: 'right' }
                             ]
                         },
                         // Nastavení upload URL
@@ -401,32 +420,22 @@
                     },
                     // Přidání našeho vlastního adaptéru pro nahrávání
                     extraPlugins: [MyCustomUploadAdapterPlugin]
-                } : {}),
-
-                // Přidání vlastních CSS stylů do editoru
-                contentStyles: [
-                    '.ck-content img { max-width: 300px !important; max-height: 200px !important; object-fit: contain !important; margin: 5px !important; border: 1px solid #ddd !important; border-radius: 4px !important; padding: 3px !important; }'
-                ]
+                } : {})
             })
-            .then(newEditor => {
+            .then(editor => {
                 // Uložení instance editoru
-                editor = newEditor;
+                window.editor = editor;
                 // Naplnění editoru obsahem z modelu (pokud existuje)
                 if (document.querySelector('#editor-content').value) {
                     editor.setData(document.querySelector('#editor-content').value);
                 }
-
-                // Připojení toolbaru do příslušného containeru
-                const toolbarContainer = document.querySelector('#toolbar-container');
-                toolbarContainer.appendChild(editor.ui.view.toolbar.element);
-
-                // Sledování nahraných obrázků
-                if (canUploadFiles) {
-                    // Poslouchání události 'change:data', která se spustí při změně obsahu
-                    editor.model.document.on('change:data', () => {
-                        trackUploadedImages();
-                    });
-                }
+                    // Sledování nahraných obrázků
+                    if (canUploadFiles) {
+                        // Poslouchání události 'change:data', která se spustí při změně obsahu
+                        editor.model.document.on('change:data', () => {
+                            trackUploadedImages();
+                        });
+                    }
             })
             .catch(error => {
                 console.error('Chyba při inicializaci editoru:', error);
@@ -434,9 +443,9 @@
 
         // Funkce pro sledování nahraných obrázků
         function trackUploadedImages() {
-            if (!editor) return;
+            if (!window.editor) return;
 
-            const content = editor.getData();
+            const content = window.editor.getData();
             const tempCode = document.getElementById('temp-discussion-code').value;
             const uploadFolder = `/uploads/discussions/${tempCode}/`;
 
@@ -526,8 +535,8 @@
 
         // Funkce pro přenos obsahu z editoru do skrytého textarea před odesláním formuláře
         function updateContent() {
-            if (editor) {
-                const content = editor.getData();
+            if (window.editor) {
+                const content = window.editor.getData();
                 const maxContentLength = 10000;
 
                 if (content.length > maxContentLength) {
@@ -544,7 +553,7 @@
                 // Vyčištění nepoužitých obrázků před odesláním formuláře
                 cleanupUnusedImages();
 
-                document.querySelector('#editor-content').value = editor.getData();
+                document.querySelector('#editor-content').value = window.editor.getData();
             }
         }
 
@@ -650,6 +659,37 @@
                 }
             });
         });
+
+
+
+        // Kód pro vkládání emoji do editoru
+        const emojiBtn = document.getElementById("emoji-btn");
+        const emojiList = document.getElementById("emoji-list");
+        const poleSmajliku = document.querySelectorAll("#emoji-list .emoji");
+
+        // Zobrazení/skrytí panelu s emoji
+        if (emojiBtn) {
+            emojiBtn.addEventListener("click", function() {
+                emojiList.style.display = emojiList.style.display === "block" ? "none" : "block";
+            });
+        }
+
+        // Vložení emoji do editoru při kliknutí
+        poleSmajliku.forEach(smajlik => {
+            smajlik.addEventListener("click", function() {
+                // Kontrola, zda globální instance CKEditoru existuje
+                if (window.editor) {
+                    const emoji = this.textContent;
+
+                    // Použití API CKEditoru 5 pro vložení emoji
+                    window.editor.model.change(writer => {
+                        window.editor.model.insertContent(writer.createText(emoji));
+                    });
+
+                    // Skrytí panelu po kliknutí pro lepší UX
+                    emojiList.style.display = "none";
+                }
+            });
+        });
     </script>
-    <script src="~/js/new-discussion.js"></script>
 }
