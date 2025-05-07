@@ -1413,7 +1413,17 @@ public class DiscussionsController : ControllerBase
                 WHERE
                     d.""Type"" != @deletedType
                     AND (d.""Type"" != @hiddenType OR @isAdmin = TRUE OR d.""UserId"" = @userId)
-                    AND d.""SearchVector"" @@ to_tsquery('czech', @query) -- Operátor @@ testuje, zda tsvector z indexu nad sloupci Title a Content odpovídá tsquery
+                    AND (d.""Type"" != @privateType
+                         OR @isAdmin = TRUE
+                         OR d.""UserId"" = @userId
+                         OR EXISTS (
+                             SELECT 1 FROM ""Friendships"" f
+                             WHERE ((f.""ApproverUserId"" = @userId AND f.""RequesterUserId"" = d.""UserId"")
+                                    OR (f.""ApproverUserId"" = d.""UserId"" AND f.""RequesterUserId"" = @userId))
+                                 AND f.""FriendshipStatus"" = @approvedStatus
+                         )
+                    )
+                    AND d.""SearchVector"" @@ to_tsquery('czech', @query)
                 ORDER BY relevance_score DESC
                 LIMIT @limit";
 
@@ -1447,6 +1457,16 @@ public class DiscussionsController : ControllerBase
                 limitParam.ParameterName = "@limit";
                 limitParam.Value = limit;
                 command.Parameters.Add(limitParam);
+
+                var privateTypeParam = command.CreateParameter();
+                privateTypeParam.ParameterName = "@privateType";
+                privateTypeParam.Value = (int)DiscussionType.Private;
+                command.Parameters.Add(privateTypeParam);
+
+                var approvedStatusParam = command.CreateParameter();
+                approvedStatusParam.ParameterName = "@approvedStatus";
+                approvedStatusParam.Value = (int)FriendshipStatus.Approved;
+                command.Parameters.Add(approvedStatusParam);
 
                 // Spuštění dotazu a zpracování výsledků
                 using var reader = await command.ExecuteReaderAsync();
