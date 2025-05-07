@@ -69,9 +69,10 @@ figcaption {
     cursor: pointer;
     transition: transform 0.2s;
     margin: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 3px;
+    /* Odstranění rámečku a zaoblení */
+    border: none;
+    border-radius: 0;
+    padding: 0;
 }
 
 /* Clearfix pro správné ukončení plovoucích elementů */
@@ -92,9 +93,10 @@ figcaption {
     max-height: 200px !important;
     object-fit: contain !important;
     margin: 5px !important;
-    border: 1px solid #ddd !important;
-    border-radius: 4px !important;
-    padding: 3px !important;
+    /* Odstranění rámečku a zaoblení */
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
 }
 
 /* Clearfix pro CKEditor */
