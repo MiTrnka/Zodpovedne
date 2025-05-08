@@ -177,16 +177,27 @@ public class UsersController : ControllerBase
             // Kontrola existence stejného emailu a stejného nickname a nepovolených znaků
             if (await userManager.FindByEmailAsync(model.Email) != null)
                 return BadRequest($"Email {model.Email} je již používán.");
+
             if (Regex.IsMatch(model.Nickname, @"[<>&]"))
                 return BadRequest(@"Přezdívka obsahuje některý z nepovolených znaků [<>&]");
-            if (await userManager.Users.AnyAsync(u => u.Nickname == model.Nickname))
-                return BadRequest($"Přezdívka {model.Nickname} je již používána.");
+
+            // Odstranění mezer z začátku a konce a normalizace vstupu
+            var normalizedNickname = model.Nickname.Trim();
+
+            // Kontrola neviditelných znaků a dalších problematických znaků
+            if (ContainsInvisibleCharacters(normalizedNickname))
+                return BadRequest("Přezdívka obsahuje neviditelné nebo nepovolené znaky.");
+
+            // Kontrola, zda existuje uživatel se stejnou přezdívkou (case-insensitive)
+            // EF.Functions.ILike používá case-insensitive porovnání v PostgreSQL
+            if (await userManager.Users.AnyAsync(u => EF.Functions.ILike(u.Nickname, normalizedNickname)))
+                return BadRequest($"Přezdívka {normalizedNickname} je již používána.");
 
             var user = new ApplicationUser
             {
                 UserName = model.Email,
                 Email = model.Email,
-                Nickname = model.Nickname
+                Nickname = normalizedNickname
             };
 
             var result = await this.userManager.CreateAsync(user, model.Password);
@@ -279,10 +290,20 @@ public class UsersController : ControllerBase
             // Kontrola znaků v nickname a existence stejného nickname
             if (Regex.IsMatch(model.Nickname, @"[<>&]"))
                 return BadRequest(@"Přezdívka obsahuje některý z nepovolených znaků [<>&]");
-            if (await userManager.Users.AnyAsync(u => EF.Functions.ILike(u.Nickname, model.Nickname)))
+
+            // Odstranění mezer z začátku a konce a normalizace vstupu
+            var normalizedNickname = model.Nickname.Trim();
+
+            // Kontrola neviditelných znaků a dalších problematických znaků
+            if (ContainsInvisibleCharacters(normalizedNickname))
+                return BadRequest("Přezdívka obsahuje neviditelné nebo nepovolené znaky.");
+
+            // Kontrola, zda existuje jiný uživatel se stejnou přezdívkou (case-insensitive)
+            if (await userManager.Users.AnyAsync(u => u.Id != user.Id && EF.Functions.ILike(u.Nickname, normalizedNickname)))
                 return BadRequest("Tato přezdívka je již používána.");
 
-            user.Nickname = model.Nickname;
+            user.Nickname = normalizedNickname;
+
             var result = await userManager.UpdateAsync(user);
 
             if (!result.Succeeded)
@@ -1491,5 +1512,44 @@ public class UsersController : ControllerBase
             _logger.Log("Chyba při načítání přátel uživatele", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
+    }
+
+    /// <summary>
+    /// Kontroluje, zda řetězec obsahuje neviditelné nebo speciální znaky
+    /// </summary>
+    /// <param name="input">Řetězec k kontrole</param>
+    /// <returns>true pokud obsahuje neviditelné znaky, jinak false</returns>
+    private bool ContainsInvisibleCharacters(string input)
+    {
+        // Kontrola prázdného vstupu
+        if (string.IsNullOrEmpty(input))
+            return true;
+
+        // Kontrola whitespace znaků na začátku nebo konci (již by měly být oříznuty pomocí Trim)
+        if (input != input.Trim())
+            return true;
+
+        // Kontrola, zda obsahuje řídicí znaky nebo jiné potenciálně problematické znaky
+        foreach (char c in input)
+        {
+            // Řídicí znaky (ASCII 0-31 kromě Tab, LF, CR)
+            if (c <= 31 && c != 9 && c != 10 && c != 13)
+                return true;
+
+            // Znaky Unicode, které jsou označeny jako neviditelné nebo formátovací
+            // Například zero-width spaces, joiners, variation selectors
+            if (char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.Format ||
+                char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.Control ||
+                char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.OtherNotAssigned)
+                return true;
+
+            // Specifické neviditelné Unicode znaky
+            // U+200B (Zero Width Space), U+200C (Zero Width Non-Joiner), atd.
+            if ((int)c == 0x200B || (int)c == 0x200C || (int)c == 0x200D ||
+                (int)c == 0x2060 || (int)c == 0xFEFF || (c >= 0x2000 && c <= 0x200F))
+                return true;
+        }
+
+        return false;
     }
 }
