@@ -895,7 +895,9 @@ public class UsersController : ControllerBase
                     // Pro každý komentář najdeme nejnovější odpověď a pouze čas této odpovědi
                     LatestReplyTime = c.Replies
                         .Where(r => r.CreatedAt > fromTime && r.UserId != userId && r.Type != CommentType.Deleted)
-                        .Max(r => r.CreatedAt)
+                        .OrderByDescending(r => r.CreatedAt) // Přidáno explicitní řazení
+                        .Select(r => r.CreatedAt)
+                        .FirstOrDefault() // Místo Max() použijeme FirstOrDefault() po řazení
                 })
                 .ToListAsync();
 
