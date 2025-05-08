@@ -1251,6 +1251,7 @@ public class UsersController : ControllerBase
                     (f.ApproverUserId == userId && f.RequesterUser.Type == UserType.Normal) ||
                     // Nebo je přihlášený uživatel requester a approver je normal
                     (f.RequesterUserId == userId && f.ApproverUser.Type == UserType.Normal))
+                .OrderBy(f => f.Id)
                 .ToListAsync();
 
             // Transformace dat pro vrácení klientovi
