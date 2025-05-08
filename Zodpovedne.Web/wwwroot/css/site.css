@@ -349,6 +349,25 @@ a {
     align-items: stretch;
 }
 
+/* Třída pro tlačítko aby se zvětšovalo s textem */
+.flexibleBtn {
+    height: auto;
+    min-height: 38px;
+    white-space: normal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 5px;
+}
+
+/* Třída pro text uvnitř tlačítka */
+.flexibleBtn-text {
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.2;
+}
+
 /* Navigace */
 .nav-link:hover {
     position: relative;

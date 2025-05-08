@@ -199,7 +199,7 @@
                             @* Tlačítko pro změnu viditelnosti (pouze pro adminy) *@
                             @if (Model.IsAdmin)
                             {
-                                <button class="btn @(Model.Discussion.Type == DiscussionType.Hidden ? "btn-outline-primary prepniVlastnostBtn" : "btn-outline-primary prepniVlastnostBtn")"
+                                <button class="btn btn-outline-primary flexibleBtn" )"
                                 onclick="toggleDiscussionVisibility(@Model.Discussion.Id)">
                                     <i class="bi bi-eye@(Model.Discussion.Type == DiscussionType.Hidden ? "" : "-slash")"></i>
 
@@ -211,7 +211,7 @@
                             @* Tlačítko pro přepínání typu diskuze mezi Top a Normal (pouze pro adminy) *@
                             @if (Model.IsAdmin && (Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Top))
                             {
-                                <button class="btn @(Model.Discussion.Type == DiscussionType.Top ? "btn-outline-primary prepniVlastnostBtn" : "btn-outline-primary prepniVlastnostBtn")"
+                                <button class="btn btn-outline-primary flexibleBtn"
                                         onclick="toggleTopStatus(@Model.Discussion.Id)">
                                     @if (Model.Discussion.Type == DiscussionType.Top)
                                     {
@@ -271,21 +271,23 @@
                                 @* Tlačítko pro přepínání typu diskuze mezi Private a Normal (pouze pro autory diskuze a adminy) *@
                                 @if ((Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Private))
                                 {
-                                    <button style="border-radius: 5px;" class="btn btn-outline-primary @(Model.Discussion.Type == DiscussionType.Private ? "btn-outline-primary prepniVlastnostBtn" : "btn-outline-primary prepniVlastnostBtn")"
+                                    <button style="border-radius: 5px;" class="btn btn-outline-primary flexibleBtn"
                                             onclick="togglePrivateStatus(@Model.Discussion.Id)">
                                         @if (Model.Discussion.Type == DiscussionType.Normal)
                                         {
                                             <text>
-                                                <span title="Nastavit režim jen pro přátele. Diskusi uvidí pouze vaši přátelé, nebo ti, kteří budou mít na diskuzi odkaz.">
-                                                    <span style="font-size: 12px;">Pro přátele</span>
+                                                <span class="flexibleBtn-text"
+                                                    title="Nastavit režim jen pro přátele. Diskusi uvidí pouze vaši přátelé, nebo ti, kteří budou mít na diskuzi odkaz.">
+                                                    Pro přátele
                                                 </span>
                                             </text>
                                         }
                                         else
                                         {
                                             <text>
-                                                <span title="Nastavit režim viditelnosti diskuze pro všechny. Diskuse bude veřejně dostupná.">
-                                                    <span style="font-size: 12px;">Pro všechny</span>
+                                                <span class="flexibleBtn-text"
+                                                    title="Nastavit režim viditelnosti diskuze pro všechny. Diskuse bude veřejně dostupná.">
+                                                    Pro všechny
                                                 </span>
                                             </text>
                                         }
@@ -294,7 +296,7 @@
                                 <button id="edit-discussion-btn" class="btn btn-primary" onclick="toggleDiscussionEdit(true)">
                                     <i title="Upravit diskusi" class="bi bi-pencil"></i>
                                 </button>
-                                <button id="save-discussion-btn" style="border-radius:5px;" class="btn btn-outline-primary d-none" onclick="saveDiscussionChanges(@Model.Discussion.Id, @((int)Model.Discussion.Type), event)">
+                                <button id="save-discussion-btn" style="border-radius:5px;" class="btn btn-outline-primary d-none flexibleBtn" onclick="saveDiscussionChanges(@Model.Discussion.Id, @((int)Model.Discussion.Type), event)">
                                     <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                         <!-- Kulaté pozadí -->
                                         <circle cx="10" cy="10" r="10" fill="#99cc33" />
@@ -308,7 +310,7 @@
                                               stroke-linejoin="round" />
                                     </svg> Uložit
                                 </button>
-                                <button id="cancel-discussion-btn" style="border-radius:5px;" class="btn btn-outline-primary d-none" onclick="handleCancelEditDiscussionClick()">
+                                <button id="cancel-discussion-btn" style="border-radius:5px;" class="btn btn-outline-primary d-none flexibleBtn" onclick="handleCancelEditDiscussionClick()">
                                     <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                         <!-- Kulaté pozadí -->
                                         <circle cx="10" cy="10" r="10" fill="#dc3545" />
