@@ -145,6 +145,9 @@
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">Změna přezdívky</h5>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn-dialog-close btn-close" onClick="toggleEditPrezdivka()" aria-label="Close">
+                        </button>
             </div>
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(Model.NicknameErrorMessage))
