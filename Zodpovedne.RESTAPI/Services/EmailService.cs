@@ -49,7 +49,7 @@ public class EmailService : IEmailService
             message.To.Add(new MailboxAddress(nickname, email));
 
             // Nastavení předmětu e-mailu
-            message.Subject = "Obnovení hesla - Mydiscussion";
+            message.Subject = "Obnovení hesla - Discussion";
 
             // Vytvoření HTML a textové verze těla e-mailu
             var builder = new BodyBuilder
@@ -61,7 +61,7 @@ public class EmailService : IEmailService
                <p>Obdrželi jsme žádost o obnovení hesla pro Váš účet. Klikněte na následující odkaz pro nastavení nového hesla:</p>
                <p><a href='{resetLink}'>Obnovit heslo</a></p>
                <p>Pokud jste o obnovení hesla nežádali, tento e-mail můžete ignorovat.</p>
-               <p>S pozdravem,<br>Tým Mydiscussion</p>",
+               <p>S pozdravem,<br>Tým Discussion</p>",
 
                 // Textová verze e-mailu - pro klienty nepodporující HTML nebo preferující text
                 TextBody = $@"
@@ -76,7 +76,7 @@ public class EmailService : IEmailService
                Pokud jste o obnovení hesla nežádali, tento e-mail můžete ignorovat.
 
                S pozdravem,
-               Tým Mydiscussion"
+               Tým Discussion"
             };
 
             // Přiřazení vytvořeného těla k e-mailové zprávě

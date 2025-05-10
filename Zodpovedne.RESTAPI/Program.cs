@@ -45,7 +45,7 @@ namespace Zodpovedne.RESTAPI
                 // možná komplikace, pokud API bude bìžet na více serverech, protože klíèe nebudou sdíleny
                 // v takovém pøípadì je do budoucna lepší použít nìjaký externí úložištì, napø. Azure Key Vault
                 builder.Services.AddDataProtection()
-                    .PersistKeysToFileSystem(new DirectoryInfo("/var/www/mydiscussion/keys"));
+                    .PersistKeysToFileSystem(new DirectoryInfo("/var/www/discussion/keys"));
             }
 
             // Kontrola existence konfiguraèního souboru a jeho položek
@@ -190,7 +190,14 @@ namespace Zodpovedne.RESTAPI
                                  "https://api.mydiscussion.cz",
                                  "https://mydiscussions.cz",
                                  "https://www.mydiscussions.cz",
-                                 "https://api.mydiscussions.cz"
+                                 "https://api.mydiscussions.cz",
+
+                                 "https://discussion.cz",
+                                 "https://www.discussion.cz",
+                                 "https://api.discussion.cz",
+                                 "https://discussions.cz",
+                                 "https://www.discussions.cz",
+                                 "https://api.discussions.cz"
 
                              )
                              .AllowAnyMethod()

@@ -30,15 +30,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - My Discussion</title>
+    <title>@ViewData["Title"] - Discussion</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/catalogs.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/ckeditor-content.css" asp-append-version="true" />
-    @if ((Configuration["SiteInstance"] != null) && (Configuration["SiteInstance"] == "mydiscussion.cz"))
+    @if ((Configuration["SiteInstance"] != null) && (Configuration["SiteInstance"] == "discussion.cz"))
     {
-        <link rel="icon" type="image/png" href="~/images/faviconmydiscussion.png" sizes="32x32">
+        <link rel="icon" type="image/png" href="~/images/favicondiscussion.png" sizes="32x32">
     }
     @if ((Configuration["SiteInstance"] != null) && (Configuration["SiteInstance"] == "mamouzodpovedne.cz"))
     {
@@ -69,7 +69,7 @@
     <nav class="navbar navbar-expand-xl navbar-light">
         <div class="site-header">
             <div class="logo-container"> <!-- MZ: logo.png  -->
-                <a asp-page="/Index"><img src="/images/mydiscussion-logo.svg" alt="logo Mydiscussion" style="width: 200px; height: auto;"></a>
+                <a asp-page="/Index"><img src="/images/discussion-logo.svg" alt="logo Discussion" style="width: 200px; height: auto;"></a>
             </div>
         </div>
         <div class="container flex">
