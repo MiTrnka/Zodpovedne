@@ -65,6 +65,43 @@ body {
 .loadMoreLink:hover {
     color: var(--primary-color);
 }
+/* Desing scroll posuvniku */
+.scrollbar {
+    scrollbar-width: thin; /* Firefox - lze použít 'thin', 'auto' nebo 'none' */
+    scrollbar-color: #888 #f1f1f1; /* Firefox - barva posuvníku a pozadí */
+}
+
+/* Pro Chrome, Safari a Opera */
+.scrollbar::-webkit-scrollbar {
+    width: 0.5px; /* Šířka vertikálního scrollbaru */
+    height: 1px; /* Výška horizontálního scrollbaru */
+}
+
+.scrollbar::-webkit-scrollbar-track {
+    background: var(--primary-color); /* Barva dráhy scrollbaru */
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+    background: var(--primary-color); /* Barva posuvníku */
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color); /* Barva posuvníku při najetí myší */
+}
+/* info boxy */
+.alert.alert-danger, .alert.alert-info {
+    position: relative;
+}
+.alert.alert-danger::after, .alert.alert-info::after {
+    content: "\00D7";
+    display: block;
+    position: absolute;
+    font-size: 24px;
+    right: 10px;
+    top: 0px;
+    color: inherit;
+    cursor: pointer;
+}
 /* Detail diskuse - graficke cary pro jednotlive komentar  */
 /* Hlavní kontejner komentáře */
 .komentar-wrapper {

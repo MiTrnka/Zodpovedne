@@ -224,7 +224,7 @@
                 <i class="bi bi-chevron-down" id="friends-chevron"></i>
             </button>
 
-            <div class="card-body" id="friends-list">
+            <div class="card-body scrollbar" id="friends-list">
                 @if (Model.Friendships.Any())
                 {
                     <div class="table-responsive">
@@ -361,7 +361,7 @@
                 Moje diskuze <i class="bi bi-chevron-down" id="discussions-chevron"></i>
             </button>
 
-            <div class="card-body" id="user-discussions" ">
+            <div class="card-body scrollbar" id="user-discussions" ">
             @if (Model.UserDiscussions.Any())
             {
                     <div class="list-group ">
@@ -405,7 +405,7 @@
 
             </button>
 
-            <div class="card-body" id="new-replies-notifications">
+            <div class="card-body scrollbar" id="new-replies-notifications">
             @if (Model.NewRepliesNotifications.Any())
             {
                     <div class="list-group">

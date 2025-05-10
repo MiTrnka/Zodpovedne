@@ -77,7 +77,7 @@
                     <i class="bi bi-chevron-down" id="friends-chevron"></i>
 
                 </button>
-                <div class="card-body" id="friends-list">
+                <div class="card-body scrollbar" id="friends-list">
 
                     @if (Model.UserFriends.Any())
                     {
@@ -132,7 +132,6 @@
                                             <a href="/Categories/@discussion.CategoryCode/@discussion.DiscussionCode" class="list-group-item list-group-item-action">
                                                 <div class="d-flex w-100 justify-content-between">
                                                     <p class="mb-1 fw-bold" style="font-size: 12px;">@discussion.Title</p>
-                                                    <small style="font-size: 12px;">Aktualizováno: @discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
                                                 </div>
                                                 <p class="mb-1" style="font-size: 12px;">Kategorie: @discussion.CategoryName</p>
                                                 <small style="font-size: 12px;">
@@ -140,7 +139,9 @@
                                                     <span>&nbsp;</span>
                                                     <i class="bi bi-person"></i> Autor: @discussion.AuthorNickname
                                                     <span>&nbsp;</span>
-                                                    <i class="bi bi-calendar-plus"></i> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                                    <i class="bi bi-calendar-plus"></i> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                                    <span style="font-size: 12px;">&nbsp;<i class="bi bi-pencil"></i> @discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+
                                                 </small>
                                             </a>
                                         </td>
@@ -160,7 +161,7 @@
                 <i class="bi bi-chevron-down" id="discussions-chevron"></i>
 
             </button>
-            <div class="card-body" id="user-discussions">
+            <div class="card-body scrollbar" id="user-discussions">
             @if (Model.UserDiscussions.Any())
             {
                     @foreach (var discussion in Model.UserDiscussions)
@@ -175,13 +176,14 @@
                                                 <div class="d-flex w-100 justify-content-between">
                                                     <p class="mb-1 fw-bold" style="font-size: 12px;">
                                                         @discussion.Title</p>
-                                                    <small style="font-size: 12px;">Aktualizováno: @discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</small>
                                                 </div>
                                                 <p class="mb-1" style="font-size: 12px;">Kategorie: @discussion.CategoryName</p>
                                                 <small style="font-size: 12px;">
                                                     <i class="bi bi-eye"></i> @discussion.ViewCount
                                                     <span>&nbsp;</span>
-                                                    <i class="bi bi-calendar-plus"></i> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                                    <i class="bi bi-calendar-plus"></i> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                                    <span style="font-size: 12px;">&nbsp;<i class="bi bi-pencil"></i> @discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+
                                                 </small>
                                             </a>
                                         </td>
