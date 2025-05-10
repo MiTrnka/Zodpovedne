@@ -1293,7 +1293,9 @@ tr.toggle-row td {
 
     .navbar-nav.flex-grow-1 {
         order: 1; /* Levé menu bude první */
+        padding-top: 0px;
     }
+
     .navbar-expand-xl {
         margin: auto;
         max-width: 1920px;
