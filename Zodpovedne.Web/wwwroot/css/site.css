@@ -1003,7 +1003,7 @@ span[title="Autor"] a{
 #change-email-account, #change-prezdivka-account, #change-password-account {
     width: 90%;
     max-width: 450px;
-    max-height: 250px;
+    max-height: 230px;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -1011,14 +1011,21 @@ span[title="Autor"] a{
     margin: 0px;
 }
 #change-password-account {
-    max-height: 350px;
+    max-height: 320px;
 }
+
 #change-email-account:not([open]), #change-prezdivka-account:not([open]), #change-password-account:not([open]) {
     display: none;
 }
 .btn-dialog-close{
     width: 25px;
     height: 25px;
+}
+.btn-dialog-send {
+    width: 100%;
+}
+dialog h5 {
+    margin-left: 16px;
 }
 .btn-close:focus {
     border: none;

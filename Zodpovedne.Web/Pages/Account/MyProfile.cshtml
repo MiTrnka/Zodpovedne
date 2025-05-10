@@ -28,9 +28,11 @@
             <div class="card-body">
                 <dl>
                     <dt>Email</dt>
-                    <dd>@Model.UserProfile?.Email</dd>
+                    <dd>@Model.UserProfile?.Email <button class="edit-account-btn" onclick="toggleEditModal('change-email-account');">&nbsp;<i title="Upravit email" class="bi bi-pencil"></i></button></dd>
                     <dt>Přezdívka</dt>
-                    <dd>@Model.UserProfile?.Nickname</dd>
+                    <dd>@Model.UserProfile?.Nickname <button class="edit-account-btn" onclick="toggleEditModal('change-prezdivka-account');">&nbsp;<i title="Upravit přezdívku" class="bi bi-pencil"></i></button></dd>
+                    <dt>Heslo</dt>
+                    <dd>****** <button class="edit-account-btn" onclick="toggleEditModal('change-password-account');">&nbsp;<i title="Upravit heslo" class="bi bi-pencil"></i></button></dd>
                     <dt>Registrován</dt>
                     <dd>@Model.UserProfile?.Created.ToString("dd.MM.yyyy HH:mm")</dd>
                     @if (@Model.UserProfile?.LastLogin != null)
@@ -109,7 +111,7 @@
                 <div class="flex-grow-1 me-2">
                     <input type="text" asp-for="SearchNickname" class="form-control" placeholder="Zadejte přezdívku uživatele" required />
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: auto;">
+                <button type="submit" class="btn btn-primary " style="width: auto;">
                     Najít profil
                 </button>
             </form>
@@ -122,10 +124,15 @@
         </div>
 
         <!-- Sekce pro změnu emailu -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Změna emailu</h5>
-            </div>
+        <dialog class="card mb-4" id="change-email-account" style="z-index: 9999;">
+            <div id="change-email-account-inner">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-center">Změna emailu</h5>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn-dialog-close btn-close" onClick="toggleEditModal('change-email-account')" aria-label="Close">
+                        </button>
+                    </div>
+                </div>
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(Model.EmailErrorMessage))
                 {
@@ -136,39 +143,49 @@
                         <label class="form-label">Nový email</label>
                         <input type="email" asp-for="NewEmail" class="form-control" required />
                     </div>
-                    <button type="submit" class="btn btn-primary">Změnit email</button>
+                        <button type="submit" class="btn btn-primary btn-dialog-send">Změnit email</button>
                 </form>
+                </div>
             </div>
-        </div>
+        </dialog>
 
         <!-- Sekce pro změnu přezdívky -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Změna přezdívky</h5>
+        <dialog class="card mb-4" id="change-prezdivka-account" style="z-index: 9999;">
+            <div id="change-prezdivka-account-inner">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Změna přezdívky</h5>
                     <div class="d-flex justify-content-end">
-                        <button type="button" class="btn-dialog-close btn-close" onClick="toggleEditPrezdivka()" aria-label="Close">
+                        <button type="button" class="btn-dialog-close btn-close" onClick="toggleEditModal('change-prezdivka-account')" aria-label="Close">
                         </button>
-            </div>
-            <div class="card-body">
-                @if (!string.IsNullOrEmpty(Model.NicknameErrorMessage))
-                {
-                    <div class="alert alert-danger">@Model.NicknameErrorMessage</div>
-                }
-                <form method="post" asp-page-handler="UpdateNickname">
-                    <div class="mb-3">
-                        <label class="form-label">Nová přezdívka</label>
-                        <input type="text" asp-for="NewNickname" class="form-control" required />
                     </div>
-                    <button type="submit" class="btn btn-primary">Změnit přezdívku</button>
-                </form>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.NicknameErrorMessage))
+                    {
+                        <div class="alert alert-danger">@Model.NicknameErrorMessage</div>
+                    }
+                    <form method="post" asp-page-handler="UpdateNickname">
+                        <div class="mb-3">
+                            <label class="form-label">Nová přezdívka</label>
+                            <input type="text" asp-for="NewNickname" class="form-control" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-dialog-send w-100">Změnit přezdívku</button>
+                    </form>
+                </div>
             </div>
-        </div>
+        </dialog>
 
         <!-- Sekce pro změnu hesla -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Změna hesla</h5>
-            </div>
+        <dialog class="card mb-4" id="change-password-account" style="z-index: 9999;">
+            <div id="change-password-account-inner">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Změna hesla</h5>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn-dialog-close btn-close" onClick="toggleEditModal('change-password-account')" aria-label="Close">
+                        </button>
+                    </div>
+                </div>
+
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(Model.PasswordErrorMessage))
                 {
@@ -183,10 +200,11 @@
                         <label class="form-label">Nové heslo</label>
                         <input type="password" asp-for="NewPassword" class="form-control" required />
                     </div>
-                    <button type="submit" class="btn btn-primary">Změnit heslo</button>
+                        <button type="submit" class="btn btn-primary btn-dialog-send">Změnit heslo</button>
                 </form>
+                </div>
             </div>
-        </div>
+        </dialog>
 
         <!-- Sekce s přáteli -->
         <div class="card mb-4" style="border:none;">
@@ -418,12 +436,36 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <script defer>
+      function toggleEditModal(IdModalOkna) {
+          const element = document.getElementById(IdModalOkna);
+         if (element.open) {
+          element.close();
+        } else {
+          element.showModal();
+        }
+      }
         // Funkce pro rozbalení/sbalení sekce s diskuzemi
         document.addEventListener('DOMContentLoaded', function () {
             const toggleButton = document.getElementById('toggle-discussions');
             const discussionsContainer = document.getElementById('user-discussions');
             const chevronIcon = document.getElementById('discussions-chevron');
+            const changePrezdivkaAccount = document.getElementById('change-prezdivka-account');
+            
+            // Pokud element existuje, nastavíme event listenery
+            if (changePrezdivkaAccount) {
+                changePrezdivkaAccount.addEventListener("click", function(e) {
+                    let souradniceDialogOkna = changePrezdivkaAccount.getBoundingClientRect();
 
+                    if (
+                        e.clientX < souradniceDialogOkna.left ||
+                        e.clientX > souradniceDialogOkna.right ||
+                        e.clientY < souradniceDialogOkna.top ||
+                        e.clientY > souradniceDialogOkna.bottom
+                    ) {
+                        changePrezdivkaAccount.hide();
+                    }
+                });
+            }
             toggleButton.addEventListener('click', function () {
                 if (discussionsContainer.style.display === 'none') {
                     discussionsContainer.style.display = 'block';
