@@ -23,7 +23,6 @@
                                 <th>Autor</th>
                                 <th>Diskuze</th>
                                 <th>Kategorie</th>
-                                <th>Aktualizováno</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -63,11 +62,6 @@
                                         <a href="/Categories/@discussion.CategoryCode" class="text-decoration-none">
                                             @discussion.CategoryName
                                         </a>
-                                    </td>
-                                    <td class="text-nowrap">
-                                        <small class="text-muted" title="@discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")">
-                                            @discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
-                                        </small>
                                     </td>
                                 </tr>
                             }
