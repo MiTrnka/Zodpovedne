@@ -2,7 +2,21 @@
 @model MyProfileModel
 @{
     ViewData["Title"] = "Můj profil";
-
+    // Error při změně přezdívky
+    @if (!string.IsNullOrEmpty(Model.NicknameErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.NicknameErrorMessage</div>
+    }
+    // Error při změně emaulu
+    @if (!string.IsNullOrEmpty(Model.EmailErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.EmailErrorMessage</div>
+    }
+    // Error při změně hesla
+    @if (!string.IsNullOrEmpty(Model.PasswordErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.PasswordErrorMessage</div>
+    }
     //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
     if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
@@ -134,10 +148,6 @@
                     </div>
                 </div>
             <div class="card-body">
-                @if (!string.IsNullOrEmpty(Model.EmailErrorMessage))
-                {
-                    <div class="alert alert-danger">@Model.EmailErrorMessage</div>
-                }
                 <form method="post" asp-page-handler="UpdateEmail">
                     <div class="mb-3">
                         <label class="form-label">Nový email</label>
@@ -160,10 +170,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    @if (!string.IsNullOrEmpty(Model.NicknameErrorMessage))
-                    {
-                        <div class="alert alert-danger">@Model.NicknameErrorMessage</div>
-                    }
+
                     <form method="post" asp-page-handler="UpdateNickname">
                         <div class="mb-3">
                             <label class="form-label">Nová přezdívka</label>
@@ -187,10 +194,6 @@
                 </div>
 
             <div class="card-body">
-                @if (!string.IsNullOrEmpty(Model.PasswordErrorMessage))
-                {
-                    <div class="alert alert-danger">@Model.PasswordErrorMessage</div>
-                }
                 <form method="post" asp-page-handler="ChangePassword">
                     <div class="mb-3">
                         <label class="form-label">Současné heslo</label>
