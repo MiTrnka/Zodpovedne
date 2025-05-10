@@ -464,6 +464,10 @@ document.addEventListener('DOMContentLoaded', function () {
         // Unikátní jméno skupiny radio buttonů pro tuto otázku
         const radioGroupName = `vote-question-${question.id}`;
 
+        // Vytvoření wrapper divu pro radio buttony
+        const wrapperContainer = document.createElement('div');
+        wrapperContainer.className = 'vote-form-wrapper';
+
         // Vytvoření radio buttonů pro možnosti Ano, Ne, Nehlasuji
         const options = [
             { value: 'true', label: 'Ano', checked: question.currentUserVote === true },
@@ -491,14 +495,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
             optionContainer.appendChild(radioInput);
             optionContainer.appendChild(radioLabel);
-            formContainer.appendChild(optionContainer);
+
+            // Přidáváme jednotlivé form-check elementy do wrapperu
+            wrapperContainer.appendChild(optionContainer);
+
         });
+
+        // Přidáme wrapper s form-check elementy do hlavního containeru
+        formContainer.appendChild(wrapperContainer);
 
         // Přidání aktuálních výsledků pod radio buttony
         const resultsContainer = document.createElement('div');
         resultsContainer.className = 'voting-results mt-3';
         resultsContainer.appendChild(createVotingResults(question));
         formContainer.appendChild(resultsContainer);
+
 
         return formContainer;
     }

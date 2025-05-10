@@ -1184,6 +1184,12 @@ tr.toggle-row td {
     padding-left: 1.5rem !important; /* Menší odsazení zleva */
 }
 
+.vote-form-wrapper {
+    display: flex;
+    margin-top: 15px;
+    gap: 10px;
+}
+
 #voting-questions-container .progress {
     height: 15px !important; /* Nižší progress bary */
     margin-bottom: 0.25rem !important; /* Menší prostor pod progress bary */
