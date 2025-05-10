@@ -97,77 +97,15 @@ public class MyProfileModel : BasePageModel
         if (!IsUserLoggedIn)
             return RedirectToPage("/Account/Login");
 
-        var client = _clientFactory.CreateBearerClient(HttpContext);
+        await LoadUserDataAsync();
 
-        // Naètení profilu uživatele
-        var response = await client.GetAsync($"{ApiBaseUrl}/users/authenticated-user");
-
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.Log("Nepodaøilo se naèíst data pøihlášeného uživatele.");
-            ErrorMessage = "Omlouváme se, nepodaøilo se naèíst Váš profil.";
-            return Page();
-        }
-
-        UserProfile = await response.Content.ReadFromJsonAsync<UserProfileDto>();
         if (UserProfile == null)
         {
             _logger.Log("Nepodaøilo se naèíst data pøihlášeného uživatele z response.");
             ErrorMessage = "Omlouváme se, nepodaøilo se naèíst Váš profil.";
-            return Page();
         }
 
-        // Naètení diskuzí uživatele
-        try
-        {
-            var discussionsResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/user-discussions");
-            if (discussionsResponse.IsSuccessStatusCode)
-            {
-                var userDiscussions = await discussionsResponse.Content.ReadFromJsonAsync<List<BasicDiscussionInfoDto>>();
-                if (userDiscussions != null)
-                {
-                    UserDiscussions = userDiscussions;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
-            // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst diskuze
-        }
-
-        // Naètení seznamu diskuzí, kde pøihlášený uživatel dostal nové odpovìdi ke svým komentáøùm
-        try
-        {
-            var notificationsResponse = await client.GetAsync($"{ApiBaseUrl}/users/discussions-with-new-replies");
-            if (notificationsResponse.IsSuccessStatusCode)
-            {
-                NewRepliesNotifications = await notificationsResponse.Content
-                    .ReadFromJsonAsync<List<DiscussionWithNewRepliesDto>>() ?? new();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.Log("Nepodaøilo se naèíst notifikace o nových odpovìdích", ex);
-            // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst notifikace
-        }
-
-        // Naètení pøátelství
-        try
-        {
-            var friendshipsResponse = await client.GetAsync($"{ApiBaseUrl}/users/friendships");
-            if (friendshipsResponse.IsSuccessStatusCode)
-            {
-                Friendships = await friendshipsResponse.Content.ReadFromJsonAsync<List<FriendshipItem>>() ?? new();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.Log("Nepodaøilo se naèíst seznam pøátel", ex);
-            // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst pøátele
-        }
-
-        return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
+        return Page();
     }
 
     /// <summary>
@@ -256,6 +194,7 @@ public class MyProfileModel : BasePageModel
         {
             _logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
             ErrorMessage = "Omlouváme se, nìco se pokazilo.";
+            await LoadUserDataAsync();
             return Page();
         }
 
@@ -268,17 +207,18 @@ public class MyProfileModel : BasePageModel
         {
             // Email se zmìnil úspìšnì, uživatel bude odhlášen a bude se muset znovu nalogovat, aby se mu vygeneroval nový JWT token
             if (await SignedOutIsOK())
-                return RedirectToPage("/Account/Login", new { statusMessage = "Váš email byl úspìšnì zmìnìn, nyní se jím mùžete novì pøihlásit"}); // Zpùsobí naètení nové stránky (znovu se novì naplní model)
+                return RedirectToPage("/Account/Login", new { statusMessage = "Váš email byl úspìšnì zmìnìn, nyní se jím mùžete novì pøihlásit" });
             else
             {
                 ErrorMessage = "Nastala chyba pøi odhlašování";
+                await LoadUserDataAsync();
                 return Page();
             }
         }
 
         EmailErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì emailu.");
-
-        return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
+        await LoadUserDataAsync();
+        return Page();
     }
 
     /// <summary>
@@ -295,12 +235,14 @@ public class MyProfileModel : BasePageModel
         {
             _logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
             ErrorMessage = "Omlouváme se, nìco se pokazilo.";
+            await LoadUserDataAsync();
             return Page();
         }
 
         if (string.IsNullOrWhiteSpace(NewNickname))
         {
             NicknameErrorMessage = "Pøezdívka nesmí být prázdná.";
+            await LoadUserDataAsync();
             return Page();
         }
 
@@ -311,12 +253,12 @@ public class MyProfileModel : BasePageModel
 
         if (response.IsSuccessStatusCode)
         {
-            return RedirectToPage("MyProfile", new { statusMessage = "Pøezdívka byla úspìšnì zmìnìna. Zmìna se všude projeví po novém pøihlášení." }); // Zpùsobí znovunaètení stránky (znovu se novì naplní model)
+            return RedirectToPage("MyProfile", new { statusMessage = "Pøezdívka byla úspìšnì zmìnìna. Zmìna se všude projeví po novém pøihlášení." });
         }
 
-        NicknameErrorMessage = await GetErrorFromHttpResponseMessage(response,"Nastala chyba pøi zmìnì pøezdívky.");
-
-        return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
+        NicknameErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì pøezdívky.");
+        await LoadUserDataAsync();
+        return Page();
     }
 
     /// <summary>
@@ -333,6 +275,7 @@ public class MyProfileModel : BasePageModel
         {
             _logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
             ErrorMessage = "Omlouváme se, nìco se pokazilo.";
+            await LoadUserDataAsync();
             return Page();
         }
 
@@ -347,17 +290,13 @@ public class MyProfileModel : BasePageModel
 
         if (response.IsSuccessStatusCode)
         {
-            return RedirectToPage("MyProfile", new { statusMessage = "Heslo bylo úspìšnì zmìnìno." }); // Zpùsobí znovunaètení stránky (znovu se novì naplní model)
+            return RedirectToPage("MyProfile", new { statusMessage = "Heslo bylo úspìšnì zmìnìno." });
         }
 
         PasswordErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì hesla.");
-
-        return Page(); // Zpùsobí naètení stránky ale s pùvodním modelem
+        await LoadUserDataAsync();
+        return Page();
     }
-
-
-
-
 
     /// <summary>
     /// Handler pro schválení žádosti o pøátelství
@@ -444,5 +383,70 @@ public class MyProfileModel : BasePageModel
         }
 
         return RedirectToPage(new { statusMessage = StatusMessage });
+    }
+
+    /// <summary>
+    /// Pomocná metoda pro naètení dat uživatele
+    /// </summary>
+    private async Task LoadUserDataAsync()
+    {
+        if (!IsUserLoggedIn)
+            return;
+
+        var client = _clientFactory.CreateBearerClient(HttpContext);
+
+        // Naètení profilu uživatele
+        var response = await client.GetAsync($"{ApiBaseUrl}/users/authenticated-user");
+        if (response.IsSuccessStatusCode)
+        {
+            UserProfile = await response.Content.ReadFromJsonAsync<UserProfileDto>();
+        }
+
+        // Naètení diskuzí uživatele
+        try
+        {
+            var discussionsResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/user-discussions");
+            if (discussionsResponse.IsSuccessStatusCode)
+            {
+                var userDiscussions = await discussionsResponse.Content.ReadFromJsonAsync<List<BasicDiscussionInfoDto>>();
+                if (userDiscussions != null)
+                {
+                    UserDiscussions = userDiscussions;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
+        }
+
+        // Naètení seznamu diskuzí, kde pøihlášený uživatel dostal nové odpovìdi ke svým komentáøùm
+        try
+        {
+            var notificationsResponse = await client.GetAsync($"{ApiBaseUrl}/users/discussions-with-new-replies");
+            if (notificationsResponse.IsSuccessStatusCode)
+            {
+                NewRepliesNotifications = await notificationsResponse.Content
+                    .ReadFromJsonAsync<List<DiscussionWithNewRepliesDto>>() ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Nepodaøilo se naèíst notifikace o nových odpovìdích", ex);
+        }
+
+        // Naètení pøátelství
+        try
+        {
+            var friendshipsResponse = await client.GetAsync($"{ApiBaseUrl}/users/friendships");
+            if (friendshipsResponse.IsSuccessStatusCode)
+            {
+                Friendships = await friendshipsResponse.Content.ReadFromJsonAsync<List<FriendshipItem>>() ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log("Nepodaøilo se naèíst seznam pøátel", ex);
+        }
     }
 }
