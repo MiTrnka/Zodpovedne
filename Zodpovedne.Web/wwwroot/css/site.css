@@ -1216,6 +1216,11 @@ tr.toggle-row td {
     padding: 0.75rem !important;
 }
 
+#messages-badge {
+    left: auto !important;
+    right: 10px;
+}
+
 /* Styly pro tablet a větší obrazovky (≥576px) */
 @media (min-width: 576px) {
     /* Tlačítka na širších obrazovkách */
@@ -1297,7 +1302,10 @@ tr.toggle-row td {
         background-color: transparent;
 
     }
-
+    #messages-badge {
+        left: 30px !important;
+        right: auto !important;
+    }
     .navbar-nav.flex-grow-1 {
         order: 1; /* Levé menu bude první */
         padding-top: 0px;
