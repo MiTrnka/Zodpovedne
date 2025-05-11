@@ -302,8 +302,16 @@ a {
 }
 .like-btn-disable, .like-btn, .pocetZobrazeni {
     margin-bottom: 0.5rem !important;
+    border: none;
+    background-color: transparent;
 }
-
+.btn:active, .btn:focus, .btn:focus-visible, .btn:active:focus {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+}
 .btn-primary {
     color: #fff;
     background-color: var(--primary-color);
@@ -976,7 +984,6 @@ h1 {
     width: auto;
     height: var(--btn-height);
 }
-
 
 .like-btn-disable, .like-btn[disabled] {
     color: var(--text-color);
