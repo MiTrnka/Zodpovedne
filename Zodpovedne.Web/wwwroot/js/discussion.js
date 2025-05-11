@@ -280,6 +280,26 @@ async function togglePrivateStatus(discussionId) {
     }
 }
 
+// Funkce pro nahrazení ikony nevyplnenho srdce za vyplnene srdce po pridani lajku 
+// vola se pri pridani lajku k diskusi nebo ke komentari 
+function replaceHeartIcon(button) {
+    // Najde vnořený element i s třídou bi-heart
+    const icon = button.querySelector('i.bi-heart');
+
+    // Pokud byl nalezen element s třídou bi-heart
+    if (icon) {
+        // Odstraní třídu bi-heart
+        icon.classList.remove('bi-heart');
+        // Přidá třídu bi-heart-fill
+        icon.classList.add('bi-heart-fill');
+
+        // Volitelně změňte také title atribut pro lepší popis
+        if (icon.hasAttribute('title')) {
+            icon.setAttribute('title', 'Počet srdcí od uživatelů');
+        }
+    }
+}
+
 // Funkce pro přidání like k diskuzi
 async function likeDiscussion(discussionId) {
     try {
@@ -299,6 +319,7 @@ async function likeDiscussion(discussionId) {
                 const button = document.querySelector(`button[onclick="likeDiscussion(${discussionId})"]`);
                 button.disabled = true;
                 button.classList.replace('like-btn', 'like-btn-disable');
+                replaceHeartIcon(button);
             }
         } else {
             alert('Nepodařilo se přidat like.');
@@ -328,6 +349,7 @@ async function likeComment(discussionId, commentId) {
                 const button = document.querySelector(`button[onclick="likeComment(${discussionId}, ${commentId})"]`);
                 button.disabled = true;
                 button.classList.replace('like-btn', 'like-btn-disable');
+                replaceHeartIcon(button);
             }
         } else {
             alert('Nepodařilo se přidat like.');

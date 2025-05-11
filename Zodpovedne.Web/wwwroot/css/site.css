@@ -988,7 +988,7 @@ h1 {
 .like-btn-disable, .like-btn[disabled] {
     color: var(--text-color);
 }
-    .like-btn-disable i {
+    .like-btn-disable i::before {
         color: var(--text-color);
     }
 
