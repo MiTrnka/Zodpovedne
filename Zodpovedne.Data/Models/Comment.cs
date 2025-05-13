@@ -17,7 +17,7 @@ public class Comment
     public int? ParentCommentId { get; set; }
 
     [Required(ErrorMessage = "Obsah komentáře je povinný")]
-    [MaxLength(200, ErrorMessage = "Obsah komentáře nesmí být delší než 200 znaků.")]
+    [MaxLength(500, ErrorMessage = "Obsah komentáře nesmí být delší než 500 znaků.")]
     public string Content { get; set; } = "";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

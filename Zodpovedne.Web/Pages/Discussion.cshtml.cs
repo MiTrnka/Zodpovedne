@@ -220,8 +220,8 @@ public class DiscussionModel : BasePageModel
     {
         if (!ModelState.IsValid)
         {
-            _logger.Log("Neplatný model pøi pøidávání komentáøe");
-            ErrorMessage = "Omlouváme se, ale komentáø se nepodaøilo vložit.";
+            _logger.Log("Nepodaøilo se vložit komentáø, pøekroèila se maximální velikost");
+            ErrorMessage = "Omlouváme se, ale komentáø se nepodaøilo vložit, pøekroèili jste maximální velikost 500 znakù.";
             return Page();
         }
 
