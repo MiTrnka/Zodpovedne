@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
      */
     function createNotificationItem(notification, formattedTime) {
         const item = document.createElement('a');
-        item.href = notification.discussionUrl;
+        item.href = notification.discussionUrl + '#comments-container';
         item.className = 'dropdown-item py-2 notification-item';
         item.innerHTML = `
             <div class="d-flex justify-content-between align-items-start">
