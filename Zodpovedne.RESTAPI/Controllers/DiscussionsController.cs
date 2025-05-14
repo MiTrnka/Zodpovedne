@@ -1757,53 +1757,78 @@ public class DiscussionsController : ControllerBase
             if (user == null)
                 return NotFound();
 
-            // Nejdřív získáme ID a datum lajkovaných diskuzí
+            // Zjištění přátelství mezi aktuálním uživatelem a cílovým uživatelem
+            var friendIds = new List<string>();
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                // Vyhledání schválených přátelství, kde je uživatel buď žadatelem nebo schvalovatelem
+                friendIds = await dbContext.Friendships
+                    .AsNoTracking()
+                    .Where(f => (f.ApproverUserId == currentUserId || f.RequesterUserId == currentUserId) &&
+                           f.FriendshipStatus == FriendshipStatus.Approved)
+                    .Select(f => f.ApproverUserId == currentUserId ? f.RequesterUserId : f.ApproverUserId)
+                    .ToListAsync();
+            }
+
+            // Změna strategie - načteme více lajkovaných diskuzí pro případnou filtraci
+            // Načteme alespoň 3x více lajků, abychom měli dostatečnou rezervu pro filtraci
+            int fetchLimit = limit * 3;
+
+            // Nejdřív získáme ID a datum více lajkovaných diskuzí
             var likedDiscussionIds = await dbContext.DiscussionLikes
                 .AsNoTracking()
                 .Where(dl => dl.UserId == userId)
                 .OrderByDescending(dl => dl.CreatedAt) // Seřadit podle data lajku (nejnovější první)
-                .Take(limit)
-                .Select(dl => dl.DiscussionId)
+                .Take(fetchLimit)
+                .Select(dl => new { dl.DiscussionId, dl.CreatedAt }) // Přidáváme i datum pro pozdější řazení
                 .ToListAsync();
 
-            // Pak načteme detaily diskuzí podle ID
-            var likedDiscussions = await dbContext.Discussions
-            .AsNoTracking()
-            .Where(d => likedDiscussionIds.Contains(d.Id))
-            .Where(d => d.Type != DiscussionType.Deleted) // Ignorovat smazané diskuze
-            .Where(d => d.Type != DiscussionType.Hidden || isAdmin || d.UserId == currentUserId) // Skryté diskuze vidí jen admin nebo autor
-            .Where(d => d.Type != DiscussionType.ForFriends || isAdmin || d.UserId == currentUserId ||
-                   dbContext.Friendships.Any(f =>
-                       ((f.ApproverUserId == currentUserId && f.RequesterUserId == d.UserId) ||
-                        (f.ApproverUserId == d.UserId && f.RequesterUserId == currentUserId)) &&
-                       f.FriendshipStatus == FriendshipStatus.Approved))
-            .Where(d => d.Type != DiscussionType.Private || isAdmin || d.UserId == currentUserId) // Private diskuze vidí jen admin nebo autor
-            .Include(d => d.Category) // Include před Select
-            .Include(d => d.User)     // Include před Select
-            .ToListAsync();
+            // Rychlý check, jestli máme vůbec nějaké lajky
+            if (!likedDiscussionIds.Any())
+                return Ok(new List<BasicDiscussionInfoDto>());
 
-            // Nyní mapujeme na DTO a zachováváme pořadí podle data lajku
-            var result = likedDiscussionIds
-                .Select(id => likedDiscussions.FirstOrDefault(d => d.Id == id))
-                .Where(d => d != null) // Filtrujeme případné null hodnoty
-                .Select(d => new BasicDiscussionInfoDto
+            // Pak načteme detaily diskuzí podle ID včetně aplikování filtru oprávnění
+            var likedDiscussions = await dbContext.Discussions
+                .AsNoTracking()
+                .Where(d => likedDiscussionIds.Select(l => l.DiscussionId).Contains(d.Id))
+                .Where(d => d.Type != DiscussionType.Deleted) // Ignorovat smazané diskuze
+                .Where(d => d.Type != DiscussionType.Hidden || isAdmin || d.UserId == currentUserId) // Skryté diskuze vidí jen admin nebo autor
+                .Where(d => d.Type != DiscussionType.ForFriends || isAdmin || d.UserId == currentUserId ||
+                       friendIds.Contains(d.UserId))
+                .Where(d => d.Type != DiscussionType.Private || isAdmin || d.UserId == currentUserId) // Private diskuze vidí jen admin nebo autor
+                .Include(d => d.Category) // Include před Select
+                .Include(d => d.User)     // Include před Select
+                .ToListAsync();
+
+            // Vytvoříme lookup pro data lajků, abychom mohli správně řadit
+            var likeDates = likedDiscussionIds.ToDictionary(l => l.DiscussionId, l => l.CreatedAt);
+
+            // Nyní mapujeme na DTO, zachováváme pořadí podle data lajku a bereme jen požadovaný počet
+            var result = likedDiscussions
+                .Select(d => new {
+                    Discussion = d,
+                    LikeDate = likeDates[d.Id] // Přiřadíme datum lajku pro řazení
+                })
+                .OrderByDescending(x => x.LikeDate) // Řazení podle data lajku
+                .Take(limit) // Omezení na požadovaný počet
+                .Select(x => new BasicDiscussionInfoDto
                 {
-                    Id = d!.Id,
-                    Title = d.Title,
-                    Content = d.Content.Length > 100 ? d.Content.Substring(0, 100) + "..." : d.Content,
-                    ImagePath = d.ImagePath,
-                    CategoryName = d.Category.Name,
-                    CategoryId = d.CategoryId,
-                    CategoryCode = d.Category.Code,
-                    DiscussionCode = d.Code,
-                    AuthorNickname = d.User.Nickname,
-                    AuthorId = d.UserId,
-                    CreatedAt = d.CreatedAt,
-                    UpdatedAt = d.UpdatedAt,
-                    UpdatedWhateverAt = d.UpdatedWhateverAt,
-                    ViewCount = d.ViewCount,
-                    Type = d.Type,
-                    VoteType = d.VoteType
+                    Id = x.Discussion.Id,
+                    Title = x.Discussion.Title,
+                    Content = x.Discussion.Content.Length > 100 ? x.Discussion.Content.Substring(0, 100) + "..." : x.Discussion.Content,
+                    ImagePath = x.Discussion.ImagePath,
+                    CategoryName = x.Discussion.Category.Name,
+                    CategoryId = x.Discussion.CategoryId,
+                    CategoryCode = x.Discussion.Category.Code,
+                    DiscussionCode = x.Discussion.Code,
+                    AuthorNickname = x.Discussion.User.Nickname,
+                    AuthorId = x.Discussion.UserId,
+                    CreatedAt = x.Discussion.CreatedAt,
+                    UpdatedAt = x.Discussion.UpdatedAt,
+                    UpdatedWhateverAt = x.Discussion.UpdatedWhateverAt,
+                    ViewCount = x.Discussion.ViewCount,
+                    Type = x.Discussion.Type,
+                    VoteType = x.Discussion.VoteType
                 })
                 .ToList();
 
