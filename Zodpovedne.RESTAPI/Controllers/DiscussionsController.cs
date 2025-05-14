@@ -90,7 +90,11 @@ public class DiscussionsController : ControllerBase
                     d.Type != DiscussionType.ForFriends || // ForFriends diskuze vidí jen:
                     isAdmin ||                          // - admin (může vidět vše)
                     d.UserId == userId ||               // - autor diskuze (vidí své diskuze)
-                    friendIds.Contains(d.UserId));      // - přátelé autora (vidí diskuze svých přátel)
+                    friendIds.Contains(d.UserId))       // - přátelé autora (vidí diskuze svých přátel)
+                .Where(d =>
+                    d.Type != DiscussionType.Private || // Private diskuze vidí jen:
+                    isAdmin ||                          // - admin (může vidět vše)
+                    d.UserId == userId);                // - autor diskuze (vidí své diskuze)
 
             // Aplikace filtru podle kategorie, pokud je zadána
             if (categoryId.HasValue)
@@ -292,6 +296,7 @@ public class DiscussionsController : ControllerBase
                 .Where(d => d.Type != DiscussionType.Deleted) // Smazané diskuze nevidí nikdo
                 .Where(d => d.Type != DiscussionType.Hidden || isMyAccount || isAdmin) // Hidden diskuze vidí jen autor nebo admin
                 .Where(d => d.Type != DiscussionType.ForFriends || isMyAccount || isAdmin || friendIds.Contains(d.UserId)) // ForFriends diskuze vidí autor, admin nebo přátelé autora
+                .Where(d => d.Type != DiscussionType.Private || isMyAccount || isAdmin) // Private diskuze vidí jen autor nebo admin
                 .Include(d => d.Category) // Načteme i kategorii pro zobrazení
                 .OrderByDescending(d => d.UpdatedAt) // Řazení od nejnovějších
                 .Select(d => new BasicDiscussionInfoDto
@@ -364,7 +369,7 @@ public class DiscussionsController : ControllerBase
                 .Include(d => d.User)     // Autor pro zobrazení nicknamu
                 .Include(d => d.Likes)    // Lajky pro zobrazení počtu a kontrolu uživatelových lajků
                                           // Filtrování diskuzí dle oprávnění uživatele
-                .FirstOrDefaultAsync(d => d.Id == discussionId &&
+               .FirstOrDefaultAsync(d => d.Id == discussionId &&
                     d.Type != DiscussionType.Deleted &&     // Nikdy nezobrazujeme smazané diskuze
                     (d.Type != DiscussionType.Hidden ||     // Pro skryté diskuze kontrolujeme:
                         isAdmin ||                          // - buď je uživatel admin (vidí vše)
@@ -1463,7 +1468,7 @@ public class DiscussionsController : ControllerBase
                 WHERE
                     d.""Type"" != @deletedType
                     AND (d.""Type"" != @hiddenType OR @isAdmin = TRUE OR d.""UserId"" = @userId)
-                    AND (d.""Type"" != @privateType
+                    AND (d.""Type"" != @forfriendsType
                          OR @isAdmin = TRUE
                          OR d.""UserId"" = @userId
                          OR EXISTS (
@@ -1472,6 +1477,10 @@ public class DiscussionsController : ControllerBase
                                     OR (f.""ApproverUserId"" = d.""UserId"" AND f.""RequesterUserId"" = @userId))
                                  AND f.""FriendshipStatus"" = @approvedStatus
                          )
+                    )
+                    AND (d.""Type"" != @privateType
+                         OR @isAdmin = TRUE
+                         OR d.""UserId"" = @userId
                     )
                     AND d.""SearchVector"" @@ to_tsquery('czech', @query)
                 ORDER BY relevance_score DESC
@@ -1508,15 +1517,20 @@ public class DiscussionsController : ControllerBase
                 limitParam.Value = limit;
                 command.Parameters.Add(limitParam);
 
-                var privateTypeParam = command.CreateParameter();
-                privateTypeParam.ParameterName = "@privateType";
-                privateTypeParam.Value = (int)DiscussionType.ForFriends;
-                command.Parameters.Add(privateTypeParam);
+                var forfriendsTypeParam = command.CreateParameter();
+                forfriendsTypeParam.ParameterName = "@forfriendsType";
+                forfriendsTypeParam.Value = (int)DiscussionType.ForFriends;
+                command.Parameters.Add(forfriendsTypeParam);
 
                 var approvedStatusParam = command.CreateParameter();
                 approvedStatusParam.ParameterName = "@approvedStatus";
                 approvedStatusParam.Value = (int)FriendshipStatus.Approved;
                 command.Parameters.Add(approvedStatusParam);
+
+                var privateTypeParam = command.CreateParameter();
+                privateTypeParam.ParameterName = "@privateType";
+                privateTypeParam.Value = (int)DiscussionType.Private;
+                command.Parameters.Add(privateTypeParam);
 
                 // Spuštění dotazu a zpracování výsledků
                 using var reader = await command.ExecuteReaderAsync();
@@ -1641,6 +1655,7 @@ public class DiscussionsController : ControllerBase
                 .Where(d => friendIds.Contains(d.UserId) &&
                        d.Type != DiscussionType.Deleted &&
                        d.Type != DiscussionType.Hidden &&
+                       d.Type != DiscussionType.Private &&
                        d.User.Type == UserType.Normal)
                 .OrderByDescending(d => d.UpdatedWhateverAt);
 
@@ -1753,18 +1768,19 @@ public class DiscussionsController : ControllerBase
 
             // Pak načteme detaily diskuzí podle ID
             var likedDiscussions = await dbContext.Discussions
-                .AsNoTracking()
-                .Where(d => likedDiscussionIds.Contains(d.Id))
-                .Where(d => d.Type != DiscussionType.Deleted) // Ignorovat smazané diskuze
-                .Where(d => d.Type != DiscussionType.Hidden || isAdmin || d.UserId == currentUserId) // Skryté diskuze vidí jen admin nebo autor
-                .Where(d => d.Type != DiscussionType.ForFriends || isAdmin || d.UserId == currentUserId ||
-                       dbContext.Friendships.Any(f =>
-                           ((f.ApproverUserId == currentUserId && f.RequesterUserId == d.UserId) ||
-                            (f.ApproverUserId == d.UserId && f.RequesterUserId == currentUserId)) &&
-                           f.FriendshipStatus == FriendshipStatus.Approved))
-                .Include(d => d.Category) // Include před Select
-                .Include(d => d.User)     // Include před Select
-                .ToListAsync();
+            .AsNoTracking()
+            .Where(d => likedDiscussionIds.Contains(d.Id))
+            .Where(d => d.Type != DiscussionType.Deleted) // Ignorovat smazané diskuze
+            .Where(d => d.Type != DiscussionType.Hidden || isAdmin || d.UserId == currentUserId) // Skryté diskuze vidí jen admin nebo autor
+            .Where(d => d.Type != DiscussionType.ForFriends || isAdmin || d.UserId == currentUserId ||
+                   dbContext.Friendships.Any(f =>
+                       ((f.ApproverUserId == currentUserId && f.RequesterUserId == d.UserId) ||
+                        (f.ApproverUserId == d.UserId && f.RequesterUserId == currentUserId)) &&
+                       f.FriendshipStatus == FriendshipStatus.Approved))
+            .Where(d => d.Type != DiscussionType.Private || isAdmin || d.UserId == currentUserId) // Private diskuze vidí jen admin nebo autor
+            .Include(d => d.Category) // Include před Select
+            .Include(d => d.User)     // Include před Select
+            .ToListAsync();
 
             // Nyní mapujeme na DTO a zachováváme pořadí podle data lajku
             var result = likedDiscussionIds
