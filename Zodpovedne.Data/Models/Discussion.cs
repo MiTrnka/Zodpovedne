@@ -24,7 +24,10 @@ public class Discussion
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // čas vytvoření nebo aktualizace článku diskuze
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    // čas vytvoření nebo aktualizace článku diskuze, nebo komentáře nebo ankety
+    public DateTime UpdatedWhateverAt { get; set; } = DateTime.UtcNow;
 
     public int ViewCount { get; set; }
 
