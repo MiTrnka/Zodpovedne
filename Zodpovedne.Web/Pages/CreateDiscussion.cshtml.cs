@@ -34,7 +34,7 @@ public class CreateDiscussionModel : BasePageModel
 
     // Vlastnost pro checkbox "Diskuze jen pro pøátele"
     [BindProperty]
-    public bool IsPrivate { get; set; } = false;
+    public bool IsForFriends { get; set; } = false;
 
     // Nová vlastnost pro checkbox "Vytvoøit hlasování"
     [BindProperty]
@@ -184,8 +184,8 @@ public class CreateDiscussionModel : BasePageModel
             Input.Title = _sanitizer.Sanitize(Input.Title);
             Input.Content = _sanitizer.Sanitize(Input.Content);
 
-            // Nastavení typu diskuze na Private, pokud byl zaškrtnut checkbox
-            Input.Type = IsPrivate ? DiscussionType.Private : DiscussionType.Normal;
+            // Nastavení typu diskuze na ForFriends, pokud byl zaškrtnut checkbox
+            Input.Type = IsForFriends ? DiscussionType.ForFriends : DiscussionType.Normal;
 
             // Nastavení typu hlasování podle hodnoty v checkboxu a vybranéhotypu
             if (HasVoting)

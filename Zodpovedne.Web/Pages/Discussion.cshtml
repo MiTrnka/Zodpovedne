@@ -165,7 +165,7 @@
                                     </svg>
                                 </span>
                             }
-                            @if (Model.Discussion.Type == DiscussionType.Private)
+                            @if (Model.Discussion.Type == DiscussionType.ForFriends)
                             {
                                 <span class="private-icon" title="Diskuze viditelná pouze pro přátele autora">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -268,11 +268,11 @@
                         @if (Model.CanEditDiscussion)
                         {
                             <div class="btn-group d-flex gap-1">
-                                @* Tlačítko pro přepínání typu diskuze mezi Private a Normal (pouze pro autory diskuze a adminy) *@
-                                @if ((Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.Private))
+                                @* Tlačítko pro přepínání typu diskuze mezi ForFriends a Normal (pouze pro autory diskuze a adminy) *@
+                                @if ((Model.Discussion.Type == DiscussionType.Normal || Model.Discussion.Type == DiscussionType.ForFriends))
                                 {
                                     <button style="border-radius: 5px;" class="btn btn-outline-primary flexibleBtn"
-                                            onclick="togglePrivateStatus(@Model.Discussion.Id)">
+                                            onclick="toggleForFriendsStatus(@Model.Discussion.Id)">
                                         @if (Model.Discussion.Type == DiscussionType.Normal)
                                         {
                                             <text>

@@ -42,7 +42,8 @@ public class ProfileModel : BasePageModel
     /// </summary>
     public bool CanViewFriendInfo =>
         (IsUserLoggedIn && UserProfile?.Id == CurrentUserId) || // Je to jeho vlastní profil
-        (FriendshipStatus == Zodpovedne.Contracts.Enums.FriendshipStatus.Approved);  // Nebo jsou pøátelé
+        (FriendshipStatus == Zodpovedne.Contracts.Enums.FriendshipStatus.Approved) ||   // Nebo jsou pøátelé
+        (IsAdmin); // Nebo je admin
 
     /// <summary>
     /// Indikuje, zda pøihlášený uživatel mùže odeslat žádost o pøátelství tomuto uživateli.

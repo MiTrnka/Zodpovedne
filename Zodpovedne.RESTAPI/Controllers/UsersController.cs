@@ -1459,6 +1459,8 @@ public class UsersController : ControllerBase
             if (string.IsNullOrEmpty(currentUserId))
                 return Unauthorized();
 
+            var isAdmin = User.IsInRole("Admin");
+
             // Kontrola oprávnění - může vidět přátele jen vlastník profilu nebo jeho přátelé
             bool canViewFriends = (currentUserId == userId); // Je to vlastní profil
 
@@ -1471,7 +1473,7 @@ public class UsersController : ControllerBase
                         (f.ApproverUserId == userId && f.RequesterUserId == currentUserId))
                         && f.FriendshipStatus == FriendshipStatus.Approved);
 
-                if (!areFriends)
+                if ((!areFriends) && (!isAdmin))
                     return Forbid("Nejste přátelé s tímto uživatelem");
             }
 

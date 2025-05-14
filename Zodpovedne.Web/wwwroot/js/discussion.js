@@ -258,11 +258,11 @@ async function toggleTopStatus(discussionId) {
     }
 }
 
-// Funkce pro přepínání typu diskuze mezi DiscussionType.Normal a DiscussionType.Private
-async function togglePrivateStatus(discussionId) {
+// Funkce pro přepínání typu diskuze mezi DiscussionType.Normal a DiscussionType.ForFriends
+async function toggleForFriendsStatus(discussionId) {
     try {
         const apiBaseUrl = document.getElementById('apiBaseUrl').value;
-        const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/toggle-private`, {
+        const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}/toggle-forfriends`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
@@ -272,16 +272,16 @@ async function togglePrivateStatus(discussionId) {
         if (response.ok) {
             location.reload();
         } else {
-            alert('Nepodařilo se změnit Private status diskuze.');
+            alert('Nepodařilo se změnit ForFriends status diskuze.');
         }
     } catch (error) {
-        console.error('Chyba při změně Private statusu:', error);
-        alert('Došlo k chybě při změně Private statusu diskuze.');
+        console.error('Chyba při změně ForFriends statusu:', error);
+        alert('Došlo k chybě při změně ForFriends statusu diskuze.');
     }
 }
 
-// Funkce pro nahrazení ikony nevyplnenho srdce za vyplnene srdce po pridani lajku 
-// vola se pri pridani lajku k diskusi nebo ke komentari 
+// Funkce pro nahrazení ikony nevyplnenho srdce za vyplnene srdce po pridani lajku
+// vola se pri pridani lajku k diskusi nebo ke komentari
 function replaceHeartIcon(button) {
     // Najde vnořený element i s třídou bi-heart
     const icon = button.querySelector('i.bi-heart');
@@ -403,7 +403,7 @@ async function toggleDiscussionEdit(show) {
     // Získání informace, zda uživatel může nahrávat soubory
     const canUploadFiles = document.getElementById("discussion-settings").dataset.canUpload === "true";
     // Získá tlačítko pro přepínání soukromé diskuze
-    const privateToggleBtn = document.querySelector('button[onclick*="togglePrivateStatus"]');
+    const privateToggleBtn = document.querySelector('button[onclick*="toggleForFriendsStatus"]');
 
     if (show) {
         titleDisplay.classList.add('d-none');

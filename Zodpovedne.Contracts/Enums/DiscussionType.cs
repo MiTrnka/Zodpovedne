@@ -6,5 +6,6 @@ public enum DiscussionType
     Top = 1,
     Hidden = 2,
     Deleted = 3,
-    Private = 4
+    ForFriends = 4,
+    Private = 5
 }

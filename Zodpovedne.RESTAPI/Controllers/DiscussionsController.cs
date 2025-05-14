@@ -87,7 +87,7 @@ public class DiscussionsController : ControllerBase
                     isAdmin ||                         // - admin (může vidět vše)
                     d.UserId == userId)                // - autor diskuze (vidí své diskuze)
                 .Where(d =>
-                    d.Type != DiscussionType.Private || // Private diskuze vidí jen:
+                    d.Type != DiscussionType.ForFriends || // ForFriends diskuze vidí jen:
                     isAdmin ||                          // - admin (může vidět vše)
                     d.UserId == userId ||               // - autor diskuze (vidí své diskuze)
                     friendIds.Contains(d.UserId));      // - přátelé autora (vidí diskuze svých přátel)
@@ -285,13 +285,13 @@ public class DiscussionsController : ControllerBase
             // Respektujeme pravidla viditelnosti diskuzí:
             // - Smazané diskuze nikdo nevidí
             // - Hidden diskuze vidí jen autor sám nebo admin
-            // - Private diskuze vidí autor, admin nebo přátelé autora
+            // - ForFriends diskuze vidí autor, admin nebo přátelé autora
             var discussions = await dbContext.Discussions
                 .AsNoTracking()
                 .Where(d => d.UserId == userId) // Filtrujeme diskuze daného uživatele
                 .Where(d => d.Type != DiscussionType.Deleted) // Smazané diskuze nevidí nikdo
                 .Where(d => d.Type != DiscussionType.Hidden || isMyAccount || isAdmin) // Hidden diskuze vidí jen autor nebo admin
-                .Where(d => d.Type != DiscussionType.Private || isMyAccount || isAdmin || friendIds.Contains(d.UserId)) // Private diskuze vidí autor, admin nebo přátelé autora
+                .Where(d => d.Type != DiscussionType.ForFriends || isMyAccount || isAdmin || friendIds.Contains(d.UserId)) // ForFriends diskuze vidí autor, admin nebo přátelé autora
                 .Include(d => d.Category) // Načteme i kategorii pro zobrazení
                 .OrderByDescending(d => d.UpdatedAt) // Řazení od nejnovějších
                 .Select(d => new BasicDiscussionInfoDto
@@ -775,11 +775,11 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Přepne typ diskuze mezi Normal a Private
+    /// Přepne typ diskuze mezi Normal a ForFriends
     /// Přístupné pouze pro adminy
     /// </summary>
-    [HttpPut("{discussionId}/toggle-private")]
-    public async Task<IActionResult> ToggleDiscussionPrivate(int discussionId)
+    [HttpPut("{discussionId}/toggle-forfriends")]
+    public async Task<IActionResult> ToggleDiscussionForFriends(int discussionId)
     {
         try
         {
@@ -794,12 +794,12 @@ public class DiscussionsController : ControllerBase
                 return Forbid();
 
             // Přepnutí typu mezi Normal a Top je možné jen pro tyto dva stavy
-            if (discussion.Type != DiscussionType.Normal && discussion.Type != DiscussionType.Private)
-                return BadRequest("Nelze měnit Private status pro tento typ diskuze.");
+            if (discussion.Type != DiscussionType.Normal && discussion.Type != DiscussionType.ForFriends)
+                return BadRequest("Nelze měnit ForFriends status pro tento typ diskuze.");
 
             // Přepnutí typu mezi Normal a Top
             discussion.Type = discussion.Type == DiscussionType.Normal
-                ? DiscussionType.Private
+                ? DiscussionType.ForFriends
                 : DiscussionType.Normal;
             var now = DateTime.UtcNow;
 
@@ -810,7 +810,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce ToggleDiscussionPrivate endpointu.", e);
+            _logger.Log("Chyba při vykonávání akce ToggleDiscussionForFriends endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1510,7 +1510,7 @@ public class DiscussionsController : ControllerBase
 
                 var privateTypeParam = command.CreateParameter();
                 privateTypeParam.ParameterName = "@privateType";
-                privateTypeParam.Value = (int)DiscussionType.Private;
+                privateTypeParam.Value = (int)DiscussionType.ForFriends;
                 command.Parameters.Add(privateTypeParam);
 
                 var approvedStatusParam = command.CreateParameter();
@@ -1757,7 +1757,7 @@ public class DiscussionsController : ControllerBase
                 .Where(d => likedDiscussionIds.Contains(d.Id))
                 .Where(d => d.Type != DiscussionType.Deleted) // Ignorovat smazané diskuze
                 .Where(d => d.Type != DiscussionType.Hidden || isAdmin || d.UserId == currentUserId) // Skryté diskuze vidí jen admin nebo autor
-                .Where(d => d.Type != DiscussionType.Private || isAdmin || d.UserId == currentUserId ||
+                .Where(d => d.Type != DiscussionType.ForFriends || isAdmin || d.UserId == currentUserId ||
                        dbContext.Friendships.Any(f =>
                            ((f.ApproverUserId == currentUserId && f.RequesterUserId == d.UserId) ||
                             (f.ApproverUserId == d.UserId && f.RequesterUserId == currentUserId)) &&
