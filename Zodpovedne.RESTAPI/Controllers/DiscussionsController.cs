@@ -176,6 +176,7 @@ public class DiscussionsController : ControllerBase
                     AuthorNickname = d.User.Nickname,
                     CreatedAt = d.CreatedAt,
                     UpdatedAt = d.UpdatedAt,
+                    UpdatedWhateverAt = d.UpdatedWhateverAt,
                     // Efektivní přístup k počtu komentářů
                     CommentsCount = commentCountByDiscussionId.TryGetValue(d.Id, out var count) ? count : 0,
                     ViewCount = d.ViewCount,
@@ -307,6 +308,7 @@ public class DiscussionsController : ControllerBase
                     AuthorId = d.UserId,
                     CreatedAt = d.CreatedAt,
                     UpdatedAt = d.UpdatedAt,
+                    UpdatedWhateverAt = d.UpdatedWhateverAt,
                     ViewCount = d.ViewCount,
                     Type = d.Type,
                     VoteType = d.VoteType
@@ -462,6 +464,7 @@ public class DiscussionsController : ControllerBase
                 AuthorId = discussion.UserId,
                 CreatedAt = discussion.CreatedAt,
                 UpdatedAt = discussion.UpdatedAt,
+                UpdatedWhateverAt = discussion.UpdatedWhateverAt,
                 ViewCount = discussion.ViewCount,
                 Type = discussion.Type,
                 VoteType = discussion.VoteType,
@@ -564,6 +567,7 @@ public class DiscussionsController : ControllerBase
                     AuthorId = d.UserId,
                     CreatedAt = d.CreatedAt,
                     UpdatedAt = d.UpdatedAt,
+                    UpdatedWhateverAt = d.UpdatedWhateverAt,
                     ViewCount = d.ViewCount,
                     Type = d.Type,
                     VoteType = d.VoteType
@@ -651,6 +655,8 @@ public class DiscussionsController : ControllerBase
             var suffix = UrlHelper.GenerateUniqueSuffix();
             var code = $"{baseCode}-{suffix}";
 
+            // Aktuální čas pro jednotné použití
+            var now = DateTime.UtcNow;
 
             var discussion = new Discussion
             {
@@ -658,8 +664,9 @@ public class DiscussionsController : ControllerBase
                 UserId = userId,
                 Title = model.Title,
                 Content = model.Content,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
+                CreatedAt = now,
+                UpdatedAt = now,
+                UpdatedWhateverAt = now,
                 Type = user.Type == UserType.Hidden ? DiscussionType.Hidden : model.Type,
                 Code = code,
                 VoteType = model.VoteType
@@ -705,10 +712,14 @@ public class DiscussionsController : ControllerBase
             if (!isAdmin && discussion.UserId != userId)
                 return Forbid();
 
-            // Přidaná sanitizace
+            // Aktuální čas pro jednotné použití
+            var now = DateTime.UtcNow;
+
             discussion.Title = _sanitizer.Sanitize(model.Title);
             discussion.Content = _sanitizer.Sanitize(model.Content);
-            discussion.UpdatedAt = DateTime.UtcNow;
+            discussion.UpdatedAt = now;
+            discussion.UpdatedWhateverAt = now;
+
             // Typ diskuze může měnit pouze admin
             if (isAdmin)
             {
@@ -748,7 +759,10 @@ public class DiscussionsController : ControllerBase
                 ? DiscussionType.Top
                 : DiscussionType.Normal;
 
-            discussion.UpdatedAt = DateTime.UtcNow;
+            var now = DateTime.UtcNow;
+
+            discussion.UpdatedWhateverAt = now;
+
             await dbContext.SaveChangesAsync();
 
             return Ok(new { type = discussion.Type });
@@ -787,8 +801,9 @@ public class DiscussionsController : ControllerBase
             discussion.Type = discussion.Type == DiscussionType.Normal
                 ? DiscussionType.Private
                 : DiscussionType.Normal;
+            var now = DateTime.UtcNow;
 
-            discussion.UpdatedAt = DateTime.UtcNow;
+            discussion.UpdatedWhateverAt = now;
             await dbContext.SaveChangesAsync();
 
             return Ok(new { type = discussion.Type });
@@ -819,9 +834,12 @@ public class DiscussionsController : ControllerBase
             if (!isAdmin && discussion.UserId != userId)
                 return Forbid();
 
+            var now = DateTime.UtcNow;
+
             // Nastavíme diskuzi jako smazanou (typ Deleted)
             discussion.Type = DiscussionType.Deleted;
-            discussion.UpdatedAt = DateTime.UtcNow;
+            discussion.UpdatedWhateverAt = now;
+
 
             // Smažeme i všechny její komentáře (nastavíme na typ Deleted)
             var comments = await dbContext.Comments
@@ -910,9 +928,11 @@ public class DiscussionsController : ControllerBase
             // Uložíme původní kategorii pro odpověď
             var oldCategoryId = discussion.CategoryId;
 
+            var now = DateTime.UtcNow;
+
             // Změníme kategorii diskuze
             discussion.CategoryId = newCategoryId;
-            //discussion.UpdatedAt = DateTime.UtcNow;
+            discussion.UpdatedWhateverAt = DateTime.UtcNow;
 
             await dbContext.SaveChangesAsync();
 
@@ -955,7 +975,8 @@ public class DiscussionsController : ControllerBase
         if (discussion == null || discussion.Type == DiscussionType.Deleted)
             return NotFound("Diskuze neexistuje.");
 
-
+        // Aktuální čas pro jednotné použití
+        var now = DateTime.UtcNow;
 
         if (parentCommentId != null) // Jedná se o vytváření reakčního komentáře
         {
@@ -974,7 +995,7 @@ public class DiscussionsController : ControllerBase
                 return BadRequest("Lze reagovat pouze na hlavní komentáře.");
 
             // Aktualizujeme datum vytvoření rodičovského komentáře
-            parentComment.UpdatedAt = DateTime.UtcNow;
+            parentComment.UpdatedAt = now;
         }
 
         // Sanitizace vstupů
@@ -986,12 +1007,16 @@ public class DiscussionsController : ControllerBase
             ParentCommentId = parentCommentId,
             UserId = userId,
             Content = _sanitizer.Sanitize(model.Content), //Pro zamezení XSS útoků
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
+            CreatedAt = now,
+            UpdatedAt = now,
             Type = user.Type == UserType.Hidden ? CommentType.Hidden : model.Type
         };
 
         dbContext.Comments.Add(comment);
+
+        // Aktualizace UpdatedWhateverAt v diskuzi
+        discussion.UpdatedWhateverAt = now;
+
         await dbContext.SaveChangesAsync();
 
         // Načteme vytvořený komentář včetně uživatele pro správné mapování
@@ -1039,16 +1064,25 @@ public class DiscussionsController : ControllerBase
                 _logger.Log($"Pokus o smazání komentáře s ID {commentId} uživatelem {userId}, který na to nemá právo.");
                 return Forbid();
             }
+            var now = DateTime.UtcNow;
+
 
             // Nastavíme komentář jako smazaný (typ Deleted)
             comment.Type = CommentType.Deleted;
-            comment.UpdatedAt = DateTime.UtcNow;
+            comment.UpdatedAt = now;
 
             // Nastavíme i všechny reakce na smazané
             foreach (var reply in comment.Replies)
             {
                 reply.Type = CommentType.Deleted;
-                reply.UpdatedAt = DateTime.UtcNow;
+                reply.UpdatedAt = now;
+            }
+
+            // Získáme a aktualizujeme odpovídající diskuzi
+            var discussion = await dbContext.Discussions.FindAsync(discussionId);
+            if (discussion != null)
+            {
+                discussion.UpdatedWhateverAt = now;
             }
 
             await dbContext.SaveChangesAsync();
@@ -1095,14 +1129,19 @@ public class DiscussionsController : ControllerBase
             if (!isAdmin && discussion.UserId == userId)
                 return BadRequest("Nelze dát like vlastní diskuzi.");
 
+            var now = DateTime.UtcNow;
+
             // Přidáme like
             var like = new DiscussionLike
             {
                 DiscussionId = id,
-                UserId = userId
+                UserId = userId,
+                CreatedAt = now
             };
 
             dbContext.DiscussionLikes.Add(like);
+            discussion.UpdatedWhateverAt = now;
+
             await dbContext.SaveChangesAsync();
 
             // Vrátíme aktuální stav liků
@@ -1155,14 +1194,23 @@ public class DiscussionsController : ControllerBase
             if (!isAdmin && comment.UserId == userId)
                 return BadRequest("Nelze dát like vlastnímu komentáři.");
 
+            var now = DateTime.UtcNow;
+
             // Přidáme like
             var like = new CommentLike
             {
                 CommentId = commentId,
-                UserId = userId
+                UserId = userId,
+                CreatedAt = now
             };
 
             dbContext.CommentLikes.Add(like);
+
+            var discussion = await dbContext.Discussions.FindAsync(discussionId);
+            if (discussion != null)
+            {
+                discussion.UpdatedWhateverAt = now;  // Aktualizace nového sloupce
+            }
             await dbContext.SaveChangesAsync();
 
             // Vrátíme aktuální stav liků
@@ -1258,7 +1306,9 @@ public class DiscussionsController : ControllerBase
                 ? DiscussionType.Hidden
                 : DiscussionType.Normal;
 
-            discussion.UpdatedAt = DateTime.UtcNow;
+            //var now = DateTime.UtcNow;
+            //discussion.UpdatedWhateverAt = now;
+
             await dbContext.SaveChangesAsync();
 
             return Ok(new { type = discussion.Type });
@@ -1291,7 +1341,7 @@ public class DiscussionsController : ControllerBase
                 ? CommentType.Hidden
                 : CommentType.Normal;
 
-            comment.UpdatedAt = DateTime.UtcNow;
+
             await dbContext.SaveChangesAsync();
 
             return Ok(new { type = comment.Type });
@@ -1503,6 +1553,7 @@ public class DiscussionsController : ControllerBase
                     d.CategoryId,
                     d.CreatedAt,
                     d.UpdatedAt,
+                    d.UpdatedWhateverAt,
                     d.ViewCount,
                     d.Type,
                     d.Code,
@@ -1539,6 +1590,7 @@ public class DiscussionsController : ControllerBase
                         AuthorId = discussion.UserId,
                         CreatedAt = discussion.CreatedAt,
                         UpdatedAt = discussion.UpdatedAt,
+                        UpdatedWhateverAt = discussion.UpdatedWhateverAt,
                         ViewCount = discussion.ViewCount,
                         Type = discussion.Type,
                         VoteType = discussion.VoteType
@@ -1561,7 +1613,7 @@ public class DiscussionsController : ControllerBase
 
     /// <summary>
     /// Vrací kombinovaný seznam nejnovějších diskuzí přátel a TOP diskuzí.
-    /// Diskuze jsou seřazeny podle času aktualizace, nejnovější první.
+    /// Diskuze jsou seřazeny podle času aktualizace "whatever", nejnovější první.
     /// </summary>
     /// <param name="limit">Maximální počet vrácených diskuzí (výchozí hodnota 20)</param>
     /// <returns>Seznam diskuzí seřazený dle času aktualizace</returns>
@@ -1590,7 +1642,7 @@ public class DiscussionsController : ControllerBase
                        d.Type != DiscussionType.Deleted &&
                        d.Type != DiscussionType.Hidden &&
                        d.User.Type == UserType.Normal)
-                .OrderByDescending(d => d.UpdatedAt);
+                .OrderByDescending(d => d.UpdatedWhateverAt);
 
             // Získat TOP diskuze (ne od přátel, ty už máme)
             var topDiscussionsQuery = dbContext.Discussions
@@ -1599,7 +1651,7 @@ public class DiscussionsController : ControllerBase
                        !friendIds.Contains(d.UserId) &&
                        d.UserId != userId &&
                        d.User.Type == UserType.Normal)
-                .OrderByDescending(d => d.UpdatedAt)
+                .OrderByDescending(d => d.UpdatedWhateverAt)
                 .Take(3);
 
             // Sloučení obou dotazů do jednoho seznamu
@@ -1620,7 +1672,7 @@ public class DiscussionsController : ControllerBase
                 .Include(d => d.Category)
                 .Include(d => d.User)
                 .Include(d => d.Likes)
-                .OrderByDescending(d => d.UpdatedAt)
+                .OrderByDescending(d => d.UpdatedWhateverAt)
                 .ToListAsync();
 
             // Zjištění počtu komentářů pro každou diskuzi
@@ -1642,6 +1694,7 @@ public class DiscussionsController : ControllerBase
                 //AuthorId = d.UserId,
                 CreatedAt = d.CreatedAt,
                 UpdatedAt = d.UpdatedAt,
+                UpdatedWhateverAt = d.UpdatedWhateverAt,
                 CommentsCount = commentCounts.TryGetValue(d.Id, out var count) ? count : 0,
                 ViewCount = d.ViewCount,
                 Type = d.Type,
@@ -1654,7 +1707,7 @@ public class DiscussionsController : ControllerBase
                     CanUserLike = d.UserId != userId && !d.Likes.Any(l => l.UserId == userId)
                 }
             })
-            .OrderByDescending(d => d.UpdatedAt)
+            .OrderByDescending(d => d.UpdatedWhateverAt)
             .Take(limit)
             .ToList();
 
@@ -1731,6 +1784,7 @@ public class DiscussionsController : ControllerBase
                     AuthorId = d.UserId,
                     CreatedAt = d.CreatedAt,
                     UpdatedAt = d.UpdatedAt,
+                    UpdatedWhateverAt = d.UpdatedWhateverAt,
                     ViewCount = d.ViewCount,
                     Type = d.Type,
                     VoteType = d.VoteType

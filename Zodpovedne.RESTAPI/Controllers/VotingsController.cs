@@ -140,6 +140,9 @@ public class VotingsController : ControllerBase
             if (model.VoteType != VoteType.None && (model.Questions == null || !model.Questions.Any()))
                 return BadRequest("Hlasování musí obsahovat alespoň jednu otázku.");
 
+            // Aktuální čas pro jednotné použití
+            var now = DateTime.UtcNow;
+
             // Pokud chceme odstranit hlasování, odstraníme všechny otázky a nastavíme VoteType na None
             if (model.VoteType == VoteType.None)
             {
@@ -148,6 +151,8 @@ public class VotingsController : ControllerBase
                     .ExecuteDeleteAsync();
 
                 discussion.VoteType = VoteType.None;
+                discussion.UpdatedWhateverAt = now;
+
                 await _dbContext.SaveChangesAsync();
 
                 return Ok(new VotingDto
@@ -160,7 +165,7 @@ public class VotingsController : ControllerBase
 
             // Aktualizace typu hlasování v diskuzi
             discussion.VoteType = model.VoteType;
-            discussion.UpdatedAt = DateTime.UtcNow;
+            discussion.UpdatedWhateverAt = now;
 
             // Použijeme transakci pro zajištění konzistence dat
             using var transaction = await _dbContext.Database.BeginTransactionAsync();
@@ -211,7 +216,7 @@ public class VotingsController : ControllerBase
                         {
                             existingQuestion.Text = questionDto.Text;
                             existingQuestion.DisplayOrder = questionDto.DisplayOrder;
-                            existingQuestion.UpdatedAt = DateTime.UtcNow;
+                            existingQuestion.UpdatedAt = now;
                             _dbContext.VotingQuestions.Update(existingQuestion);
                         }
                     }
@@ -223,8 +228,8 @@ public class VotingsController : ControllerBase
                             DiscussionId = model.DiscussionId,
                             Text = questionDto.Text,
                             DisplayOrder = questionDto.DisplayOrder,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
+                            CreatedAt = now,
+                            UpdatedAt = now
                         };
 
                         _dbContext.VotingQuestions.Add(newQuestion);
@@ -322,6 +327,9 @@ public class VotingsController : ControllerBase
                     return BadRequest($"Otázka s ID {questionId} nepatří k této diskuzi.");
             }
 
+            // Aktuální čas pro jednotné použití
+            var now = DateTime.UtcNow;
+
             // Použijeme transakci pro zajištění konzistence dat
             using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
@@ -369,7 +377,7 @@ public class VotingsController : ControllerBase
 
                             // Aktualizujeme hlas uživatele
                             existingVote.VoteValue = voteValue;
-                            existingVote.UpdatedAt = DateTime.UtcNow;
+                            existingVote.UpdatedAt = now;
                         }
 
                         // Označíme tuto otázku jako zpracovanou, aby se nevyhodnotila v druhém kroku (mazání)
@@ -383,8 +391,8 @@ public class VotingsController : ControllerBase
                             VotingQuestionId = questionId,
                             UserId = userId,
                             VoteValue = voteValue,
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
+                            CreatedAt = now,
+                            UpdatedAt = now
                         };
 
                         _dbContext.Votes.Add(newVote);
@@ -397,7 +405,7 @@ public class VotingsController : ControllerBase
                     }
 
                     // Aktualizujeme časovou značku poslední aktualizace otázky
-                    question.UpdatedAt = DateTime.UtcNow;
+                    question.UpdatedAt = now;
                 }
 
                 // V druhém kroku zpracujeme otázky, na které uživatel dříve hlasoval, ale nyní jsou
@@ -416,11 +424,14 @@ public class VotingsController : ControllerBase
                         question.NoVotes--;
 
                     // Aktualizujeme časovou značku
-                    question.UpdatedAt = DateTime.UtcNow;
+                    question.UpdatedAt = now;
 
                     // Smažeme hlas
                     _dbContext.Votes.Remove(voteToDelete);
                 }
+
+                // Aktualizace UpdatedWhateverAt v diskuzi
+                discussion.UpdatedWhateverAt = now;
 
                 // Uložíme změny
                 await _dbContext.SaveChangesAsync();
@@ -521,9 +532,12 @@ public class VotingsController : ControllerBase
                     return BadRequest("Pro aktivaci hlasování musí existovat alespoň jedna otázka.");
             }
 
+            // Aktuální čas pro jednotné použití
+            var now = DateTime.UtcNow;
+
             // Aktualizace typu hlasování
             discussion.VoteType = voteType;
-            discussion.UpdatedAt = DateTime.UtcNow;
+            discussion.UpdatedWhateverAt = now;
             await _dbContext.SaveChangesAsync();
 
             return Ok(new { Status = "success", VoteType = voteType });

@@ -64,6 +64,7 @@ public class DiscussionListDto
     public string AuthorNickname { get; set; } = "";
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedWhateverAt { get; set; }
     public int CommentsCount { get; set; }
     public int ViewCount { get; set; }
     public DiscussionType Type { get; set; }
@@ -87,6 +88,7 @@ public class DiscussionDetailDto
     public string AuthorId { get; set; } = "";
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedWhateverAt { get; set; }
     public int ViewCount { get; set; }
     public DiscussionType Type { get; set; }
     public ICollection<CommentDto> Comments { get; set; } = new List<CommentDto>();
@@ -109,6 +111,7 @@ public class BasicDiscussionInfoDto
     public string AuthorId { get; set; } = "";
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedWhateverAt { get; set; }
     public int ViewCount { get; set; }
     public DiscussionType Type { get; set; }
     public VoteType VoteType { get; set; } = VoteType.None;
