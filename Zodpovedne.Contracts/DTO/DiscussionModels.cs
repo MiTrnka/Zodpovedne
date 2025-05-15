@@ -45,7 +45,7 @@ public class UpdateDiscussionDto
     [MaxLength(10000, ErrorMessage = "Obsah diskuze může mít maximálně 3 000 znaků")]
     public string Content { get; set; } = "";
 
-    // Typ diskuze může měnit jen admin
+    // Typ diskuze může měnit autor diskuze (některé typy) a admin (všechny typy)
     public DiscussionType Type { get; set; }
 
     /// <summary>
