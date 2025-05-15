@@ -397,24 +397,39 @@ async function toggleDiscussionEdit(show) {
     const titleEdit = document.getElementById('discussion-title-edit');
     const contentDisplay = document.getElementById('discussion-content-display');
     const editorContainer = document.getElementById('editor-container');
+    const toolbarContainer = document.getElementById('toolbar-container');
     const editBtn = document.getElementById('edit-discussion-btn');
     const saveBtn = document.getElementById('save-discussion-btn');
     const cancelBtn = document.getElementById('cancel-discussion-btn');
     // Získání informace, zda uživatel může nahrávat soubory
     const canUploadFiles = document.getElementById("discussion-settings").dataset.canUpload === "true";
-    // Získá tlačítko pro přepínání soukromé diskuze
-    const privateToggleBtn = document.querySelector('button[onclick*="toggleForFriendsStatus"]');
+
+    // reference na container se selectem pro typ diskuze
+    const discussionTypeContainer = document.getElementById('discussion-type-select-container');
+
+    // Reference na select pro typ diskuze
+    const discussionTypeSelect = document.getElementById('editDiscussionType');
+
+    // Získání aktuálního typu diskuze z hidden inputu
+    const currentDiscussionType = document.getElementById('currentDiscussionType')?.value || "0";
 
     if (show) {
         titleDisplay.classList.add('d-none');
         titleEdit.classList.remove('d-none');
         contentDisplay.classList.add('d-none');
         editorContainer.classList.remove('d-none');
+        toolbarContainer?.classList.remove('d-none');
         editBtn.classList.add('d-none');
         saveBtn.classList.remove('d-none');
         cancelBtn.classList.remove('d-none');
 
-        if (privateToggleBtn) privateToggleBtn.classList.add('d-none');
+        // Zobrazíme select pro typ diskuze při editaci
+        discussionTypeContainer?.classList.remove('d-none');
+
+        // Nastavíme vybranou hodnotu v selectu podle aktuálního typu diskuze
+        if (discussionTypeSelect && currentDiscussionType) {
+            discussionTypeSelect.value = currentDiscussionType;
+        }
 
         // Inicializace editoru při prvním zobrazení
         if (!window.discussionEditor) {
@@ -427,8 +442,6 @@ async function toggleDiscussionEdit(show) {
                 'link',
                 'bulletedList',
                 'numberedList',
-                '|',
-                'alignment',
                 '|',
                 'undo',
                 'redo'
@@ -445,9 +458,6 @@ async function toggleDiscussionEdit(show) {
                         items: toolbarItems
                     },
                     language: 'cs',
-                    alignment: {
-                        options: ['left', 'center', 'right', 'justify']
-                    },
                     // Konfigurace obrázků
                     image: {
                         insert: {
@@ -511,15 +521,18 @@ async function toggleDiscussionEdit(show) {
                 });
         }
     } else {
-        titleDisplay.classList.remove('d-none');
-        titleEdit.classList.add('d-none');
-        contentDisplay.classList.remove('d-none');
-        editorContainer.classList.add('d-none');
-        editBtn.classList.remove('d-none');
-        saveBtn.classList.add('d-none');
-        cancelBtn.classList.add('d-none');
+        titleDisplay?.classList.remove('d-none');
+        titleEdit?.classList.add('d-none');
+        contentDisplay?.classList.remove('d-none');
+        editorContainer?.classList.add('d-none');
+        toolbarContainer?.classList.add('d-none');
+        editBtn?.classList.remove('d-none');
+        saveBtn?.classList.add('d-none');
+        cancelBtn?.classList.add('d-none');
 
-        if (privateToggleBtn) privateToggleBtn.classList.remove('d-none');
+        if (discussionTypeContainer) {
+            discussionTypeContainer.classList.add('d-none');
+        }
 
         // Zrušení instance editoru při zrušení editace
         if (window.discussionEditor) {
@@ -582,6 +595,12 @@ async function saveDiscussionChanges(discussionId, discussionType, event) {
         // Před uložením zkontrolujeme nepoužívané obrázky a smažeme je
         await cleanupUnusedImages(content);
 
+        // Získání vybraného typu diskuze z selectu
+        const discussionTypeSelect = document.getElementById('editDiscussionType');
+        // Pokud select existuje, použijeme jeho hodnotu, jinak původní typ diskuze
+        const selectedDiscussionType = discussionTypeSelect ? parseInt(discussionTypeSelect.value) : discussionType;
+
+        // Odeslání požadavku na server s aktualizovanými daty
         const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}`, {
             method: 'PUT',
             headers: {
@@ -591,7 +610,8 @@ async function saveDiscussionChanges(discussionId, discussionType, event) {
             body: JSON.stringify({
                 title: titleEdit.value,
                 content: content,
-                type: discussionType
+                type: selectedDiscussionType, // Zde používáme novou proměnnou selectedDiscussionType
+                voteType: 0 // Zachováme současný stav hlasování
             })
         });
 
@@ -620,10 +640,15 @@ async function saveDiscussionChanges(discussionId, discussionType, event) {
                 document.getElementById('discussionUpdatedAtValue').textContent = '';
             }
         } else {
-            const errorData = await response.json();
-            if (errorData && errorData.errors && errorData.errors.Content) {
-                alert(errorData.errors.Content[0]);
-            } else {
+            try {
+                const errorData = await response.json();
+                console.error("Chyba při ukládání:", errorData); // Pro diagnostiku
+                if (errorData && errorData.errors && errorData.errors.Content) {
+                    alert(errorData.errors.Content[0]);
+                } else {
+                    alert('Nepodařilo se uložit změny.');
+                }
+            } catch (e) {
                 alert('Nepodařilo se uložit změny.');
             }
         }
@@ -673,7 +698,6 @@ async function cleanupUnusedImages(newContent) {
         if (response.ok) {
             const result = await response.json();
             if (result.success) {
-                console.log('Nepoužívané obrázky byly úspěšně smazány.');
                 return true;
             } else {
                 console.warn('Při mazání nepoužívaných obrázků došlo k chybě:', result.error);
@@ -693,7 +717,17 @@ async function cleanupUnusedImages(newContent) {
 // Obsluha události při zrušení editace diskuze
 async function handleCancelEditDiscussionClick() {
     const originalContent = document.getElementById('discussion-content-display').innerHTML;
+
+    // Skrytí select boxu pro typ diskuze
+    /*const discussionTypeContainer = document.getElementById('discussion-type-select-container');
+    if (discussionTypeContainer) {
+        discussionTypeContainer.classList.add('d-none');
+    }*/
+
+    // Volání standardní funkce pro ukončení editace
     toggleDiscussionEdit(false);
+
+    // Vyčištění nepoužívaných obrázků
     await cleanupUnusedImages(originalContent);
 }
 
