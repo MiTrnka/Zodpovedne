@@ -542,16 +542,68 @@ public class UsersController : ControllerBase
     /// <returns>IP adresa klienta</returns>
     private string GetClientIpAddress()
     {
-        // Pokud aplikace běží za proxy/load balancerem, použijeme X-Forwarded-For hlavičku
-        string? ip = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        // Nejprve zkontrolujeme standardní hlavičky pro proxy
+        string? ip = null;
 
-        // Pokud X-Forwarded-For není k dispozici, použijeme RemoteIpAddress
+        // X-Forwarded-For obsahuje seznam IP adres, první je původní klient
+        var forwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(forwardedFor))
+        {
+            // Hlavička může obsahovat více IP adres oddělených čárkou
+            // například: "203.0.113.195, 70.41.3.18, 150.172.238.178"
+            // První adresa je IP adresa původního klienta
+            ip = forwardedFor.Split(',')[0].Trim();
+        }
+
+        // Pokud X-Forwarded-For není k dispozici, zkusíme X-Real-IP
+        if (string.IsNullOrEmpty(ip))
+        {
+            ip = HttpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
+        }
+
+        // Nginx může používat také hlavičku Forwarded (HTTP standard)
+        if (string.IsNullOrEmpty(ip))
+        {
+            var forwarded = HttpContext.Request.Headers["Forwarded"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(forwarded))
+            {
+                // Formát "Forwarded: for=192.0.2.60;proto=http;by=203.0.113.43"
+                var forwardedParts = forwarded.Split(';');
+                foreach (var part in forwardedParts)
+                {
+                    if (part.TrimStart().StartsWith("for=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var forValue = part.Substring(4).Trim();
+                        // Odstranění případných uvozovek a závorek
+                        forValue = forValue.TrimStart('"', '[').TrimEnd('"', ']');
+                        ip = forValue;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Další alternativní hlavičky používané některými proxy
+        if (string.IsNullOrEmpty(ip))
+        {
+            ip = HttpContext.Request.Headers["CF-Connecting-IP"].FirstOrDefault() ?? // Cloudflare
+                 HttpContext.Request.Headers["True-Client-IP"].FirstOrDefault();     // Akamai, Cloudflare
+        }
+
+        // Nakonec zkusíme přímou IP adresu z připojení (jako fallback)
         if (string.IsNullOrEmpty(ip) && HttpContext?.Connection?.RemoteIpAddress != null)
         {
             ip = HttpContext.Connection.RemoteIpAddress.ToString();
+
+            // Pokud je to localhost nebo IPv4-mapped IPv6 adresa, pokusíme se ji přeformátovat
+            if (ip.StartsWith("::ffff:"))
+            {
+                // Převod IPv4-mapped IPv6 adresy na čistou IPv4 adresu
+                ip = ip.Substring(7);
+            }
         }
 
-        // Pokud není k dispozici ani jedna z možností, vrátíme prázdný řetězec
+        // Pokud není k dispozici ani jedna z možností, vrátíme "neznámá"
         return ip ?? "neznámá";
     }
 
