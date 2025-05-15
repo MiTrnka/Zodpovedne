@@ -325,7 +325,19 @@ namespace Zodpovedne.RESTAPI
             // Pøidání pamìové cache napøíklad pro cachování dat z databáze (seznam diskuzí, kde nìkdo reagoval na mùj komentáø)
             builder.Services.AddMemoryCache();
 
+            // Konfigurace pro práci za proxy
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+                                          Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+                // Povolení všech sítí (v produkèním prostøedí je lepší omezit)
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
+
             var app = builder.Build();
+
+            app.UseForwardedHeaders();
 
             // seznam rout, pro které se ihned vrátí 404 a nepokraèuje se v pipeline
             app.MapShortCircuit(404, "wp-admin", "wp-login", "sitemap.xml", "robots.txt");
