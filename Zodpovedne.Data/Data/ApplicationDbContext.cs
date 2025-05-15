@@ -32,6 +32,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<SiteInstance> SiteInstances { get; set; }
     public DbSet<VotingQuestion> VotingQuestions { get; set; }
     public DbSet<Vote> Votes { get; set; }
+    public DbSet<LoginHistory> LoginHistory { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -276,6 +277,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // Index pro rychlejší vyhledávání hlasů podle uživatele
             entity.HasIndex(v => v.UserId);
+        });
+
+        // Konfigurace LoginHistory
+        builder.Entity<LoginHistory>(entity =>
+        {
+            entity.ToTable("LoginHistory");
+
+            // Vztah k uživateli (N:1)
+            entity.HasOne(lh => lh.User)
+                  .WithMany()
+                  .HasForeignKey(lh => lh.UserId)
+                  .OnDelete(DeleteBehavior.Cascade); // Při smazání uživatele se smažou i záznamy o jeho přihlášení
+
+            // Index pro rychlejší vyhledávání podle uživatele
+            entity.HasIndex(lh => lh.UserId);
+
+            // Index pro rychlejší vyhledávání podle času přihlášení
+            entity.HasIndex(lh => lh.LoginTime);
         });
 
     }

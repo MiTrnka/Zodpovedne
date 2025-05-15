@@ -54,6 +54,12 @@ public class ProfileModel : BasePageModel
         UserProfile?.Id != CurrentUserId &&             // Není to jeho vlastní profil
         FriendshipStatus == null;                       // A žádný vztah zatím neexistuje
 
+    // Pøidejte tuto vlastnost do tøídy ProfileModel
+    /// <summary>
+    /// Historie pøihlášení uživatele - dostupná pouze pro adminy
+    /// </summary>
+    public List<LoginHistoryDto> LoginHistory { get; private set; } = new();
+
     /// <summary>
     /// Indikuje, zda již byla odeslána žádost o pøátelství, na kterou èekáme odpovìï.
     /// </summary>
@@ -174,6 +180,24 @@ public class ProfileModel : BasePageModel
             {
                 _logger.Log("Nepodaøilo se naèíst seznam pøátel uživatele", ex);
                 // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst pøátele
+            }
+        }
+
+        // Naètení historie pøihlášení - pouze pro adminy
+        if (IsAdmin && UserProfile != null)
+        {
+            try
+            {
+                var loginHistoryResponse = await client.GetAsync($"{ApiBaseUrl}/users/login-history/{UserProfile.Id}?limit=20");
+                if (loginHistoryResponse.IsSuccessStatusCode)
+                {
+                    LoginHistory = await loginHistoryResponse.Content.ReadFromJsonAsync<List<LoginHistoryDto>>() ?? new();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Log("Nepodaøilo se naèíst historii pøihlášení uživatele", ex);
+                // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst historii
             }
         }
 

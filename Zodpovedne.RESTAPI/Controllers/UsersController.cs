@@ -537,6 +537,25 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
+    /// Pomocná metoda pro získání IP adresy klienta
+    /// </summary>
+    /// <returns>IP adresa klienta</returns>
+    private string GetClientIpAddress()
+    {
+        // Pokud aplikace běží za proxy/load balancerem, použijeme X-Forwarded-For hlavičku
+        string? ip = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+
+        // Pokud X-Forwarded-For není k dispozici, použijeme RemoteIpAddress
+        if (string.IsNullOrEmpty(ip) && HttpContext?.Connection?.RemoteIpAddress != null)
+        {
+            ip = HttpContext.Connection.RemoteIpAddress.ToString();
+        }
+
+        // Pokud není k dispozici ani jedna z možností, vrátíme prázdný řetězec
+        return ip ?? "neznámá";
+    }
+
+    /// <summary>
     /// Vytvoří JWT token pro přihlášení uživatele ze zadaného emailu a hesla (LoginModel) (zkontroluje zadaný email a heslo a vytvoří JWT token)
     /// </summary>
     /// <param name="model"></param>
@@ -581,6 +600,22 @@ public class UsersController : ControllerBase
             user.LastLogin = DateTime.UtcNow;
             await this.userManager.UpdateAsync(user);
 
+            // Získání IP adresy uživatele
+            string ipAddress = GetClientIpAddress();
+
+            // Vytvoření záznamu o přihlášení
+            var loginHistory = new LoginHistory
+            {
+                UserId = user.Id,
+                LoginTime = DateTime.UtcNow,
+                IpAddress = ipAddress
+            };
+
+            // Přidání záznamu do databáze
+            dbContext.LoginHistory.Add(loginHistory);
+            await dbContext.SaveChangesAsync();
+
+
             var token = await GenerateJwtToken(user);
 
             return Ok(new TokenResponseDto
@@ -594,6 +629,54 @@ public class UsersController : ControllerBase
         catch (Exception e)
         {
             _logger.Log("Chyba při vykonávání akce CreateToken endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Vrací historii přihlášení uživatele
+    /// </summary>
+    /// <param name="userId">ID uživatele</param>
+    /// <param name="limit">Maximální počet záznamů</param>
+    /// <returns>Seznam posledních přihlášení</returns>
+    [Authorize]
+    [HttpGet("login-history/{userId}")]
+    public async Task<ActionResult<IEnumerable<object>>> GetUserLoginHistory(string userId, [FromQuery] int limit = 20)
+    {
+        try
+        {
+            // Získání ID přihlášeného uživatele
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isAdmin = User.IsInRole("Admin");
+
+            // Kontrola oprávnění - historii vidí pouze admin nebo samotný uživatel
+            if (!isAdmin && currentUserId != userId)
+                return Forbid();
+
+            // Ověření existence uživatele
+            var user = await userManager.FindByIdAsync(userId);
+            if (user == null)
+                return NotFound("Uživatel nebyl nalezen.");
+
+            // Načtení historie přihlášení seřazené od nejnovějších
+            var loginHistory = await dbContext.LoginHistory
+                .AsNoTracking()
+                .Where(lh => lh.UserId == userId)
+                .OrderByDescending(lh => lh.LoginTime)
+                .Take(limit)
+                .Select(lh => new
+                {
+                    lh.Id,
+                    lh.LoginTime,
+                    lh.IpAddress
+                })
+                .ToListAsync();
+
+            return Ok(loginHistory);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při získávání historie přihlášení uživatele", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

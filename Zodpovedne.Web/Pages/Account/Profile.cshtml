@@ -199,6 +199,45 @@
                 <p class="text-muted">Uživatel zatím nevytvořil žádné diskuze.</p>
             }
         </div>
+
+            <!-- Sekce s historií přihlášení - viditelná pouze pro adminy -->
+            @if (Model.IsAdmin && Model.UserProfile != null)
+            {
+                <div class="card mb-4" style="border:none;">
+                    <button class="d-flex justify-content-between w-100 account-toggle-wrapper" type="button" id="toggle-login-history">
+                        <span>Historie přihlášení <small class="text-danger">(vidí pouze admin)</small></span>
+                        <i class="bi bi-chevron-down" id="login-history-chevron"></i>
+                    </button>
+                    <div class="card-body scrollbar" id="login-history-list" style="display:none;">
+                        @if (Model.LoginHistory.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Čas přihlášení</th>
+                                            <th>IP adresa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var login in Model.LoginHistory)
+                                        {
+                                            <tr>
+                                                <td>@login.LoginTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                                <td>@login.IpAddress</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted">Pro tohoto uživatele není k dispozici žádná historie přihlášení.</p>
+                        }
+                    </div>
+                </div>
+            }
     </div>
 </div>
 
@@ -240,7 +279,7 @@
                     friendsChevron.classList.add('bi-chevron-down');
                 }
             });
-            // Kód pro přepínání sekce s naposledy lajkovanymi diskusemi
+            // Kód pro rozbalování sekce s naposledy lajkovanymi diskusemi
             const toggleLikesBtn = document.getElementById('toggle-likes');
             const likesContainer = document.getElementById('likes-list');
             const likesChevron = document.getElementById('likes-chevron');
@@ -256,5 +295,25 @@
                     likesChevron.classList.add('bi-chevron-down');
                 }
             });
+
+
+            // Kód pro rozbalování sekce s historií přihlášení
+            const toggleLoginHistoryBtn = document.getElementById('toggle-login-history');
+            if (toggleLoginHistoryBtn) { // Kontrola existence prvku (pouze pro adminy)
+                const loginHistoryContainer = document.getElementById('login-history-list');
+                const loginHistoryChevron = document.getElementById('login-history-chevron');
+
+                toggleLoginHistoryBtn.addEventListener('click', function () {
+                    if (loginHistoryContainer.style.display === 'none') {
+                        loginHistoryContainer.style.display = 'block';
+                        loginHistoryChevron.classList.remove('bi-chevron-down');
+                        loginHistoryChevron.classList.add('bi-chevron-up');
+                    } else {
+                        loginHistoryContainer.style.display = 'none';
+                        loginHistoryChevron.classList.remove('bi-chevron-up');
+                        loginHistoryChevron.classList.add('bi-chevron-down');
+                    }
+                });
+            }
     </script>
 }
