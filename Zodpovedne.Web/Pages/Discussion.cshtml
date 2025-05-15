@@ -115,7 +115,7 @@
 
                     @* Panel s tlačítky pro like, editaci a změnu viditelnosti *@
                     <div class="card-footer text-editor-footer d-flex align-items-center">
-                        <div class="d-flex gap-1 detail-diskuse-dolni-btn-wrapper">
+                        <div class="d-flex gap-1 detail-diskuse-dolni-btn-wrapper" id="discussionInfoPanel">
                             @* Tlačítko Like *@
                             @if (Model.CanLikeDiscussion)
                             {
@@ -167,7 +167,7 @@
                             }
                             @if (Model.Discussion.Type == DiscussionType.ForFriends)
                             {
-                                <span class="private-icon" title="Diskuze viditelná pouze pro přátele autora">
+                                <span title="Diskuze viditelná pouze pro přátele autora">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                                         <!-- Kulaté pozadí -->
                                         <circle cx="12" cy="12" r="11" fill="var(--light-primary-color-ultra-light)"
@@ -198,7 +198,7 @@
                             }
                             @if (Model.Discussion.Type == DiscussionType.Private)
                             {
-                                <span class="private-icon" title="Diskuze viditelná pouze uživatelům s odkazem na diskuzi">
+                                <span title="Diskuze viditelná pouze uživatelům s odkazem na diskuzi">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                                         <!-- Kulaté pozadí -->
                                         <circle cx="12" cy="12" r="11" fill="var(--light-primary-color-ultra-light)"
@@ -230,17 +230,17 @@
 
 
                           <button type="button" id="emoji-btn-discussion">&#128512;</button>
-
                         </div>
 
                         @* Tlačítka pro editaci *@
                         @if (Model.CanEditDiscussion)
                         {
                             <div class="btn-group d-flex gap-1">
-                        @* Nový select box pro typ diskuze *@
-                                <div class="form-group me-2 d-none" id="discussion-type-select-container">
+                                @* select box pro typ diskuze - zobrazí se pouze pro adminy nebo pokud diskuze není typu Hidden *@
+                                <div class="form-group me-2 d-none" id="discussion-type-select-container"
+                                     data-is-admin="@Model.IsAdmin.ToString().ToLower()"
+                                     data-discussion-type="@((int)Model.Discussion.Type)">
                                     <select id="editDiscussionType" class="form-select">
-                                        @* Použijeme HTML atributy bez Razor syntaxe a hodnoty nastavíme v JavaScriptu *@
                                         <option value="0">Veřejná</option>
                                         <option value="4">Pro přátele</option>
                                         <option value="5">Soukromá</option>
@@ -267,7 +267,8 @@
                                               stroke-width="2"
                                               stroke-linecap="round"
                                               stroke-linejoin="round" />
-                                    </svg> Uložit
+                                    </svg>
+                                    <span class="hide-text-when-narrow">Uložit</span>
                                 </button>
                                 <button id="cancel-discussion-btn" style="border-radius:5px;" class="btn btn-outline-primary d-none flexibleBtn" onclick="handleCancelEditDiscussionClick()">
                                     <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -281,7 +282,8 @@
                                               stroke-width="2"
                                               stroke-linecap="round"
                                               stroke-linejoin="round" />
-                                    </svg> Zrušit
+                                    </svg>
+                                    <span class="hide-text-when-narrow">Zrušit</span>
                                 </button>
                                 <form method="post" asp-page-handler="DeleteDiscussion" class="d-inline">
                                     <button type="submit" class="btn btn-danger"

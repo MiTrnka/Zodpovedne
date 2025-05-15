@@ -413,6 +413,8 @@ async function toggleDiscussionEdit(show) {
     // Získání aktuálního typu diskuze z hidden inputu
     const currentDiscussionType = document.getElementById('currentDiscussionType')?.value || "0";
 
+    //const discussionInfoPanel = document.getElementById('discussionInfoPanel');
+
     if (show) {
         titleDisplay.classList.add('d-none');
         titleEdit.classList.remove('d-none');
@@ -423,8 +425,25 @@ async function toggleDiscussionEdit(show) {
         saveBtn.classList.remove('d-none');
         cancelBtn.classList.remove('d-none');
 
-        // Zobrazíme select pro typ diskuze při editaci
-        discussionTypeContainer?.classList.remove('d-none');
+        //discussionInfoPanel.classList.add('d-none');
+
+        // Zobrazíme select pro typ diskuze při editaci pouze pokud je uživatel admin
+        // nebo pokud diskuze není typu Hidden (2)
+        if (discussionTypeContainer) {
+            const isAdmin = discussionTypeContainer.dataset.isAdmin === "true";
+            const discussionType = parseInt(discussionTypeContainer.dataset.discussionType);
+
+            // Pokud je uživatel admin nebo diskuze není typu Hidden, zobrazíme select
+            if (isAdmin || discussionType !== 2) {
+                discussionTypeContainer.classList.remove('d-none');
+
+                // Nastavíme aktuální hodnotu v selectu
+                const discussionTypeSelect = document.getElementById('editDiscussionType');
+                if (discussionTypeSelect) {
+                    discussionTypeSelect.value = discussionType.toString();
+                }
+            }
+        }
 
         // Nastavíme vybranou hodnotu v selectu podle aktuálního typu diskuze
         if (discussionTypeSelect && currentDiscussionType) {
@@ -530,6 +549,8 @@ async function toggleDiscussionEdit(show) {
         saveBtn?.classList.add('d-none');
         cancelBtn?.classList.add('d-none');
 
+        //discussionInfoPanel.classList.remove('d-none');
+
         if (discussionTypeContainer) {
             discussionTypeContainer.classList.add('d-none');
         }
@@ -597,8 +618,15 @@ async function saveDiscussionChanges(discussionId, discussionType, event) {
 
         // Získání vybraného typu diskuze z selectu
         const discussionTypeSelect = document.getElementById('editDiscussionType');
-        // Pokud select existuje, použijeme jeho hodnotu, jinak původní typ diskuze
-        const selectedDiscussionType = discussionTypeSelect ? parseInt(discussionTypeSelect.value) : discussionType;
+        let selectedDiscussionType;
+
+        // Kontrola, zda je select viditelný a existuje
+        if (discussionTypeSelect && !discussionTypeSelect.closest('.d-none')) {
+            selectedDiscussionType = parseInt(discussionTypeSelect.value);
+        } else {
+            // Pokud select neexistuje nebo není viditelný, použijeme původní typ diskuze
+            selectedDiscussionType = discussionType;
+        }
 
         // Odeslání požadavku na server s aktualizovanými daty
         const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}`, {

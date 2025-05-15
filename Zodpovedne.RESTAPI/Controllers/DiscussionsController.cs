@@ -725,7 +725,7 @@ public class DiscussionsController : ControllerBase
             discussion.UpdatedAt = now;
             discussion.UpdatedWhateverAt = now;
 
-            // Typ diskuze - autor může měnit mezi Normal, ForFriends a Private, admin může nastavit jakýkoliv typ
+            // Typ diskuze - autor může měnit mezi Normal, ForFriends a Private, Hidden, admin může nastavit jakýkoliv typ
             if (isAdmin)
             {
                 // Admin může nastavit jakýkoliv typ diskuze
@@ -736,7 +736,8 @@ public class DiscussionsController : ControllerBase
                 // Autor může přepínat jen mezi těmito typy
                 if (model.Type == DiscussionType.Normal ||
                     model.Type == DiscussionType.ForFriends ||
-                    model.Type == DiscussionType.Private)
+                    model.Type == DiscussionType.Private ||
+                    model.Type == DiscussionType.Hidden)
                 {
                     discussion.Type = model.Type;
                 }

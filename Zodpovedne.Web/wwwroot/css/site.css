@@ -1221,8 +1221,17 @@ tr.toggle-row td {
     right: 10px;
 }
 
+.hide-text-when-narrow {
+    display: none;
+}
+
 /* Styly pro tablet a větší obrazovky (≥576px) */
 @media (min-width: 576px) {
+
+    .hide-text-when-narrow {
+        display: inline;
+    }
+
     /* Tlačítka na širších obrazovkách */
     .btn, .pocetZobrazeni, like-btn-disable, like-btn {
         margin-bottom: 0;
@@ -1239,7 +1248,6 @@ tr.toggle-row td {
     .user-list-item {
         grid-template-columns: 1fr 1fr 1fr;
     }
-
 }
 
 /* Styly pro větší tablety a menší notebooky (≥768px) */
