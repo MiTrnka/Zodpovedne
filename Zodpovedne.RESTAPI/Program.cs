@@ -16,6 +16,7 @@ using Zodpovedne.Data.Models;
 using Zodpovedne.Logging.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Zodpovedne.Data.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace Zodpovedne.RESTAPI
 {
@@ -40,6 +41,11 @@ namespace Zodpovedne.RESTAPI
                 builder.WebHost.ConfigureKestrel(options =>
                 {
                     options.ListenAnyIP(5001); // Port, na kterém bude API poslouchat
+                                               // Nastavení pro práci za proxy
+                    options.ConfigureHttpsDefaults(httpsOptions =>
+                    {
+                        httpsOptions.SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13;
+                    });
                 });
                 // nastavuje, kam se budou ukládat šifrovací klíèe pro ASP.NET Core DataProtection
                 // možná komplikace, pokud API bude bìžet na více serverech, protože klíèe nebudou sdíleny
@@ -328,11 +334,22 @@ namespace Zodpovedne.RESTAPI
             // Konfigurace pro práci za proxy
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
-                options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
-                                          Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
-                // Povolení všech sítí (v produkèním prostøedí je lepší omezit)
+                // Pøímé nastavení hlavièek, které chceme zpracovávat
+                options.ForwardedHeaders = ForwardedHeaders.All;
+
+                // Povolení všech proxy serverù a sítí
                 options.KnownNetworks.Clear();
                 options.KnownProxies.Clear();
+
+                // Dùležité - povolit uživatelské hlavièky
+                options.ForwardedForHeaderName = "X-Forwarded-For";
+                options.ForwardedHostHeaderName = "X-Forwarded-Host";
+                options.ForwardedProtoHeaderName = "X-Forwarded-Proto";
+                options.OriginalHostHeaderName = "Host";
+                options.OriginalForHeaderName = "X-Original-For";
+
+                // Povolit hlavièku X-Real-IP
+                options.ForwardedForHeaderName = "X-Real-IP";
             });
 
             var app = builder.Build();

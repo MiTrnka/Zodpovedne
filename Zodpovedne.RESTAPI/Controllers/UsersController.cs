@@ -542,69 +542,52 @@ public class UsersController : ControllerBase
     /// <returns>IP adresa klienta</returns>
     private string GetClientIpAddress()
     {
-        // Nejprve zkontrolujeme standardní hlavičky pro proxy
-        string? ip = null;
-
-        // X-Forwarded-For obsahuje seznam IP adres, první je původní klient
-        var forwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(forwardedFor))
+        try
         {
-            // Hlavička může obsahovat více IP adres oddělených čárkou
-            // například: "203.0.113.195, 70.41.3.18, 150.172.238.178"
-            // První adresa je IP adresa původního klienta
-            ip = forwardedFor.Split(',')[0].Trim();
-        }
+            // Získání různých hodnot IP adres pro diagnostiku
+            var remoteIpAddress = HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "null";
+            var xForwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].ToString();
+            var xRealIp = HttpContext.Request.Headers["X-Real-IP"].ToString();
 
-        // Pokud X-Forwarded-For není k dispozici, zkusíme X-Real-IP
-        if (string.IsNullOrEmpty(ip))
-        {
-            ip = HttpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
-        }
+            // Detailní log pro diagnostiku
+            //_logger.Log($"IP INFO - RemoteIpAddress: {remoteIpAddress}, X-Forwarded-For: {xForwardedFor}, X-Real-IP: {xRealIp}");
 
-        // Nginx může používat také hlavičku Forwarded (HTTP standard)
-        if (string.IsNullOrEmpty(ip))
-        {
-            var forwarded = HttpContext.Request.Headers["Forwarded"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(forwarded))
+            // První zkontrolujeme X-Real-IP, což je nejčistší forma IP adresy klienta
+            if (!string.IsNullOrEmpty(xRealIp) && xRealIp != "127.0.0.1" && !xRealIp.StartsWith("::ffff:127.0.0.1"))
             {
-                // Formát "Forwarded: for=192.0.2.60;proto=http;by=203.0.113.43"
-                var forwardedParts = forwarded.Split(';');
-                foreach (var part in forwardedParts)
+                return xRealIp;
+            }
+
+            // Poté zkusíme první adresu v X-Forwarded-For (která by měla být adresa klienta)
+            if (!string.IsNullOrEmpty(xForwardedFor))
+            {
+                var ips = xForwardedFor.Split(',');
+                if (ips.Length > 0)
                 {
-                    if (part.TrimStart().StartsWith("for=", StringComparison.OrdinalIgnoreCase))
+                    var clientIp = ips[0].Trim();
+                    if (clientIp != "127.0.0.1" && !clientIp.StartsWith("::ffff:127.0.0.1"))
                     {
-                        var forValue = part.Substring(4).Trim();
-                        // Odstranění případných uvozovek a závorek
-                        forValue = forValue.TrimStart('"', '[').TrimEnd('"', ']');
-                        ip = forValue;
-                        break;
+                        return clientIp;
                     }
                 }
             }
-        }
 
-        // Další alternativní hlavičky používané některými proxy
-        if (string.IsNullOrEmpty(ip))
-        {
-            ip = HttpContext.Request.Headers["CF-Connecting-IP"].FirstOrDefault() ?? // Cloudflare
-                 HttpContext.Request.Headers["True-Client-IP"].FirstOrDefault();     // Akamai, Cloudflare
-        }
-
-        // Nakonec zkusíme přímou IP adresu z připojení (jako fallback)
-        if (string.IsNullOrEmpty(ip) && HttpContext?.Connection?.RemoteIpAddress != null)
-        {
-            ip = HttpContext.Connection.RemoteIpAddress.ToString();
-
-            // Pokud je to localhost nebo IPv4-mapped IPv6 adresa, pokusíme se ji přeformátovat
-            if (ip.StartsWith("::ffff:"))
+            // Pokud se nám nepodařilo získat IP adresu z hlaviček a RemoteIpAddress není localhost,
+            // použijeme RemoteIpAddress
+            if (remoteIpAddress != "::1" && remoteIpAddress != "127.0.0.1" &&
+                !remoteIpAddress.StartsWith("::ffff:127.0.0.1") && remoteIpAddress != "null")
             {
-                // Převod IPv4-mapped IPv6 adresy na čistou IPv4 adresu
-                ip = ip.Substring(7);
+                return remoteIpAddress;
             }
-        }
 
-        // Pokud není k dispozici ani jedna z možností, vrátíme "neznámá"
-        return ip ?? "neznámá";
+            // Pokud vše selže, vrátíme nějakou hodnotu pro indikaci problému
+            return "unknown-ip";
+        }
+        catch (Exception ex)
+        {
+            _logger.Log($"Chyba při získávání IP adresy: {ex.Message}", ex);
+            return "error-ip";
+        }
     }
 
     /// <summary>

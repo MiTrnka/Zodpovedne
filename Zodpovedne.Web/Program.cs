@@ -39,6 +39,11 @@ public class Program
             builder.WebHost.ConfigureKestrel(options =>
             {
                 options.ListenAnyIP(5000); // Port, na kterém bude Web poslouchat
+                                           // Nastavení pro práci za proxy
+                options.ConfigureHttpsDefaults(httpsOptions =>
+                {
+                    httpsOptions.SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls13;
+                });
             });
             // nastavuje, kam se budou ukládat šifrovací klíèe pro ASP.NET Core DataProtection
             //zajišuje šifrování a dešifrování dùleitıch dat, jako jsou: Session cookies, Anti - forgery tokeny...
