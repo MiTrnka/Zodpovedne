@@ -29,17 +29,38 @@
         box-shadow: 0 0 5px rgba(0,0,0,0.2);
     }
 
-/* Styly pro zarovnání obrázků */
-.image-style-inline {
+/* Explicitní styly pro zarovnání obrázků */
+img.image-style-inline,
+.image-style-inline img {
     float: none;
     display: inline-block;
     margin: 0 5px;
 }
 
-.image-style-align-center {
+img.image-style-align-center,
+.image-style-align-center img {
+    display: block;
     margin-left: auto;
     margin-right: auto;
+}
+
+figure.image-style-inline {
+    display: inline-block;
+    margin: 0 5px;
+}
+
+figure.image-style-align-center {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
     display: block;
+}
+
+/* Pro případy, kdy třídy nejsou přímo na img nebo figure */
+.image-style-align-center:not(figure):not(img) {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
     text-align: center;
 }
 
@@ -47,18 +68,6 @@
 figure {
     margin: 1rem 0;
 }
-
-    figure.image-style-inline {
-        display: inline-block;
-        margin: 0 5px;
-    }
-
-    figure.image-style-align-center {
-        margin-left: auto;
-        margin-right: auto;
-        text-align: center;
-        display: block;
-    }
 
 /* Popisky obrázků */
 figcaption {
@@ -111,6 +120,26 @@ figcaption {
         display: block;
     }
 
+/* Explicitní styly pro zarovnání mediálního obsahu */
+figure.media.image-style-align-center {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+.media.image-style-align-center .ck-media__wrapper {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+figure.media.image-style-align-center iframe,
+.media.image-style-align-center iframe {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
 /* -------- Specifické styly pro editor během editace -------- */
 /* CKEditor specifické styly pro obrázky */
 .ck-content img {
@@ -121,6 +150,21 @@ figcaption {
     border: none !important;
     border-radius: 0 !important;
     padding: 0 !important;
+}
+
+    /* CKEditor specifické styly pro zarovnání */
+    .ck-content img.image-style-align-center,
+    .ck-content .image-style-align-center img {
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+.ck-content figure.image-style-align-center {
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: block !important;
 }
 
 /* CKEditor specifické styly pro media embed */
@@ -157,4 +201,43 @@ figcaption {
     .ck-content .media {
         max-width: 100%;
     }
+}
+
+/* Explicitní styly pro zachování zarovnání po uložení */
+.text-center img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Vylepšené styly pro obrázky */
+figure.image, figure.image.image-style-align-center {
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+    figure.image.image-style-align-center img {
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+/* Zvýraznění stylů pro div.text-center */
+div.text-center {
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+    div.text-center img {
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+/* Úprava stylů pro editaci */
+.ck.ck-editor__editable .image.image-style-align-center {
+    margin-left: auto !important;
+    margin-right: auto !important;
 }

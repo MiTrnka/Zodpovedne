@@ -351,6 +351,8 @@
     @await Html.PartialAsync("_ValidationScriptsPartial")
     <!-- Import adaptéru pro nahrávání souborů -->
     <script src="~/js/ckeditor-upload-adapter.js"></script>
+    <!-- Import sdílených utilit pro editor -->
+    <script src="~/js/editor-utils.js"></script>
     <!-- Import skriptu pro hlasování -->
     <script src="~/js/voting.js" asp-append-version="true"></script>
 
@@ -373,112 +375,27 @@
         let uploadedImages = [];
 
         // Inicializace CKEditoru
-        ClassicEditor
-            .create(document.querySelector('#editor-container'), {
-                // Základní konfigurace nástrojové lišty
-                toolbar: [
-                    'heading',
-                    '|',
-                    'bold',
-                    'italic',
-                    'link',
-                    'bulletedList',
-                    'numberedList',
-                    '|',
-                    'alignment',
-                    '|',
-                    ...(canUploadFiles ? ['imageUpload', '|'] : []),
-                    'mediaEmbed', // Tlačítko pro vkládání videí
-                    '|',
-                    'undo',
-                    'redo'
-                ],
-                language: 'cs',
-                alignment: {
-                    options: ['left', 'center', 'right', 'justify']
-                },
-                // Konfigurace pro mediaEmbed
-                mediaEmbed: {
-                    previewsInData: true, // Ukládat iframe v HTML
-                    // Přidáváme možnosti zarovnání
-                    toolbar: ['mediaEmbed:inline', 'mediaEmbed:center'],
-                    styles: {
-                        options: [
-                            { name: 'inline', title: 'Umístit kdekoliv', className: '' },
-                            { name: 'center', title: 'Zarovnat na střed', className: 'image-style-align-center' }
-                        ]
-                    },
-                    providers: [
-                        {
-                            name: 'youtube',
-                            url: [
-                                /^(?:m\.)?youtube\.com\/watch\?v=([\w-]+)(?:&t=(\d+))?/,
-                                /^(?:m\.)?youtube\.com\/v\/([\w-]+)(?:\?t=(\d+))?/,
-                                /^youtube\.com\/embed\/([\w-]+)(?:\?start=(\d+))?/,
-                                /^youtu\.be\/([\w-]+)(?:\?t=(\d+))?/
-                            ],
-                            html: match => {
-                                const id = match[1];
-                                const time = match[2];
+           ClassicEditor
+        .create(document.querySelector('#editor-container'), createEditorConfig(canUploadFiles))
+        .then(editor => {
+            // Uložení instance editoru
+            window.editor = editor;
 
-                                return (
-                                    '<div class="embed-responsive embed-responsive-16by9">' +
-                                        '<iframe class="embed-responsive-item" ' +
-                                            'src="https://www.youtube.com/embed/' + id + (time ? '?start=' + time : '') + '" ' +
-                                            'allowfullscreen>' +
-                                        '</iframe>' +
-                                    '</div>'
-                                );
-                            }
-                        }
-                    ]
-                },
-                // Konfigurace obrázků - pouze pokud uživatel může nahrávat soubory
-                ...(canUploadFiles ? {
-                    image: {
-                        insert: {
-                            type: 'inline'
-                        },
-                        // Zjednodušená toolbar pro obrázky - jen inline a center
-                        toolbar: [
-                            'imageTextAlternative',
-                            '|',
-                            'imageStyle:inline',
-                            'imageStyle:alignCenter'
-                        ],
-                        // Zjednodušená konfigurace stylů pro obrázky
-                        styles: {
-                            options: [
-                                { name: 'inline', title: 'Umístit kdekoliv', icon: 'inline' },
-                                { name: 'alignCenter', title: 'Zarovnat na střed', icon: 'center' }
-                            ]
-                        },
-                        upload: {
-                            types: ['jpeg', 'png', 'gif', 'jpg', 'webp']
-                        }
-                    },
-                    extraPlugins: [MyCustomUploadAdapterPlugin]
-                } : {})
-            })
-            .then(editor => {
-                // Uložení instance editoru
-                window.editor = editor;
+            // Naplnění editoru obsahem z modelu (pokud existuje)
+            if (document.querySelector('#editor-content').value) {
+                editor.setData(document.querySelector('#editor-content').value);
+            }
 
-                // Naplnění editoru obsahem z modelu (pokud existuje)
-                if (document.querySelector('#editor-content').value) {
-                    editor.setData(document.querySelector('#editor-content').value);
-                }
-
-                // Sledování nahraných obrázků
-                if (canUploadFiles) {
-                    editor.model.document.on('change:data', () => {
-                        trackUploadedImages();
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Chyba při inicializaci editoru:', error);
-            });
+            // Sledování nahraných obrázků
+            if (canUploadFiles) {
+                editor.model.document.on('change:data', () => {
+                    trackUploadedImages();
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Chyba při inicializaci editoru:', error);
+        });
 
         // Funkce pro sledování nahraných obrázků
         function trackUploadedImages() {
@@ -592,7 +509,9 @@
                 // Vyčištění nepoužitých obrázků před odesláním formuláře
                 cleanupUnusedImages();
 
-                document.querySelector('#editor-content').value = window.editor.getData();
+                // Zpracování obsahu pro zachování zarovnání obrázků
+                const processedContent = processEditorContentBeforeSave(window.editor.getData());
+                document.querySelector('#editor-content').value = processedContent;
             }
         }
 
@@ -730,5 +649,6 @@
                 }
             });
         });
-    </script>
+
+        </script>
 }

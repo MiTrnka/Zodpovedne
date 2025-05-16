@@ -391,6 +391,12 @@ function getDiscussionCodeFromUrl() {
     return '';
 }
 
+
+
+
+
+
+
 // Funkce pro konverzi HTML před načtením do editoru
 function convertHtmlForCKEditor(html) {
     // Konvertování div.embed-responsive s iframe na data-oembed-url formát, který CKEditor rozpozná
@@ -479,28 +485,6 @@ async function toggleDiscussionEdit(show) {
 
         // Inicializace editoru při prvním zobrazení
         if (!window.discussionEditor) {
-            // Základní konfigurace nástrojové lišty
-            const toolbarItems = [
-                'heading',
-                '|',
-                'bold',
-                'italic',
-                'link',
-                'bulletedList',
-                'numberedList',
-                '|',
-                'alignment',
-                '|',
-                'mediaEmbed',
-                '|',
-                'undo',
-                'redo'
-            ];
-            // Přidáme tlačítko pro nahrávání obrázků pouze pokud má uživatel na to oprávnění
-            if (canUploadFiles) {
-                toolbarItems.splice(toolbarItems.indexOf('mediaEmbed'), 0, 'imageUpload', '|');
-            }
-
             // Konvertujeme HTML obsah pro editor
             const originalContent = document.getElementById('discussion-content-display').innerHTML;
             const convertedContent = convertHtmlForCKEditor(originalContent);
@@ -509,79 +493,7 @@ async function toggleDiscussionEdit(show) {
             editorContainer.innerHTML = '';
 
             ClassicEditor
-                .create(document.getElementById('editor-container'), {
-                    // Editor configuration
-                    toolbar: {
-                        items: toolbarItems
-                    },
-                    language: 'cs',
-                    // Konfigurace zarovnání textu
-                    alignment: {
-                        options: ['left', 'center', 'right', 'justify']
-                    },
-                    // Konfigurace pro mediaEmbed
-                    mediaEmbed: {
-                        previewsInData: true, // Ukládat iframe v HTML
-                        // Přidáváme možnosti zarovnání
-                        toolbar: ['mediaEmbed:inline', 'mediaEmbed:center'],
-                        styles: {
-                            options: [
-                                { name: 'inline', title: 'Umístit kdekoliv', className: '' },
-                                { name: 'center', title: 'Zarovnat na střed', className: 'image-style-align-center' }
-                            ]
-                        },
-                        providers: [
-                            {
-                                name: 'youtube',
-                                url: [
-                                    /^(?:m\.)?youtube\.com\/watch\?v=([\w-]+)(?:&t=(\d+))?/,
-                                    /^(?:m\.)?youtube\.com\/v\/([\w-]+)(?:\?t=(\d+))?/,
-                                    /^youtube\.com\/embed\/([\w-]+)(?:\?start=(\d+))?/,
-                                    /^youtu\.be\/([\w-]+)(?:\?t=(\d+))?/
-                                ],
-                                html: match => {
-                                    const id = match[1];
-                                    const time = match[2];
-
-                                    return (
-                                        '<div class="embed-responsive embed-responsive-16by9">' +
-                                        '<iframe class="embed-responsive-item" ' +
-                                        'src="https://www.youtube.com/embed/' + id + (time ? '?start=' + time : '') + '" ' +
-                                        'allowfullscreen>' +
-                                        '</iframe>' +
-                                        '</div>'
-                                    );
-                                }
-                            }
-                        ]
-                    },
-                    // Konfigurace obrázků - pouze pokud uživatel může nahrávat soubory
-                    ...(canUploadFiles ? {
-                        image: {
-                            insert: {
-                                type: 'inline' // Změna výchozího stylu na inline
-                            },
-                            // Zjednodušená toolbar pro obrázky - jen inline a center
-                            toolbar: [
-                                'imageTextAlternative',
-                                '|',
-                                'imageStyle:inline',
-                                'imageStyle:alignCenter'
-                            ],
-                            // Zjednodušená konfigurace stylů pro obrázky
-                            styles: {
-                                options: [
-                                    { name: 'inline', title: 'Umístit kdekoliv', icon: 'inline' },
-                                    { name: 'alignCenter', title: 'Zarovnat na střed', icon: 'center' }
-                                ]
-                            },
-                            upload: {
-                                types: ['jpeg', 'png', 'gif', 'jpg', 'webp']
-                            }
-                        },
-                        extraPlugins: [MyCustomUploadAdapterPlugin]
-                    } : {})
-                })
+                .create(document.getElementById('editor-container'), createEditorConfig(canUploadFiles))
                 .then(editor => {
                     window.discussionEditor = editor;
 
@@ -643,78 +555,6 @@ async function saveDiscussionChanges(discussionId, discussionType, event) {
         // Získáme obsah z editoru
         let content = window.discussionEditor ? window.discussionEditor.getData() : '';
 
-        console.log("Obsah z editoru před zpracováním:", content.length,
-            "obsahuje YouTube iframe:", content.includes("youtube.com/embed"));
-
-        // OPRAVA: Zkontrolujeme a opravíme zarovnání obrázků
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = content;
-
-        // Najdeme všechny obrázky s třídami pro zarovnání
-        tempDiv.querySelectorAll('img').forEach(img => {
-            // Kontrola tříd pro zarovnání z CKEditoru
-            const hasLeftClass = img.classList.contains('image-style-align-left');
-            const hasCenterClass = img.classList.contains('image-style-align-center');
-            const hasRightClass = img.classList.contains('image-style-align-right');
-
-            // Pokud má třídu pro zarovnání, přidáme inline styly pro zajištění správného zobrazení
-            if (hasLeftClass) {
-                img.style.float = 'left';
-                img.style.marginRight = '10px';
-                img.style.marginBottom = '10px';
-            } else if (hasCenterClass) {
-                // Pro zarovnání na střed potřebujeme obalit obrázek v divu nebo použít specifické styly
-                const parent = img.parentNode;
-
-                // Pokud již není v divu pro zarovnání na střed
-                if (parent.tagName !== 'DIV' || !parent.style.textAlign || parent.style.textAlign !== 'center') {
-                    // Vytvoříme div pro zarovnání na střed
-                    const centerDiv = document.createElement('div');
-                    centerDiv.style.textAlign = 'center';
-
-                    // Nahradíme obrázek divem obsahujícím obrázek
-                    parent.replaceChild(centerDiv, img);
-                    centerDiv.appendChild(img);
-                }
-            } else if (hasRightClass) {
-                img.style.float = 'right';
-                img.style.marginLeft = '10px';
-                img.style.marginBottom = '10px';
-            }
-        });
-
-        // Najdeme všechny figure elementy s třídami pro zarovnání
-        tempDiv.querySelectorAll('figure').forEach(figure => {
-            // Kontrola tříd pro zarovnání z CKEditoru
-            const hasLeftClass = figure.classList.contains('image-style-align-left');
-            const hasCenterClass = figure.classList.contains('image-style-align-center');
-            const hasRightClass = figure.classList.contains('image-style-align-right');
-
-            // Pokud má třídu pro zarovnání, přidáme inline styly
-            if (hasLeftClass) {
-                figure.style.float = 'left';
-                figure.style.marginRight = '10px';
-                figure.style.marginBottom = '10px';
-            } else if (hasCenterClass) {
-                figure.style.textAlign = 'center';
-                figure.style.margin = '0 auto';
-
-                // Ujistíme se, že img uvnitř figure má správný styl
-                const img = figure.querySelector('img');
-                if (img) {
-                    img.style.display = 'block';
-                    img.style.margin = '0 auto';
-                }
-            } else if (hasRightClass) {
-                figure.style.float = 'right';
-                figure.style.marginLeft = '10px';
-                figure.style.marginBottom = '10px';
-            }
-        });
-
-        // Aktualizujeme obsah po opravách
-        content = tempDiv.innerHTML;
-
         if (content.length > maxContentLength) {
             document.getElementById("modalMessage").textContent =
                 `Obsah diskuze nesmí být delší než ${maxContentLength} znaků. Aktuální délka: ${content.length}`;
@@ -724,6 +564,9 @@ async function saveDiscussionChanges(discussionId, discussionType, event) {
             }
             return false;
         }
+
+        // Zpracování obsahu pro zachování zarovnání obrázků
+        content = processEditorContentBeforeSave(content);
 
         // Před uložením zkontrolujeme nepoužívané obrázky a smažeme je
         await cleanupUnusedImages(content);
