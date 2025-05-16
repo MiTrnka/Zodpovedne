@@ -391,7 +391,25 @@ function getDiscussionCodeFromUrl() {
     return '';
 }
 
-// Funkce pro přepínání mezi zobrazením a editací diskuze (show true znamená, že se má zobrazit editační mód)
+// Funkce pro konverzi HTML před načtením do editoru
+function convertHtmlForCKEditor(html) {
+    // Konvertování div.embed-responsive s iframe na data-oembed-url formát, který CKEditor rozpozná
+    return html.replace(
+        /<div class="embed-responsive embed-responsive-16by9">\s*<iframe.*?src="https:\/\/www\.youtube\.com\/embed\/([a-zA-Z0-9_-]+)".*?><\/iframe>\s*<\/div>/g,
+        '<figure class="media"><oembed url="https://www.youtube.com/watch?v=$1"></oembed></figure>'
+    );
+}
+
+// Funkce pro konverzi HTML zpět po uložení
+function convertHtmlFromCKEditor(html) {
+    // Konvertování CKEditor formátu zpět na původní formát
+    return html.replace(
+        /<figure class="media">\s*<oembed url="https:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)"><\/oembed>\s*<\/figure>/g,
+        '<div class="embed-responsive embed-responsive-16by9"><iframe class="embed-responsive-item" src="https://www.youtube.com/embed/$1" allowfullscreen></iframe></div>'
+    );
+}
+
+// Aktualizovaná funkce toggleDiscussionEdit
 async function toggleDiscussionEdit(show) {
     const titleDisplay = document.getElementById('discussion-title-display');
     const titleEdit = document.getElementById('discussion-title-edit');
@@ -413,8 +431,6 @@ async function toggleDiscussionEdit(show) {
     // Získání aktuálního typu diskuze z hidden inputu
     const currentDiscussionType = document.getElementById('currentDiscussionType')?.value || "0";
 
-    //const discussionInfoPanel = document.getElementById('discussionInfoPanel');
-
     if (show) {
         titleDisplay.classList.add('d-none');
         titleEdit.classList.remove('d-none');
@@ -424,8 +440,6 @@ async function toggleDiscussionEdit(show) {
         editBtn.classList.add('d-none');
         saveBtn.classList.remove('d-none');
         cancelBtn.classList.remove('d-none');
-
-        //discussionInfoPanel.classList.add('d-none');
 
         // Zobrazíme select pro typ diskuze při editaci pouze pokud je uživatel admin
         // nebo pokud diskuze není typu Hidden (2)
@@ -462,12 +476,16 @@ async function toggleDiscussionEdit(show) {
                 'bulletedList',
                 'numberedList',
                 '|',
+                'alignment',
+                '|',
+                'mediaEmbed',
+                '|',
                 'undo',
                 'redo'
             ];
             // Přidáme tlačítko pro nahrávání obrázků pouze pokud má uživatel na to oprávnění
             if (canUploadFiles) {
-                toolbarItems.splice(toolbarItems.length - 2, 0, 'imageUpload', '|');
+                toolbarItems.splice(toolbarItems.indexOf('mediaEmbed'), 0, 'imageUpload', '|');
             }
 
             ClassicEditor
@@ -477,52 +495,77 @@ async function toggleDiscussionEdit(show) {
                         items: toolbarItems
                     },
                     language: 'cs',
-                    // Konfigurace obrázků
-                    image: {
-                        insert: {
-                            type: 'inline' // Změna výchozího stylu na inline
-                        },
-                        toolbar: [
-                            'imageTextAlternative',
-                            '|',
-                            'imageStyle:inline',        // Plovoucí obrázek
-                            'imageStyle:alignLeft',    // Zarovnání vlevo
-                            'imageStyle:alignCenter',  // Zarovnání na střed
-                            'imageStyle:alignRight'   // Zarovnání vpravo
-                        ],
-                        resizeOptions: [
-                            {
-                                name: 'original',
-                                value: null,
-                                label: 'Originální velikost'
-                            },
-                            {
-                                name: 'responsive',
-                                value: null,
-                                label: 'Responzivní'
-                            }
-                        ],
-                        // Definice stylů zarovnání - použití standardních CKEditor stylů
-                        styles: {
-                            options: [
-                                { name: 'inline', title: 'Umístit kdekoliv', icon: 'inline' },
-                                { name: 'alignLeft', title: 'Zarovnat vlevo', icon: 'left' },
-                                { name: 'alignCenter', title: 'Zarovnat na střed', icon: 'center' },
-                                { name: 'alignRight', title: 'Zarovnat vpravo', icon: 'right' }
-                            ]
-                        },
-                        // Nastavení upload URL
-                        upload: {
-                            types: ['jpeg', 'png', 'gif', 'jpg', 'webp']
-                        }
+                    // Konfigurace zarovnání textu
+                    alignment: {
+                        options: ['left', 'center', 'right', 'justify']
                     },
-                    // přidání našeho vlastního adaptéru pro nahrávání
-                    extraPlugins: [MyCustomUploadAdapterPlugin]
+                    // Konfigurace pro mediaEmbed
+                    mediaEmbed: {
+                        previewsInData: true, // Ukládat iframe v HTML
+                        providers: [
+                            {
+                                name: 'youtube',
+                                url: [
+                                    /^(?:m\.)?youtube\.com\/watch\?v=([\w-]+)(?:&t=(\d+))?/,
+                                    /^(?:m\.)?youtube\.com\/v\/([\w-]+)(?:\?t=(\d+))?/,
+                                    /^youtube\.com\/embed\/([\w-]+)(?:\?start=(\d+))?/,
+                                    /^youtu\.be\/([\w-]+)(?:\?t=(\d+))?/
+                                ],
+                                html: match => {
+                                    const id = match[1];
+                                    const time = match[2];
+
+                                    return (
+                                        '<div class="embed-responsive embed-responsive-16by9">' +
+                                        '<iframe class="embed-responsive-item" ' +
+                                        'src="https://www.youtube.com/embed/' + id + (time ? '?start=' + time : '') + '" ' +
+                                        'allowfullscreen>' +
+                                        '</iframe>' +
+                                        '</div>'
+                                    );
+                                }
+                            }
+                        ]
+                    },
+                    // Konfigurace obrázků - pouze pokud uživatel může nahrávat soubory
+                    ...(canUploadFiles ? {
+                        image: {
+                            insert: {
+                                type: 'inline' // Změna výchozího stylu na inline
+                            },
+                            toolbar: [
+                                'imageTextAlternative',
+                                '|',
+                                'imageStyle:inline',        // Plovoucí obrázek
+                                'imageStyle:alignLeft',    // Zarovnání vlevo
+                                'imageStyle:alignCenter',  // Zarovnání na střed
+                                'imageStyle:alignRight'   // Zarovnání vpravo
+                            ],
+                            styles: {
+                                options: [
+                                    { name: 'inline', title: 'Umístit kdekoliv', icon: 'inline' },
+                                    { name: 'alignLeft', title: 'Zarovnat vlevo', icon: 'left' },
+                                    { name: 'alignCenter', title: 'Zarovnat na střed', icon: 'center' },
+                                    { name: 'alignRight', title: 'Zarovnat vpravo', icon: 'right' }
+                                ]
+                            },
+                            upload: {
+                                types: ['jpeg', 'png', 'gif', 'jpg', 'webp']
+                            }
+                        },
+                        extraPlugins: [MyCustomUploadAdapterPlugin]
+                    } : {})
                 })
                 .then(editor => {
                     window.discussionEditor = editor;
-                    // Nastavení počáteční hodnoty editoru
-                    editor.setData(document.getElementById('discussion-content-display').innerHTML);
+
+                    // Konvertujeme HTML obsah pro editor
+                    const originalContent = document.getElementById('discussion-content-display').innerHTML;
+                    const convertedContent = convertHtmlForCKEditor(originalContent);
+
+                    // Nastavení počáteční hodnoty editoru s konvertovaným obsahem
+                    editor.setData(convertedContent);
+
                     // Přidání kontroly maximální délky
                     const maxContentLength = 10000; // Odpovídá omezení v modelu
                     editor.model.document.on('change:data', () => {
@@ -549,8 +592,6 @@ async function toggleDiscussionEdit(show) {
         saveBtn?.classList.add('d-none');
         cancelBtn?.classList.add('d-none');
 
-        //discussionInfoPanel.classList.remove('d-none');
-
         if (discussionTypeContainer) {
             discussionTypeContainer.classList.add('d-none');
         }
@@ -565,9 +606,107 @@ async function toggleDiscussionEdit(show) {
                 console.error('Chyba při rušení instance editoru:', error);
             }
         }
-
     }
     $("#emoji-btn-discussion").toggle();
+}
+
+// Aktualizovaná funkce saveDiscussionChanges
+async function saveDiscussionChanges(discussionId, discussionType, event) {
+    const titleEdit = document.getElementById('discussion-title-edit');
+    const contentDisplay = document.getElementById('discussion-content-display');
+    const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+    const maxContentLength = 10000;
+
+    try {
+        // Získáme obsah z editoru
+        let editorContent = window.discussionEditor ? window.discussionEditor.getData() : '';
+
+        // Konvertujeme HTML zpět do formátu s div.embed-responsive pro YouTube videa
+        editorContent = convertHtmlFromCKEditor(editorContent);
+
+        if (editorContent.length > maxContentLength) {
+            document.getElementById("modalMessage").textContent =
+                `Obsah diskuze nesmí být delší než ${maxContentLength} znaků. Aktuální délka: ${editorContent.length}`;
+            new bootstrap.Modal(document.getElementById("errorModal")).show();
+            if (event) {
+                event.preventDefault();
+            }
+            return false;
+        }
+
+        // Před uložením zkontrolujeme nepoužívané obrázky a smažeme je
+        await cleanupUnusedImages(editorContent);
+
+        // Získání vybraného typu diskuze z selectu
+        const discussionTypeSelect = document.getElementById('editDiscussionType');
+        let selectedDiscussionType;
+
+        // Kontrola, zda je select viditelný a existuje
+        if (discussionTypeSelect && !discussionTypeSelect.closest('.d-none')) {
+            selectedDiscussionType = parseInt(discussionTypeSelect.value);
+        } else {
+            // Pokud select neexistuje nebo není viditelný, použijeme původní typ diskuze
+            selectedDiscussionType = discussionType;
+        }
+
+        // Odeslání požadavku na server s aktualizovanými daty
+        const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: titleEdit.value,
+                content: editorContent, // Použijeme konvertovaný obsah
+                type: selectedDiscussionType,
+                voteType: 0 // Zachováme současný stav hlasování
+            })
+        });
+
+        if (response.ok) {
+            // Aktualizujeme zobrazení
+            contentDisplay.innerHTML = editorContent;
+            toggleDiscussionEdit(false);
+
+            try {
+                const now = new Date();
+                const formatter = new Intl.DateTimeFormat('cs-CZ', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                });
+                const formatted = formatter.format(now).replace(/\u00A0/g, '');
+                document.getElementById('discussionUpdatedAtValue').textContent = formatted;
+
+                // Způsobí kompletní znovunačtení stránky v prohlížeči
+                window.location.reload(true);
+                return;
+            }
+            catch (error) {
+                document.getElementById('discussionUpdatedAtValue').textContent = '';
+            }
+        } else {
+            try {
+                const errorData = await response.json();
+                console.error("Chyba při ukládání:", errorData);
+                if (errorData && errorData.errors && errorData.errors.Content) {
+                    alert(errorData.errors.Content[0]);
+                } else {
+                    alert('Nepodařilo se uložit změny.');
+                }
+            } catch (e) {
+                alert('Nepodařilo se uložit změny.');
+            }
+        }
+    }
+    catch (error) {
+        console.error('Chyba při ukládání:', error);
+        alert('Došlo k chybě při ukládání změn.');
+    }
 }
 
 // Vlozeni smajliku do diskuse
@@ -594,100 +733,7 @@ poleSmajlikuDiskuse.forEach(smajlik => {
     });
 });
 
-// Funkce pro uložení změn v diskuzi
-async function saveDiscussionChanges(discussionId, discussionType, event) {
-    const titleEdit = document.getElementById('discussion-title-edit');
-    const contentDisplay = document.getElementById('discussion-content-display');
-    const apiBaseUrl = document.getElementById('apiBaseUrl').value;
-    const maxContentLength = 10000;
-
-    try {
-        const content = window.discussionEditor ? window.discussionEditor.getData() : '';
-        if (content.length > maxContentLength) {
-            document.getElementById("modalMessage").textContent =
-                `Obsah diskuze nesmí být delší než ${maxContentLength} znaků. Aktuální délka: ${content.length}`;
-            new bootstrap.Modal(document.getElementById("errorModal")).show();
-            if (event) {
-                event.preventDefault();
-            }
-            return false;
-        }
-
-        // Před uložením zkontrolujeme nepoužívané obrázky a smažeme je
-        await cleanupUnusedImages(content);
-
-        // Získání vybraného typu diskuze z selectu
-        const discussionTypeSelect = document.getElementById('editDiscussionType');
-        let selectedDiscussionType;
-
-        // Kontrola, zda je select viditelný a existuje
-        if (discussionTypeSelect && !discussionTypeSelect.closest('.d-none')) {
-            selectedDiscussionType = parseInt(discussionTypeSelect.value);
-        } else {
-            // Pokud select neexistuje nebo není viditelný, použijeme původní typ diskuze
-            selectedDiscussionType = discussionType;
-        }
-
-        // Odeslání požadavku na server s aktualizovanými daty
-        const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                title: titleEdit.value,
-                content: content,
-                type: selectedDiscussionType, // Zde používáme novou proměnnou selectedDiscussionType
-                voteType: 0 // Zachováme současný stav hlasování
-            })
-        });
-
-        if (response.ok) {
-            contentDisplay.innerHTML = content;
-            toggleDiscussionEdit(false);
-
-            try {
-                const now = new Date();
-                const formatter = new Intl.DateTimeFormat('cs-CZ', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false
-                });
-                const formatted = formatter.format(now).replace(/\u00A0/g, '');
-                document.getElementById('discussionUpdatedAtValue').textContent = formatted;
-
-                // Způsobí kompletní znovunačtení stránky v prohlížeči
-                window.location.reload(true);
-                return;
-            }
-            catch (error) {
-                document.getElementById('discussionUpdatedAtValue').textContent = '';
-            }
-        } else {
-            try {
-                const errorData = await response.json();
-                console.error("Chyba při ukládání:", errorData); // Pro diagnostiku
-                if (errorData && errorData.errors && errorData.errors.Content) {
-                    alert(errorData.errors.Content[0]);
-                } else {
-                    alert('Nepodařilo se uložit změny.');
-                }
-            } catch (e) {
-                alert('Nepodařilo se uložit změny.');
-            }
-        }
-    }
-    catch (error) {
-        console.error('Chyba při ukládání:', error);
-        alert('Došlo k chybě při ukládání změn.');
-    }
-}
-
-// Funkce pro kontrolu a mazání nepoužívaných obrázků (úprava pro zasílání seznamu aktivních obrázků)
+// Upravená funkce pro kontrolu a mazání nepoužívaných obrázků, která bere v úvahu vložená YouTube videa
 async function cleanupUnusedImages(newContent) {
     try {
         // Získání kódu diskuze z URL

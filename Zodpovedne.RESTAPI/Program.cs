@@ -287,6 +287,34 @@ namespace Zodpovedne.RESTAPI
                 sanitizer.AllowedCssProperties.Add("height");
                 sanitizer.AllowedCssProperties.Add("display");
 
+                // Povolíme iframe pro YouTube embedy
+                sanitizer.AllowedTags.Add("iframe");
+                sanitizer.AllowedAttributes.Add("allowfullscreen");
+                sanitizer.AllowedAttributes.Add("frameborder");
+                sanitizer.AllowedAttributes.Add("src");
+                sanitizer.AllowedAttributes.Add("width");
+                sanitizer.AllowedAttributes.Add("height");
+                sanitizer.AllowedAttributes.Add("class");
+
+                // Povolíme div pro obálku YouTube embedu
+                sanitizer.AllowedTags.Add("div");
+                sanitizer.AllowedClasses.Add("embed-responsive");
+                sanitizer.AllowedClasses.Add("embed-responsive-16by9");
+                sanitizer.AllowedClasses.Add("embed-responsive-item");
+
+                // Pøípadné další užiteèné povolení pro CSS u embedding videí
+                sanitizer.AllowedCssProperties.Add("position");
+                sanitizer.AllowedCssProperties.Add("top");
+                sanitizer.AllowedCssProperties.Add("bottom");
+                sanitizer.AllowedCssProperties.Add("left");
+                sanitizer.AllowedCssProperties.Add("right");
+                sanitizer.AllowedCssProperties.Add("padding-top");
+                sanitizer.AllowedCssProperties.Add("overflow");
+
+                // Pøípadné další užiteèné atributy pro iframe
+                sanitizer.AllowedAttributes.Add("allow"); // Moderní alternativa k allowfullscreen
+                sanitizer.AllowedAttributes.Add("loading"); // Pro lazy loading
+
                 return sanitizer;
             });
 
