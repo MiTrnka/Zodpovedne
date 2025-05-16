@@ -5,41 +5,29 @@
 
 // Konfigurace CKEditoru
 function createEditorConfig(canUploadFiles = false) {
-    // Základní konfigurace nástrojové lišty
-    const toolbarItems = [
-        'heading',
-        '|',
-        'bold',
-        'italic',
-        'link',
-        'bulletedList',
-        'numberedList',
-        '|',
-        'align',
-        '|',
-        'mediaEmbed',
-        '|',
-        'undo',
-        'redo'
-    ];
-
-    // Přidáme tlačítko pro nahrávání obrázků pouze pokud má uživatel na to oprávnění
-    if (canUploadFiles) {
-        toolbarItems.splice(toolbarItems.indexOf('mediaEmbed'), 0, 'imageUpload', '|');
-    }
-
-    // Základní konfigurace editoru
     const editorConfig = {
-        toolbar: {
-            items: toolbarItems
-        },
+        // Základní konfigurace nástrojové lišty bez problematického alignment
+        toolbar: [
+            'heading',
+            '|',
+            'bold',
+            'italic',
+            'link',
+            'bulletedList',
+            'numberedList',
+            '|',
+            // Odstraněno alignment
+            ...(canUploadFiles ? ['imageUpload', '|'] : []), // Podmíněné přidání tlačítka pro nahrávání obrázků
+            'mediaEmbed', // Nástroj pro vkládání médií
+            '|',
+            'undo',
+            'redo'
+        ],
         language: 'cs',
-        alignment: {
-            options: ['left', 'center']
-        },
+        // Odstraněna konfigurace alignment
+        // Konfigurace pro vkládání médií
         mediaEmbed: {
             previewsInData: true, // Ukládat iframe v HTML
-            // Přidáváme možnosti zarovnání
             toolbar: ['mediaEmbed:inline', 'mediaEmbed:center'],
             styles: {
                 options: [
@@ -77,23 +65,23 @@ function createEditorConfig(canUploadFiles = false) {
     // Přidáme konfiguraci pro obrázky pouze pokud uživatel může nahrávat soubory
     if (canUploadFiles) {
         editorConfig.image = {
-            // Základní nastavení
             insert: {
-                type: 'inline'
+                type: 'inline' // Změna výchozího stylu na inline
             },
-            // Zarovnání a styly
             toolbar: [
                 'imageTextAlternative',
                 '|',
-                'imageStyle:inline',
-                'imageStyle:alignCenter'
+                'imageStyle:inline',        // Plovoucí obrázek
+                'imageStyle:alignCenter'  // Zarovnání na střed
             ],
+            // Definice stylů zarovnání - použití standardních CKEditor stylů
             styles: {
                 options: [
                     { name: 'inline', title: 'Umístit kdekoliv', icon: 'inline' },
                     { name: 'alignCenter', title: 'Zarovnat na střed', icon: 'center' }
                 ]
             },
+            // Nastavení upload URL
             upload: {
                 types: ['jpeg', 'png', 'gif', 'jpg', 'webp']
             }
