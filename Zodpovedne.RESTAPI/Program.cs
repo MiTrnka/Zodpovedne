@@ -335,29 +335,23 @@ namespace Zodpovedne.RESTAPI
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
                 // Pøímé nastavení hlavièek, které chceme zpracovávat
-                options.ForwardedHeaders = ForwardedHeaders.All;
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 
-                // Povolení všech proxy serverù a sítí
-                options.KnownNetworks.Clear();
-                options.KnownProxies.Clear();
+                // Povolit všechny proxy servery
+                options.KnownProxies.Add(System.Net.IPAddress.Parse("127.0.0.1"));
+                options.KnownProxies.Add(System.Net.IPAddress.Parse("::1"));
 
-                // Dùležité - povolit uživatelské hlavièky
+                // Nastavení custom hlavièek
                 options.ForwardedForHeaderName = "X-Forwarded-For";
-                options.ForwardedHostHeaderName = "X-Forwarded-Host";
                 options.ForwardedProtoHeaderName = "X-Forwarded-Proto";
-                options.OriginalHostHeaderName = "Host";
-                options.OriginalForHeaderName = "X-Original-For";
 
-                // Povolit hlavièku X-Real-IP
-                options.ForwardedForHeaderName = "X-Real-IP";
             });
-
             var app = builder.Build();
 
             app.UseForwardedHeaders();
 
             // seznam rout, pro které se ihned vrátí 404 a nepokraèuje se v pipeline
-            app.MapShortCircuit(404, "wp-admin", "wp-login", "sitemap.xml", "robots.txt");
+            app.MapShortCircuit(404, "wp-admin", "wp-login", "sitemap.xml", "robots.txt", "/Categories/sitemap.xml", "/Categories/robots.txt");
 
             if (app.Environment.IsDevelopment())
             {

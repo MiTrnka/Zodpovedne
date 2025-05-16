@@ -544,43 +544,72 @@ public class UsersController : ControllerBase
     {
         try
         {
+            // Logování všech HTTP hlaviček pro kompletní diagnostiku
+            string allHeaders = string.Join(", ", HttpContext.Request.Headers.Select(h => $"{h.Key}: {h.Value}"));
+            //_logger.Log($"DEBUG - All HTTP Headers: {allHeaders}");
+
             // Získání různých hodnot IP adres pro diagnostiku
             var remoteIpAddress = HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "null";
             var xForwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].ToString();
             var xRealIp = HttpContext.Request.Headers["X-Real-IP"].ToString();
+            var xClientIp = HttpContext.Request.Headers["X-Client-IP"].ToString();
+            var xDebugRemoteAddr = HttpContext.Request.Headers["X-Debug-Remote-Addr"].ToString();
 
-            // Detailní log pro diagnostiku
-            //_logger.Log($"IP INFO - RemoteIpAddress: {remoteIpAddress}, X-Forwarded-For: {xForwardedFor}, X-Real-IP: {xRealIp}");
+            // Detailní log pro diagnostiku - VŽDY LOGUJEME PRO ANALÝZU PROBLÉMU
+            /*_logger.Log($"IP INFO - RemoteIpAddress: {remoteIpAddress}, " +
+                       $"X-Forwarded-For: {xForwardedFor}, " +
+                       $"X-Real-IP: {xRealIp}, " +
+                       $"X-Client-IP: {xClientIp}, " +
+                       $"X-Debug-Remote-Addr: {xDebugRemoteAddr}");*/
 
-            // První zkontrolujeme X-Real-IP, což je nejčistší forma IP adresy klienta
-            if (!string.IsNullOrEmpty(xRealIp) && xRealIp != "127.0.0.1" && !xRealIp.StartsWith("::ffff:127.0.0.1"))
+            // Funkce pro převod IPv6 adres na IPv4
+            string NormalizeIpAddress(string ip)
             {
-                return xRealIp;
+                if (ip != null && ip.StartsWith("::ffff:"))
+                {
+                    return ip.Substring(7);
+                }
+                return ip;
             }
 
-            // Poté zkusíme první adresu v X-Forwarded-For (která by měla být adresa klienta)
+            // 1. Nejprve zkontrolujeme vlastní hlavičku X-Debug-Remote-Addr
+            if (!string.IsNullOrEmpty(xDebugRemoteAddr) && xDebugRemoteAddr != "127.0.0.1")
+            {
+                return NormalizeIpAddress(xDebugRemoteAddr);
+            }
+
+            // 2. Pak zkontrolujeme X-Real-IP
+            if (!string.IsNullOrEmpty(xRealIp) && xRealIp != "127.0.0.1")
+            {
+                return NormalizeIpAddress(xRealIp);
+            }
+
+            // 3. Pak zkontrolujeme X-Forwarded-For
             if (!string.IsNullOrEmpty(xForwardedFor))
             {
                 var ips = xForwardedFor.Split(',');
                 if (ips.Length > 0)
                 {
-                    var clientIp = ips[0].Trim();
-                    if (clientIp != "127.0.0.1" && !clientIp.StartsWith("::ffff:127.0.0.1"))
+                    var clientIp = NormalizeIpAddress(ips[0].Trim());
+                    if (clientIp != "127.0.0.1")
                     {
                         return clientIp;
                     }
                 }
             }
 
-            // Pokud se nám nepodařilo získat IP adresu z hlaviček a RemoteIpAddress není localhost,
-            // použijeme RemoteIpAddress
-            if (remoteIpAddress != "::1" && remoteIpAddress != "127.0.0.1" &&
-                !remoteIpAddress.StartsWith("::ffff:127.0.0.1") && remoteIpAddress != "null")
+            // 4. Pak zkontrolujeme X-Client-IP
+            if (!string.IsNullOrEmpty(xClientIp) && xClientIp != "127.0.0.1")
             {
-                return remoteIpAddress;
+                return NormalizeIpAddress(xClientIp);
             }
 
-            // Pokud vše selže, vrátíme nějakou hodnotu pro indikaci problému
+            // 5. Jako poslední možnost použijeme RemoteIpAddress
+            if (remoteIpAddress != "::1" && remoteIpAddress != "127.0.0.1" && remoteIpAddress != "null")
+            {
+                return NormalizeIpAddress(remoteIpAddress);
+            }
+
             return "unknown-ip";
         }
         catch (Exception ex)

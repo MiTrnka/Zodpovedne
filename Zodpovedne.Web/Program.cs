@@ -1,6 +1,7 @@
 // NuGet HtmlSanitizer   //pro bezpeèné èištìní HTML vstupu
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using System.Security.Claims;
 using Zodpovedne.Logging;
 using Zodpovedne.Logging.Services;
@@ -182,10 +183,31 @@ public class Program
             return sanitizer;
         });
 
+        // Konfigurace pro pøístup z proxy
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            // Specifikujte pøesnì, které hlavièky chcete zpracovávat
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+            // V produkci omezte dùvìryhodné proxy servery pouze na ty, které známe
+            // Pokud nginx bìží na stejném serveru, mùžete dùvìøovat jen localhost
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+
+            // Pøidejte dùvìryhodné proxy servery
+            options.KnownProxies.Add(System.Net.IPAddress.Parse("127.0.0.1"));
+            options.KnownProxies.Add(System.Net.IPAddress.Parse("::1"));
+
+            // Pokud máte externí proxy server, pøidejte jeho IP adresu
+            // options.KnownProxies.Add(System.Net.IPAddress.Parse("IP_ADRESA_PROXY_SERVERU"));
+        });
+
         var app = builder.Build();
 
+        app.UseForwardedHeaders();
+
         // seznam rout, pro které se ihned vrátí 404 a nepokraèuje se v pipeline
-        app.MapShortCircuit(404, "wp-admin","wp-login", "sitemap.xml", "robots.txt");
+        app.MapShortCircuit(404, "wp-admin", "wp-login", "sitemap.xml", "robots.txt", "/Categories/sitemap.xml", "/Categories/robots.txt");
 
         // Konfigurace HTTP request pipeline pro produkci.
         if (!app.Environment.IsDevelopment())
