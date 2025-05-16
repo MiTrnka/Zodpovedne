@@ -400,6 +400,14 @@
                 // Konfigurace pro mediaEmbed
                 mediaEmbed: {
                     previewsInData: true, // Ukládat iframe v HTML
+                    // Přidáváme možnosti zarovnání
+                    toolbar: ['mediaEmbed:inline', 'mediaEmbed:center'],
+                    styles: {
+                        options: [
+                            { name: 'inline', title: 'Umístit kdekoliv', className: '' },
+                            { name: 'center', title: 'Zarovnat na střed', className: 'image-style-align-center' }
+                        ]
+                    },
                     providers: [
                         {
                             name: 'youtube',
@@ -431,32 +439,18 @@
                         insert: {
                             type: 'inline'
                         },
+                        // Zjednodušená toolbar pro obrázky - jen inline a center
                         toolbar: [
                             'imageTextAlternative',
                             '|',
                             'imageStyle:inline',
-                            'imageStyle:alignLeft',
-                            'imageStyle:alignCenter',
-                            'imageStyle:alignRight'
+                            'imageStyle:alignCenter'
                         ],
-                        resizeOptions: [
-                            {
-                                name: 'original',
-                                value: null,
-                                label: 'Originální velikost'
-                            },
-                            {
-                                name: 'responsive',
-                                value: null,
-                                label: 'Responzivní'
-                            }
-                        ],
+                        // Zjednodušená konfigurace stylů pro obrázky
                         styles: {
                             options: [
                                 { name: 'inline', title: 'Umístit kdekoliv', icon: 'inline' },
-                                { name: 'alignLeft', title: 'Zarovnat vlevo', icon: 'left' },
-                                { name: 'alignCenter', title: 'Zarovnat na střed', icon: 'center' },
-                                { name: 'alignRight', title: 'Zarovnat vpravo', icon: 'right' }
+                                { name: 'alignCenter', title: 'Zarovnat na střed', icon: 'center' }
                             ]
                         },
                         upload: {

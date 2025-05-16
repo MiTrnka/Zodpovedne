@@ -1,91 +1,76 @@
-﻿/* Styly pro vložená YouTube videa */
-.discussion-content .media {
-    margin: 1em 0;
-    display: block;
-    min-width: 15em;
+﻿/*
+ * CKEditor Content Styles
+ * Optimalizováno pro zobrazení videí a obrázků s jednotným zarovnáním
+ */
+
+/* -------- Základní styly pro obsah v diskuzi -------- */
+.discussion-content:after {
+    content: "";
+    display: table;
     clear: both;
 }
 
-    .discussion-content .media iframe {
-        width: 100%;
-        height: 355px;
-        max-width: 560px;
-        margin: 0 auto;
+/* -------- Styly pro obrázky -------- */
+/* Obrázky v obsahu diskuze */
+.discussion-content img {
+    max-width: 300px;
+    max-height: 200px;
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin: 5px;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+}
+
+    .discussion-content img:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    }
+
+/* Styly pro zarovnání obrázků */
+.image-style-inline {
+    float: none;
+    display: inline-block;
+    margin: 0 5px;
+}
+
+.image-style-align-center {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    text-align: center;
+}
+
+/* Styly pro figure (obal obrázků) */
+figure {
+    margin: 1rem 0;
+}
+
+    figure.image-style-inline {
+        display: inline-block;
+        margin: 0 5px;
+    }
+
+    figure.image-style-align-center {
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
         display: block;
     }
 
+/* Popisky obrázků */
+figcaption {
+    font-size: 0.9rem;
+    color: #666;
+    text-align: center;
+    margin-top: 5px;
+}
+
+/* -------- Styly pro vložená YouTube videa -------- */
 /* Responsivní obálka pro YouTube videa */
-.discussion-content .embed-responsive {
-    position: relative;
-    display: block;
-    width: 100%;
-    padding: 0;
-    overflow: hidden;
-    max-width: 560px;
-    margin: 0 auto;
-}
-
-    .discussion-content .embed-responsive::before {
-        display: block;
-        content: "";
-        padding-top: 56.25%; /* 16:9 aspect ratio */
-    }
-
-    .discussion-content .embed-responsive .embed-responsive-item,
-    .discussion-content .embed-responsive iframe {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border: 0;
-    }
-
-/* Styly pro editor */
-.ck-content .media {
-    margin: 1em 0;
-    display: block;
-    min-width: 15em;
-}
-
-    .ck-content .media iframe {
-        width: 100%;
-        height: 355px;
-        max-width: 560px;
-        margin: 0 auto;
-        display: block;
-    }
-
-/* Rozšíření stávajícího CSS pro YouTube videa v obsahu diskuze */
-.discussion-content .embed-responsive {
-    position: relative;
-    display: block;
-    width: 100%;
-    padding: 0;
-    overflow: hidden;
-    max-width: 560px;
-    margin: 0 auto 1em;
-}
-
-    .discussion-content .embed-responsive::before {
-        display: block;
-        content: "";
-        padding-top: 56.25%; /* 16:9 aspect ratio */
-    }
-
-    .discussion-content .embed-responsive .embed-responsive-item,
-    .discussion-content .embed-responsive iframe {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border: 0;
-    }
-
-/* Specifické styly pro embed v CKEditoru během editace */
+.discussion-content .embed-responsive,
 .ck-content .embed-responsive {
     position: relative;
     display: block;
@@ -93,15 +78,18 @@
     padding: 0;
     overflow: hidden;
     max-width: 560px;
-    margin: 0 auto 1em;
+    margin: 1em auto;
 }
 
+    .discussion-content .embed-responsive::before,
     .ck-content .embed-responsive::before {
         display: block;
         content: "";
         padding-top: 56.25%; /* 16:9 aspect ratio */
     }
 
+    .discussion-content .embed-responsive .embed-responsive-item,
+    .discussion-content .embed-responsive iframe,
     .ck-content .embed-responsive .embed-responsive-item,
     .ck-content .embed-responsive iframe {
         position: absolute;
@@ -113,7 +101,29 @@
         border: 0;
     }
 
-/* Zajištění správného zobrazení během editace */
+    /* Zarovnání videí */
+    .discussion-content .embed-responsive.text-center,
+    .media.image-style-align-center,
+    figure.media.image-style-align-center {
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        display: block;
+    }
+
+/* -------- Specifické styly pro editor během editace -------- */
+/* CKEditor specifické styly pro obrázky */
+.ck-content img {
+    max-width: 300px !important;
+    max-height: 200px !important;
+    object-fit: contain !important;
+    margin: 5px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+}
+
+/* CKEditor specifické styly pro media embed */
 .ck-content .media {
     position: relative;
     display: block;
@@ -122,126 +132,15 @@
     margin: 1em auto;
 }
 
-/* Zobrazení embed v režimu náhledu */
-figure.media {
-    margin: 1em auto;
-    max-width: 560px;
-}
+    .ck-content .media oembed {
+        display: block;
+        position: relative;
+    }
 
-/* Společné styly pro iframe v editoru i v zobrazení */
-.ck-content iframe,
-.discussion-content iframe {
+.ck-content figure.media iframe {
     width: 100%;
-    max-width: 560px;
-    margin: 0 auto;
-    display: block;
-    min-height: 315px;
+    height: 315px;
     border: none;
-}
-
-
-
-
-
-/* Styly pro obrázky v CKEditoru */
-
-/* Zarovnání obrázků */
-.image-style-align-left {
-    float: left;
-    margin-right: 20px;
-    margin-bottom: 10px;
-}
-
-.image-style-align-center {
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
-}
-
-.image-style-align-right {
-    float: right;
-    margin-left: 20px;
-    margin-bottom: 10px;
-}
-
-/* Styl pro plovoucí (inline) obrázky */
-.image-style-inline {
-    float: left;
-    margin-right: 10px;
-    margin-bottom: 10px;
-}
-
-/* Styly pro obalový element figure */
-figure {
-    margin: 1rem 0;
-}
-
-    figure.image-style-align-left {
-        float: left;
-        margin-right: 20px;
-    }
-
-    figure.image-style-align-center {
-        margin-left: auto;
-        margin-right: auto;
-        text-align: center;
-    }
-
-    figure.image-style-align-right {
-        float: right;
-        margin-left: 20px;
-    }
-
-    figure.image-style-inline {
-        float: left;
-        margin-right: 10px;
-        display: inline-block;
-    }
-
-/* Popisky obrázků */
-figcaption {
-    font-size: 0.9rem;
-    color: #666;
-    text-align: center;
-    margin-top: 5px;
-}
-
-/* Styly pro obrázky v obsahu diskuze */
-.discussion-content img {
-    max-width: 300px;
-    max-height: 200px;
-    object-fit: contain;
-    cursor: pointer;
-    transition: transform 0.2s;
-    margin: 5px;
-    /* Odstranění rámečku a zaoblení */
-    border: none;
-    border-radius: 0;
-    padding: 0;
-}
-
-/* Clearfix pro správné ukončení plovoucích elementů */
-.discussion-content:after {
-    content: "";
-    display: table;
-    clear: both;
-}
-
-.discussion-content img:hover {
-    transform: scale(1.03);
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
-}
-
-/* Styly pro obrázky uvnitř CKEditoru */
-.ck-content img {
-    max-width: 300px !important;
-    max-height: 200px !important;
-    object-fit: contain !important;
-    margin: 5px !important;
-    /* Odstranění rámečku a zaoblení */
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
 }
 
 /* Clearfix pro CKEditor */
@@ -249,4 +148,13 @@ figcaption {
     content: "";
     display: table;
     clear: both;
+}
+
+/* -------- Další styly pro různé velikosti obrazovky -------- */
+@media (max-width: 768px) {
+    .discussion-content .embed-responsive,
+    .ck-content .embed-responsive,
+    .ck-content .media {
+        max-width: 100%;
+    }
 }
