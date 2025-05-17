@@ -68,9 +68,9 @@ namespace Zodpovedne.Data.Services
             // Vytvoření testovacích uživatelů, každý se nejprve dohledá podle emailu a založí se jen tehdy, pokud uživatel s daným emailem nebo Nickname není v databázi
             var users = new[]
             {
-                new { Email = "adela.novakova@mz.cz", Nickname = "AdelaN" },
-                new { Email = "adam.kral@mz.cz", Nickname = "AdamK" },
-                new { Email = "alex.kovar@mz.cz", Nickname = "AlexK" },
+                new { Email = "michal@mz.cz", Nickname = "Michal" },
+                new { Email = "marketa@mz.cz", Nickname = "Markéta" }
+                /*new { Email = "alex.kovar@mz.cz", Nickname = "AlexK" },
                 new { Email = "alena.kubikova@mz.cz", Nickname = "AlenaK" },
                 new { Email = "andrea.kucerova@mz.cz", Nickname = "AndreaK" },
                 new { Email = "aneta.hajkova@mz.cz", Nickname = "AnetaH" },
@@ -146,7 +146,7 @@ namespace Zodpovedne.Data.Services
                 new { Email = "veronika.vacek@mz.cz", Nickname = "VeronikaV" },
                 new { Email = "viktor.sedlak@mz.cz", Nickname = "ViktorS" },
                 new { Email = "vladimir.klima@mz.cz", Nickname = "VladimirK" },
-                new { Email = "zdenek.benes@mz.cz", Nickname = "ZdenekB" }
+                new { Email = "zdenek.benes@mz.cz", Nickname = "ZdenekB" }*/
             };
             var createdUsers = new List<ApplicationUser>();
             foreach (var userData in users)
@@ -181,9 +181,10 @@ namespace Zodpovedne.Data.Services
             // Vytvoření kategorií, každá se nejprve dohledá podle Name a založí se jen tehdy, pokud kategorie s daným Name nebo Code není v databázi
             var categories = new[]
             {
-                new { Name = "Vývoj", Code = "vyvoj", Description = "Kategorie s diskuzemi a komentáři vhodnými pro testování" },
-                new { Name = "Katalogy", Code = "katalogy", Description = "Diskuze o našich katalozích, kde si můžete nakoupit různé zboží" },
-                new { Name = "Těhotenství", Code = "tehotenstvi", Description = "Diskuze o těhotenství, přípravě na porod a období před porodem" },
+                new { Name = "Vývoj1", Code = "vyvoj1", Description = "Kategorie s diskuzemi a komentáři vhodnými pro testování" },
+                new { Name = "Vývoj2", Code = "vyvoj2", Description = "Kategorie s diskuzemi a komentáři vhodnými pro testování" },
+                new { Name = "Katalogy", Code = "katalogy", Description = "Diskuze o našich katalozích, kde si můžete nakoupit různé zboží" }
+                /*new { Name = "Těhotenství", Code = "tehotenstvi", Description = "Diskuze o těhotenství, přípravě na porod a období před porodem" },
                 new { Name = "Porod", Code = "porod", Description = "Zkušenosti s porodem, porodnice, příprava na porod" },
                 new { Name = "Kojení", Code = "kojeni", Description = "Vše o kojení, problémy a jejich řešení" },
                 new { Name = "Výchova", Code = "vychova", Description = "Výchovné metody, řešení problémů s dětmi" },
@@ -200,7 +201,7 @@ namespace Zodpovedne.Data.Services
                 new { Name = "I", Code = "i", Description = "Iiiii" },
                 new { Name = "J", Code = "j", Description = "Jjjjj" },
                 new { Name = "K", Code = "k", Description = "Kkkkk" },
-                new { Name = "L", Code = "l", Description = "Lllll" }
+                new { Name = "L", Code = "l", Description = "Lllll" }*/
             };
             var createdCategories = new List<Category>();
             foreach (var categoryData in categories)
@@ -210,7 +211,7 @@ namespace Zodpovedne.Data.Services
                     var category = new Category
                     {
                         Name = categoryData.Name,
-                        Code = categoryData.Code,  // Přidáno
+                        Code = categoryData.Code,
                         Description = categoryData.Description,
                         DisplayOrder = createdCategories.Count + 1,
                         ImagePath = "category-img.svg"
@@ -227,7 +228,7 @@ namespace Zodpovedne.Data.Services
             }
 
             // Vytvoření úvodních site instancí
-            var siteInstances = new[] { "mamazodpovedne.cz", "mamazodpovedne.sk" };
+            var siteInstances = new[] { "mamazodpovedne.cz", "mamazodpovedne.sk", "discussion.cz", "myparty.cz" };
             var createdsiteInstances = new List<SiteInstance>();
             foreach (var siteInstancesData in siteInstances)
             {
@@ -613,7 +614,7 @@ namespace Zodpovedne.Data.Services
                         )
                     };
 
-                case "Těhotenství":
+                /*case "Těhotenství":
                     return new[]
                     {
                         (
@@ -736,7 +737,7 @@ namespace Zodpovedne.Data.Services
                             "Máte zkušenost s Montessori školkou? Naše zkušenosti jsou...",
                             "alternativni-vzdelavani"
                         )
-                    };
+                    };*/
 
                 default:
                     return Array.Empty<(string, string, string)>();
