@@ -99,10 +99,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const textareaKomentare = document.getElementById("new-comment-textarea");
     const poleSmajliku = document.querySelectorAll("#emoji-list .emoji");
 
+    if (emojiBtn) {
+        emojiBtn.addEventListener("click", () => {
+            emojiList.style.display = emojiList.style.display === "block" ? "none" : "block";
+        });
+    }
 
-    emojiBtn.addEventListener("click", () => {
-        emojiList.style.display = emojiList.style.display === "block" ? "none" : "block";
-    });
     // Vlozeni smajlika do textarei pri kliknuti na smajlika
     poleSmajliku.forEach(smajlik => {
         smajlik.addEventListener("click", () => {
