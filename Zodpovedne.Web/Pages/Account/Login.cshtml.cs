@@ -81,7 +81,7 @@ public class LoginModel : BasePageModel
         await Login(result.Token, result.Nickname);
 
         // Pøesmìrování na pùvodní stránku nebo na hlavní stránku
-        if ((string.IsNullOrEmpty(ReturnUrl)) || (ReturnUrl == "/Account/Logout") || (ReturnUrl == "/Account/Login") || (ReturnUrl == "/Account/Register") || (ReturnUrl == "/Account/ForgotPassword") || (ReturnUrl == "/Categories"))
+        if ((string.IsNullOrEmpty(ReturnUrl)) || (ReturnUrl == "/Account/Logout") || (ReturnUrl == "/Account/Login") || (ReturnUrl == "/Account/Register") || (ReturnUrl == "/Categories") || (ReturnUrl == "/Account/ForgotPassword") || (ReturnUrl == "/Account/ResetPassword"))
             return RedirectToPage("/Index");
 
         return LocalRedirect(ReturnUrl);

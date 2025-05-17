@@ -3,7 +3,11 @@
  * Pro použití v Discussion.js a CreateDiscussion.cshtml
  */
 
-// Konfigurace CKEditoru
+/*
+slouží k centralizované konfiguraci CKEditoru pro webovou aplikaci, vytváří a vrací objekt s nastavením pro různé aspekty editoru jako toolbar,
+podporované jazyky, zarovnání a zpracování médií; tato konfigurace se používá při inicializaci CKEditoru a díky parametru canUploadFiles
+flexibilně přizpůsobuje funkcionalitu editoru podle oprávnění uživatele, přičemž zajišťuje konzistentní chování napříč různými částmi aplikace.
+*/
 function createEditorConfig(canUploadFiles = false) {
     const editorConfig = {
         // Základní konfigurace nástrojové lišty bez problematického alignment
@@ -94,7 +98,10 @@ function createEditorConfig(canUploadFiles = false) {
     return editorConfig;
 }
 
-// Funkce pro úpravu HTML před odesláním na server
+/* funkce je odpovědná za zpracování HTML obsahu z CKEditoru před jeho odesláním na server, kde analyzuje DOM strukturu, identifikuje obrázky a media elementy s třídami pro zarovnání
+a aplikuje dodatečné HTML atributy a CSS vlastnosti, které zajistí, že zarovnání (především centrování) těchto prvků zůstane zachováno i po uložení;
+tato funkce řeší mnoho edge-case scénářů, jako je ztráta zarovnání obrázků po vložení videa, a obecně překlenuje mezery mezi tím, co CKEditor produkuje a co prohlížeče správně zobrazují.
+*/
 function processEditorContentBeforeSave(content) {
     // Vytvořte dočasný div pro manipulaci s obsahem
     const tempDiv = document.createElement('div');

@@ -397,7 +397,11 @@ function getDiscussionCodeFromUrl() {
 
 
 
-// Funkce pro konverzi HTML před načtením do editoru
+/*
+Funkce pro konverzi HTML před načtením do editoru
+Funkce convertHtmlForCKEditor transformuje HTML obsah před jeho vložením do CKEditoru,
+zejména převádí vložená YouTube videa z embedovaných iframe elementů do speciálního formátu, který CKEditor rozpozná jako media obsah
+*/
 function convertHtmlForCKEditor(html) {
     // Konvertování div.embed-responsive s iframe na data-oembed-url formát, který CKEditor rozpozná
     // Zachováváme třídy pro zarovnání
@@ -413,7 +417,12 @@ function convertHtmlForCKEditor(html) {
     );
 }
 
-// Funkce pro konverzi HTML zpět po uložení
+/*
+Funkce pro konverzi HTML zpět po uložení
+Funkce convertHtmlFromCKEditor provádí opačný proces než funkce convertHtmlForCKEditor.
+Převádí speciální formát CKEditoru zpět na standardní HTML s iframe embedů, což zajišťuje
+kompatibilitu mezi interní reprezentací editoru a běžným HTML zobrazovaným v prohlížeči
+*/
 function convertHtmlFromCKEditor(html) {
     // Konvertování CKEditor formátu zpět na původní formát
     // Zachováváme třídy pro zarovnání
@@ -428,7 +437,11 @@ function convertHtmlFromCKEditor(html) {
     );
 }
 
-// Aktualizovaná funkce toggleDiscussionEdit
+/*
+Funkce toggleDiscussionEdit přepíná mezi režimem prohlížení a editace diskuze, přičemž při aktivaci editačního režimu skrývá zobrazovací elementy,
+inicializuje CKEditor s odpovídající konfigurací a načítá původní obsah; funguje jako přepínač uživatelského rozhraní,
+který dynamicky upravuje DOM a spravuje životní cyklus CKEditoru, čímž umožňuje plynulý přechod mezi čtením a úpravou obsahu.
+*/
 async function toggleDiscussionEdit(show) {
     const titleDisplay = document.getElementById('discussion-title-display');
     const titleEdit = document.getElementById('discussion-title-edit');
@@ -544,7 +557,11 @@ async function toggleDiscussionEdit(show) {
     $("#emoji-btn-discussion").toggle();
 }
 
-// Funkce pro uložení změn v diskuzi
+/*
+Funkce saveDiscussionChanges se stará o zpracování a uložení změn provedených v editoru diskuze, kde nejprve validuje délku obsahu,
+poté pomocí processEditorContentBeforeSave zajišťuje správné formátování prvků, komunikuje s API pro uložení změn a nakonec
+aktualizuje zobrazení nebo přesměruje uživatele; je klíčovým spojovacím článkem mezi front-endovými úpravami a back-endovými daty.
+*/
 async function saveDiscussionChanges(discussionId, discussionType, event) {
     const titleEdit = document.getElementById('discussion-title-edit');
     const contentDisplay = document.getElementById('discussion-content-display');

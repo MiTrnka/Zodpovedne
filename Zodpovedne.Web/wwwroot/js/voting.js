@@ -364,6 +364,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /**
      * Načtení hlasování pro danou diskuzi
+     * Funkce loadVoting má za úkol komunikovat s API serverem, získat data o hlasování pro konkrétní diskuzi a následně zajistit jejich zobrazení. Je to klíčová funkce, která:
+     * Inicializuje načítání hlasovací ankety
+     * Provádí AJAX požadavek na API endpoint
+     * Zpracovává odpověď ze serveru
+     * V případě úspěchu předává data k zobrazení pomocí displayVoting
+     * V případě chyby nebo nenalezení ankety skryje celou sekci hlasování
      * @param {number} discussionId - ID diskuze
      */
     async function loadVoting(discussionId) {
@@ -404,6 +410,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /**
      * Zobrazení hlasování v UI
+     * Zpracovat data hlasování získaná z API
+     * Vytvořit a zobrazit UI prvky pro hlasovací anketu v závislosti na typu hlasování a stavu přihlášení uživatele
+     * Skrýt načítací indikátor a zobrazit samotnou anketu
      * @param {object} votingData - Data hlasování z API
      */
     function displayVoting(votingData) {
