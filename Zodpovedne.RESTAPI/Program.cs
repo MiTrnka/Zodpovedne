@@ -184,6 +184,14 @@ namespace Zodpovedne.RESTAPI
                                  "https://api.mamazodpovedne.sk",
                                  "https://api.mamouzodpovedne.sk",
 
+                                 "https://myparty.cz",
+                                 "https://www.myparty.cz",
+                                 "https://api.myparty.cz",
+                                 "https://myparties.cz",
+                                 "https://www.myparties.cz",
+                                 "https://api.myparties.cz",
+
+
                                  "https://freediscussion.cz",
                                  "https://www.freediscussion.cz",
                                  "https://api.freediscussion.cz",
