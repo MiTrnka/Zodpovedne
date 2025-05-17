@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!loadingElement || !questionsContainer) return;
 
         // Skrytí načítacího indikátoru
-        loadingElement.classList.add('d-none');
+        loadingElement.style.setProperty('display', 'none', 'important');
 
         // Zobrazení kontejneru otázek
         questionsContainer.classList.remove('d-none');
