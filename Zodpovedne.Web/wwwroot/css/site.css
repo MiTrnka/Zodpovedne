@@ -1366,6 +1366,9 @@ tr.toggle-row td {
     .nav-item{
         text-align: center;
     }
+    .nav-link{
+        white-space: nowrap;
+    }
     #messages-badge, #notification-badge {
         left: 15px;
     }
