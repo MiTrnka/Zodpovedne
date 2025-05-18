@@ -1,3 +1,6 @@
+-- Počet aktivnich spojeni na PostgreSQL
+SELECT count(*) FROM pg_stat_activity;
+
 -- Kdo lajkoval jakou diskuzi
 SELECT 	"Users"."Nickname", "Discussions"."Title"
 FROM 	"DiscussionLikes" inner join 
