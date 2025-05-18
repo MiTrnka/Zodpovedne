@@ -195,12 +195,12 @@
                         <li class="nav-item">
                             <a class="nav-link @(IsMenuItemActive("/Account/Register") ? "active" : "")"
                             asp-page="/Account/Register"
-                            asp-route-returnUrl="@Context.Request.Path">Registrovat se</a>
+                               asp-route-returnUrl="@Context.Request.Path" style="padding:7px 40px;">Registrovat se</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(IsMenuItemActive("/Account/Login") ? "active" : "")"
                             asp-page="/Account/Login"
-                            asp-route-returnUrl="@Context.Request.Path">Přihlásit se</a>
+                               asp-route-returnUrl="@Context.Request.Path" style="padding:7px 40px;">Přihlásit se</a>
                         </li>
                     }
                 </ul>
