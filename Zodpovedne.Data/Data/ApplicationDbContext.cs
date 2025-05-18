@@ -82,6 +82,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Indexy
+            entity.HasIndex(d => d.UpdatedWhateverAt);
+            entity.HasIndex(d => d.Type);
+            entity.HasIndex(d => new { d.Type, d.UpdatedWhateverAt });
+            entity.HasIndex(d => d.ViewCount);
         });
 
         // Konfigurace Comment
@@ -107,6 +113,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(c => c.ParentCommentId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);
+
+            // Indexy
+            entity.HasIndex(c => c.UpdatedAt);
+            entity.HasIndex(c => c.Type);
+            entity.HasIndex(c => new { c.Type, c.DiscussionId });
         });
 
         // Konfigurace DiscussionLike

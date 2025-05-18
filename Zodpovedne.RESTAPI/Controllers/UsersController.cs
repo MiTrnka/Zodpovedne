@@ -1705,4 +1705,30 @@ public class UsersController : ControllerBase
 
         return false;
     }
+
+    /// <summary>
+    /// Vrátí počet aktivních uživatelů (typ UserType.Normal)
+    /// Nekešovaný endpoint dostupný pro veřejnost
+    /// </summary>
+    /// <returns>Počet aktivních uživatelů v systému</returns>
+    [HttpGet("count")]
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public async Task<ActionResult<int>> UserCount()
+    {
+        try
+        {
+            // Získání počtu uživatelů typu Normal
+            var normalUsersCount = await dbContext.Users
+                .AsNoTracking()
+                .Where(u => u.Type == UserType.Normal)
+                .CountAsync();
+
+            return Ok(normalUsersCount);
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při vykonávání akce UserCount endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
 }
