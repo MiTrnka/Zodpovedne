@@ -57,28 +57,34 @@
                 </div>
 
                 <!-- Přidání sekce pro volby diskuze -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
+                <div class="row">
+                    <div>
                         <!-- Select box pro typ diskuze -->
-                        <div class="form-group mb-2">
-                            <label class="form-label" for="discussionType">Typ diskuze</label>
-                            <select id="discussionType" name="Input.Type" class="form-select" asp-for="Input.Type">
-                                <!-- Veřejná diskuze - viditelná pro všechny -->
-                                <option value="@((int)DiscussionType.Normal)" selected>Veřejná</option>
-                                <!-- Diskuze jen pro přátele - viditelná jen pro přátele autora -->
-                                <option value="@((int)DiscussionType.ForFriends)">Pro přátele</option>
-                                <!-- Soukromá diskuze - viditelná jen pro autora -->
-                                <option value="@((int)DiscussionType.Private)">Soukromá</option>
-                                <!-- TOP diskuze - pouze pro administrátory -->
-                                @if (Model.IsAdmin)
-                                {
-                                    <option value="@((int)DiscussionType.Top)">Top</option>
-                                }
-                            </select>
-                            <small class="form-text text-muted">
-                                Určuje, kdo uvidí vaši diskuzi.
-                            </small>
+                        <div class="form-group discussion-type mb-2">
+                            <div class="type-discussion-label-wrapper">
+                                <label class="form-label" for="discussionType">Typ diskuze</label>
+
+                                <small class="form-text text-muted d-flex align-items-center" style="margin-top: 0px;">
+                                    Určuje, kdo uvidí vaši diskuzi.
+                                </small>
+                            </div>
+                                <select id="discussionType" name="Input.Type" class="form-select" asp-for="Input.Type">
+                                    <!-- Veřejná diskuze - viditelná pro všechny -->
+                                    <option value="@((int)DiscussionType.Normal)" selected>Veřejná</option>
+                                    <!-- Diskuze jen pro přátele - viditelná jen pro přátele autora -->
+                                    <option value="@((int)DiscussionType.ForFriends)">Pro přátele</option>
+                                    <!-- Soukromá diskuze - viditelná jen pro autora -->
+                                    <option value="@((int)DiscussionType.Private)">Soukromá</option>
+                                    <!-- TOP diskuze - pouze pro administrátory -->
+                                    @if (Model.IsAdmin)
+                                    {
+                                        <option value="@((int)DiscussionType.Top)">Top</option>
+                                    }
+                                </select>
+                           
                         </div>
+
+            
                     </div>
                     <div class="col-md-6">
                         <!-- Přidáme checkbox pro vytvoření hlasování -->

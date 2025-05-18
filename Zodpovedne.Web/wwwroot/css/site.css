@@ -563,14 +563,6 @@ a {
 }
 
 
-
-/* Opravit pozici badge na mobilních zařízeních */
-/*#notification-badge {
-    transform: translate(-50%, -50%) !important;
-    right: auto !important;
-}*/
-
-
 /* Navigace - mobilní verze */
 .navbar {
     padding: 0.5rem;
@@ -584,6 +576,7 @@ a {
     padding: 0.5rem;
     z-index: 1000;
     transition: all 0.3s ease-in-out;
+    padding: 0.5rem 1rem 0.5rem 0.5rem; /* Trochu více prostoru vpravo pro notifikaci */
 }
     /* Nastavení vlastností pro čáry hamburgeru */
     .navbar-toggler .navbar-toggler-icon {
@@ -616,10 +609,30 @@ a {
                 top: 10px;
             }
 
-    /* Styl pro stav, kdy je menu rozbalené (tvoří křížek) */
-    .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
-        background-color: transparent; /* Prostřední čára zmizí */
-    }
+           /* Notifikace u hamburger menu */
+            #hamburger-menu-notification {
+                position: absolute;
+                top: -8px;
+                right: -14px;
+                width: 14px;
+                height: 14px;
+                background-color: var(--primary-color); /* Červená barva pro notifikaci */
+                border-radius: 50%; /* Kulatý tvar */
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 10px;
+                color: white;
+                font-weight: bold;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); /* Jemný stín pro lepší viditelnost */
+                border: 1px solid white; /* Bílý okraj pro lepší kontrast */
+                z-index: 1001;
+            }
+    
+/* Styl pro stav, kdy je menu rozbalené (tvoří křížek) */
+.navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
+    background-color: transparent; /* Prostřední čára zmizí */
+}
 
     .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon::before {
         transform: rotate(45deg);
@@ -832,10 +845,23 @@ h1 {
     align-items: center;
     height:100%;
 }
-
-.title-detail-category{
-    color:var(--text-color);
-    text-align:center;
+.discussion-type{
+    display: flex;
+}
+.discussion-type label {
+    white-space: nowrap;
+    margin-right: 15px;
+    margin-bottom: 0px;
+    display: flex;
+    align-items: center;
+}
+.type-discussion-label-wrapper{
+    width: 50%;
+    min-width:170px;
+}
+.title-detail-category {
+    color: var(--text-color);
+    text-align: center;
 }
 
 .lead {
@@ -1142,6 +1168,7 @@ tr.toggle-row td {
     display: flex;
     justify-content: space-between;
     gap: 10px;
+    margin-top: 10px;
 }
 .register-btn-wrapper button, .create-discussion-btn{
     width: 60%;
@@ -1255,7 +1282,7 @@ tr.toggle-row td {
     .navbar-nav .nav-link {
         font-size: 0.9rem;
     }
-    #friendship-badge{
+    #friendship-badge {
         left: 30px;
     }
     /* Grid pro seznam uživatelů */

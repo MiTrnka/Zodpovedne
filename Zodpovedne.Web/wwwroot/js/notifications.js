@@ -67,10 +67,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     friendshipBadge.classList.add('d-none');
                 }
+
+                updateHamburgerMenuNotification();
             })
             .catch(error => {
                 console.error('Chyba při načítání počtu žádostí o přátelství:', error);
             });
+
     }
 
 
@@ -179,10 +182,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Aktualizace UI na základě nových dat
                 updateNotificationsUI();
+
             })
             .catch(error => {
                 console.error('Chyba při načítání notifikací:', error);
             });
+    }
+
+
+    function updateHamburgerMenuNotification() {
+      // kontrola, zda existuje alespon jedna ikona s notifikací v menu
+        const newMessage = $("#messages-badge");
+        const newFriendshipRequest = $("#friendship-badge");
+        const newReply = $("#notification-badge");
+        const hamburgerMenuNotification = $("#hamburger-menu-notification");
+
+        if ((newMessage.length > 0 && !newMessage.hasClass('d-none')) || (newFriendshipRequest.length > 0 && !newFriendshipRequest.hasClass('d-none')) || (newReply.length > 0 && !newReply.hasClass('d-none'))) {
+            hamburgerMenuNotification.removeClass('d-none');
+        } else {
+            hamburgerMenuNotification.addClass('d-none');
+        }
+
     }
 
     /**
@@ -195,6 +215,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Aktualizace počtu a viditelnosti badge
         updateNotificationBadge();
+
+        // zobrazeni Ikony u Hamburger munu, pokud existuje notifikace
+        updateHamburgerMenuNotification();
     }
 
     /**
@@ -292,13 +315,8 @@ document.addEventListener('DOMContentLoaded', function () {
             badge.classList.add(BADGE_HIDE_CLASS);
             bellIcon.classList.remove(ANIMATION_CLASS);
         }
+        updateHamburgerMenuNotification();
     }
-
-
-
-
-
-
 
 
     // NÍŽE JE SEKCE PRO POČET NEPŘEČTENÝCH ZPRÁV
@@ -359,6 +377,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     messagesBadge.classList.add('d-none');
                     messagesIcon.classList.remove('text-primary');
                 }
+                // Zobrazeni hamburgeh ikkony, pokud existuje nejaka notifikace
+                updateHamburgerMenuNotification();
+
             })
             .catch(error => {
                 console.error('Chyba při načítání počtu nepřečtených zpráv:', error);

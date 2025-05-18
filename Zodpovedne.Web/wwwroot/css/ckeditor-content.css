@@ -194,11 +194,12 @@ figure.media.image-style-align-center iframe,
     clear: both;
 }
 
+.ck-editor__main, .ck-content {
+    height: 30vh;
+}
 /* -------- Další styly pro různé velikosti obrazovky -------- */
 @media (max-width: 768px) {
-    .discussion-content .embed-responsive,
-    .ck-content .embed-responsive,
-    .ck-content .media {
+    .discussion-content .embed-responsive, .ck-content .embed-responsive, .ck-content .media {
         max-width: 100%;
     }
 }
