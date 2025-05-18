@@ -9,7 +9,7 @@ let currentPage = 1;             // Aktuální stránka zpráv
 let hasOlderMessages = false;    // Indikátor, zda existují starší zprávy
 let isLoadingMessages = false;   // Indikátor, zda probíhá načítání zpráv
 const pageSize = 20;             // Počet zpráv na stránku
-const REFRESH_INTERVAL = 30000; // 30 sekund
+const REFRESH_INTERVAL = 20000; // 20 sekund
 
 /**
  * Zvýrazní řádek aktuálně vybraného přítele v seznamu
@@ -61,11 +61,23 @@ document.addEventListener('DOMContentLoaded', function () {
     updateUnreadCounts();
     setInterval(updateUnreadCounts, REFRESH_INTERVAL);
 
+    // Přidáme přímé obnovení aktuální konverzace každých 5 sekund
+    // Toto zajistí častější kontrolu stavu přečtení zpráv
+    setInterval(() => {
+        if (currentRecipientId) {
+            refreshCurrentConversation();
+        }
+    }, 10000); // Každých 10 sekund
+
 });
 
 /**
- * Funkce pro aktualizaci aktuální otevřené konverzace
- * Načte nejnovější zprávy od posledního načtení
+ Aktualizuje aktuálně otevřenou konverzaci novými daty z API, přičemž zachovává kontext probíhající konverzace.
+ Asynchronně načítá nejnovější sadu zpráv, porovnává je s aktuálně zobrazenými, identifikuje a přidává nové zprávy a aktualizuje
+ stavy existujících - především indikátory přečtení pro zprávy, které si protistrana mezitím přečetla.
+ Funkce také ošetřuje speciální případy, jako je prázdná konverzace nebo chyby při komunikaci se serverem.
+ Je volána automaticky v pravidelných intervalech, což zajišťuje, že uživatel vidí aktuální obsah
+ konverzace včetně indikátorů přečtení bez nutnosti ručního obnovení stránky.
  * @returns {Promise<void>}
  */
 async function refreshCurrentConversation() {
@@ -97,12 +109,8 @@ async function refreshCurrentConversation() {
         // Zpracování odpovědi
         const data = await response.json();
 
-        // Získáme ID všech aktuálně zobrazených zpráv v konverzaci
-        const messagesContainer = document.getElementById('messages-container');
-        const existingMessages = messagesContainer.querySelectorAll('.message');
-        const existingMessageIds = Array.from(existingMessages)
-            .map(msg => parseInt(msg.getAttribute('data-id') || '0'))
-            .filter(id => id > 0);
+        // Získáme ID aktuálně přihlášeného uživatele
+        let currentUserId = document.getElementById('current-user-id-input')?.value;
 
         // Pokud nemáme žádné zprávy, není co aktualizovat
         if (!data.messages || data.messages.length === 0) {
@@ -112,32 +120,89 @@ async function refreshCurrentConversation() {
             return;
         }
 
-        // Filtrujeme zprávy, které ještě nejsou zobrazeny
-        const newMessages = data.messages.filter(message => !existingMessageIds.includes(message.id));
+        // Vytvoříme mapu zpráv z nově načtených dat pro rychlý přístup
+        const messagesMap = new Map();
+        data.messages.forEach(message => {
+            messagesMap.set(message.id, message);
+        });
 
-        // OPRAVA: Zkontrolujeme, zda máme nějaký obsah v kontejneru
+        // Získáme všechny aktuálně zobrazené zprávy v konverzaci
+        const messagesContainer = document.getElementById('messages-container');
+        const existingMessages = messagesContainer.querySelectorAll('.message');
+
+        // Procházíme všechny existující zprávy a aktualizujeme jejich stav přečtení
+        existingMessages.forEach(messageElement => {
+            const messageId = parseInt(messageElement.getAttribute('data-id') || '0');
+            if (messageId > 0 && messagesMap.has(messageId)) {
+                const updatedMessage = messagesMap.get(messageId);
+                const senderId = messageElement.getAttribute('data-sender');
+
+                // Pokud je zpráva od aktuálního uživatele a byla přečtena, přidáme indikátor
+                if (senderId === currentUserId && updatedMessage.readAt) {
+                    // Hledáme, zda už existuje indikátor přečtení
+                    let readIndicator = messageElement.querySelector('.message-read-indicator');
+
+                    // Pokud indikátor neexistuje a zpráva byla přečtena, přidáme ho
+                    if (!readIndicator) {
+                        // Najdeme footer zprávy nebo ho vytvoříme
+                        let messageFooter = messageElement.querySelector('.message-footer');
+                        if (!messageFooter) {
+                            // Vytvoříme strukturu pro footer, pokud neexistuje
+                            const messageTime = messageElement.querySelector('.message-time');
+                            if (messageTime) {
+                                // Vytvoříme footer a přesuneme do něj časový údaj
+                                messageFooter = document.createElement('div');
+                                messageFooter.className = 'message-footer';
+                                messageTime.parentNode.insertBefore(messageFooter, messageTime);
+                                messageFooter.appendChild(messageTime);
+                            }
+                        }
+
+                        // Pokud máme footer, přidáme indikátor přečtení
+                        if (messageFooter) {
+                            readIndicator = document.createElement('span');
+                            readIndicator.className = 'message-read-indicator';
+                            readIndicator.innerHTML = '<i class="bi bi-check2"></i>';
+                            messageFooter.appendChild(readIndicator);
+                        }
+                    }
+                }
+            }
+        });
+
+        // Původní logika pro přidání nových zpráv
+        const existingMessageIds = Array.from(existingMessages)
+            .map(msg => parseInt(msg.getAttribute('data-id') || '0'))
+            .filter(id => id > 0);
+
+        // Zkontrolujeme, zda máme nějaký obsah v kontejneru
         const emptyConversationMessage = messagesContainer.querySelector('.text-center.text-muted.my-5');
         // Pokud jde o prázdnou konverzaci a existují nové zprávy, kompletně nahradíme obsah
-        if (emptyConversationMessage && newMessages.length > 0) {
+        if (emptyConversationMessage && data.messages.length > 0) {
             // Vyčistíme kontejner a zobrazíme všechny zprávy znovu
             messagesContainer.innerHTML = '';
             // Použijeme funkci displayMessages pro správné zobrazení všech zpráv
             displayMessages(data.messages, true);
         }
         // Jinak přidáme jen nové zprávy
-        else if (newMessages.length > 0) {
-            // Seřadíme zprávy podle času (od nejstarší po nejnovější)
-            newMessages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
+        else {
+            // Filtrujeme zprávy, které ještě nejsou zobrazeny
+            const newMessages = data.messages.filter(message => !existingMessageIds.includes(message.id));
 
-            // Přidáme nové zprávy do UI
-            newMessages.forEach(message => {
-                addMessageToUI(message);
-            });
-        }
+            if (newMessages.length > 0) {
+                // Seřadíme zprávy podle času (od nejstarší po nejnovější)
+                newMessages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
 
-        // Scrollování dolů k nejnovější zprávě vždy, když máme nové zprávy
-        if (newMessages.length > 0) {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                // Přidáme nové zprávy do UI
+                newMessages.forEach(message => {
+                    // Určení, zda odesílatelem zprávy je aktuální uživatel
+                    const isCurrentUserSender = message.senderUserId === currentUserId;
+                    addMessageToUI(message, isCurrentUserSender);
+                });
+
+                // Scrollování dolů k nejnovější zprávě
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
         }
 
         // Odstraníme notifikaci u aktuálního příjemce
@@ -424,7 +489,10 @@ function updateConversationUI(nickname) {
 }
 
 /**
- * Zobrazí zprávy v UI (rozhodnutí, která zpráva se zobrazí jako moje a která jako od příjemce), připojení nové zprávy
+ * Zobrazuje celou sadu zpráv najednou v uživatelském rozhraní, přičemž může buď vyčistit a kompletně přepsat existující obsah chatu,
+ * nebo přidat zprávy na určitou pozici. Zpracovává pole zpráv, třídí je podle času, vytváří pro každou zprávu HTML reprezentaci včetně identifikátorů,
+ * formátování textu, časových značek a indikátorů přečtení. Zajišťuje správné rozlišení mezi odeslanými a přijatými zprávami a jejich
+ * odpovídající vizuální stylování. Tato funkce se používá především při prvotním načtení konverzace nebo načítání větších dávek historických zpráv.
  * @param {Array} messages - Seznam zpráv k zobrazení
  * @param {boolean} clearContainer - Zda má být kontejner před přidáním zpráv vyčištěn
  */
@@ -488,10 +556,18 @@ function displayMessages(messages, clearContainer = false) {
         // Nahrazení znaku nového řádku za <br> tag pro HTML zobrazení
         const formattedContent = message.content.replace(/\n/g, '<br>');
 
+        // Přidání ikony přečtení pokud je zpráva odeslána aktuálním uživatelem a byla přečtena
+        const readIndicator = (isCurrentUserSender && message.readAt)
+            ? '<span class="message-read-indicator"><i class="bi bi-check2"></i></span>'
+            : '';
+
         return `
             <div class="message ${messageClass}" ${debugInfo}>
                 <div class="message-content">${formattedContent}</div>
-                <div class="message-time">${timeFormatted} | ${dateFormatted}</div>
+                <div class="message-footer">
+                    <div class="message-time">${timeFormatted} | ${dateFormatted}</div>
+                    ${readIndicator}
+                </div>
             </div>
         `;
     }).join('');
@@ -513,7 +589,10 @@ function displayMessages(messages, clearContainer = false) {
 }
 
 /**
- * Přidá novou zprávu do UI
+ * Přidává jednotlivou zprávu do uživatelského rozhraní chatu. Vytváří HTML element zprávy s odpovídajícími třídami, zobrazuje obsah zprávy včetně formátování,
+ * časové značky a indikátoru přečtení. Následně vkládá nově vytvořený element do kontejneru zpráv a zajišťuje,
+ * aby se zobrazení automaticky posunulo na nejnovější zprávu. Tato funkce se typicky používá při odeslání nové zprávy
+ * nebo pro přidání jednotlivých zpráv při jejich postupném načítání.
  * @param {Object} message - Data zprávy k přidání
  * @param {boolean} isFromCurrentUser - Zda byla zpráva odeslána aktuálním uživatelem
  */
@@ -523,11 +602,14 @@ function addMessageToUI(message, isFromCurrentUser) {
 
     // Vytvoření HTML elementu pro zprávu
     const messageElement = document.createElement('div');
-
     messageElement.className = `message ${isFromCurrentUser ? 'message-sent' : 'message-received'}`;
 
     // Přidáme data-id atribut pro identifikaci zprávy
     messageElement.setAttribute('data-id', message.id);
+
+    // Přidáme data-sender atribut, použijeme přímo ID z objektu zprávy
+    // Tím se vyhneme možným problémům s chybějícím currentUserId
+    messageElement.setAttribute('data-sender', message.senderUserId);
 
     // Formátování času
     const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -536,11 +618,19 @@ function addMessageToUI(message, isFromCurrentUser) {
     // Náhrada znaku nového řádku za <br> tag
     const formattedContent = message.content.replace(/\n/g, '<br>');
 
+    // Přidání ikony přečtení pokud je zpráva odeslána aktuálním uživatelem a byla přečtena
+    const readIndicator = (isFromCurrentUser && message.readAt)
+        ? '<span class="message-read-indicator"><i class="bi bi-check2"></i></span>'
+        : '';
+
     // Nastavení obsahu zprávy
     messageElement.innerHTML = `
     <div class="message-content">${formattedContent}</div>
-    <div class="message-time">${timeFormatted} | ${dateFormatted}</div>
-`;
+    <div class="message-footer">
+        <div class="message-time">${timeFormatted} | ${dateFormatted}</div>
+        ${readIndicator}
+    </div>
+    `;
 
     // Přidání na konec kontejneru
     messagesContainer.appendChild(messageElement);

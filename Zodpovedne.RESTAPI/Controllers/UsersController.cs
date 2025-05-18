@@ -664,6 +664,7 @@ public class UsersController : ControllerBase
             user.LastLogin = DateTime.UtcNow;
             await this.userManager.UpdateAsync(user);
 
+            /*
             // Získání IP adresy uživatele
             string ipAddress = GetClientIpAddress();
 
@@ -678,7 +679,7 @@ public class UsersController : ControllerBase
             // Přidání záznamu do databáze
             dbContext.LoginHistory.Add(loginHistory);
             await dbContext.SaveChangesAsync();
-
+            */
 
             var token = await GenerateJwtToken(user);
 
