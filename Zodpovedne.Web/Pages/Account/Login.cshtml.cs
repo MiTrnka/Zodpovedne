@@ -9,6 +9,7 @@ using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Ganss.Xss;
 using Zodpovedne.Logging.Services;
+using Zodpovedne.Web.Extensions;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -79,6 +80,40 @@ public class LoginModel : BasePageModel
 
         // Pøihlášení uživatele pomocí cookie
         await Login(result.Token, result.Nickname);
+
+        // Získání JWT tokenu z obsahu odpovìdi
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(result.Token);
+
+        // Získání userId z JWT tokenu
+        var userId = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.NameId)?.Value;
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            try
+            {
+                // Získání IP adresy klienta
+                string clientIp = Zodpovedne.Web.Extensions.HttpClientFactoryExtensions.GetClientIpAddress(HttpContext);
+
+                // Vytvoøení klienta s autorizaèním tokenem
+                var authClient = _clientFactory.CreateBearerClient(HttpContext);
+
+                // Zaznamenání pøihlášení uživatele
+                await authClient.PostAsJsonAsync(
+                    $"{ApiBaseUrl}/users/record-login",
+                    new RecordLoginDto
+                    {
+                        UserId = userId,
+                        IpAddress = clientIp
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                // Logování chyby, ale pokraèujeme, i když se nepodaøí zaznamenat pøihlášení
+                _logger.Log("Chyba pøi zaznamenávání pøihlášení", ex);
+            }
+        }
 
         // Pøesmìrování na pùvodní stránku nebo na hlavní stránku
         if ((string.IsNullOrEmpty(ReturnUrl)) || (ReturnUrl == "/Account/Logout") || (ReturnUrl == "/Account/Login") || (ReturnUrl == "/Account/Register") || (ReturnUrl == "/Categories") || (ReturnUrl == "/Account/ForgotPassword") || (ReturnUrl == "/Account/ResetPassword"))

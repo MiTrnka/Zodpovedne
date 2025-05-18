@@ -540,7 +540,7 @@ public class UsersController : ControllerBase
     /// Pomocná metoda pro získání IP adresy klienta
     /// </summary>
     /// <returns>IP adresa klienta</returns>
-    private string GetClientIpAddress()
+    /*private string GetClientIpAddress()
     {
         try
         {
@@ -556,11 +556,11 @@ public class UsersController : ControllerBase
             var xDebugRemoteAddr = HttpContext.Request.Headers["X-Debug-Remote-Addr"].ToString();
 
             // Detailní log pro diagnostiku - VŽDY LOGUJEME PRO ANALÝZU PROBLÉMU
-            /*_logger.Log($"IP INFO - RemoteIpAddress: {remoteIpAddress}, " +
+            _logger.Log($"IP INFO - RemoteIpAddress: {remoteIpAddress}, " +
                        $"X-Forwarded-For: {xForwardedFor}, " +
                        $"X-Real-IP: {xRealIp}, " +
                        $"X-Client-IP: {xClientIp}, " +
-                       $"X-Debug-Remote-Addr: {xDebugRemoteAddr}");*/
+                       $"X-Debug-Remote-Addr: {xDebugRemoteAddr}");
 
             // Funkce pro převod IPv6 adres na IPv4
             string NormalizeIpAddress(string ip)
@@ -617,7 +617,7 @@ public class UsersController : ControllerBase
             _logger.Log($"Chyba při získávání IP adresy: {ex.Message}", ex);
             return "error-ip";
         }
-    }
+    }*/
 
     /// <summary>
     /// Vytvoří JWT token pro přihlášení uživatele ze zadaného emailu a hesla (LoginModel) (zkontroluje zadaný email a heslo a vytvoří JWT token)
@@ -1728,6 +1728,42 @@ public class UsersController : ControllerBase
         catch (Exception e)
         {
             _logger.Log("Chyba při vykonávání akce UserCount endpointu.", e);
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    /// <summary>
+    /// Zaznamená přihlášení uživatele včetně IP adresy
+    /// </summary>
+    /// <param name="model">Data o přihlášení</param>
+    [Authorize]
+    [HttpPost("record-login")]
+    public async Task<IActionResult> RecordLogin([FromBody] RecordLoginDto model)
+    {
+        try
+        {
+            // Ověření, že uživatel může zapisovat pouze svůj vlastní login
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(currentUserId) || currentUserId != model.UserId)
+                return Forbid();
+
+            // Vytvoření záznamu o přihlášení
+            var loginHistory = new LoginHistory
+            {
+                UserId = model.UserId,
+                LoginTime = DateTime.UtcNow,
+                IpAddress = model.IpAddress
+            };
+
+            // Přidání záznamu do databáze
+            dbContext.LoginHistory.Add(loginHistory);
+            await dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            _logger.Log("Chyba při zaznamenávání historie přihlášení", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

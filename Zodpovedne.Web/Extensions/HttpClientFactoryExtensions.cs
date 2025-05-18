@@ -13,6 +13,23 @@ public static class HttpClientFactoryExtensions
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
 
+        // Získání IP adresy klienta z HttpContext
+        string clientIp = GetClientIpAddress(httpContext);
+
+        // Přidáme IP do hlavičky, pokud není prázdná nebo localhost
+        if (!string.IsNullOrEmpty(clientIp) && clientIp != "127.0.0.1" && clientIp != "::1" && clientIp != "unknown")
+        {
+            client.DefaultRequestHeaders.Add("X-Client-IP", clientIp);
+        }
+
+        return client;
+    }
+
+    /// <summary>
+    /// Získání IP adresy klienta z HttpContext
+    /// </summary>
+    public static string GetClientIpAddress(HttpContext httpContext)
+    {
         // Funkce pro normalizaci IP adresy
         string NormalizeIpAddress(string ip)
         {
@@ -24,7 +41,7 @@ public static class HttpClientFactoryExtensions
         }
 
         // Důkladnější získání reálné IP klienta
-        string clientIp = null;
+        string clientIp = "unknown";
 
         // 1. Zkusíme z X-Real-IP hlavičky
         if (httpContext.Request.Headers.TryGetValue("X-Real-IP", out var realIp) && !string.IsNullOrEmpty(realIp))
@@ -40,18 +57,17 @@ public static class HttpClientFactoryExtensions
                 clientIp = NormalizeIpAddress(ips[0].Trim());
             }
         }
-        // 3. Zkusíme z RemoteIpAddress
+        // 3. Zkusíme z X-Debug-Remote-Addr hlavičky (může být přidána v proxy nastavení pro testování)
+        else if (httpContext.Request.Headers.TryGetValue("X-Debug-Remote-Addr", out var debugRemoteAddr) && !string.IsNullOrEmpty(debugRemoteAddr))
+        {
+            clientIp = NormalizeIpAddress(debugRemoteAddr);
+        }
+        // 4. Nakonec zkusíme z RemoteIpAddress
         else if (httpContext.Connection.RemoteIpAddress != null)
         {
             clientIp = NormalizeIpAddress(httpContext.Connection.RemoteIpAddress.ToString());
         }
 
-        // Přidáme IP do hlavičky, pokud není prázdná nebo localhost
-        if (!string.IsNullOrEmpty(clientIp) && clientIp != "127.0.0.1" && clientIp != "::1")
-        {
-            client.DefaultRequestHeaders.Add("X-Client-IP", clientIp);
-        }
-
-        return client;
+        return clientIp;
     }
 }
