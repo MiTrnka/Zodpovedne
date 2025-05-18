@@ -85,28 +85,28 @@
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
                         <a class="nav-link @(IsMenuItemActive("/Categories") ? "active" : "")"
-                        asp-page="/Categories">Diskuze</a>
+                           asp-page="/Categories" style="padding:7px 40px;">Diskuze</a>
                     </li>
                     @if (Context.Session.GetString("JWTToken") != null)
                     {
                         <li class="nav-item">
                             <a class="nav-link @(currentPath == "/Index" || currentPath == "" ? "active" : "")"
-                               asp-page="/Index">Novinky</a>
+                               asp-page="/Index" style="padding:7px 40px;">Novinky</a>
                         </li>
                     }
                     @if ((Configuration["SiteInstance"] != null) && (Configuration["SiteInstance"] == "mamouzodpovedne.cz"))
                     {
                         <li class="nav-item">
                             <a class="nav-link @(IsMenuItemActive("/Katalog/Hracky") ? "active" : "")"
-                            asp-page="/katalog/hracky">Hračky</a>
+                               asp-page="/katalog/hracky" style="padding:7px 40px;">Hračky</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(IsMenuItemActive("/Katalog/Obleceni") ? "active" : "")"
-                            asp-page="/katalog/obleceni">Oblečení</a>
+                               asp-page="/katalog/obleceni" style="padding:7px 40px;">Oblečení</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(IsMenuItemActive("/Katalog/Elektronika") ? "active" : "")"
-                            asp-page="/katalog/elektronika">Elektronika</a>
+                               asp-page="/katalog/elektronika" style="padding:7px 40px;">Elektronika</a>
                         </li>
                     }
                 </ul>
@@ -118,38 +118,43 @@
                 </form>
 
                 <!-- Pravá část menu -->
-                <ul class="navbar-nav">
+                <ul class="navbar-nav menu-right-section">
                     @if (Context.Session.GetString("JWTToken") != null)
                     {
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link @(IsMenuItemActive("/Admin/Users") ? "active" : "")"
-                                asp-page="/Admin/Users">Uživatelé</a>
+                                   asp-page="/Admin/Users" style="padding:7px 40px;">Uživatelé</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link @(IsMenuItemActive("/Account/RegisterAdmin") ? "active" : "")"
                                 asp-page="/Account/RegisterAdmin"
-                                asp-route-returnUrl="@Context.Request.Path">Registrovat dalšího admina</a>
+                                   asp-route-returnUrl="@Context.Request.Path" style="padding:7px 40px;">Registrovat dalšího admina</a>
                             </li>
                         }
                         <!-- Ikona zpráv -->
                         <li class="nav-item">
                             <a class="nav-link position-relative nav-link @(IsMenuItemActive("/Messages") ? "active" : "")" href="/Messages" id="messages-link">
-                                <i class="bi bi-envelope nav-icon" id="messages-icon"></i>
-                                <span id="messages-badge" class="position-absolute top-0 translate-middle badge rounded-pill bg-danger d-none">
-                                    <span id="messages-count">0</span>
-                                    <span class="visually-hidden">nepřečtených zpráv</span>
-                                </span>
+                                <div class="position-relative menu-icon-wrapper">
+                                    <i class="bi bi-envelope nav-icon" id="messages-icon"></i>
+                                    <span id="messages-badge" class="position-absolute  badge rounded-pill bg-danger d-none">
+                                        <span id="messages-count">0</span>
+                                        <span class="visually-hidden">nepřečtených zpráv</span>
+                                    </span>
+                                </div>
+                              
                             </a>
                         </li>
                         <!-- Notifikační zvoneček s dropdown menu -->
-                        <li class="nav-item dropdown position-relative" id="notifications-container">
+                        <li class="nav-item dropdown position-relative d-flex" id="notifications-container" >
                             <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-bell" id="notification-bell"></i>
-                                <span class="position-absolute top-0 translate-middle badge rounded-pill bg-danger d-none" id="notification-badge">
-                                    <span id="notifications-count">0</span>
-                                </span>
+                                <div class="position-relative menu-icon-wrapper">
+                                    <i class="bi bi-bell" id="notification-bell"></i>
+                                    <span class="position-absolute badge rounded-pill bg-danger d-none" id="notification-badge">
+                                        <span id="notifications-count">0</span>
+                                    </span>
+                                </div>
                             </a>
                             <div class="dropdown-menu start-50 position-absolute translate-middle-x" aria-labelledby="notificationsDropdown" id="notifications-dropdown">
                                 <div class="p-2" id="notifications-header">
@@ -166,19 +171,23 @@
                             </div>
                         </li>
                         <!-- Účet přihlášeného uživatele s notifikací pro nové žádosti o přátelství -->
-                        <li class="position-relative nav-item account-icon-text nav-link @(IsMenuItemActive("/Account/MyProfile") ? "active" : "")" style="cursor: pointer;">
-                            <i id="user-icon" class="bi bi-person"></i>
-                            <span id="friendship-badge" class="position-absolute top-0 translate-middle badge rounded-pill bg-danger d-none" style="font-size: 0.5rem;margin-right:20px; margin-top: 7px;">
-                                <span id="friendship-count">0</span>
-                                <span class="visually-hidden">žádostí o přátelství</span>
-                            </span>
+                        <li class="position-relative menu-icon-wrapper nav-item account-icon-text @(IsMenuItemActive("/Account/MyProfile") ? "active" : "")" style="cursor: pointer;">
+                           
                         <!-- Můj profil -->
-                            <a class="user-name"
-                            asp-page="/Account/MyProfile">@Context.Session.GetString("UserNickname")</a>
+                            <a class="user-name nav-link"
+                               asp-page="/Account/MyProfile">
+                                <div class="menu-icon-wrapper">
+                                    <i id="user-icon" class="bi bi-person"></i>@Context.Session.GetString("UserNickname")
+                                    <span id="friendship-badge" class="position-absolute badge rounded-pill bg-danger d-none">
+                                        <span id="friendship-count">0</span>
+                                        <span class="visually-hidden">žádostí o přátelství</span>
+                                    </span>
+                                </div> 
+                            </a>
                         </li>
                         <!-- Odhlásit -->
                         <li class="nav-item odhlasit-menu">
-                            <a class="nav-link" asp-page="/Account/Logout">Odhlásit se</a>
+                            <a class="nav-link" asp-page="/Account/Logout" style="padding:7px 40px;">Odhlásit se</a>
                         </li>
                     }
                     else

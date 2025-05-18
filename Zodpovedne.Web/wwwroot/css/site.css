@@ -421,14 +421,7 @@ a {
     width: 100%;
     max-width: 1000px;
 }
-.account-icon-text {
-    display: flex;
-    justify-content: center;
-}
-.account-icon-text a{
-    text-decoration: none;
-    color: black;
-}
+
 #discussion-likes-count {
     color: var(--primary-color);
 }
@@ -438,58 +431,56 @@ a {
 #user-icon{
     padding-right: 5px;
 }
-
-.user-name, .odhlasit-menu {
-    padding-top: 3px;
+#friendship-badge{
+    left: 40px;
 }
+
 /* Styl pro hover efekt - postupně se objevující jednoduché podtržení */
 .nav-link:not(.active):hover::after {
     content: '';
     position: absolute;
-    width: 80%;
+    width: 40%;
     height: 1px;
     bottom: 0;
-    left: 10%;
-    right: 10%;
+    left: 40px;
+    right: 40px;
     background-color: var(--primary-color);
 }
 
-.navbar-nav .nav-link.active {
+.navbar-nav .nav-link.active, li.active {
     background-color: none;
     font-weight: bold;
     position: relative;
     display: flex;
-    align-items: center;
-    justify-content: center;
     height: 100%;
 }
 
 /* Styl pro aktivní stránku - dvojité podtržení */
-.nav-link.active::after {
+.nav-link.active::after, li.active::after {
     content: '';
     position: absolute;
-    width: 70%;
+    max-width: 35%;
     height: 1px;
     bottom: 0;
-    left: 20%;
-    right: 0;
+    left: 40px;
+    right: 20%;
     background-color: var(--primary-color);
 }
 
-.nav-link.active::before {
+.nav-link.active::before, li.active::before {
     content: '';
     position: absolute;
-    width: 80%;
+    max-width: 40%;
     height: 1px;
     bottom: 3px;
-    left: 10%;
-    right: 10%;
+    left: 40px;
+    right: 40px;
     background-color: var(--primary-color);
 }
 
 
 /* Styly pro ikony v menu*/
-#notification-bell, #user-icon, #messages-icon {
+#notification-bell, #user-icon, #messages-icon  {
     font-size: 1.2rem;
     transition: color 0.3s;
 }
@@ -525,20 +516,40 @@ a {
     }
 }
 
-/* Úprava pozice badge - přímo u zvonečku */
-#notification-badge {
-    transform: translate(-50%, -50%);
-    margin-left: 0;
+/* Úprava pozice badge */
+.menu-icon-wrapper .badge{
+    font-size: 0.55rem;
+    top: -10px ;
+    left: 34px !important;
+}
+.menu-icon-wrapper{
+    text-align: left;
+    width: auto;
+    max-height: 35px;
+}
+.menu-icon-wrapper a{
+    padding: 7px 14px;
+}
+#user-icon, #notification-bell, #messages-icon {
+    margin-left: 25px;
+    max-width: 30px;
+}
+#notificationsDropdown{
+    width: 100%;
 }
 
-#notifications-dropdown {
-    width: 350px;
-    padding: 0;
+#friendship-badge {
+    top: -3px;
+    left: 47px !important; 
 }
 
 .notification-item {
     transition: background-color 0.2s;
     border-left: 3px solid transparent;
+}
+.menu-right-section{
+    padding-top: 0px !important;
+    margin-top: -14px;
 }
 
 .notification-item:hover {
@@ -554,10 +565,10 @@ a {
 
 
 /* Opravit pozici badge na mobilních zařízeních */
-#notification-badge {
+/*#notification-badge {
     transform: translate(-50%, -50%) !important;
     right: auto !important;
-}
+}*/
 
 
 /* Navigace - mobilní verze */
@@ -628,7 +639,8 @@ a {
 
 .navbar-nav {
     padding: 1rem 0;
-    text-align: center;
+    text-align: left;
+    width: 100%;
 }
 
 .navbar-nav .nav-item {
@@ -652,6 +664,8 @@ a {
 
 .fulltextForm {
     order: 1; /* Vyhledavaci form bude jako prvni nahore */
+    width: 100%;
+    padding: 0px 40px;
 }
 
 .fulltextFormInput:focus {
@@ -659,7 +673,7 @@ a {
     box-shadow: none;
     border-color: var(--primary-color);
 }
-.fulltextFormBtn{ /* iii */
+.fulltextFormBtn{
     width:5rem;
     margin: auto 5px;
 }
@@ -746,7 +760,7 @@ h1 {
     position: absolute;
     top: -5px;
     right: -10px;
-    background-color: var(--secondary-color); /* iii */
+    background-color: var(--secondary-color); 
     padding: 2px;
     border-radius: 2px;
     color: var(--primary-color);
@@ -770,7 +784,7 @@ h1 {
     line-height: 1;
 }
 
-.card-kategorie, .card-diskuse{ /* iii */
+.card-kategorie, .card-diskuse{ 
     background-color: var(--light-primary-color-ultra-light);
     padding: 10px;
     border: 1px solid white;
@@ -897,7 +911,7 @@ h1 {
     max-width: 100% !important;
 }
 
-/* Detail diskuse */ /* iii */
+/* Detail diskuse */
 
 .text-editor-wrapper{
     padding:15px 15px 0px 15px;
@@ -1020,7 +1034,7 @@ span[title="Autor"] a{
     background-color: white;
     backdrop-filter: blur(5px); /* Rozmazání pozadí */
     -webkit-backdrop-filter: blur(5px); /* Pro Safari podporu */
-    border-radius: 15px; /* iii */
+    border-radius: 15px; 
 }
 .profile-wrapper{
     margin: 0px auto;
@@ -1216,10 +1230,10 @@ tr.toggle-row td {
     padding: 0.75rem !important;
 }
 
-#messages-badge {
+/*#messages-badge {
     left: auto !important;
     right: 10px;
-}
+}*/
 
 .hide-text-when-narrow {
     display: none;
@@ -1239,10 +1253,11 @@ tr.toggle-row td {
 
     /* Navigace pro tablet */
     .navbar-nav .nav-link {
-        padding: 0.5rem;
         font-size: 0.9rem;
     }
-
+    #friendship-badge{
+        left: 30px;
+    }
     /* Grid pro seznam uživatelů */
     .user-list-header,
     .user-list-item {
@@ -1260,7 +1275,9 @@ tr.toggle-row td {
     h1 {
         font-size: 2rem;
     }
-
+    li.account-icon-text{
+        height: 44.8px;
+    }
     /* Grid pro seznam uživatelů */
     .user-list-header,
     .user-list-item {
@@ -1272,6 +1289,9 @@ tr.toggle-row td {
         /* Logo */
         .logo-container img {
         width: 150px !important;
+    }
+    #friendship-badge {
+        left: 35px;
     }
 
 }
@@ -1308,11 +1328,123 @@ tr.toggle-row td {
     .navbar-collapse {
         flex-direction: row; /* Na desktopu řadí položky vedle sebe */
         background-color: transparent;
+    }
+    .menu-right-section{
+        justify-content: end;
+        padding: 0px;
+    }
+    .menu-right-section .nav-item{
+        width: auto;
+    }
+    #messages-link, #notification-bell, #user-icon {
+        padding: 7px 14px;
+    }
+    #messages-link{
+        margin-right: 5px;
+    }
+    #notificationsDropdown {
+        width: auto;
+        padding: 0px;
+        margin-top: 7px;
+    }
+    #notification-bell, #user-icon, #messages-icon {
+        margin-left: 0px;
+    }
+    .fulltextForm {
+        margin-top: -20px;
+    }
 
+    .odhlasit-menu {
+        margin-bottom: 0px !important;
+    }
+    .odhlasit-menu .nav-link {
+       margin-top: 5px;
+    }
+    .user-name.nav-link{
+        padding-left: 0px !important;
+    }
+    .nav-item{
+        text-align: center;
+    }
+    #messages-badge, #notification-badge {
+        left: 15px;
     }
     #messages-badge {
-        left: 30px !important;
-        right: auto !important;
+        left: 20px !important;
+    }
+    #friendship-badge {
+        top: -2px;
+        left: 28px !important;
+    }
+
+    /* Styl pro hover efekt - postupně se objevující jednoduché podtržení */
+    .nav-link:not(.active):hover::after, .account-icon-text:not(.active):hover::after {
+        content: '';
+        position: absolute;
+        width: 90%;
+        min-width: 30px;
+        max-width: 70px;
+        height: 1px;
+        bottom: 3px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--primary-color);
+    }
+    .account-icon-text:not(.active):hover::after {
+        bottom: -5px;
+    }
+    .nav-link[href="/Account/MyProfile"]:hover::after {
+        display: none !important;
+    }
+
+    .navbar-nav .nav-link.active, li.active {
+        background-color: none;
+        font-weight: bold;
+        position: relative;
+        display: flex;
+        height: 100%;
+    }
+
+    /* Styl pro aktivní stránku - dvojité podtržení */
+    .nav-link.active::after, li.active::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        max-width: 90%;
+        height: 1px;
+        bottom: 0;
+        left: auto;
+        right: 0px;
+        background-color: var(--primary-color);
+    }
+
+    .nav-link.active::before, li.active::before {
+        content: '';
+        position: absolute;
+        height: 1px;
+        bottom: 3px;
+        left: auto;
+        right: 10px;
+        width: 100%;
+        max-width: calc(90% - 10px);
+        background-color: var(--primary-color);
+    }
+    .account-icon-text.active {
+        position: relative;
+    }
+    .account-icon-text.active::before {
+        left: auto;
+        right: 10px;
+        max-width: calc(90% - 10px);
+        transform: none;
+        bottom: -8px;
+    }
+    .account-icon-text.active::after {
+        left: auto;
+        right: 0px;
+        max-width: 90%;
+        transform: none;
+        bottom: -5px;
     }
     .navbar-nav.flex-grow-1 {
         order: 1; /* Levé menu bude první */
@@ -1321,7 +1453,12 @@ tr.toggle-row td {
 
     .navbar-expand-xl {
         margin: auto;
-        max-width: 1920px;
+        max-width: 2200px !important;
+        justify-content: center;
+    }
+    .navbar-expand-xl > .container{
+        margin: 0px;
+        width: 100%;
     }
 
     .fulltextForm {
