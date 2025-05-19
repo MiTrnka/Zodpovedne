@@ -81,22 +81,22 @@
 
                     @if (Model.UserFriends.Any())
                     {
-                     <div class="table-responsive">
+                        <div class="table-responsive">
 
-                      <table class="table table-hover">
-                        <tbody>
-                            @foreach (var friend in Model.UserFriends)
-                            {
-                               <tr class="toggle-row">
-                                    <td class="toggle-content-row d-flex justify-content-between p-1">
-                                            <a href="/Account/Profile/@friend.OtherUserNickname" class="text-decoration-none">@friend.OtherUserNickname</a>
-                                        <p class="card-text text-muted" style="width:auto;">
+                            <table class="table table-hover">
+                                <tbody>
+                                    @foreach (var friend in Model.UserFriends)
+                                    {
+                                        <tr class="toggle-row">
+                                            <td class="toggle-content-row d-flex justify-content-between p-1">
+                                                <a href="/Account/Profile/@friend.OtherUserNickname" class="text-decoration-none">@friend.OtherUserNickname</a>
+                                                <p class="card-text text-muted" style="width:auto;">
                                                     <i class="bi bi-calendar-plus"></i> <span style="font-size: 12px;">Přátelé od: @friend.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
-                                        </p>
-                                        </td>
-                                </tr>
+                                                </p>
+                                            </td>
+                                        </tr>
 
-                            }
+                                    }
                                 </tbody>
                             </table>
                         </div>
@@ -121,8 +121,8 @@
 
                 </button>
                 <div class="card-body" id="likes-list">
-                        @foreach (var discussion in Model.LikedDiscussions)
-                        {
+                    @foreach (var discussion in Model.LikedDiscussions)
+                    {
                         <div class="table-responsive">
 
                             <table class="table table-hover">
@@ -147,9 +147,9 @@
                                         </td>
                                     </tr>
                                 </tbody>
-                           </table>
-                         </div>
-                        }
+                            </table>
+                        </div>
+                    }
                 </div>
             </div>
         }
@@ -162,8 +162,8 @@
 
             </button>
             <div class="card-body scrollbar" id="user-discussions">
-            @if (Model.UserDiscussions.Any())
-            {
+                @if (Model.UserDiscussions.Any())
+                {
                     @foreach (var discussion in Model.UserDiscussions)
                     {
                         <div class="table-responsive">
@@ -175,7 +175,8 @@
                                             <a href="/Categories/@discussion.CategoryCode/@discussion.DiscussionCode" class="list-group-item list-group-item-action">
                                                 <div class="d-flex w-100 justify-content-between">
                                                     <p class="mb-1 fw-bold" style="font-size: 12px;">
-                                                        @discussion.Title</p>
+                                                        @discussion.Title
+                                                    </p>
                                                 </div>
                                                 <p class="mb-1" style="font-size: 12px;">Kategorie: @discussion.CategoryName</p>
                                                 <small style="font-size: 12px;">
@@ -193,51 +194,75 @@
                         </div>
                     }
 
-            }
-            else
-            {
-                <p class="text-muted">Uživatel zatím nevytvořil žádné diskuze.</p>
-            }
+                }
+                else
+                {
+                    <p class="text-muted">Uživatel zatím nevytvořil žádné diskuze.</p>
+                }
+            </div>
         </div>
 
-            <!-- Sekce s historií přihlášení - viditelná pouze pro adminy -->
-            @if (Model.IsAdmin && Model.UserProfile != null)
-            {
-                <div class="card mb-4" style="border:none;">
-                    <button class="d-flex justify-content-between w-100 account-toggle-wrapper" type="button" id="toggle-login-history">
-                        <span>Historie přihlášení <small class="text-danger">(vidí pouze admin)</small></span>
-                        <i class="bi bi-chevron-down" id="login-history-chevron"></i>
-                    </button>
-                    <div class="card-body scrollbar" id="login-history-list" style="display:none;">
-                        @if (Model.LoginHistory.Any())
-                        {
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
+        <!-- Sekce s historií přihlášení - viditelná pouze pro adminy -->
+        @if (Model.IsAdmin && Model.UserProfile != null)
+        {
+            <div class="card mb-4" style="border:none;">
+                <button class="d-flex justify-content-between w-100 account-toggle-wrapper" type="button" id="toggle-login-history">
+                    <span>Historie přihlášení <small class="text-danger">(vidí pouze admin)</small></span>
+                    <i class="bi bi-chevron-down" id="login-history-chevron"></i>
+                </button>
+                <div class="card-body scrollbar" id="login-history-list" style="display:none;">
+                    @if (Model.LoginHistory.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Čas přihlášení</th>
+                                        <th>IP adresa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var login in Model.LoginHistory)
+                                    {
                                         <tr>
-                                            <th>Čas přihlášení</th>
-                                            <th>IP adresa</th>
+                                            <td>@login.LoginTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                            <td>@login.IpAddress</td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var login in Model.LoginHistory)
-                                        {
-                                            <tr>
-                                                <td>@login.LoginTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
-                                                <td>@login.IpAddress</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-                        else
-                        {
-                            <p class="text-muted">Pro tohoto uživatele není k dispozici žádná historie přihlášení.</p>
-                        }
-                    </div>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Pro tohoto uživatele není k dispozici žádná historie přihlášení.</p>
+                    }
                 </div>
-            }
+            </div>
+
+            <!-- JavaScript pro ovládání sekce historie přihlášení přímo zde v podmínce -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const toggleLoginHistoryBtn = document.getElementById('toggle-login-history');
+                    const loginHistoryContainer = document.getElementById('login-history-list');
+                    const loginHistoryChevron = document.getElementById('login-history-chevron');
+
+                    if (toggleLoginHistoryBtn && loginHistoryContainer && loginHistoryChevron) {
+                        toggleLoginHistoryBtn.addEventListener('click', function () {
+                            if (loginHistoryContainer.style.display === 'none') {
+                                loginHistoryContainer.style.display = 'block';
+                                loginHistoryChevron.classList.remove('bi-chevron-down');
+                                loginHistoryChevron.classList.add('bi-chevron-up');
+                            } else {
+                                loginHistoryContainer.style.display = 'none';
+                                loginHistoryChevron.classList.remove('bi-chevron-up');
+                                loginHistoryChevron.classList.add('bi-chevron-down');
+                            }
+                        });
+                    }
+                });
+            </script>
+        }
     </div>
 </div>
 
@@ -245,12 +270,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <script defer>
-             // Funkce pro rozbalení/sbalení sekce s diskuzemi
-            document.addEventListener('DOMContentLoaded', function () {
-                const toggleButton = document.getElementById('toggle-discussions');
-                const discussionsContainer = document.getElementById('user-discussions');
-                const chevronIcon = document.getElementById('discussions-chevron');
+        // Funkce pro rozbalení/sbalení sekce s diskuzemi
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleButton = document.getElementById('toggle-discussions');
+            const discussionsContainer = document.getElementById('user-discussions');
+            const chevronIcon = document.getElementById('discussions-chevron');
 
+            if (toggleButton && discussionsContainer && chevronIcon) {
                 toggleButton.addEventListener('click', function () {
                     if (discussionsContainer.style.display === 'none') {
                         discussionsContainer.style.display = 'block';
@@ -262,58 +288,49 @@
                         chevronIcon.classList.add('bi-chevron-down');
                     }
                 });
-            });
-            // Kód pro přepínání sekce s přáteli
+            }
+        });
+
+        // Kód pro přepínání sekce s přáteli
+        document.addEventListener('DOMContentLoaded', function () {
             const toggleFriendsBtn = document.getElementById('toggle-friends');
             const friendsContainer = document.getElementById('friends-list');
             const friendsChevron = document.getElementById('friends-chevron');
 
-            toggleFriendsBtn.addEventListener('click', function () {
-                if (friendsContainer.style.display === 'none') {
-                    friendsContainer.style.display = 'block';
-                    friendsChevron.classList.remove('bi-chevron-down');
-                    friendsChevron.classList.add('bi-chevron-up');
-                } else {
-                    friendsContainer.style.display = 'none';
-                    friendsChevron.classList.remove('bi-chevron-up');
-                    friendsChevron.classList.add('bi-chevron-down');
-                }
-            });
-            // Kód pro rozbalování sekce s naposledy lajkovanymi diskusemi
-            const toggleLikesBtn = document.getElementById('toggle-likes');
-            const likesContainer = document.getElementById('likes-list');
-            const likesChevron = document.getElementById('likes-chevron');
-
-            toggleLikesBtn.addEventListener('click', function () {
-                if (likesContainer.style.display === 'none') {
-                    likesContainer.style.display = 'block';
-                    likesChevron.classList.remove('bi-chevron-down');
-                    likesChevron.classList.add('bi-chevron-up');
-                } else {
-                    likesContainer.style.display = 'none';
-                    likesChevron.classList.remove('bi-chevron-up');
-                    likesChevron.classList.add('bi-chevron-down');
-                }
-            });
-
-
-            // Kód pro rozbalování sekce s historií přihlášení
-            const toggleLoginHistoryBtn = document.getElementById('toggle-login-history');
-            if (toggleLoginHistoryBtn) { // Kontrola existence prvku (pouze pro adminy)
-                const loginHistoryContainer = document.getElementById('login-history-list');
-                const loginHistoryChevron = document.getElementById('login-history-chevron');
-
-                toggleLoginHistoryBtn.addEventListener('click', function () {
-                    if (loginHistoryContainer.style.display === 'none') {
-                        loginHistoryContainer.style.display = 'block';
-                        loginHistoryChevron.classList.remove('bi-chevron-down');
-                        loginHistoryChevron.classList.add('bi-chevron-up');
+            if (toggleFriendsBtn && friendsContainer && friendsChevron) {
+                toggleFriendsBtn.addEventListener('click', function () {
+                    if (friendsContainer.style.display === 'none') {
+                        friendsContainer.style.display = 'block';
+                        friendsChevron.classList.remove('bi-chevron-down');
+                        friendsChevron.classList.add('bi-chevron-up');
                     } else {
-                        loginHistoryContainer.style.display = 'none';
-                        loginHistoryChevron.classList.remove('bi-chevron-up');
-                        loginHistoryChevron.classList.add('bi-chevron-down');
+                        friendsContainer.style.display = 'none';
+                        friendsChevron.classList.remove('bi-chevron-up');
+                        friendsChevron.classList.add('bi-chevron-down');
                     }
                 });
             }
+        });
+
+        // Kód pro rozbalování sekce s naposledy lajkovanymi diskusemi
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleLikesBtn = document.getElementById('toggle-likes');
+            const likesContainer = document.getElementById('likes-list');
+            const likesChevron = document.getElementById('lekes-chevron');
+
+            if (toggleLikesBtn && likesContainer && likesChevron) {
+                toggleLikesBtn.addEventListener('click', function () {
+                    if (likesContainer.style.display === 'none') {
+                        likesContainer.style.display = 'block';
+                        likesChevron.classList.remove('bi-chevron-down');
+                        likesChevron.classList.add('bi-chevron-up');
+                    } else {
+                        likesContainer.style.display = 'none';
+                        likesChevron.classList.remove('bi-chevron-up');
+                        likesChevron.classList.add('bi-chevron-down');
+                    }
+                });
+            }
+        });
     </script>
 }
