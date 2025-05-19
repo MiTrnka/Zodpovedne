@@ -31,7 +31,7 @@
                     <dt>Přezdívka</dt>
                     <dd>@Model.UserProfile?.Nickname</dd>
                     <dt>Registrován</dt>
-                    <dd>@Model.UserProfile?.Created.ToString("dd.MM.yyyy HH:mm")</dd>
+                    <dd>@Model.UserProfile?.Created.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</dd>
                     @if (Model.CanViewFriendInfo)
                     {
                         @if (@Model.UserProfile?.LastLogin != null)
