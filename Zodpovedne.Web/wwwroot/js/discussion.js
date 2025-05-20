@@ -282,8 +282,13 @@ async function toggleForFriendsStatus(discussionId) {
     }
 }
 
-// Funkce pro nahrazení ikony nevyplnenho srdce za vyplnene srdce po pridani lajku
-// vola se pri pridani lajku k diskusi nebo ke komentari
+/*
+Funkce pro nahrazení ikony nevyplnenho srdce za vyplnene srdce po pridani lajku
+vola se pri pridani lajku k diskusi nebo ke komentari
+Tato pomocná funkce se používá po úspěšném přidání lajku pro vizuální změnu ikony v tlačítku. Nahrazuje třídu bi-heart (reprezentující prázdné srdce) třídou bi-heart-fill 
+(reprezentující vyplněné srdce). Také aktualizuje atribut title prvku pro lepší přístupnost. 
+Tato funkce je volána jak při přidávání lajků k diskuzím, tak ke komentářům, a slouží pro konzistentní vizuální zpětnou vazbu uživateli.
+ */
 function replaceHeartIcon(button) {
     // Najde vnořený element i s třídou bi-heart
     const icon = button.querySelector('i.bi-heart');
@@ -302,7 +307,13 @@ function replaceHeartIcon(button) {
     }
 }
 
-// Funkce pro přidání like k diskuzi
+/*
+Tato funkce zpracovává přidávání lajků k samotné diskuzi (článku). Nejprve získá URL API endpointu z hidden pole na stránce a poté odešle POST požadavek 
+na endpoint /discussions/{discussionId}/like s JWT tokenem v hlavičce. Po úspěšné odpovědi aktualizuje počet lajků v uživatelském rozhraní a pokud 
+uživatel již nemůže přidat další lajk (běžný uživatel už dal svůj jediný povolený lajk), změní vizuální stav tlačítka na disabled a nahradí ikonu 
+nevyplněného srdce ikonou vyplněného srdce. Administrátoři nejsou omezeni a mohou přidávat více lajků díky kontrole na straně serveru, který v odpovědi 
+vrací parametr canUserLike, který u běžných uživatelů po přidání lajku nastaví na false, zatímco u administrátorů zůstává na true.
+*/
 async function likeDiscussion(discussionId) {
     try {
         const apiBaseUrl = document.getElementById('apiBaseUrl').value;
@@ -332,7 +343,12 @@ async function likeDiscussion(discussionId) {
     }
 }
 
-// Funkce pro přidání like ke komentáři
+/*
+Podobně jako předchozí funkce, tato zpracovává přidávání lajků ke komentářům. Volá endpoint /discussions/{discussionId}/comments/{commentId}/like a aktualizuje 
+počet lajků u konkrétního komentáře podle jeho ID. Funkce také ověřuje z odpovědi serveru, zda uživatel může přidat další lajk a případně deaktivuje 
+tlačítko a změní ikonu. Princip je stejný jako u likeDiscussion - běžní uživatelé mohou přidat pouze jeden lajk ke každému komentáři, 
+zatímco administrátoři mohou přidávat lajky opakovaně.
+*/
 async function likeComment(discussionId, commentId) {
     try {
         const apiBaseUrl = document.getElementById('apiBaseUrl').value;

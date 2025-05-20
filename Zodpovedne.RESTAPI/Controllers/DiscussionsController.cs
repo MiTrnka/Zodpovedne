@@ -1116,6 +1116,12 @@ public class DiscussionsController : ControllerBase
     /// <summary>
     /// Přidá like k diskuzi. Pro adminy není omezení počtu liků.
     /// Pro ostatní uživatele je možný jen jeden like na diskuzi.
+    /// Kontroluje, zda uživatel již přidal lajk ke konkrétní diskuzi a pokud není administrátor, zablokuje mu možnost přidat více než jeden lajk. Také ověřuje, že uživatel
+    /// nepřidává lajk své vlastní diskuzi. V odpovědi vrací aktualizovaný počet lajků, informaci, zda uživatel přidal lajk, a zda může přidat další lajky.
+    /// Tato poslední hodnota je vždy true pro administrátory, což jim umožňuje přidávat neomezený počet lajků.
+    /// API vrací objekt LikeInfoDto, který obsahuje tři klíčové vlastnosti: LikeCount (celkový počet lajků), HasUserLiked (zda přihlášený uživatel dal lajk)
+    /// a CanUserLike (zda může přihlášený uživatel dát lajk). Tato poslední vlastnost je pro administrátory vždy true, což jim umožňuje přidávat neomezené množství lajků,
+    /// zatímco běžní uživatelé mohou přidat pouze jeden lajk k jedné diskuzi nebo komentáři.
     /// </summary>
     [Authorize]
     [HttpPost("{id}/like")]
@@ -1180,6 +1186,12 @@ public class DiscussionsController : ControllerBase
     /// <summary>
     /// Přidá like ke komentáři. Pro adminy není omezení počtu liků.
     /// Pro ostatní uživatele je možný jen jeden like na komentář.
+    /// zpracovává přidávání lajků ke komentářům. Implementuje stejnou logiku - běžní uživatelé mohou přidat pouze jeden lajk ke každému
+    /// komentáři a nemohou lajkovat vlastní komentáře, zatímco administrátoři mohou dávat lajky opakovaně.
+    /// Endpoint aktualizuje počet lajků v databázi a vrací aktualizované informace o počtu lajků a možnosti přidat další.
+    /// API vrací objekt LikeInfoDto, který obsahuje tři klíčové vlastnosti: LikeCount (celkový počet lajků), HasUserLiked (zda přihlášený uživatel dal lajk)
+    /// a CanUserLike (zda může přihlášený uživatel dát lajk). Tato poslední vlastnost je pro administrátory vždy true, což jim umožňuje přidávat neomezené množství lajků,
+    /// zatímco běžní uživatelé mohou přidat pouze jeden lajk k jedné diskuzi nebo komentáři.
     /// </summary>
     [Authorize]
     [HttpPost("{discussionId}/comments/{commentId}/like")]
