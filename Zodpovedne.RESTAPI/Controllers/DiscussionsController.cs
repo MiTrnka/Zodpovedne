@@ -1114,67 +1114,120 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Přidá like k diskuzi. Pro adminy není omezení počtu liků.
-    /// Pro ostatní uživatele je možný jen jeden like na diskuzi.
-    /// Kontroluje, zda uživatel již přidal lajk ke konkrétní diskuzi a pokud není administrátor, zablokuje mu možnost přidat více než jeden lajk. Také ověřuje, že uživatel
-    /// nepřidává lajk své vlastní diskuzi. V odpovědi vrací aktualizovaný počet lajků, informaci, zda uživatel přidal lajk, a zda může přidat další lajky.
+    /// Přidá nebo odebere like k diskuzi podle aktuálního stavu.
+    /// Pro adminy není omezení počtu liků a mohou pouze přidávat.
+    /// Pro běžné uživatele (s rolí Member) je možný jen jeden like na diskuzi a opětovným kliknutím ho mohou odebrat.
+    /// Kontroluje, zda uživatel již přidal lajk ke konkrétní diskuzi. Pro běžné uživatele
+    /// pokud již lajk existuje, bude odebrán. Admini mohou vždy přidat další lajk.
+    /// Ověřuje také, že uživatel nepřidává lajk své vlastní diskuzi.
+    /// V odpovědi vrací aktualizovaný počet lajků, informaci, zda uživatel přidal lajk, a zda může přidat další lajky.
     /// Tato poslední hodnota je vždy true pro administrátory, což jim umožňuje přidávat neomezený počet lajků.
-    /// API vrací objekt LikeInfoDto, který obsahuje tři klíčové vlastnosti: LikeCount (celkový počet lajků), HasUserLiked (zda přihlášený uživatel dal lajk)
-    /// a CanUserLike (zda může přihlášený uživatel dát lajk). Tato poslední vlastnost je pro administrátory vždy true, což jim umožňuje přidávat neomezené množství lajků,
-    /// zatímco běžní uživatelé mohou přidat pouze jeden lajk k jedné diskuzi nebo komentáři.
     /// </summary>
+    /// <param name="id">ID diskuze, ke které se přidává nebo odebírá lajk</param>
+    /// <returns>Objekt LikeInfoDto s aktualizovanými informacemi o lajcích</returns>
     [Authorize]
     [HttpPost("{id}/like")]
     public async Task<ActionResult<LikeInfoDto>> AddDiscussionLike(int id)
     {
         try
         {
+            // Získání ID přihlášeného uživatele a ověření, zda je admin
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
 
+            // Kontrola přihlášení uživatele
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            // Najdeme diskuzi
+            // Načtení diskuze včetně lajků
             var discussion = await dbContext.Discussions
                 .Include(d => d.Likes)
                 .FirstOrDefaultAsync(d => d.Id == id &&
                     d.Type != DiscussionType.Deleted &&
                     (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId));
 
+            // Kontrola existence diskuze
             if (discussion == null)
                 return NotFound();
 
-            // Kontrola, zda už uživatel nedal like (přeskočíme pro adminy)
-            if (!isAdmin && discussion.Likes.Any(l => l.UserId == userId))
-                return BadRequest("Uživatel už dal této diskuzi like.");
+            // Aktuální čas pro jednotné použití
+            var now = DateTime.UtcNow;
 
-            // Kontrola, zda uživatel nedává like své vlastní diskuzi
+            // Získání existujícího lajku od aktuálního uživatele (pokud existuje)
+            var existingLike = discussion.Likes.FirstOrDefault(l => l.UserId == userId);
+
+            // Kontrola, zda uživatel nedává like své vlastní diskuzi (kromě adminů)
             if (!isAdmin && discussion.UserId == userId)
                 return BadRequest("Nelze dát like vlastní diskuzi.");
 
-            var now = DateTime.UtcNow;
-
-            // Přidáme like
-            var like = new DiscussionLike
+            // 1. Pro admina - vždy přidáváme nový lajk
+            if (isAdmin)
             {
-                DiscussionId = id,
-                UserId = userId,
-                CreatedAt = now
-            };
+                // Přidáme nový like
+                var like = new DiscussionLike
+                {
+                    DiscussionId = id,
+                    UserId = userId,
+                    CreatedAt = now
+                };
 
-            dbContext.DiscussionLikes.Add(like);
-            discussion.UpdatedWhateverAt = now;
+                dbContext.DiscussionLikes.Add(like);
+                discussion.UpdatedWhateverAt = now;
 
-            await dbContext.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
 
-            // Vrátíme aktuální stav liků
-            return Ok(new LikeInfoDto
+                // Vrátíme aktuální stav liků
+                return Ok(new LikeInfoDto
+                {
+                    LikeCount = discussion.Likes.Count, // Zvýšíme počet o právě přidaný lajk
+                    HasUserLiked = true,
+                    CanUserLike = true  // Admin může dávat další lajky
+                });
+            }
+            // 2. Pro běžného uživatele (Member) - přepínáme mezi stavy like/unlike
+            else
             {
-                LikeCount = discussion.Likes.Count,
-                HasUserLiked = true,
-                CanUserLike = isAdmin  // Admin může dávat další liky
-            });
+                // Pokud uživatel již dal like, odebereme ho
+                if (existingLike != null)
+                {
+                    dbContext.DiscussionLikes.Remove(existingLike);
+                    discussion.UpdatedWhateverAt = now;
+
+                    await dbContext.SaveChangesAsync();
+
+                    // Vrátíme aktuální stav liků - nyní bez lajku uživatele
+                    return Ok(new LikeInfoDto
+                    {
+                        LikeCount = discussion.Likes.Count, // Snížíme počet o odebraný lajk
+                        HasUserLiked = false,
+                        CanUserLike = true  // Uživatel může znovu přidat lajk
+                    });
+                }
+                // Uživatel ještě nedal like - přidáme ho
+                else
+                {
+                    // Přidáme nový like
+                    var like = new DiscussionLike
+                    {
+                        DiscussionId = id,
+                        UserId = userId,
+                        CreatedAt = now
+                    };
+
+                    dbContext.DiscussionLikes.Add(like);
+                    discussion.UpdatedWhateverAt = now;
+
+                    await dbContext.SaveChangesAsync();
+
+                    // Vrátíme aktuální stav liků
+                    return Ok(new LikeInfoDto
+                    {
+                        LikeCount = discussion.Likes.Count, // Zvýšíme počet o právě přidaný lajk
+                        HasUserLiked = true,
+                        CanUserLike = true  // Uživatel může odebrat svůj lajk
+                    });
+                }
+            }
         }
         catch (Exception e)
         {
@@ -1184,28 +1237,33 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Přidá like ke komentáři. Pro adminy není omezení počtu liků.
-    /// Pro ostatní uživatele je možný jen jeden like na komentář.
-    /// zpracovává přidávání lajků ke komentářům. Implementuje stejnou logiku - běžní uživatelé mohou přidat pouze jeden lajk ke každému
-    /// komentáři a nemohou lajkovat vlastní komentáře, zatímco administrátoři mohou dávat lajky opakovaně.
-    /// Endpoint aktualizuje počet lajků v databázi a vrací aktualizované informace o počtu lajků a možnosti přidat další.
-    /// API vrací objekt LikeInfoDto, který obsahuje tři klíčové vlastnosti: LikeCount (celkový počet lajků), HasUserLiked (zda přihlášený uživatel dal lajk)
-    /// a CanUserLike (zda může přihlášený uživatel dát lajk). Tato poslední vlastnost je pro administrátory vždy true, což jim umožňuje přidávat neomezené množství lajků,
-    /// zatímco běžní uživatelé mohou přidat pouze jeden lajk k jedné diskuzi nebo komentáři.
+    /// Přidá nebo odebere like ke komentáři podle aktuálního stavu.
+    /// Pro adminy není omezení počtu liků a mohou pouze přidávat.
+    /// Pro běžné uživatele (s rolí Member) je možný jen jeden like na komentář a opětovným kliknutím ho mohou odebrat.
+    /// Kontroluje, zda uživatel již přidal lajk ke konkrétnímu komentáři. Pro běžné uživatele
+    /// pokud již lajk existuje, bude odebrán. Admini mohou vždy přidat další lajk.
+    /// Ověřuje také, že uživatel nepřidává lajk svému vlastnímu komentáři.
+    /// V odpovědi vrací aktualizovaný počet lajků, informaci, zda uživatel přidal lajk, a zda může přidat další lajky.
+    /// Tato poslední hodnota je vždy true pro administrátory, což jim umožňuje přidávat neomezený počet lajků.
     /// </summary>
+    /// <param name="discussionId">ID diskuze, ke které komentář patří</param>
+    /// <param name="commentId">ID komentáře, ke kterému se přidává/odebírá lajk</param>
+    /// <returns>Objekt LikeInfoDto s aktualizovanými informacemi o lajcích</returns>
     [Authorize]
     [HttpPost("{discussionId}/comments/{commentId}/like")]
     public async Task<ActionResult<LikeInfoDto>> AddCommentLike(int discussionId, int commentId)
     {
         try
         {
+            // Získání ID přihlášeného uživatele a ověření, zda je admin
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isAdmin = User.IsInRole("Admin");
 
+            // Kontrola přihlášení uživatele
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            // Najdeme komentář
+            // Načtení komentáře včetně lajků
             var comment = await dbContext.Comments
                 .Include(c => c.Likes)
                 .FirstOrDefaultAsync(c => c.Id == commentId &&
@@ -1213,43 +1271,106 @@ public class DiscussionsController : ControllerBase
                     c.Type != CommentType.Deleted &&
                     (c.Type != CommentType.Hidden || isAdmin || c.UserId == userId));
 
+            // Kontrola existence komentáře
             if (comment == null)
                 return NotFound();
 
-            // Kontrola, zda už uživatel nedal like (přeskočíme pro adminy)
-            if (!isAdmin && comment.Likes.Any(l => l.UserId == userId))
-                return BadRequest("Uživatel už dal tomuto komentáři like.");
+            // Aktuální čas pro jednotné použití
+            var now = DateTime.UtcNow;
 
-            // Kontrola, zda uživatel nedává like svému vlastnímu komentáři (přeskočit pro adminy)
+            // Získání existujícího lajku od aktuálního uživatele (pokud existuje)
+            var existingLike = comment.Likes.FirstOrDefault(l => l.UserId == userId);
+
+            // Kontrola, zda uživatel nedává like svému vlastnímu komentáři (kromě adminů)
             if (!isAdmin && comment.UserId == userId)
                 return BadRequest("Nelze dát like vlastnímu komentáři.");
 
-            var now = DateTime.UtcNow;
-
-            // Přidáme like
-            var like = new CommentLike
+            // 1. Pro admina - vždy přidáváme nový lajk
+            if (isAdmin)
             {
-                CommentId = commentId,
-                UserId = userId,
-                CreatedAt = now
-            };
+                // Přidáme nový like
+                var like = new CommentLike
+                {
+                    CommentId = commentId,
+                    UserId = userId,
+                    CreatedAt = now
+                };
 
-            dbContext.CommentLikes.Add(like);
+                dbContext.CommentLikes.Add(like);
 
-            var discussion = await dbContext.Discussions.FindAsync(discussionId);
-            if (discussion != null)
-            {
-                discussion.UpdatedWhateverAt = now;  // Aktualizace nového sloupce
+                // Aktualizace časového razítka diskuze
+                var discussion = await dbContext.Discussions.FindAsync(discussionId);
+                if (discussion != null)
+                {
+                    discussion.UpdatedWhateverAt = now;
+                }
+
+                await dbContext.SaveChangesAsync();
+
+                // Vrátíme aktuální stav liků
+                return Ok(new LikeInfoDto
+                {
+                    LikeCount = comment.Likes.Count, // Zvýšíme počet o právě přidaný lajk
+                    HasUserLiked = true,
+                    CanUserLike = true  // Admin může dávat další lajky
+                });
             }
-            await dbContext.SaveChangesAsync();
-
-            // Vrátíme aktuální stav liků
-            return Ok(new LikeInfoDto
+            // 2. Pro běžného uživatele (Member) - přepínáme mezi stavy like/unlike
+            else
             {
-                LikeCount = comment.Likes.Count,
-                HasUserLiked = true,
-                CanUserLike = isAdmin  // Admin může dávat další liky
-            });
+                // Pokud uživatel již dal like, odebereme ho
+                if (existingLike != null)
+                {
+                    dbContext.CommentLikes.Remove(existingLike);
+
+                    // Aktualizace časového razítka diskuze
+                    var discussion = await dbContext.Discussions.FindAsync(discussionId);
+                    if (discussion != null)
+                    {
+                        discussion.UpdatedWhateverAt = now;
+                    }
+
+                    await dbContext.SaveChangesAsync();
+
+                    // Vrátíme aktuální stav liků - nyní bez lajku uživatele
+                    return Ok(new LikeInfoDto
+                    {
+                        LikeCount = comment.Likes.Count, // Snížíme počet o odebraný lajk
+                        HasUserLiked = false,
+                        CanUserLike = true  // Uživatel může znovu přidat lajk
+                    });
+                }
+                // Uživatel ještě nedal like - přidáme ho
+                else
+                {
+                    // Přidáme nový like
+                    var like = new CommentLike
+                    {
+                        CommentId = commentId,
+                        UserId = userId,
+                        CreatedAt = now
+                    };
+
+                    dbContext.CommentLikes.Add(like);
+
+                    // Aktualizace časového razítka diskuze
+                    var discussion = await dbContext.Discussions.FindAsync(discussionId);
+                    if (discussion != null)
+                    {
+                        discussion.UpdatedWhateverAt = now;
+                    }
+
+                    await dbContext.SaveChangesAsync();
+
+                    // Vrátíme aktuální stav liků
+                    return Ok(new LikeInfoDto
+                    {
+                        LikeCount = comment.Likes.Count, // Zvýšíme počet o právě přidaný lajk
+                        HasUserLiked = true,
+                        CanUserLike = true  // Uživatel může odebrat svůj lajk
+                    });
+                }
+            }
         }
         catch (Exception e)
         {

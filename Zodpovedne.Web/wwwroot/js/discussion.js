@@ -282,38 +282,47 @@ async function toggleForFriendsStatus(discussionId) {
     }
 }
 
-/*
-Funkce pro nahrazení ikony nevyplnenho srdce za vyplnene srdce po pridani lajku
-vola se pri pridani lajku k diskusi nebo ke komentari
-Tato pomocná funkce se používá po úspěšném přidání lajku pro vizuální změnu ikony v tlačítku. Nahrazuje třídu bi-heart (reprezentující prázdné srdce) třídou bi-heart-fill 
-(reprezentující vyplněné srdce). Také aktualizuje atribut title prvku pro lepší přístupnost. 
-Tato funkce je volána jak při přidávání lajků k diskuzím, tak ke komentářům, a slouží pro konzistentní vizuální zpětnou vazbu uživateli.
+/**
+ * Funkce pro aktualizaci ikony srdce v tlačítku pro lajky.
+ * 
+ * Aktualizuje ikonu srdce v tlačítku podle toho, zda uživatel dal lajk nebo ne.
+ * Mění třídu ikony mezi bi-heart (nevyplněné srdce) a bi-heart-fill (vyplněné srdce)
+ * a aktualizuje atribut title pro lepší přístupnost.
+ * 
+ * @param {HTMLElement} button - Reference na tlačítko, jehož ikona má být aktualizována
+ * @param {boolean} isFilled - True pro vyplněné srdce, false pro nevyplněné
  */
-function replaceHeartIcon(button) {
-    // Najde vnořený element i s třídou bi-heart
-    const icon = button.querySelector('i.bi-heart');
+function updateHeartIcon(button, isFilled) {
+    // Najde element s ikonou srdce
+    const icon = button.querySelector('i.bi-heart, i.bi-heart-fill');
 
-    // Pokud byl nalezen element s třídou bi-heart
     if (icon) {
-        // Odstraní třídu bi-heart
-        icon.classList.remove('bi-heart');
-        // Přidá třídu bi-heart-fill
-        icon.classList.add('bi-heart-fill');
-
-        // Volitelně změňte také title atribut pro lepší popis
-        if (icon.hasAttribute('title')) {
-            icon.setAttribute('title', 'Počet srdcí od uživatelů');
+        if (isFilled) {
+            // Změna na vyplněné srdce
+            icon.classList.remove('bi-heart');
+            icon.classList.add('bi-heart-fill');
+            icon.setAttribute('title', 'Kliknutím odeberete srdce');
+        } else {
+            // Změna na nevyplněné srdce
+            icon.classList.remove('bi-heart-fill');
+            icon.classList.add('bi-heart');
+            icon.setAttribute('title', 'Kliknutím přidáte srdce');
         }
     }
 }
 
-/*
-Tato funkce zpracovává přidávání lajků k samotné diskuzi (článku). Nejprve získá URL API endpointu z hidden pole na stránce a poté odešle POST požadavek 
-na endpoint /discussions/{discussionId}/like s JWT tokenem v hlavičce. Po úspěšné odpovědi aktualizuje počet lajků v uživatelském rozhraní a pokud 
-uživatel již nemůže přidat další lajk (běžný uživatel už dal svůj jediný povolený lajk), změní vizuální stav tlačítka na disabled a nahradí ikonu 
-nevyplněného srdce ikonou vyplněného srdce. Administrátoři nejsou omezeni a mohou přidávat více lajků díky kontrole na straně serveru, který v odpovědi 
-vrací parametr canUserLike, který u běžných uživatelů po přidání lajku nastaví na false, zatímco u administrátorů zůstává na true.
-*/
+/**
+ * Funkce pro přidání nebo odebrání lajku k diskuzi.
+ * 
+ * Funkce asynchronně komunikuje s API endpointem pro správu lajků diskuze. Podle role uživatele a aktuálního stavu
+ * lajku se chová dvěma způsoby:
+ * 1. Pro adminy: Vždy přidává nový lajk (neomezené množství lajků)
+ * 2. Pro běžné uživatele (Member): Funguje jako přepínač - pokud uživatel již dal lajk, odebere ho; pokud ještě nedal, přidá ho
+ * 
+ * Funkce po úspěšné operaci aktualizuje počet lajků v UI a upraví vzhled tlačítka podle aktuálního stavu.
+ * 
+ * @param {number} discussionId - ID diskuze, ke které se přidává/odebírá lajk
+ */
 async function likeDiscussion(discussionId) {
     try {
         const apiBaseUrl = document.getElementById('apiBaseUrl').value;
@@ -327,28 +336,62 @@ async function likeDiscussion(discussionId) {
 
         if (response.ok) {
             const result = await response.json();
+            // Aktualizace počítadla lajků
             document.getElementById('discussion-likes-count').textContent = result.likeCount;
-            if (!result.canUserLike) {
-                const button = document.querySelector(`button[onclick="likeDiscussion(${discussionId})"]`);
-                button.disabled = true;
-                button.classList.replace('like-btn', 'like-btn-disable');
-                replaceHeartIcon(button);
+
+            // Získání reference na tlačítko lajku
+            const button = document.querySelector(`button[onclick="likeDiscussion(${discussionId})"]`);
+
+            // Aktualizace stavu tlačítka podle odpovědi serveru
+            if (result.hasUserLiked) {
+                // Uživatel přidal lajk - nastavíme vyplněné srdce
+                button.classList.remove('like-btn-disable');
+                button.classList.add('like-btn');
+                button.disabled = false;
+
+                // Aktualizace ikony na vyplněné srdce
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('bi-heart');
+                    icon.classList.add('bi-heart-fill');
+                    icon.setAttribute('title', 'Kliknutím odeberete srdce');
+                }
+            } else {
+                // Uživatel odebral lajk - nastavíme nevyplněné srdce
+                button.classList.remove('like-btn-disable');
+                button.classList.add('like-btn');
+                button.disabled = false;
+
+                // Aktualizace ikony na nevyplněné srdce
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('bi-heart-fill');
+                    icon.classList.add('bi-heart');
+                    icon.setAttribute('title', 'Kliknutím přidáte srdce');
+                }
             }
         } else {
-            alert('Nepodařilo se přidat like.');
+            alert('Nepodařilo se provést operaci s lajkem.');
         }
     } catch (error) {
-        console.error('Chyba při přidávání like:', error);
-        alert('Došlo k chybě při přidávání like.');
+        console.error('Chyba při operaci s lajkem:', error);
+        alert('Došlo k chybě při operaci s lajkem.');
     }
 }
 
-/*
-Podobně jako předchozí funkce, tato zpracovává přidávání lajků ke komentářům. Volá endpoint /discussions/{discussionId}/comments/{commentId}/like a aktualizuje 
-počet lajků u konkrétního komentáře podle jeho ID. Funkce také ověřuje z odpovědi serveru, zda uživatel může přidat další lajk a případně deaktivuje 
-tlačítko a změní ikonu. Princip je stejný jako u likeDiscussion - běžní uživatelé mohou přidat pouze jeden lajk ke každému komentáři, 
-zatímco administrátoři mohou přidávat lajky opakovaně.
-*/
+/**
+ * Funkce pro přidání nebo odebrání lajku ke komentáři.
+ * 
+ * Funkce asynchronně komunikuje s API endpointem pro správu lajků komentáře. Podle role uživatele a aktuálního stavu
+ * lajku se chová dvěma způsoby:
+ * 1. Pro adminy: Vždy přidává nový lajk (neomezené množství lajků)
+ * 2. Pro běžné uživatele (Member): Funguje jako přepínač - pokud uživatel již dal lajk, odebere ho; pokud ještě nedal, přidá ho
+ * 
+ * Funkce po úspěšné operaci aktualizuje počet lajků v UI a upraví vzhled tlačítka podle aktuálního stavu.
+ * 
+ * @param {number} discussionId - ID diskuze, ke které komentář patří
+ * @param {number} commentId - ID komentáře, ke kterému se přidává/odebírá lajk
+ */
 async function likeComment(discussionId, commentId) {
     try {
         const apiBaseUrl = document.getElementById('apiBaseUrl').value;
@@ -362,19 +405,32 @@ async function likeComment(discussionId, commentId) {
 
         if (response.ok) {
             const result = await response.json();
+            // Aktualizace počítadla lajků
             document.getElementById(`comment-${commentId}-likes-count`).textContent = result.likeCount;
-            if (!result.canUserLike) {
-                const button = document.querySelector(`button[onclick="likeComment(${discussionId}, ${commentId})"]`);
-                button.disabled = true;
-                button.classList.replace('like-btn', 'like-btn-disable');
-                replaceHeartIcon(button);
+
+            // Získání reference na tlačítko lajku
+            const button = document.querySelector(`button[onclick="likeComment(${discussionId}, ${commentId})"]`);
+
+            // Aktualizace stavu tlačítka podle odpovědi serveru
+            if (result.hasUserLiked) {
+                // Uživatel přidal lajk - nastavíme vyplněné srdce
+                button.classList.remove('like-btn-disable');
+                button.classList.add('like-btn');
+                button.disabled = false;
+                updateHeartIcon(button, true);
+            } else {
+                // Uživatel odebral lajk - nastavíme nevyplněné srdce
+                button.classList.remove('like-btn-disable');
+                button.classList.add('like-btn');
+                button.disabled = false;
+                updateHeartIcon(button, false);
             }
         } else {
-            alert('Nepodařilo se přidat like.');
+            alert('Nepodařilo se provést operaci s lajkem komentáře.');
         }
     } catch (error) {
-        console.error('Chyba při přidávání like:', error);
-        alert('Došlo k chybě při přidávání like.');
+        console.error('Chyba při operaci s lajkem komentáře:', error);
+        alert('Došlo k chybě při operaci s lajkem komentáře.');
     }
 }
 

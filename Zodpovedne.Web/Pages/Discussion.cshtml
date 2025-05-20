@@ -119,16 +119,16 @@
                             @* Tlačítko Like *@
                             @if (Model.CanLikeDiscussion)
                             {
-                                <button class="btn like-btn-footer @Model.GetLikeButtonClass(Model.Discussion.Likes.CanUserLike)"
-                                onclick="likeDiscussion(@Model.Discussion.Id)"
-                                @(!Model.Discussion.Likes.CanUserLike ? "disabled" : "")>
-                                    @* Pokud okud uživatle může likovat vloží se nevyplněné srdce, pokud nemůže likovat srdce bude vyplněné *@
-                                    @if (Model.Discussion.Likes.CanUserLike)
+                                <button class="btn like-btn-footer @Model.GetLikeButtonClass(true)"
+                                        onclick="likeDiscussion(@Model.Discussion.Id)">
+                                    @* Pokud uživatel již dal lajk, zobrazíme vyplněné srdce, jinak nevyplněné srdce *@
+                                    @if (Model.Discussion.Likes.HasUserLiked)
                                     {
-                                        <text><i title="Přidat srdce" class="bi bi-heart"></i></text>
+                                        <text><i title="Kliknutím odeberete srdce" class="bi bi-heart-fill"></i></text>
                                     }
-                                    else{
-                                        <text><i title="Počet srdcí od uživatelů" class="bi bi-heart-fill"></i></text>
+                                    else
+                                    {
+                                        <text><i title="Kliknutím přidáte srdce" class="bi bi-heart"></i></text>
                                     }
                                     <span id="discussion-likes-count">@Model.Discussion.Likes.LikeCount</span>
                                 </button>

@@ -101,27 +101,24 @@ public class DiscussionModel : BasePageModel
         comment.ParentCommentId == null;
 
     /// <summary>
-    /// Urèuje, zda mùže aktuální uživatel dát like diskuzi
+    /// Urèuje, zda mùže aktuální uživatel dát nebo odebrat like diskuzi
     /// </summary>
-    public bool CanLikeDiscussion => IsAdmin ||
+    public bool CanLikeDiscussion =>
         Discussion != null && IsUserLoggedIn &&
-        Discussion.AuthorId != CurrentUserId &&
-        Discussion.Likes.CanUserLike;
+        Discussion.AuthorId != CurrentUserId; // Uživatel nemùže lajkovat své vlastní diskuze
 
     /// <summary>
-    /// Urèuje, zda mùže aktuální uživatel dát like komentáøi
-    /// Admin mùže dát like jakémukoliv komentáøi, ostatní nemohou lajkovat své vlastní komentáøe
+    /// Urèuje, zda mùže aktuální uživatel dát nebo odebrat like komentáøi
     /// </summary>
     public bool CanLikeComment(CommentDto comment) =>
         IsUserLoggedIn &&
-        (IsAdmin || comment.AuthorNickname != User.Identity?.Name) &&
-        comment.Likes.CanUserLike;
+        comment.AuthorNickname != User.Identity?.Name; // Uživatel nemùže lajkovat své vlastní komentáøe
 
     /// <summary>
-    /// Vrací CSS tøídu pro tlaèítko like podle stavu
+    /// Vrací CSS tøídu pro tlaèítko like podle typu
     /// </summary>
-    public string GetLikeButtonClass(bool canLike) =>
-        canLike ? "like-btn" : "like-btn-disable";
+    public string GetLikeButtonClass(bool isLikeButton) =>
+        isLikeButton ? "like-btn" : "like-btn-disable";
 
     /// <summary>
     /// Generuje unikátní ID pro formuláø s odpovìdí na komentáø
