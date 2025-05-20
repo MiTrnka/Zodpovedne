@@ -767,11 +767,12 @@ h1 {
     line-height:1.2;
     color: var(--text-color);
     margin-top: 2px;
+    position: relative;
 }
 .popisky .autor {
-    margin-bottom: 1rem;
+    margin-bottom: 0px;
     position: absolute;
-    top: -5px;
+    top: 0px;
     right: -10px;
     background-color: var(--secondary-color); 
     padding: 2px;
@@ -782,6 +783,7 @@ h1 {
 .popisky .autor a {
     color: var(--primary-color);
 }
+
 .title-autor-wrapper {
     justify-content: space-between;
     gap: 5px;

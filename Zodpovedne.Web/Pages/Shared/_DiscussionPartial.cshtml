@@ -68,21 +68,12 @@
                             </div>
                         </a>
                      </div>
-                        <div class="popisky">
-                            @* Autor *@
-                            <div class="autor">
-                                <span title="Autor">
-                                    @Html.Raw("&nbsp;")
-                                <i class="bi bi-person"></i> <a asp-page="/Account/Profile" asp-route-nickname="@Model.AuthorNickname">@Model.AuthorNickname</a>
-                                    @Html.Raw("&nbsp;")
-                                </span>
-                            </div>
-                        </div>
+             
                 </div>
 
                 @* Metadata diskuze *@
-                <div class="card-text text-muted popisky">
-
+                <div class="card-text text-muted popisky w-100" style="display: flex; justify-content: space-between;">
+                  <div>
                     @* Datum vytvoření - převedené na lokální čas *@
                     <span title="Datum vytvoření">
                         <i class="bi bi-calendar-plus"></i> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
@@ -95,17 +86,29 @@
                         }
                         @(Model.UpdatedAt.Date != Model.CreatedAt.Date ? Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy") : "")
                     </span>
-                    <span class="mx-2">•</span>
+                    <span style="margin-right: 3px; margin-left:3px;">•</span>
 
                     @* Počet komentářů *@
                     <span title="Počet komentářů">
                         <i class="bi bi-chat"></i> @Model.CommentsCount
                     </span>
-                    <span class="mx-2">•</span>
+                    <span style="margin-right: 3px; margin-left:3px;">•</span>
                     @* Počet zobrazení *@
                     <span title="Počet zobrazení">
                         <i class="bi bi-eye"></i> @Model.ViewCount
                     </span>
+                  </div>
+                    <div class="autor-wrapper">
+                        @* Autor *@
+                        <div class="autor">
+                            <span title="Autor">
+                                @Html.Raw("&nbsp;")
+                                <i class="bi bi-person"></i> <a asp-page="/Account/Profile" asp-route-nickname="@Model.AuthorNickname">@Model.AuthorNickname</a>
+                                @Html.Raw("&nbsp;")
+                            </span>
+                        </div>
+                    </div>
                 </div>
-
+                
+              
         </div>
