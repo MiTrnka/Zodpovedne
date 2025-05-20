@@ -68,23 +68,14 @@
                             </div>
                         </a>
                      </div>
-             
                 </div>
 
                 @* Metadata diskuze *@
                 <div class="card-text text-muted popisky w-100" style="display: flex; justify-content: space-between;">
                   <div>
-                    @* Datum vytvoření - převedené na lokální čas *@
-                    <span title="Datum vytvoření">
-                        <i class="bi bi-calendar-plus"></i> @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
-                    </span>
                     @* Datum aktualizace - převedené na lokální čas *@
                     <span title="Datum aktualizace">
-                        @if (Model.UpdatedAt.Date != Model.CreatedAt.Date)
-                        {
-                            @Html.Raw("&nbsp; | &nbsp;<i class=\"bi bi-pencil\"></i>")
-                        }
-                        @(Model.UpdatedAt.Date != Model.CreatedAt.Date ? Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy") : "")
+                        <i class="bi bi-calendar"></i> @Model.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy")
                     </span>
                     <span style="margin-right: 3px; margin-left:3px;">•</span>
 
@@ -109,6 +100,4 @@
                         </div>
                     </div>
                 </div>
-                
-              
         </div>
