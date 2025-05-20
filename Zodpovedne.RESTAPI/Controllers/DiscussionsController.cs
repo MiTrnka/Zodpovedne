@@ -1651,8 +1651,8 @@ public class DiscussionsController : ControllerBase
     }
 
     /// <summary>
-    /// Vrací kombinovaný seznam nejnovějších diskuzí přátel a TOP diskuzí.
-    /// Diskuze jsou seřazeny podle času aktualizace "whatever", nejnovější první.
+    /// Vrací kombinovaný seznam TOP diskuzí a diskuzí od přátel seřazený podle času aktualizace.
+    /// Výsledný seznam obsahuje nejprve TOP diskuze a poté diskuze od přátel typu Normal nebo ForFriends.
     /// </summary>
     /// <param name="limit">Maximální počet vrácených diskuzí (výchozí hodnota 20)</param>
     /// <returns>Seznam diskuzí seřazený dle času aktualizace</returns>
@@ -1662,100 +1662,115 @@ public class DiscussionsController : ControllerBase
     {
         try
         {
+            // Kontrola limitu pro ochranu před příliš velkými požadavky
+            if (limit <= 0) limit = 20;
+            if (limit > 100) limit = 100;
+
             // Získání ID přihlášeného uživatele
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            // Získání seznamu ID přátel přihlášeného uživatele
+            // Nejprve získáme seznam ID přátel přihlášeného uživatele
             var friendIds = await dbContext.Friendships
                 .Where(f => (f.ApproverUserId == userId || f.RequesterUserId == userId) &&
                        f.FriendshipStatus == FriendshipStatus.Approved)
                 .Select(f => f.ApproverUserId == userId ? f.RequesterUserId : f.ApproverUserId)
                 .ToListAsync();
 
-            // Získat diskuze přátel (vytvořené přáteli)
-            var friendsDiscussionsQuery = dbContext.Discussions
-                .AsNoTracking()
-                .Where(d => friendIds.Contains(d.UserId) &&
-                       d.Type != DiscussionType.Deleted &&
-                       d.Type != DiscussionType.Hidden &&
-                       d.Type != DiscussionType.Private &&
-                       d.User.Type == UserType.Normal)
-                .OrderByDescending(d => d.UpdatedWhateverAt);
+            // Příprava seznamu výsledků
+            var result = new List<DiscussionListDto>();
 
-            // Získat TOP diskuze (ne od přátel, ty už máme)
-            var topDiscussionsQuery = dbContext.Discussions
+            // 1. Získáme TOP diskuze (limitujeme počet na polovinu celkového limitu pro optimalizaci výkonu)
+            var topDiscussionsLimit = Math.Max(5, limit / 2); // Minimálně 5, nebo polovinu limitu
+            var topDiscussions = await dbContext.Discussions
                 .AsNoTracking()
                 .Where(d => d.Type == DiscussionType.Top &&
-                       !friendIds.Contains(d.UserId) &&
-                       d.UserId != userId &&
-                       d.User.Type == UserType.Normal)
+                      d.Type != DiscussionType.Deleted &&
+                      d.User.Type == UserType.Normal)
                 .OrderByDescending(d => d.UpdatedWhateverAt)
-                .Take(3);
-
-            // Sloučení obou dotazů do jednoho seznamu
-            var combinedDiscussionIds = await friendsDiscussionsQuery
-                .Select(d => d.Id)
-                .Union(topDiscussionsQuery.Select(d => d.Id))
-                .Take(limit)
-                .ToListAsync();
-
-            // Pokud nemáme žádné výsledky, vrátíme prázdný seznam
-            if (!combinedDiscussionIds.Any())
-                return new List<DiscussionListDto>();
-
-            // Načtení kompletních dat pro vybrané diskuze
-            var discussions = await dbContext.Discussions
-                .AsNoTracking()
-                .Where(d => combinedDiscussionIds.Contains(d.Id))
+                .Take(topDiscussionsLimit)
                 .Include(d => d.Category)
                 .Include(d => d.User)
                 .Include(d => d.Likes)
-                .OrderByDescending(d => d.UpdatedWhateverAt)
                 .ToListAsync();
 
-            // Zjištění počtu komentářů pro každou diskuzi
+            // 2. Získáme diskuze od přátel (typ Normal nebo ForFriends)
+            var friendsDiscussionsLimit = Math.Max(limit - topDiscussions.Count, 0);
+            var friendsDiscussions = new List<Discussion>();
+
+            if (friendsDiscussionsLimit > 0 && friendIds.Any())
+            {
+                friendsDiscussions = await dbContext.Discussions
+                    .AsNoTracking()
+                    .Where(d => friendIds.Contains(d.UserId) &&
+                          (d.Type == DiscussionType.Normal || d.Type == DiscussionType.ForFriends) &&
+                          d.Type != DiscussionType.Deleted &&
+                          d.User.Type == UserType.Normal)
+                    .OrderByDescending(d => d.UpdatedWhateverAt)
+                    .Take(friendsDiscussionsLimit)
+                    .Include(d => d.Category)
+                    .Include(d => d.User)
+                    .Include(d => d.Likes)
+                    .ToListAsync();
+            }
+
+            // 3. Sloučení obou seznamů
+            var allDiscussions = topDiscussions.Concat(friendsDiscussions).ToList();
+
+            // 4. Získání ID všech diskuzí pro efektivní načtení počtu komentářů
+            var allDiscussionIds = allDiscussions.Select(d => d.Id).ToList();
+
+            // 5. Efektivní načtení počtu komentářů pro všechny diskuze jedním dotazem
             var commentCounts = await dbContext.Comments
                 .AsNoTracking()
-                .Where(c => combinedDiscussionIds.Contains(c.DiscussionId))
+                .Where(c => allDiscussionIds.Contains(c.DiscussionId))
+                .Where(c => c.Type != CommentType.Deleted &&     // Ignorujeme smazané
+                    (c.Type != CommentType.Hidden ||            // Hidden komentáře počítáme pro:
+                        User.IsInRole("Admin") ||               // - adminy
+                        c.UserId == userId))                    // - autory komentářů
                 .GroupBy(c => c.DiscussionId)
                 .Select(g => new { DiscussionId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.DiscussionId, x => x.Count);
 
-            // Mapování na DTO
-            var result = discussions.Select(d => new DiscussionListDto
-            {
-                Id = d.Id,
-                Title = d.Title,
-                CategoryName = d.Category.Name,
-                CategoryCode = d.Category.Code,
-                AuthorNickname = d.User.Nickname,
-                //AuthorId = d.UserId,
-                CreatedAt = d.CreatedAt,
-                UpdatedAt = d.UpdatedAt,
-                UpdatedWhateverAt = d.UpdatedWhateverAt,
-                CommentsCount = commentCounts.TryGetValue(d.Id, out var count) ? count : 0,
-                ViewCount = d.ViewCount,
-                Type = d.Type,
-                Code = d.Code,
-                VoteType = d.VoteType,
-                Likes = new LikeInfoDto
+            // 6. Mapování diskuzí na DTO
+            result = allDiscussions
+                .Select(d => new DiscussionListDto
                 {
-                    LikeCount = d.Likes.Count,
-                    HasUserLiked = d.Likes.Any(l => l.UserId == userId),
-                    CanUserLike = d.UserId != userId && !d.Likes.Any(l => l.UserId == userId)
-                }
-            })
-            .OrderByDescending(d => d.UpdatedWhateverAt)
-            .Take(limit)
-            .ToList();
+                    Id = d.Id,
+                    Title = d.Title,
+                    CategoryName = d.Category.Name,
+                    CategoryCode = d.Category.Code,
+                    AuthorNickname = d.User.Nickname,
+                    CreatedAt = d.CreatedAt,
+                    UpdatedAt = d.UpdatedAt,
+                    UpdatedWhateverAt = d.UpdatedWhateverAt,
+                    // Efektivní přístup k počtu komentářů
+                    CommentsCount = commentCounts.TryGetValue(d.Id, out var count) ? count : 0,
+                    ViewCount = d.ViewCount,
+                    Type = d.Type,
+                    Code = d.Code,
+                    VoteType = d.VoteType,
+                    // Informace o lajcích
+                    Likes = new LikeInfoDto
+                    {
+                        LikeCount = d.Likes.Count,
+                        HasUserLiked = d.Likes.Any(l => l.UserId == userId),
+                        CanUserLike = User.IsInRole("Admin") ||
+                            (d.UserId != userId && !d.Likes.Any(l => l.UserId == userId))
+                    }
+                })
+                // Seřazení výsledku - nejprve TOP diskuze, pak ostatní podle data aktualizace
+                .OrderByDescending(d => d.Type == DiscussionType.Top)
+                .ThenByDescending(d => d.UpdatedWhateverAt)
+                .Take(limit)
+                .ToList();
 
             return Ok(result);
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při načítání kombinovaného feedu diskuzí", e);
+            _logger.Log("Chyba při vykonávání akce GetCombinedFeed2 endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
