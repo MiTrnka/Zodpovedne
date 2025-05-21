@@ -32,9 +32,9 @@ $(document).ready(function () {
  * Převádí textové URL adresy na HTML odkazy nebo obrázky/GIFy
  *
  * Funkce prochází text a hledá řetězce, které vypadají jako URL adresy.
- * Pro odkazy na obrázky/GIFy (končící na .gif, .jpg, .jpeg, .png) nebo
- * pocházející z populárních stránek s meme a GIFy (giphy.com, tenor.com, imgur.com apod.)
- * vloží přímo obrázek s omezenou velikostí.
+ * Pro odkazy na obrázky/GIFy (končící na .gif, .jpg, .jpeg, .png) je zobrazí jako obrázky.
+ * Pro odkazy z populárních stránek s meme a GIFy (giphy.com, tenor.com, imgur.com apod.)
+ * provede kontrolu, zda jde skutečně o odkaz na konkrétní GIF/obrázek, a pak jej zobrazí.
  * Ostatní URL adresy převádí na HTML odkazy s atributem target="_blank",
  * aby se otevíraly v nové záložce.
  *
@@ -63,13 +63,36 @@ function linkifyText(text) {
             href = 'http://' + url;
         }
 
-        // Kontrola, zda jde o odkaz na obrázek nebo GIF podle domény nebo přípony
+        // Kontrola, zda jde přímo o obrázek podle přípony souboru
         const isDirectImageUrl = /\.(gif|jpe?g|png)$/i.test(url);
-        const isGifSite = /(giphy\.com|tenor\.com|imgur\.com|gfycat\.com|media\.discordapp\.net|media\.tenor\.com)/i.test(url);
 
-        if (isDirectImageUrl || isGifSite) {
-            // Pokud je to odkaz na přímo na obrázek nebo z populární stránky s GIFy,
-            // vložíme jako obrázek s omezenou velikostí
+        if (isDirectImageUrl) {
+            // Přímý odkaz na obrázek - zobrazíme jako obrázek
+            return `<a href="${href}" target="_blank"><img src="${href}" alt="Obrázek" style="max-width: 200px; max-height: 200px; display: block; margin: 5px 0;" loading="lazy"></a>`;
+        }
+
+        // Kontrola odkazů na GIFy z populárních služeb - musíme kontrolovat specifické vzory URL,
+        // které odpovídají konkrétním GIFům, ne hlavním stránkám
+
+        // Giphy.com - má např. formát /gifs/..., /embed/..., /media/...
+        if (/giphy\.com\/(gifs|embed|media|clips)\/[a-zA-Z0-9-]+$/i.test(url)) {
+            return `<a href="${href}" target="_blank"><img src="${href}" alt="GIF" style="max-width: 200px; max-height: 200px; display: block; margin: 5px 0;" loading="lazy"></a>`;
+        }
+
+        // Tenor.com - má např. formát /view/..., /8474832...
+        if (/tenor\.com\/view\/[a-zA-Z0-9-]+$/i.test(url) || /tenor\.com\/[a-zA-Z0-9]{7,}$/i.test(url)) {
+            return `<a href="${href}" target="_blank"><img src="${href}" alt="GIF" style="max-width: 200px; max-height: 200px; display: block; margin: 5px 0;" loading="lazy"></a>`;
+        }
+
+        // Imgur.com - má např. formát /gallery/..., /a/..., přímé ID obrázku
+        if (/imgur\.com\/(gallery\/|a\/)?[a-zA-Z0-9]{5,}$/i.test(url)) {
+            return `<a href="${href}" target="_blank"><img src="${href}" alt="Obrázek" style="max-width: 200px; max-height: 200px; display: block; margin: 5px 0;" loading="lazy"></a>`;
+        }
+
+        // Discord a další CDN odkazy na média
+        if (/media\.discordapp\.net\/attachments\/[0-9]+\/[0-9]+\/[^\/]+$/i.test(url) ||
+            /cdn\.discordapp\.com\/attachments\/[0-9]+\/[0-9]+\/[^\/]+$/i.test(url) ||
+            /media\.tenor\.com\/[a-zA-Z0-9_-]+\/[^\/]+$/i.test(url)) {
             return `<a href="${href}" target="_blank"><img src="${href}" alt="Obrázek" style="max-width: 200px; max-height: 200px; display: block; margin: 5px 0;" loading="lazy"></a>`;
         }
 
