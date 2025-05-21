@@ -40,19 +40,27 @@ $(document).ready(function () {
 * @returns {string} Text s URL adresami převedenými na HTML odkazy
 */
 function linkifyText(text) {
-    // Regulární výraz pro detekci URL adres
-    // Podporuje adresy začínající http://, https://, www. nebo končící známými doménami
-    const urlRegex = /(https?:\/\/[^\s<]+)|(\bwww\.[^\s<]+)|(\b[^\s<]+\.(com|org|edu|gov|net|sk|cz|eu|io|co|me|info|it|biz|xyz|dev)\b)/gi;
+    // Regulární výraz pro detekci URL, který ignoruje URL v HTML atributech
+    const urlRegex = /(https?:\/\/[^\s<>"]+)|(www\.[^\s<>"]+)|([^\s<>"]+\.(com|org|edu|gov|net|sk|cz|eu|io|co|me|info|it|biz|xyz|dev))/gi;
 
-    // Nahrazení URL adres HTML odkazy
-    return text.replace(urlRegex, function (url) {
+    // Funkce pro náhradu URL adresou, která kontroluje, jestli URL není již součástí odkazu
+    return text.replace(urlRegex, function (match, url1, url2, url3) {
+        // Zjistíme, které URL bylo nalezeno (url1, url2 nebo url3)
+        const url = url1 || url2 || url3;
+
+        // Kontrola, zda URL není již součástí HTML tagu
+        // Pokud před URL je znak "<", může být součástí HTML tagu
+        const positionInText = text.indexOf(url);
+        if (positionInText > 0 && text.charAt(positionInText - 1) === '<') {
+            return url; // Vrátíme URL beze změny
+        }
+
         // Pokud URL nezačíná protokolem, přidáme http://
         let href = url;
         if (!url.match(/^https?:\/\//i)) {
             href = 'http://' + url;
         }
 
-        // Vytvoření HTML odkazu
-        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+        return '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
     });
 }

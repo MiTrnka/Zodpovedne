@@ -71,7 +71,7 @@
     </div>
 
     @* Obsah komentáře *@
-    <p class="mb-0">@Model.Content</p>
+    <p class="mb-0 comment-content">@Html.Raw(Model.Content.Replace("\n", "<br>"))</p>
 
 
 
@@ -139,7 +139,7 @@
             </div>
 
             @* Obsah odpovědi *@
-            <p class="mb-0">@reply.Content</p>
+            <p class="mb-0 comment-content">@Html.Raw(reply.Content.Replace("\n", "<br>"))</p>
         </div>
     }
 
