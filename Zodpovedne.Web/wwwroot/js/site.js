@@ -29,16 +29,18 @@ $(document).ready(function () {
 });
 
 /**
-* Převádí textové URL adresy na HTML odkazy
-*
-* Funkce prochází text a hledá řetězce, které vypadají jako URL adresy
-* (např. začínající http://, https://, www. nebo končící známými doménami).
-* Nalezené URL adresy převádí na HTML odkazy s atributem target="_blank",
-* aby se otevíraly v nové záložce.
-*
-* @param {string} text - Text, ve kterém chceme detekovat URL adresy
-* @returns {string} Text s URL adresami převedenými na HTML odkazy
-*/
+ * Převádí textové URL adresy na HTML odkazy nebo obrázky/GIFy
+ *
+ * Funkce prochází text a hledá řetězce, které vypadají jako URL adresy.
+ * Pro odkazy na obrázky/GIFy (končící na .gif, .jpg, .jpeg, .png) nebo
+ * pocházející z populárních stránek s meme a GIFy (giphy.com, tenor.com, imgur.com apod.)
+ * vloží přímo obrázek s omezenou velikostí.
+ * Ostatní URL adresy převádí na HTML odkazy s atributem target="_blank",
+ * aby se otevíraly v nové záložce.
+ *
+ * @param {string} text - Text, ve kterém chceme detekovat URL adresy
+ * @returns {string} Text s URL adresami převedenými na HTML odkazy nebo obrázky
+ */
 function linkifyText(text) {
     // Regulární výraz pro detekci URL, který ignoruje URL v HTML atributech
     const urlRegex = /(https?:\/\/[^\s<>"]+)|(www\.[^\s<>"]+)|([^\s<>"]+\.(com|org|edu|gov|net|sk|cz|eu|io|co|me|info|it|biz|xyz|dev))/gi;
@@ -61,6 +63,17 @@ function linkifyText(text) {
             href = 'http://' + url;
         }
 
+        // Kontrola, zda jde o odkaz na obrázek nebo GIF podle domény nebo přípony
+        const isDirectImageUrl = /\.(gif|jpe?g|png)$/i.test(url);
+        const isGifSite = /(giphy\.com|tenor\.com|imgur\.com|gfycat\.com|media\.discordapp\.net|media\.tenor\.com)/i.test(url);
+
+        if (isDirectImageUrl || isGifSite) {
+            // Pokud je to odkaz na přímo na obrázek nebo z populární stránky s GIFy,
+            // vložíme jako obrázek s omezenou velikostí
+            return `<a href="${href}" target="_blank"><img src="${href}" alt="Obrázek" style="max-width: 200px; max-height: 200px; display: block; margin: 5px 0;" loading="lazy"></a>`;
+        }
+
+        // Pro ostatní odkazy vytvoříme běžný odkaz
         return '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
     });
 }
