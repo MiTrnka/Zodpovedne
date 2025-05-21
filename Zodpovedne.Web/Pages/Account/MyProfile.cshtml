@@ -232,8 +232,8 @@
                             <tbody>
                                 @* Nejprve zobrazíme žádosti o přátelství (kde uživatel je schvalovatel) *@
                                 @foreach (var friendship in Model.Friendships
-                              .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && !f.IsRequester)
-                              .OrderBy(f => f.OtherUserNickname))
+                             .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && !f.IsRequester)
+                             .OrderBy(f => f.OtherUserNickname))
                                 {
                                     <tr class="toggle-row">
                                         <td class="toggle-content-row">
@@ -281,8 +281,8 @@
 
                                 @* Potom zobrazíme již potvrzená přátelství *@
                                 @foreach (var friendship in Model.Friendships
-                              .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Approved)
-                              .OrderBy(f => f.OtherUserNickname))
+                             .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Approved)
+                             .OrderBy(f => f.OtherUserNickname))
                                 {
                                     <tr class="toggle-row">
                                         <td class="toggle-content-row">
@@ -303,8 +303,8 @@
 
                                 @* Zobrazíme i odeslané žádosti o přátelství *@
                                 @foreach (var friendship in Model.Friendships
-                              .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && f.IsRequester)
-                              .OrderBy(f => f.OtherUserNickname))
+                             .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Requested && f.IsRequester)
+                             .OrderBy(f => f.OtherUserNickname))
                                 {
                                     <tr class="toggle-row">
                                         <td class="toggle-content-row">
@@ -325,8 +325,8 @@
 
                                 @* Nakonec zobrazíme zamítnuté žádosti o přátelství *@
                                 @foreach (var friendship in Model.Friendships
-                              .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Denied)
-                              .OrderBy(f => f.OtherUserNickname))
+                             .Where(f => f.Status == Zodpovedne.Contracts.Enums.FriendshipStatus.Denied)
+                             .OrderBy(f => f.OtherUserNickname))
                                 {
                                     <tr class="toggle-row">
                                         <td class="toggle-content-row">
@@ -335,12 +335,16 @@
                                             </a>
                                         </td>
                                         <td class="text-end toggle-content-row">
-                                            <form method="post" asp-page-handler="RemoveFriendship" asp-route-friendshipId="@friendship.FriendshipId"
-                                            onsubmit="return confirm('Opravdu chcete odstranit tohoto uživatele ze seznamu zamítnutých?');">
-                                                <button type="submit" class="btn btn-outline-secondary btn-sm pb-4" style="font-size: 14px;height: 25px;vertical-align:bottom;">
-                                                    <i class="bi bi-trash"></i> Odstranit ze zamítnutých
-                                                </button>
-                                            </form>
+                                            @* Tlačítko zobrazíme jen pokud přihlášený uživatel žádost zamítl (není žadatel) *@
+                                            @if (!friendship.IsRequester)
+                                            {
+                                                <form method="post" asp-page-handler="RemoveFriendship" asp-route-friendshipId="@friendship.FriendshipId"
+                                                onsubmit="return confirm('Opravdu chcete odstranit tohoto uživatele ze seznamu zamítnutých?');">
+                                                    <button type="submit" class="btn btn-outline-secondary btn-sm pb-4" style="font-size: 14px;height: 25px;vertical-align:bottom;">
+                                                        <i class="bi bi-trash"></i> Odstranit ze zamítnutých
+                                                    </button>
+                                                </form>
+                                            }
                                         </td>
                                     </tr>
                                 }
