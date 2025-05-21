@@ -9,6 +9,21 @@
 
 // Inicializace při načtení stránky
 document.addEventListener('DOMContentLoaded', function () {
+    // Kontrola, zda máme scrollovat k sekcí komentářů
+    if (sessionStorage.getItem('scrollToComments') === 'true') {
+        // Vymažeme flag, aby se nepoužil při dalším načtení
+        sessionStorage.removeItem('scrollToComments');
+
+        // Počkáme 100ms, aby se stránka stihla plně načíst a vyrenderovat
+        setTimeout(function () {
+            // Najdeme sekci komentářů
+            const commentsSection = document.getElementById('comments-container');
+            if (commentsSection) {
+                // Odscrolujeme k sekci komentářů s offset pro lepší viditelnost
+                commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
+    }
 
     //BLOK NÍŽE JE SKRIPT PRO ZOBRAZENÍ OBRÁZKŮ V NOVÉM OKNĚ PO KLIKNUTÍ
     // Najít všechny obrázky v obsahu diskuze

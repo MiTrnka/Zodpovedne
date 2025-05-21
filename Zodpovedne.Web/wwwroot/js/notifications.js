@@ -303,48 +303,75 @@ document.addEventListener('DOMContentLoaded', function () {
     /**
      * Vytvoří DOM element pro jednu položku notifikace
      * Zobrazuje kombinované informace o nových odpovědích na komentáře a nových komentářích v diskuzích
+     * do session přidává položku scrollToComments, aby se pak při načtení stránky provedl scroll k těm komentářům
      * @param {Object} notification - data notifikace
      * @param {string} formattedTime - formátovaný čas
      * @returns {HTMLElement} vytvořený DOM element
      */
     function createNotificationItem(notification, formattedTime) {
         const item = document.createElement('a');
-        item.href = notification.discussionUrl + '#comments-container';
+
+        // Jednoduchý odkaz bez hash, abychom mohli lépe kontrolovat chování
+        item.href = notification.discussionUrl;
+
+        // Rozšířený onclick handler pro řešení obou problémů
+        item.onclick = function (e) {
+            e.preventDefault(); // Vždy zabráníme výchozímu chování
+
+            // Získáme aktuální cestu bez query parametrů a hash
+            const currentPath = window.location.pathname;
+            // Získáme cílovou cestu
+            const targetPath = notification.discussionUrl;
+
+            // Pokud jsme na stejné stránce
+            if (currentPath === targetPath) {
+                // Uložíme flag do sessionStorage, že po načtení máme scrollovat
+                sessionStorage.setItem('scrollToComments', 'true');
+                // Vynutíme reload stránky
+                window.location.reload(true);
+            } else {
+                // Pokud jdeme na jinou stránku, uložíme flag do sessionStorage
+                sessionStorage.setItem('scrollToComments', 'true');
+                // Přesměrování na cílovou stránku
+                window.location.href = notification.discussionUrl;
+            }
+
+            return false;
+        };
+
         item.className = 'dropdown-item py-2 notification-item';
 
-        // Příprava informací o aktivitách
+        // Zbytek funkce zůstává stejný
         let activityBadges = '';
 
-        // Badge pro nové odpovědi na komentáře
         if (notification.commentsWithNewRepliesCount > 0) {
             activityBadges += `
-                <span class="badge bg-info ms-1" title="Počet vašich komentářů s novými odpověďmi">
-                    <i class="bi bi-chat-dots-fill"></i> ${notification.commentsWithNewRepliesCount}
-                </span>
-            `;
+            <span class="badge bg-info ms-1" title="Počet vašich komentářů s novými odpověďmi">
+                <i class="bi bi-chat-dots-fill"></i> ${notification.commentsWithNewRepliesCount}
+            </span>
+        `;
         }
 
-        // Badge pro nové komentáře v uživatelových diskuzích
         if (notification.newCommentsCount > 0) {
             activityBadges += `
-                <span class="badge bg-primary ms-1" title="Počet nových komentářů ve vaší diskuzi">
-                    <i class="bi bi-chat-left-text-fill"></i> ${notification.newCommentsCount}
-                </span>
-            `;
+            <span class="badge bg-primary ms-1" title="Počet nových komentářů ve vaší diskuzi">
+                <i class="bi bi-chat-left-text-fill"></i> ${notification.newCommentsCount}
+            </span>
+        `;
         }
 
         item.innerHTML = `
-            <div class="d-flex justify-content-between align-items-start">
-                <div class="text-truncate">
-                    <div class="fw-medium text-truncate">${notification.title}</div>
-                    <div class="small text-muted">
-                        ${notification.categoryName}
-                        ${activityBadges}
-                    </div>
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="text-truncate">
+                <div class="fw-medium text-truncate">${notification.title}</div>
+                <div class="small text-muted">
+                    ${notification.categoryName}
+                    ${activityBadges}
                 </div>
-                <span class="notification-time ms-2">${formattedTime}</span>
             </div>
-        `;
+            <span class="notification-time ms-2">${formattedTime}</span>
+        </div>
+    `;
 
         return item;
     }
