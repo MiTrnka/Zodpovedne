@@ -5,12 +5,16 @@
  *  bellIcon je ikona zvonku, která zobrazuje badge
  *
  * Tento skript:
- * 1. Načítá notifikace o nových odpovědích z API
+ * 1. Načítá notifikace o nových odpovědích a komentářích z API
  * 2. Zobrazuje počet nových notifikací v badge
  * 3. Zobrazuje seznam notifikací v dropdown menu po kliknutí na zvoneček
  * 4. Sleduje dva typy časových značek:
  *    - lastNotificationTimestamp: Používá se pro sledování celkově nejnovějších notifikací (od předposledního přihlášení)
  *    - lastBadgeClickTimestamp: Používá se pouze pro počítání nových notifikací v badge (od posledního kliknutí)
+ * 5. Zobrazuje notifikace pro:
+ *    - Nové odpovědi na komentáře přihlášeného uživatele
+ *    - Nové komentáře v diskuzích, které založil přihlášený uživatel
+ *    - Zajišťuje, že pro jednu diskuzi se nezobrazí více notifikací, i když splňuje více podmínek
  */
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -78,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-    // NÍŽE JE SEKCE PRO NOTIFIKAČNÍ SYSTÉM PRO NOVÉ ODPVĚDI V DISKUZÍCH
+    // NÍŽE JE SEKCE PRO NOTIFIKAČNÍ SYSTÉM PRO NOVÉ ODPVĚDI V DISKUZÍCH A NOVÉ KOMENTÁŘE V DISKUZÍCH VYTVOŘENÝCH UŽIVATELEM
     // Hlavní elementy
     const bellIcon = document.getElementById('notification-bell');
     const badge = document.getElementById('notification-badge');
@@ -134,6 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
     /**
      * Načte diskuzní notifikace z API
      * Volá se při inicializaci a poté pravidelně v intervalu
+     * Zpracovává jak notifikace o nových odpovědích na komentáře, tak i o nových komentářích v diskuzích vytvořených uživatelem
      */
     function loadNotifications() {
         // Zkontrolujeme, zda je uživatel přihlášen
@@ -145,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!apiBaseUrl) return;
 
         // Načtení notifikací z API
-        fetch(`${apiBaseUrl}/users/discussions-with-new-replies`, {
+        fetch(`${apiBaseUrl}/users/discussions-with-new-activities`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -155,14 +160,52 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
-                // Uložení dat notifikací
-                notificationState.items = data;
+                // Odstranění duplicit - pokud diskuze má více typů aktivit, ponecháme pouze jednu notifikaci
+                // ale zachováme informaci o typech aktivit (nové odpovědi, nové komentáře)
+                const uniqueDiscussions = new Map();
+
+                data.forEach(notification => {
+                    const discussionId = notification.discussionId;
+
+                    // Pokud ještě nemáme notifikaci pro tuto diskuzi, přidáme ji
+                    if (!uniqueDiscussions.has(discussionId)) {
+                        uniqueDiscussions.set(discussionId, notification);
+                    } else {
+                        // Pokud už máme notifikaci pro tuto diskuzi, aktualizujeme ji
+                        const existing = uniqueDiscussions.get(discussionId);
+
+                        // Zachováme nejnovější čas aktivity
+                        if (new Date(notification.latestActivityTime) > new Date(existing.latestActivityTime)) {
+                            existing.latestActivityTime = notification.latestActivityTime;
+                        }
+
+                        // Sloučíme počty aktivit
+                        if (notification.commentsWithNewRepliesCount) {
+                            existing.commentsWithNewRepliesCount = (existing.commentsWithNewRepliesCount || 0) + notification.commentsWithNewRepliesCount;
+                        }
+
+                        if (notification.newCommentsCount) {
+                            existing.newCommentsCount = (existing.newCommentsCount || 0) + notification.newCommentsCount;
+                        }
+
+                        // Aktualizujeme typ aktivity
+                        if (notification.activityType) {
+                            existing.activityType = existing.activityType ?
+                                `${existing.activityType}, ${notification.activityType}` :
+                                notification.activityType;
+                        }
+                    }
+                });
+
+                // Převedeme zpět na pole a seřadíme podle času aktivity (nejnovější první)
+                notificationState.items = Array.from(uniqueDiscussions.values())
+                    .sort((a, b) => new Date(b.latestActivityTime) - new Date(a.latestActivityTime));
 
                 // Zjištění nejnovějšího časového razítka mezi všemi notifikacemi
                 let newestTimestamp = 0;
 
-                data.forEach(notification => {
-                    const notificationTime = new Date(notification.latestReplyTime).getTime();
+                notificationState.items.forEach(notification => {
+                    const notificationTime = new Date(notification.latestActivityTime).getTime();
                     if (notificationTime > newestTimestamp) {
                         newestTimestamp = notificationTime;
                     }
@@ -191,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     function updateHamburgerMenuNotification() {
-      // kontrola, zda existuje alespon jedna ikona s notifikací v menu
+        // kontrola, zda existuje alespon jedna ikona s notifikací v menu
         const newMessage = $("#messages-badge");
         const newFriendshipRequest = $("#friendship-badge");
         const newReply = $("#notification-badge");
@@ -222,21 +265,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /**
      * Aktualizuje seznam notifikací v dropdown menu
-     * Používá kompletní seznam notifikací
+     * Používá kompletní seznam notifikací včetně nových komentářů v uživatelových diskuzích
      */
     function updateNotificationsList() {
         notificationsList.innerHTML = '';
 
         // Pokud nejsou žádné notifikace, zobrazíme informační zprávu
         if (notificationState.items.length === 0) {
-            notificationsList.innerHTML = '<div class="dropdown-item text-muted text-center py-2">Žádné nové odpovědi</div>';
+            notificationsList.innerHTML = '<div class="dropdown-item text-muted text-center py-2">Žádné nové aktivity</div>';
             return;
         }
 
         // Vytvoření položek pro každou notifikaci
         notificationState.items.forEach(notification => {
             // Formátování času
-            const notificationTime = new Date(notification.latestReplyTime);
+            const notificationTime = new Date(notification.latestActivityTime);
             const formattedTime = formatDateTime(notificationTime);
 
             // Vytvoření položky notifikace
@@ -259,6 +302,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /**
      * Vytvoří DOM element pro jednu položku notifikace
+     * Zobrazuje kombinované informace o nových odpovědích na komentáře a nových komentářích v diskuzích
      * @param {Object} notification - data notifikace
      * @param {string} formattedTime - formátovaný čas
      * @returns {HTMLElement} vytvořený DOM element
@@ -267,15 +311,35 @@ document.addEventListener('DOMContentLoaded', function () {
         const item = document.createElement('a');
         item.href = notification.discussionUrl + '#comments-container';
         item.className = 'dropdown-item py-2 notification-item';
+
+        // Příprava informací o aktivitách
+        let activityBadges = '';
+
+        // Badge pro nové odpovědi na komentáře
+        if (notification.commentsWithNewRepliesCount > 0) {
+            activityBadges += `
+                <span class="badge bg-info ms-1" title="Počet vašich komentářů s novými odpověďmi">
+                    <i class="bi bi-chat-dots-fill"></i> ${notification.commentsWithNewRepliesCount}
+                </span>
+            `;
+        }
+
+        // Badge pro nové komentáře v uživatelových diskuzích
+        if (notification.newCommentsCount > 0) {
+            activityBadges += `
+                <span class="badge bg-primary ms-1" title="Počet nových komentářů ve vaší diskuzi">
+                    <i class="bi bi-chat-left-text-fill"></i> ${notification.newCommentsCount}
+                </span>
+            `;
+        }
+
         item.innerHTML = `
             <div class="d-flex justify-content-between align-items-start">
                 <div class="text-truncate">
                     <div class="fw-medium text-truncate">${notification.title}</div>
                     <div class="small text-muted">
                         ${notification.categoryName}
-                        <span class="badge bg-info ms-1" title="Počet vašich komentářů s novými odpověďmi">
-                            <i class="bi bi-chat-dots-fill"></i> ${notification.commentsWithNewRepliesCount}
-                        </span>
+                        ${activityBadges}
                     </div>
                 </div>
                 <span class="notification-time ms-2">${formattedTime}</span>
@@ -287,14 +351,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /**
      * Aktualizuje počet a viditelnost badge
-     *
      * Počet nových notifikací pro badge se počítá od posledního kliknutí na zvoneček
-     * (nikoliv od předposledního přihlášení jako seznam notifikací)
+     * Zahrnuje jak nové odpovědi na komentáře, tak nové komentáře v diskuzích vytvořených uživatelem
      */
     function updateNotificationBadge() {
         // Počet notifikací pro badge - od posledního kliknutí na zvoneček
         const badgeNotificationsCount = notificationState.items.filter(notification => {
-            const notificationTime = new Date(notification.latestReplyTime).getTime();
+            const notificationTime = new Date(notification.latestActivityTime).getTime();
             return notificationTime > notificationState.lastBadgeClickTimestamp;
         }).length;
 
@@ -385,6 +448,4 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Chyba při načítání počtu nepřečtených zpráv:', error);
             });
     }
-
-
 });

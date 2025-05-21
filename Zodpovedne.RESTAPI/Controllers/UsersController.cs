@@ -991,13 +991,17 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Vrátí seznam diskuzí, kde má přihlášený uživatel nové odpovědi na své komentáře od posledního přihlášení.
+    /// Vrátí seznam diskuzí, kde má přihlášený uživatel nové aktivity od posledního přihlášení.
+    /// Nové aktivity zahrnují:
+    /// 1. Nové odpovědi na komentáře uživatele
+    /// 2. Nové komentáře v diskuzích, které uživatel založil
+    /// Výsledek obsahuje unikátní diskuze (bez duplicit), i když diskuze splňuje oba typy aktivit.
     /// </summary>
-    /// <returns>Seznam diskuzí s informacemi o nových odpovědích</returns>
+    /// <returns>Seznam diskuzí s informacemi o nových aktivitách</returns>
     [Authorize]
-    [HttpGet("discussions-with-new-replies")]
+    [HttpGet("discussions-with-new-activities")]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)] // Zakázání kešování pro vždy aktuální data
-    public async Task<ActionResult<IEnumerable<DiscussionWithNewRepliesDto>>> GetDiscussionsWithNewReplies()
+    public async Task<ActionResult<IEnumerable<DiscussionWithNewActivitiesDto>>> GetDiscussionsWithNewActivities()
     {
         try
         {
@@ -1009,26 +1013,31 @@ public class UsersController : ControllerBase
             // Vyhledání uživatele v databázi pro získání času předchozího přihlášení
             var user = await userManager.FindByIdAsync(userId);
             if (user == null || user.PreviousLastLogin == null)
-                return Ok(new List<DiscussionWithNewRepliesDto>()); // Pokud nemáme předchozí přihlášení, nemůžeme zjistit nové odpovědi
+                return Ok(new List<DiscussionWithNewActivitiesDto>()); // Pokud nemáme předchozí přihlášení, nemůžeme zjistit nové aktivity
 
-            //Pokus o načtení dat z keše. Pokud se načtou, tak se vrátí a metoda skončí, pokud se nenajdou, tak se musí zjistit z databáze a uložit do keše
+            // Pokus o načtení dat z keše
             // Vytvoření klíče pro keš, který obsahuje:
             // - ID uživatele (každý uživatel má vlastní keš)
             // - Časové razítko posledního přihlášení (invaliduje keš při novém přihlášení)
-            var cacheKey = $"NewReplies_{userId}_{user.LastLogin?.Ticks}";
+            var cacheKey = $"NewActivities_{userId}_{user.LastLogin?.Ticks}";
+
             // Pokus o získání dat z keše
-            // TryGetValue vrací true, pokud klíč existuje a hodnota je uložena do cachedResult
-            if (_cache.TryGetValue(cacheKey, out List<DiscussionWithNewRepliesDto>? cachedResult))
+            if (_cache.TryGetValue(cacheKey, out List<DiscussionWithNewActivitiesDto>? cachedResult))
             {
                 return Ok(cachedResult);
             }
 
-            //V keši nebyl seznam nalezen, takže se musí získat z databáze (pak uložit do keše) viz kód níže
-
-            // Čas, od kterého hledáme nové odpovědi (předchozí přihlášení)
+            // V keši nebyl seznam nalezen, takže se musí získat z databáze
+            // Čas, od kterého hledáme nové aktivity (předchozí přihlášení)
             var fromTime = user.PreviousLastLogin.Value;
 
-            // 1. KROK: Efektivně najít ID root komentářů uživatele, které mají nové odpovědi. K tomu ještě čas nejnovější odpovědi.
+            // Výsledný slovník diskuzí s informacemi o aktivitách (používáme slovník pro efektivní slučování)
+            var resultDictionary = new Dictionary<int, DiscussionWithNewActivitiesDto>();
+
+            // 1. PRVNÍ TYP AKTIVIT: Nové odpovědi na komentáře uživatele
+            // ----------------------------------------------------------
+
+            // 1.1 KROK: Efektivně najít ID root komentářů uživatele, které mají nové odpovědi.
             var rootCommentsWithNewReplies = await dbContext.Comments
                 .AsNoTracking() // Pro lepší výkon - nesledujeme změny entit
                 .Where(c => c.UserId == userId && c.ParentCommentId == null) // Jen rootové komentáře uživatele
@@ -1043,43 +1052,33 @@ public class UsersController : ControllerBase
                     // Pro každý komentář najdeme nejnovější odpověď a pouze čas této odpovědi
                     LatestReplyTime = c.Replies
                         .Where(r => r.CreatedAt > fromTime && r.UserId != userId && r.Type != CommentType.Deleted)
-                        .OrderByDescending(r => r.CreatedAt) // Přidáno explicitní řazení
+                        .OrderByDescending(r => r.CreatedAt)
                         .Select(r => r.CreatedAt)
-                        .FirstOrDefault() // Místo Max() použijeme FirstOrDefault() po řazení
+                        .FirstOrDefault()
                 })
                 .ToListAsync();
 
-            // Výsledný seznam diskuzí s informacemi o nových odpovědích, zatím je prázdný
-            var result = new List<DiscussionWithNewRepliesDto>();
-
-            // Pokud uživatel má nějaké komentáře s novými odpověďmi, zjistíme o nich další informace
+            // 1.2 KROK: Seskupit komentáře podle diskuzí
             if (rootCommentsWithNewReplies.Any())
             {
-                // 2. KROK: Seskupit komentáře podle diskuzí
-                // ----------------------------------------
-                // Efektivní způsob seskupení bez další databázové operace
                 var discussionGroups = rootCommentsWithNewReplies
                     .GroupBy(c => c.DiscussionId)
                     .Select(g => new
                     {
                         DiscussionId = g.Key,
-                        LatestReplyTime = g.Max(c => c.LatestReplyTime), // Nejnovější odpověď v diskuzi
-                        CommentsCount = g.Count() // Počet komentářů uživatele s novými odpověďmi
+                        LatestReplyTime = g.Max(c => c.LatestReplyTime),
+                        CommentsCount = g.Count()
                     })
-                    .OrderByDescending(g => g.LatestReplyTime) // Seřazení podle času nejnovější odpovědi
                     .ToList();
 
-                // 3. KROK: Získat seznam ID diskuzí, které potřebujeme načíst
-                // ---------------------------------------------------------
-                var discussionIds = discussionGroups.Select(g => g.DiscussionId).ToArray();
+                // 1.3 KROK: Získat seznam ID diskuzí s novými odpověďmi
+                var discussionIdsWithReplies = discussionGroups.Select(g => g.DiscussionId).ToList();
 
-                // 4. KROK: Efektivně načíst pouze potřebné informace o diskuzích
-                // ------------------------------------------------------------
-                // Načteme pouze potřebné informace o diskuzích v jednom dotazu
-                var discussions = await dbContext.Discussions
+                // 1.4 KROK: Efektivně načíst potřebné informace o těchto diskuzích
+                var discussionsWithReplies = await dbContext.Discussions
                     .AsNoTracking()
-                    .Where(d => discussionIds.Contains(d.Id))
-                    .Include(d => d.Category) // Potřebujeme kategorii pro URL a název kategorie
+                    .Where(d => discussionIdsWithReplies.Contains(d.Id))
+                    .Include(d => d.Category)
                     .Select(d => new
                     {
                         d.Id,
@@ -1088,46 +1087,110 @@ public class UsersController : ControllerBase
                         d.Category.Name,
                         CategoryCode = d.Category.Code
                     })
-                    .ToDictionaryAsync(d => d.Id); // Pro rychlý přístup podle ID diskuze
+                    .ToDictionaryAsync(d => d.Id);
 
-                // 5. KROK: Sestavení výsledku
-                // --------------------------
-                // Sestavíme výsledné DTO objekty s informacemi o diskuzích a nových odpovědích
+                // 1.5 KROK: Přidání diskuzí s novými odpověďmi do výsledného slovníku
                 foreach (var group in discussionGroups)
                 {
-                    // Kontrola, zda máme informace o diskuzi (pro případ nesouladu dat)
-                    if (discussions.TryGetValue(group.DiscussionId, out var discussion))
+                    if (discussionsWithReplies.TryGetValue(group.DiscussionId, out var discussion))
                     {
-                        result.Add(new DiscussionWithNewRepliesDto
+                        resultDictionary[group.DiscussionId] = new DiscussionWithNewActivitiesDto
                         {
                             DiscussionId = group.DiscussionId,
                             Title = discussion.Title,
                             DiscussionUrl = $"/Categories/{discussion.CategoryCode}/{discussion.DiscussionCode}",
                             CategoryName = discussion.Name,
-                            LatestReplyTime = group.LatestReplyTime,
-                            CommentsWithNewRepliesCount = group.CommentsCount
-                        });
+                            LatestActivityTime = group.LatestReplyTime,
+                            CommentsWithNewRepliesCount = group.CommentsCount,
+                            NewCommentsCount = 0, // Zatím žádné nové komentáře v této diskuzi
+                            ActivityType = "new_replies"
+                        };
                     }
                 }
             }
 
-            // Uložení výsledku do keše a vrácení výsledku
+            // 2. DRUHÝ TYP AKTIVIT: Nové komentáře v diskuzích, které uživatel založil
+            // ----------------------------------------------------------------------
 
-            // Nastavení možností kešování
+            // 2.1 KROK: Najít diskuze založené uživatelem, kde existují nové komentáře
+            var discussionsWithNewComments = await dbContext.Discussions
+                .AsNoTracking()
+                .Where(d => d.UserId == userId) // Diskuze založené přihlášeným uživatelem
+                .Where(d => d.Comments.Any(c =>
+                    c.CreatedAt > fromTime && // Komentář je novější než předchozí přihlášení
+                    c.UserId != userId &&     // Komentář není od samotného uživatele
+                    c.Type != CommentType.Deleted)) // Komentář není smazaný
+                .Select(d => new
+                {
+                    d.Id,
+                    d.Title,
+                    d.Code,
+                    d.Category.Name,
+                    CategoryCode = d.Category.Code,
+                    LatestCommentTime = d.Comments
+                        .Where(c => c.CreatedAt > fromTime && c.UserId != userId && c.Type != CommentType.Deleted)
+                        .OrderByDescending(c => c.CreatedAt)
+                        .Select(c => c.CreatedAt)
+                        .FirstOrDefault(),
+                    NewCommentsCount = d.Comments
+                        .Count(c => c.CreatedAt > fromTime && c.UserId != userId && c.Type != CommentType.Deleted)
+                })
+                .ToListAsync();
+
+            // 2.2 KROK: Zpracování diskuzí s novými komentáři a přidání/aktualizace ve výsledném slovníku
+            foreach (var discussion in discussionsWithNewComments)
+            {
+                // Pokud diskuze už existuje ve výsledném slovníku (má i nové odpovědi), aktualizujeme ji
+                if (resultDictionary.TryGetValue(discussion.Id, out var existingDto))
+                {
+                    // Aktualizace počtu nových komentářů
+                    existingDto.NewCommentsCount = discussion.NewCommentsCount;
+
+                    // Aktualizace typu aktivity
+                    existingDto.ActivityType = "new_replies_and_comments";
+
+                    // Aktualizace času poslední aktivity, pokud je novější komentář než odpověď
+                    if (discussion.LatestCommentTime > existingDto.LatestActivityTime)
+                    {
+                        existingDto.LatestActivityTime = discussion.LatestCommentTime;
+                    }
+                }
+                else
+                {
+                    // Jinak přidáme novou položku do výsledného slovníku
+                    resultDictionary[discussion.Id] = new DiscussionWithNewActivitiesDto
+                    {
+                        DiscussionId = discussion.Id,
+                        Title = discussion.Title,
+                        DiscussionUrl = $"/Categories/{discussion.CategoryCode}/{discussion.Code}",
+                        CategoryName = discussion.Name,
+                        LatestActivityTime = discussion.LatestCommentTime,
+                        CommentsWithNewRepliesCount = 0, // Žádné nové odpovědi na komentáře uživatele v této diskuzi
+                        NewCommentsCount = discussion.NewCommentsCount,
+                        ActivityType = "new_comments"
+                    };
+                }
+            }
+
+            // 3. KROK: Sestavení výsledného seznamu (seřazeného podle času poslední aktivity)
+            // -----------------------------------------------------------------------------
+            var result = resultDictionary.Values
+                .OrderByDescending(d => d.LatestActivityTime)
+                .ToList();
+
+            // 4. KROK: Uložení výsledku do keše
+            // --------------------------------
             var cacheOptions = new MemoryCacheEntryOptions()
-            // Absolutní expirace - data v keši vydrží maximálně 60 sekund
-            // Zajišťuje, že i během session uživatel uvidí nová data nejpozději po minutě
-            .SetAbsoluteExpiration(TimeSpan.FromSeconds(60))
-            // Nastavení velikosti položky pro případnou správu paměti
-            .SetSize(1);
-            // Uložení výsledku do keše
+                .SetAbsoluteExpiration(TimeSpan.FromSeconds(60)) // Expirace po 60 sekundách
+                .SetSize(1);
+
             _cache.Set(cacheKey, result, cacheOptions);
 
             return Ok(result);
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetDiscussionsWithNewReplies endpointu.", e);
+            _logger.Log("Chyba při vykonávání akce GetDiscussionsWithNewActivities endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

@@ -50,8 +50,6 @@ public class MyProfileModel : BasePageModel
     public bool HasFriendshipRequests => Friendships.Any(f =>
         f.Status == FriendshipStatus.Requested && !f.IsRequester);
 
-
-
     [BindProperty]
     public string? NewNickname { get; set; }
 
@@ -64,8 +62,8 @@ public class MyProfileModel : BasePageModel
     [BindProperty]
     public string? NewPassword { get; set; }
 
-    // Seznam diskuzí, ve kterých dostal pøihlášený uživatel nové odpovìdi na své komentáøe
-    public List<DiscussionWithNewRepliesDto> NewRepliesNotifications { get; set; } = new();
+    // Seznam diskuzí s novými aktivitami pro pøihlášeného uživatele (nové odpovìdi na jeho komentáøe nebo nové komentáøe v jeho diskuzích)
+    public List<DiscussionWithNewActivitiesDto> NewRepliesNotifications { get; set; } = new();
 
     public UserProfileDto? UserProfile { get; set; }
     public string? NicknameErrorMessage { get; set; }
@@ -78,7 +76,8 @@ public class MyProfileModel : BasePageModel
     // Výsledek èištìní databáze
     public CleanupResultDto? CleanupResult { get; set; }
 
-    public MyProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator) : base(clientFactory, configuration, logger, sanitizer, translator)
+    public MyProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+        : base(clientFactory, configuration, logger, sanitizer, translator)
     {
     }
 
@@ -420,19 +419,19 @@ public class MyProfileModel : BasePageModel
             _logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
         }
 
-        // Naètení seznamu diskuzí, kde pøihlášený uživatel dostal nové odpovìdi ke svým komentáøùm
+        // Naètení seznamu diskuzí s novými aktivitami pro pøihlášeného uživatele (nové odpovìdi nebo komentáøe)
         try
         {
-            var notificationsResponse = await client.GetAsync($"{ApiBaseUrl}/users/discussions-with-new-replies");
+            var notificationsResponse = await client.GetAsync($"{ApiBaseUrl}/users/discussions-with-new-activities");
             if (notificationsResponse.IsSuccessStatusCode)
             {
                 NewRepliesNotifications = await notificationsResponse.Content
-                    .ReadFromJsonAsync<List<DiscussionWithNewRepliesDto>>() ?? new();
+                    .ReadFromJsonAsync<List<DiscussionWithNewActivitiesDto>>() ?? new();
             }
         }
         catch (Exception ex)
         {
-            _logger.Log("Nepodaøilo se naèíst notifikace o nových odpovìdích", ex);
+            _logger.Log("Nepodaøilo se naèíst notifikace o nových aktivitách", ex);
         }
 
         // Naètení pøátelství

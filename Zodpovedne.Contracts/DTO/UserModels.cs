@@ -107,15 +107,50 @@ public class PagedResultDto<T>
     public bool IsFirstPage => CurrentPage == 1;
 }
 
-// Položka pro seznam diskuzí přihlášeného uživatele, které mají novou odpověď na uživatelův komentář
-public class DiscussionWithNewRepliesDto
+/// <summary>
+/// DTO pro reprezentaci diskuze s novými aktivitami (odpověďmi na komentáře uživatele a/nebo novými komentáři)
+/// </summary>
+public class DiscussionWithNewActivitiesDto
 {
+    /// <summary>
+    /// ID diskuze
+    /// </summary>
     public int DiscussionId { get; set; }
+
+    /// <summary>
+    /// Název diskuze
+    /// </summary>
     public string Title { get; set; } = "";
+
+    /// <summary>
+    /// URL pro přístup k diskuzi
+    /// </summary>
     public string DiscussionUrl { get; set; } = "";
+
+    /// <summary>
+    /// Název kategorie, do které diskuze patří
+    /// </summary>
     public string CategoryName { get; set; } = "";
-    public DateTime LatestReplyTime { get; set; }
+
+    /// <summary>
+    /// Čas poslední aktivity v diskuzi (nová odpověď nebo nový komentář)
+    /// </summary>
+    public DateTime LatestActivityTime { get; set; }
+
+    /// <summary>
+    /// Počet komentářů uživatele, které mají nové odpovědi
+    /// </summary>
     public int CommentsWithNewRepliesCount { get; set; }
+
+    /// <summary>
+    /// Počet nových komentářů v diskuzi založené uživatelem
+    /// </summary>
+    public int NewCommentsCount { get; set; }
+
+    /// <summary>
+    /// Typ aktivity - může být "new_replies", "new_comments" nebo "new_replies_and_comments"
+    /// </summary>
+    public string ActivityType { get; set; } = "";
 }
 
 // Dto pro deserializaci přátelství

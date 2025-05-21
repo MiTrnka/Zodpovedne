@@ -409,6 +409,7 @@ public class DiscussionsController : ControllerBase
                                                                    // Načtení dat potřebných pro každý root komentář
                 .Include(c => c.User)                              // Autor komentáře
                 .Include(c => c.Likes)                             // Lajky komentáře
+                .Include(c => c.Discussion)                        // Přidáme diskuzi pro kontrolu autora
                 .AsSplitQuery()                                    // Rozdělení na více SQL dotazů pro vyšší výkon
                 .ToListAsync();
 
@@ -419,19 +420,20 @@ public class DiscussionsController : ControllerBase
 
             // Načteme odpovědi pouze pro root komentáře na aktuální stránce
             var replies = await dbContext.Comments
-                .AsNoTracking()
-                .Where(c => c.DiscussionId == discussionId)        // Komentáře patřící k této diskuzi
-                .Where(c => c.ParentCommentId != null)             // Pouze odpovědi (ne root komentáře)
-                .Where(c => c.ParentCommentId != null && rootCommentIds.Contains(c.ParentCommentId.Value)) // Pouze odpovědi na načtené root komentáře
-                .Where(c => c.Type != CommentType.Deleted &&       // Nekompletně smazané
-                    (c.Type != CommentType.Hidden ||               // Skryté zobrazit jen pro:
-                        isAdmin ||                                 // - adminy
-                        c.UserId == userId))                       // - autory komentáře
-                                                                   // Načtení dat potřebných pro každou odpověď
-                .Include(c => c.User)                              // Autor odpovědi
-                .Include(c => c.Likes)                             // Lajky odpovědi
-                .AsSplitQuery()                                    // Rozdělení na více SQL dotazů pro vyšší výkon
-                .ToListAsync();
+                 .AsNoTracking()
+                 .Where(c => c.DiscussionId == discussionId)        // Komentáře patřící k této diskuzi
+                 .Where(c => c.ParentCommentId != null)             // Pouze odpovědi (ne root komentáře)
+                 .Where(c => c.ParentCommentId != null && rootCommentIds.Contains(c.ParentCommentId.Value)) // Pouze odpovědi na načtené root komentáře
+                 .Where(c => c.Type != CommentType.Deleted &&       // Nekompletně smazané
+                     (c.Type != CommentType.Hidden ||               // Skryté zobrazit jen pro:
+                         isAdmin ||                                 // - adminy
+                         c.UserId == userId))                       // - autory komentáře
+                                                                    // Načtení dat potřebných pro každou odpověď
+                 .Include(c => c.User)                              // Autor odpovědi
+                 .Include(c => c.Likes)                             // Lajky odpovědi
+                 .Include(c => c.Discussion)                        // Přidáme diskuzi pro kontrolu autora
+                 .AsSplitQuery()                                    // Rozdělení na více SQL dotazů pro vyšší výkon
+                 .ToListAsync();
 
             // 5. KROK: Přiřazení odpovědí k root komentářům
             // ---------------------------------------------
@@ -1409,6 +1411,22 @@ public class DiscussionsController : ControllerBase
                 .Any(r => r.CreatedAt > currentUser.PreviousLastLogin && r.UserId != userId);
         }
 
+        // Kontrola, zda jde o nový komentář v diskuzi založené přihlášeným uživatelem
+        bool isNewComment = false;
+
+        // Získáme informaci o diskuzi
+        var discussionAuthorId = comment.Discussion?.UserId;
+
+        // Kontrolujeme, zda komentář byl vytvořen po předchozím přihlášení aktuálního uživatele
+        // a zda diskuze patří přihlášenému uživateli
+        if (currentUser?.PreviousLastLogin != null &&
+            !string.IsNullOrEmpty(userId) &&
+            discussionAuthorId == userId &&
+            comment.UserId != userId)
+        {
+            isNewComment = comment.CreatedAt > currentUser.PreviousLastLogin;
+        }
+
         return new CommentDto
         {
             Id = comment.Id,
@@ -1428,6 +1446,8 @@ public class DiscussionsController : ControllerBase
             },
             // Indikátor nových odpovědí
             HasNewReplies = hasNewReplies,
+            // Indikátor nového komentáře v diskuzi přihlášeného uživatele
+            IsNewComment = isNewComment,
             // Rekurzivně mapujeme odpovědi na tento komentář
             // Filtrujeme jen viditelné odpovědi pro aktuálního uživatele
             Replies = comment.Replies

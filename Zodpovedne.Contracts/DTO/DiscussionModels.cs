@@ -131,6 +131,7 @@ public class CommentDto
     public ICollection<CommentDto> Replies { get; set; } = new List<CommentDto>();
     public LikeInfoDto Likes { get; set; } = new();
     public bool HasNewReplies { get; set; }
+    public bool IsNewComment { get; set; }
 }
 
 // Pro vytvoření nového komentáře

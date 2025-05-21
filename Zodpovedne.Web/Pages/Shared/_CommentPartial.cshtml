@@ -19,6 +19,13 @@
                     <i class="bi bi-chat-dots-fill"></i> Nové
                 </span>
             }
+            @* Je tento komentář nový v diskuzi, kterou založil přihlášený uživatel? *@
+            @if (Model.IsNewComment)
+            {
+                <span class="badge bg-primary ms-2" title="Nový komentář">
+                    <i class="bi bi-chat-left-text-fill"></i> Nové
+                </span>
+            }
         </div>
 
         @* Pravá část - tlačítka pro akce *@
