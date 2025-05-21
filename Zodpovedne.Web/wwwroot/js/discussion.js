@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Zpracování odkazů v komentářích
+    document.querySelectorAll('.komentar-wrapper p, .odpoved-na-komentar p').forEach(element => {
+        element.innerHTML = linkifyText(element.innerHTML);
+    });
 
     // BLOK KÓDU NÍŽE ZAJISTÍ SKRÝVÁNÍ A ODKRÝVÁNÍ TLAČÍTKA ODESLAT U NOVÉHO ROOR KOMENTÁŘE
     // A TLAČÍTKA ODPOVĚDĚT U REAKČNÍHO KOMENTÁŘ,
@@ -284,11 +288,11 @@ async function toggleForFriendsStatus(discussionId) {
 
 /**
  * Funkce pro aktualizaci ikony srdce v tlačítku pro lajky.
- * 
+ *
  * Aktualizuje ikonu srdce v tlačítku podle toho, zda uživatel dal lajk nebo ne.
  * Mění třídu ikony mezi bi-heart (nevyplněné srdce) a bi-heart-fill (vyplněné srdce)
  * a aktualizuje atribut title pro lepší přístupnost.
- * 
+ *
  * @param {HTMLElement} button - Reference na tlačítko, jehož ikona má být aktualizována
  * @param {boolean} isFilled - True pro vyplněné srdce, false pro nevyplněné
  */
@@ -313,14 +317,14 @@ function updateHeartIcon(button, isFilled) {
 
 /**
  * Funkce pro přidání nebo odebrání lajku k diskuzi.
- * 
+ *
  * Funkce asynchronně komunikuje s API endpointem pro správu lajků diskuze. Podle role uživatele a aktuálního stavu
  * lajku se chová dvěma způsoby:
  * 1. Pro adminy: Vždy přidává nový lajk (neomezené množství lajků)
  * 2. Pro běžné uživatele (Member): Funguje jako přepínač - pokud uživatel již dal lajk, odebere ho; pokud ještě nedal, přidá ho
- * 
+ *
  * Funkce po úspěšné operaci aktualizuje počet lajků v UI a upraví vzhled tlačítka podle aktuálního stavu.
- * 
+ *
  * @param {number} discussionId - ID diskuze, ke které se přidává/odebírá lajk
  */
 async function likeDiscussion(discussionId) {
@@ -381,14 +385,14 @@ async function likeDiscussion(discussionId) {
 
 /**
  * Funkce pro přidání nebo odebrání lajku ke komentáři.
- * 
+ *
  * Funkce asynchronně komunikuje s API endpointem pro správu lajků komentáře. Podle role uživatele a aktuálního stavu
  * lajku se chová dvěma způsoby:
  * 1. Pro adminy: Vždy přidává nový lajk (neomezené množství lajků)
  * 2. Pro běžné uživatele (Member): Funguje jako přepínač - pokud uživatel již dal lajk, odebere ho; pokud ještě nedal, přidá ho
- * 
+ *
  * Funkce po úspěšné operaci aktualizuje počet lajků v UI a upraví vzhled tlačítka podle aktuálního stavu.
- * 
+ *
  * @param {number} discussionId - ID diskuze, ke které komentář patří
  * @param {number} commentId - ID komentáře, ke kterému se přidává/odebírá lajk
  */

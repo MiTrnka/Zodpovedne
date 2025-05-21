@@ -493,6 +493,8 @@ function updateConversationUI(nickname) {
  * nebo přidat zprávy na určitou pozici. Zpracovává pole zpráv, třídí je podle času, vytváří pro každou zprávu HTML reprezentaci včetně identifikátorů,
  * formátování textu, časových značek a indikátorů přečtení. Zajišťuje správné rozlišení mezi odeslanými a přijatými zprávami a jejich
  * odpovídající vizuální stylování. Tato funkce se používá především při prvotním načtení konverzace nebo načítání větších dávek historických zpráv.
+ * Také automaticky detekuje URL adresy v textu zpráv a převádí je na klikatelné odkazy.
+ *
  * @param {Array} messages - Seznam zpráv k zobrazení
  * @param {boolean} clearContainer - Zda má být kontejner před přidáním zpráv vyčištěn
  */
@@ -553,8 +555,11 @@ function displayMessages(messages, clearContainer = false) {
         const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateFormatted = new Date(message.sentAt).toLocaleDateString();
 
-        // Nahrazení znaku nového řádku za <br> tag pro HTML zobrazení
-        const formattedContent = message.content.replace(/\n/g, '<br>');
+        // Nejdříve nahradíme znaky nového řádku za <br> tagy pro HTML zobrazení
+        let formattedContent = message.content.replace(/\n/g, '<br>');
+
+        // Poté linkifikujeme text (převedeme URL adresy na odkazy)
+        formattedContent = linkifyText(formattedContent);
 
         // Přidání ikony přečtení pokud je zpráva odeslána aktuálním uživatelem a byla přečtena
         const readIndicator = (isCurrentUserSender && message.readAt)
@@ -592,7 +597,9 @@ function displayMessages(messages, clearContainer = false) {
  * Přidává jednotlivou zprávu do uživatelského rozhraní chatu. Vytváří HTML element zprávy s odpovídajícími třídami, zobrazuje obsah zprávy včetně formátování,
  * časové značky a indikátoru přečtení. Následně vkládá nově vytvořený element do kontejneru zpráv a zajišťuje,
  * aby se zobrazení automaticky posunulo na nejnovější zprávu. Tato funkce se typicky používá při odeslání nové zprávy
- * nebo pro přidání jednotlivých zpráv při jejich postupném načítání.
+ * nebo pro přidání jednotlivých zpráv při jejich postupném načítání. Také automaticky detekuje URL adresy v textu zprávy
+ * a převádí je na klikatelné odkazy, které se otevírají v nové záložce.
+ *
  * @param {Object} message - Data zprávy k přidání
  * @param {boolean} isFromCurrentUser - Zda byla zpráva odeslána aktuálním uživatelem
  */
@@ -615,8 +622,11 @@ function addMessageToUI(message, isFromCurrentUser) {
     const timeFormatted = new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const dateFormatted = new Date(message.sentAt).toLocaleDateString();
 
-    // Náhrada znaku nového řádku za <br> tag
-    const formattedContent = message.content.replace(/\n/g, '<br>');
+    // Nejdříve nahradíme znaky nového řádku za <br> tag
+    let formattedContent = message.content.replace(/\n/g, '<br>');
+
+    // Poté linkifikujeme text (převedeme URL adresy na odkazy)
+    formattedContent = linkifyText(formattedContent);
 
     // Přidání ikony přečtení pokud je zpráva odeslána aktuálním uživatelem a byla přečtena
     const readIndicator = (isFromCurrentUser && message.readAt)
