@@ -98,7 +98,7 @@ public class SearchModel : BasePageModel
         }
 
         // Sanitizace je stále vhodná pro pøípadné zbývající HTML-like obsah
-        plainText = _sanitizer.Sanitize(plainText);
+        plainText = sanitizer.Sanitize(plainText);
 
         // Rozdìlení vyhledávacího dotazu na jednotlivá slova
         // Ignorujeme slova kratší než 2 znaky (pøíliš obecná)

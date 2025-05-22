@@ -15,7 +15,7 @@ public class Translator
 
     public Translator(IConfiguration configuration, FileLogger logger, IHttpClientFactory httpClientFactory)
     {
-        logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
         if (configuration == null)

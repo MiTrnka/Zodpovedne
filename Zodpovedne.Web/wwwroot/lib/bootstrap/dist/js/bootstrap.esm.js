@@ -2957,7 +2957,7 @@ const uriAttributes = new Set(['background', 'cite', 'href', 'itemtype', 'longde
  * A pattern that recognizes URLs that are safe wrt. XSS in URL navigation
  * contexts.
  *
- * Shout-out to Angular https://github.com/angular/angular/blob/15.2.8/packages/core/src/sanitization/url_sanitizer.ts#L38
+ * Shout-out to Angular https://github.com/angular/angular/blob/15.2.8/packages/core/src/sanitization/urlsanitizer.ts#L38
  */
 // eslint-disable-next-line unicorn/better-regex
 const SAFE_URL_PATTERN = /^(?!javascript:)(?:[a-z0-9+.-]+:|[^&:/?#]*(?:[/?#]|$))/i;

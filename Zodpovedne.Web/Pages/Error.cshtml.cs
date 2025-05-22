@@ -16,7 +16,7 @@ namespace Zodpovedne.Web.Pages
 
         public ErrorModel(ILogger<ErrorModel> logger)
         {
-            logger = logger;
+            this.logger = logger;
         }
 
         public void OnGet()

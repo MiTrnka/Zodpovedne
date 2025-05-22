@@ -23,7 +23,7 @@ namespace Zodpovedne.RESTAPI.Controllers;
 public class MessagesController : ControllerZodpovedneBase
 {
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
-    private readonly IHtmlSanitizer _sanitizer;
+    private readonly IHtmlSanitizer sanitizer;
 
     /// <summary>
     /// Konstruktor controlleru zpráv
@@ -33,7 +33,7 @@ public class MessagesController : ControllerZodpovedneBase
     public MessagesController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
         : base(dbContext, userManager, logger, translator)
     {
-        _sanitizer = sanitizer;
+        this.sanitizer = sanitizer;
     }
 
     /// <summary>
@@ -156,7 +156,7 @@ public class MessagesController : ControllerZodpovedneBase
                 return Unauthorized();
 
             // Sanitizace obsahu zprávy před uložením
-            model.Content = _sanitizer.Sanitize(model.Content);
+            model.Content = sanitizer.Sanitize(model.Content);
 
             // 1. KROK: Ověření, že příjemce existuje a není smazaný
             var recipient = await dbContext.Users

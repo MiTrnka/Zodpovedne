@@ -177,8 +177,8 @@ public class CreateDiscussionModel : BasePageModel
             }
 
             // Sanitizace vstupního HTML
-            Input.Title = _sanitizer.Sanitize(Input.Title);
-            Input.Content = _sanitizer.Sanitize(Input.Content);
+            Input.Title = sanitizer.Sanitize(Input.Title);
+            Input.Content = sanitizer.Sanitize(Input.Content);
 
 
             // Nastavení typu hlasování podle hodnoty v checkboxu a vybranéhotypu

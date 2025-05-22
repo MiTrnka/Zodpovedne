@@ -24,7 +24,7 @@
                     {
                         Directory.Delete(tempDir, true); // true = smazat i s obsahem
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                     }
                 }

@@ -22,7 +22,7 @@ public class EmailService : IEmailService
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _configuration = configuration;
-        logger = logger;
+        this.logger = logger;
     }
 
     // Implementace metody pro odeslání e-mailu s odkazem pro obnovení hesla

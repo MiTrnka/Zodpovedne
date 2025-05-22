@@ -19,13 +19,13 @@ namespace Zodpovedne.Web.Pages.Api;
 public class FileUploadController : ControllerBase
 {
     private readonly FileLogger logger;
-    private readonly IHtmlSanitizer _sanitizer;
+    private readonly IHtmlSanitizer sanitizer;
     private readonly IWebHostEnvironment _environment;
 
     public FileUploadController(FileLogger logger, IHtmlSanitizer sanitizer, IWebHostEnvironment environment)
     {
-        logger = logger;
-        _sanitizer = sanitizer;
+        this.logger = logger;
+        this.sanitizer = sanitizer;
         _environment = environment;
     }
 

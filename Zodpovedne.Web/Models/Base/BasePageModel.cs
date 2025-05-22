@@ -25,7 +25,7 @@ public abstract class BasePageModel : PageModel
     public Translator Translator { get; }  // Translator pro překlady textů na stránkách
 
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
-    protected readonly IHtmlSanitizer _sanitizer;
+    protected readonly IHtmlSanitizer sanitizer;
 
     /// <summary>
     /// Chybová zpráva pro zobrazení uživateli, pokud je vyplněna, zobrazí se na stránce a nic dalšího se na stránce nezobrazí
@@ -156,8 +156,8 @@ public abstract class BasePageModel : PageModel
     {
         _clientFactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _sanitizer = sanitizer;
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.sanitizer = sanitizer;
         Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 

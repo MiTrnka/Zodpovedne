@@ -25,12 +25,12 @@ namespace Zodpovedne.RESTAPI.Controllers;
 public class DiscussionsController : ControllerZodpovedneBase
 {
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
-    protected readonly IHtmlSanitizer _sanitizer;
+    protected readonly IHtmlSanitizer sanitizer;
 
     public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, Translator translator, IHtmlSanitizer sanitizer)
         : base(dbContext, userManager, logger, translator)
     {
-        _sanitizer = sanitizer;
+        this.sanitizer = sanitizer;
     }
 
     /// <summary>
@@ -647,8 +647,8 @@ public class DiscussionsController : ControllerZodpovedneBase
                 return Unauthorized();
 
             // Sanitizace vstupů
-            var sanitizedTitle = _sanitizer.Sanitize(model.Title);
-            var sanitizedContent = _sanitizer.Sanitize(model.Content);
+            var sanitizedTitle = sanitizer.Sanitize(model.Title);
+            var sanitizedContent = sanitizer.Sanitize(model.Content);
 
             // Vygenerujeme URL-friendly kód
             var baseCode = UrlHelper.GenerateUrlFriendlyCode(sanitizedTitle);
@@ -715,8 +715,8 @@ public class DiscussionsController : ControllerZodpovedneBase
             // Aktuální čas pro jednotné použití
             var now = DateTime.UtcNow;
 
-            discussion.Title = _sanitizer.Sanitize(model.Title);
-            discussion.Content = _sanitizer.Sanitize(model.Content);
+            discussion.Title = sanitizer.Sanitize(model.Title);
+            discussion.Content = sanitizer.Sanitize(model.Content);
             discussion.UpdatedAt = now;
             discussion.UpdatedWhateverAt = now;
 
@@ -1012,14 +1012,14 @@ public class DiscussionsController : ControllerZodpovedneBase
         }
 
         // Sanitizace vstupů
-        var sanitizedContent = _sanitizer.Sanitize(model.Content);
+        var sanitizedContent = sanitizer.Sanitize(model.Content);
 
         var comment = new Comment
         {
             DiscussionId = discussionId,
             ParentCommentId = parentCommentId,
             UserId = userId,
-            Content = _sanitizer.Sanitize(model.Content), //Pro zamezení XSS útoků
+            Content = sanitizer.Sanitize(model.Content), //Pro zamezení XSS útoků
             CreatedAt = now,
             UpdatedAt = now,
             Type = user.Type == UserType.Hidden ? CommentType.Hidden : model.Type

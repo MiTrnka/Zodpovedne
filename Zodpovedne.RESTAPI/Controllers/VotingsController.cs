@@ -21,12 +21,12 @@ namespace Zodpovedne.RESTAPI.Controllers;
 public class VotingsController : ControllerZodpovedneBase
 {
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
-    private readonly IHtmlSanitizer _sanitizer;
+    private readonly IHtmlSanitizer sanitizer;
 
     public VotingsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
         : base(dbContext, userManager, logger, translator)
     {
-        _sanitizer = sanitizer;
+        this.sanitizer = sanitizer;
     }
 
     /// <summary>
