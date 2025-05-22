@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateUnreadCounts();
     setInterval(updateUnreadCounts, REFRESH_INTERVAL);
 
-    // Přidáme přímé obnovení aktuální konverzace každých 5 sekund
+    // Přidáme přímé obnovení aktuální konverzace každých 10 sekund
     // Toto zajistí častější kontrolu stavu přečtení zpráv
     setInterval(() => {
         if (currentRecipientId) {
