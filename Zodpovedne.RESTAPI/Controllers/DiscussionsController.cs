@@ -13,6 +13,7 @@ using Zodpovedne.Logging;
 using Zodpovedne.Logging.Services;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 
 namespace Zodpovedne.RESTAPI.Controllers;
@@ -26,6 +27,23 @@ public class DiscussionsController : ControllerZodpovedneBase
 {
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
     protected readonly IHtmlSanitizer sanitizer;
+
+    private string? _userId = null;
+    private string? UserId
+    {
+        get
+        {
+            if (_userId != null)
+                return _userId;
+            else
+            {
+                _userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                return _userId;
+            }
+        }
+    }
+
+    private bool IsAdmin => User?.IsInRole("Admin") ?? false;
 
     public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, Translator translator, IHtmlSanitizer sanitizer)
         : base(dbContext, userManager, logger, translator)
@@ -52,21 +70,17 @@ public class DiscussionsController : ControllerZodpovedneBase
             if (pageSize < 1) pageSize = 1;
             if (pageSize > 100) pageSize = 100; // Omezení maximální velikosti stránky
 
-            // Identifikace uživatele pro správné filtrování obsahu
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
             // Získání seznamu ID přátel přihlášeného uživatele (pokud je uživatel přihlášen)
             // Důležité pro filtrování privátních diskuzí, které vidí jen přátelé autora
             var friendIds = new List<string>();
-            if (!string.IsNullOrEmpty(userId))
+            if (!string.IsNullOrEmpty(UserId))
             {
                 // Vyhledání schválených přátelství, kde je uživatel buď žadatelem nebo schvalovatelem
                 friendIds = await dbContext.Friendships
                     .AsNoTracking()
-                    .Where(f => (f.ApproverUserId == userId || f.RequesterUserId == userId) &&
+                    .Where(f => (f.ApproverUserId == UserId || f.RequesterUserId == UserId) &&
                                f.FriendshipStatus == FriendshipStatus.Approved)
-                    .Select(f => f.ApproverUserId == userId ? f.RequesterUserId : f.ApproverUserId)
+                    .Select(f => f.ApproverUserId == UserId ? f.RequesterUserId : f.ApproverUserId)
                     .ToListAsync();
             }
 
@@ -77,17 +91,17 @@ public class DiscussionsController : ControllerZodpovedneBase
                 .Where(d => d.Type != DiscussionType.Deleted)  // Smazané diskuze nikdo nevidí
                 .Where(d =>
                     d.Type != DiscussionType.Hidden || // Hidden diskuze vidí jen:
-                    isAdmin ||                         // - admin (může vidět vše)
-                    d.UserId == userId)                // - autor diskuze (vidí své diskuze)
+                    IsAdmin ||                         // - admin (může vidět vše)
+                    d.UserId == UserId)                // - autor diskuze (vidí své diskuze)
                 .Where(d =>
                     d.Type != DiscussionType.ForFriends || // ForFriends diskuze vidí jen:
-                    isAdmin ||                          // - admin (může vidět vše)
-                    d.UserId == userId ||               // - autor diskuze (vidí své diskuze)
+                    IsAdmin ||                          // - admin (může vidět vše)
+                    d.UserId == UserId ||               // - autor diskuze (vidí své diskuze)
                     friendIds.Contains(d.UserId))       // - přátelé autora (vidí diskuze svých přátel)
                 .Where(d =>
                     d.Type != DiscussionType.Private || // Private diskuze vidí jen:
-                    isAdmin ||                          // - admin (může vidět vše)
-                    d.UserId == userId);                // - autor diskuze (vidí své diskuze)
+                    IsAdmin ||                          // - admin (může vidět vše)
+                    d.UserId == UserId);                // - autor diskuze (vidí své diskuze)
 
             // Aplikace filtru podle kategorie, pokud je zadána
             if (categoryId.HasValue)
@@ -127,8 +141,8 @@ public class DiscussionsController : ControllerZodpovedneBase
                 .Where(c => discussionIds.Contains(c.DiscussionId))
                 .Where(c => c.Type != CommentType.Deleted &&     // Ignorujeme smazané
                     (c.Type != CommentType.Hidden ||            // Hidden komentáře počítáme pro:
-                        isAdmin ||                              // - adminy
-                        c.UserId == userId))                    // - autory komentářů
+                        IsAdmin ||                              // - adminy
+                        c.UserId == UserId))                    // - autory komentářů
                 .GroupBy(c => c.DiscussionId)
                 .Select(g => new { DiscussionId = g.Key, Count = g.Count() })
                 .ToListAsync();
@@ -150,11 +164,11 @@ public class DiscussionsController : ControllerZodpovedneBase
             var likeCountByDiscussionId = likeCounts.ToDictionary(x => x.DiscussionId, x => x.Count);
 
             // Zjistíme, zda aktuální uživatel dal lajk daným diskuzím
-            var userLikes = string.IsNullOrEmpty(userId)
+            var userLikes = string.IsNullOrEmpty(UserId)
                 ? new Dictionary<int, bool>()  // Pokud uživatel není přihlášen, prázdný slovník
                 : await dbContext.DiscussionLikes
                     .AsNoTracking()
-                    .Where(l => discussionIds.Contains(l.DiscussionId) && l.UserId == userId)
+                    .Where(l => discussionIds.Contains(l.DiscussionId) && l.UserId == UserId)
                     .Select(l => l.DiscussionId)
                     .Distinct()
                     .ToDictionaryAsync(id => id, id => true);
@@ -185,9 +199,9 @@ public class DiscussionsController : ControllerZodpovedneBase
                     {
                         LikeCount = likeCountByDiscussionId.TryGetValue(d.Id, out var likeCount) ? likeCount : 0,
                         HasUserLiked = userLikes.ContainsKey(d.Id),
-                        CanUserLike = isAdmin ||
-                            (!string.IsNullOrEmpty(userId) &&
-                            d.UserId != userId &&
+                        CanUserLike = IsAdmin ||
+                            (!string.IsNullOrEmpty(UserId) &&
+                            d.UserId != UserId &&
                             !userLikes.ContainsKey(d.Id))
                     }
                 })
@@ -222,21 +236,13 @@ public class DiscussionsController : ControllerZodpovedneBase
     [HttpGet("user-discussions/{nickname?}")]
     public async Task<ActionResult<IEnumerable<BasicDiscussionInfoDto>>> GetUserDiscussions(string? nickname = null)
     {
-        string userId = String.Empty;
+        string requestedUserId = String.Empty;
         bool isMyAccount = false;
-        bool isAdmin = false;
         try
         {
-            // Zjistím, jestli je uživatel přihlášen a pokud ano, zjistím jeho id a jestli je admin
-            string? userIdFromAutentization = User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userIdFromAutentization != null)
-            {
-                isAdmin = User?.IsInRole("Admin") ?? false;
-            }
-
             string? userIdFromNickname = null;
 
-            // Pokud nickname je zadán, najdu userId dle nickname
+            // Pokud nickname je zadán, najdu user.Id dle nickname
             if (!string.IsNullOrEmpty(nickname))
             {
                 var user = dbContext.Users.Where(u => u.Nickname == nickname).FirstOrDefault();
@@ -249,9 +255,9 @@ public class DiscussionsController : ControllerZodpovedneBase
             // Koukám na svůj profil - pokud jsem přihlášen a buď:
             // - neuvedl jsem nickname, nebo
             // - uvedl jsem nickname a je to můj nickname
-            if ((userIdFromAutentization != null) && ((userIdFromAutentization == userIdFromNickname) || (userIdFromNickname == null)))
+            if ((UserId != null) && ((UserId == userIdFromNickname) || (userIdFromNickname == null)))
             {
-                userId = userIdFromAutentization;
+                requestedUserId = UserId;
                 isMyAccount = true;
             }
             else
@@ -260,21 +266,21 @@ public class DiscussionsController : ControllerZodpovedneBase
             {
                 if (userIdFromNickname == null)
                     return Unauthorized();
-                userId = userIdFromNickname;
+                requestedUserId = userIdFromNickname;
                 isMyAccount = false;
             }
 
             // Získání seznamu ID přátel přihlášeného uživatele (pokud je uživatel přihlášen)
             // Důležité pro filtrování privátních diskuzí, které vidí jen přátelé autora
             var friendIds = new List<string>();
-            if (!string.IsNullOrEmpty(userIdFromAutentization))
+            if (!string.IsNullOrEmpty(UserId))
             {
                 // Vyhledání schválených přátelství, kde je uživatel buď žadatelem nebo schvalovatelem
                 friendIds = await dbContext.Friendships
                     .AsNoTracking()
-                    .Where(f => (f.ApproverUserId == userIdFromAutentization || f.RequesterUserId == userIdFromAutentization) &&
+                    .Where(f => (f.ApproverUserId == UserId || f.RequesterUserId == UserId) &&
                                f.FriendshipStatus == FriendshipStatus.Approved)
-                    .Select(f => f.ApproverUserId == userIdFromAutentization ? f.RequesterUserId : f.ApproverUserId)
+                    .Select(f => f.ApproverUserId == UserId ? f.RequesterUserId : f.ApproverUserId)
                     .ToListAsync();
             }
 
@@ -285,11 +291,11 @@ public class DiscussionsController : ControllerZodpovedneBase
             // - ForFriends diskuze vidí autor, admin nebo přátelé autora
             var discussions = await dbContext.Discussions
                 .AsNoTracking()
-                .Where(d => d.UserId == userId) // Filtrujeme diskuze daného uživatele
+                .Where(d => d.UserId == requestedUserId) // Filtrujeme diskuze daného uživatele
                 .Where(d => d.Type != DiscussionType.Deleted) // Smazané diskuze nevidí nikdo
-                .Where(d => d.Type != DiscussionType.Hidden || isMyAccount || isAdmin) // Hidden diskuze vidí jen autor nebo admin
-                .Where(d => d.Type != DiscussionType.ForFriends || isMyAccount || isAdmin || friendIds.Contains(d.UserId)) // ForFriends diskuze vidí autor, admin nebo přátelé autora
-                .Where(d => d.Type != DiscussionType.Private || isMyAccount || isAdmin) // Private diskuze vidí jen autor nebo admin
+                .Where(d => d.Type != DiscussionType.Hidden || isMyAccount || IsAdmin) // Hidden diskuze vidí jen autor nebo admin
+                .Where(d => d.Type != DiscussionType.ForFriends || isMyAccount || IsAdmin || friendIds.Contains(d.UserId)) // ForFriends diskuze vidí autor, admin nebo přátelé autora
+                .Where(d => d.Type != DiscussionType.Private || isMyAccount || IsAdmin) // Private diskuze vidí jen autor nebo admin
                 .Include(d => d.Category) // Načteme i kategorii pro zobrazení
                 .OrderByDescending(d => d.UpdatedAt) // Řazení od nejnovějších
                 .Select(d => new BasicDiscussionInfoDto
@@ -340,16 +346,12 @@ public class DiscussionsController : ControllerZodpovedneBase
             if (pageSize < 1) pageSize = 1;
             if (pageSize > 100) pageSize = 100; // Omezení maximální velikosti stránky
 
-            // Získání ID a role přihlášeného uživatele pro filtrování obsahu dle oprávnění
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
             // Načtení aktuálního uživatele pro kontrolu nových odpovědí - děláme to pouze jednou
             // pro celý request, abychom nemuseli volat userManager pro každý komentář zvlášť
             ApplicationUser? currentUser = null;
-            if (!string.IsNullOrEmpty(userId))
+            if (!string.IsNullOrEmpty(UserId))
             {
-                currentUser = await userManager.FindByIdAsync(userId);
+                currentUser = await userManager.FindByIdAsync(UserId);
             }
 
             // 1. KROK: Načtení základních dat diskuze
@@ -365,8 +367,8 @@ public class DiscussionsController : ControllerZodpovedneBase
                .FirstOrDefaultAsync(d => d.Id == discussionId &&
                     d.Type != DiscussionType.Deleted &&     // Nikdy nezobrazujeme smazané diskuze
                     (d.Type != DiscussionType.Hidden ||     // Pro skryté diskuze kontrolujeme:
-                        isAdmin ||                          // - buď je uživatel admin (vidí vše)
-                        d.UserId == userId));               // - nebo je autorem této diskuze
+                        IsAdmin ||                          // - buď je uživatel admin (vidí vše)
+                        d.UserId == UserId));               // - nebo je autorem této diskuze
 
             // Kontrola existence diskuze
             if (discussion == null)
@@ -381,8 +383,8 @@ public class DiscussionsController : ControllerZodpovedneBase
                 .Where(c => c.ParentCommentId == null)             // Pouze root komentáře (ne odpovědi)
                 .Where(c => c.Type != CommentType.Deleted &&       // Nekompletně smazané
                     (c.Type != CommentType.Hidden ||               // Skryté zobrazit jen pro:
-                        isAdmin ||                                 // - adminy
-                        c.UserId == userId))                       // - autory komentáře
+                        IsAdmin ||                                 // - adminy
+                        c.UserId == UserId))                       // - autory komentáře
                 .CountAsync();
 
             // 3. KROK: Načtení stránkovaných root komentářů
@@ -394,8 +396,8 @@ public class DiscussionsController : ControllerZodpovedneBase
                 .Where(c => c.ParentCommentId == null)             // Pouze root komentáře (ne odpovědi)
                 .Where(c => c.Type != CommentType.Deleted &&       // Nekompletně smazané
                     (c.Type != CommentType.Hidden ||               // Skryté zobrazit jen pro:
-                        isAdmin ||                                 // - adminy
-                        c.UserId == userId))                       // - autory komentáře
+                        IsAdmin ||                                 // - adminy
+                        c.UserId == UserId))                       // - autory komentáře
                 .OrderByDescending(c => c.UpdatedAt)               // Seřadit dle data aktualizace
                 .Skip((page - 1) * pageSize)                       // Stránkování - přeskočit předchozí stránky
                 .Take(pageSize)                                    // Stránkování - vzít pouze pageSize záznamů
@@ -419,8 +421,8 @@ public class DiscussionsController : ControllerZodpovedneBase
                  .Where(c => c.ParentCommentId != null && rootCommentIds.Contains(c.ParentCommentId.Value)) // Pouze odpovědi na načtené root komentáře
                  .Where(c => c.Type != CommentType.Deleted &&       // Nekompletně smazané
                      (c.Type != CommentType.Hidden ||               // Skryté zobrazit jen pro:
-                         isAdmin ||                                 // - adminy
-                         c.UserId == userId))                       // - autory komentáře
+                         IsAdmin ||                                 // - adminy
+                         c.UserId == UserId))                       // - autory komentáře
                                                                     // Načtení dat potřebných pro každou odpověď
                  .Include(c => c.User)                              // Autor odpovědi
                  .Include(c => c.Likes)                             // Lajky odpovědi
@@ -474,17 +476,17 @@ public class DiscussionsController : ControllerZodpovedneBase
                 {
                     LikeCount = discussion.Likes.Count,            // Celkový počet lajků
                     HasUserLiked = discussion.Likes                // Informace, zda uživatel již lajkoval
-                        .Any(l => l.UserId == userId),
-                    CanUserLike = isAdmin ||                       // Může lajkovat pokud:
-                        (!string.IsNullOrEmpty(userId) &&          // - je přihlášen
-                         discussion.UserId != userId &&            // - není autor
+                        .Any(l => l.UserId == UserId),
+                    CanUserLike = IsAdmin ||                       // Může lajkovat pokud:
+                        (!string.IsNullOrEmpty(UserId) &&          // - je přihlášen
+                         discussion.UserId != UserId &&            // - není autor
                          !discussion.Likes                         // - ještě nelajkoval
-                            .Any(l => l.UserId == userId))
+                            .Any(l => l.UserId == UserId))
                 },
 
                 // Komentáře - předáváme načteného uživatele do mapování pro kontrolu nových odpovědí
                 Comments = rootComments
-                    .Select(c => MapCommentToDto(c, userId, isAdmin, currentUser))
+                    .Select(c => MapCommentToDto(c, UserId, IsAdmin, currentUser))
                     .ToList(),
 
                 // Informace o stránkování - máme další komentáře?
@@ -541,10 +543,6 @@ public class DiscussionsController : ControllerZodpovedneBase
     {
         try
         {
-            // Pro přihlášené uživatele získání ID a role
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
             // Efektivní načtení diskuze s minimem souvisejících dat
             var discussion = await dbContext.Discussions
                 .AsNoTracking()
@@ -552,7 +550,7 @@ public class DiscussionsController : ControllerZodpovedneBase
                 .Include(d => d.User)
                 .Where(d => d.Id == discussionId &&
                        d.Type != DiscussionType.Deleted &&
-                       (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId))
+                       (d.Type != DiscussionType.Hidden || IsAdmin || d.UserId == UserId))
                 .Select(d => new BasicDiscussionInfoDto
                 {
                     Id = d.Id,
@@ -637,12 +635,11 @@ public class DiscussionsController : ControllerZodpovedneBase
                 return BadRequest("Zvolená kategorie neexistuje.");
 
             // Získáme ID přihlášeného uživatele z tokenu
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
-            // Získáme detaily uživatele z databáze dle userId aktualně přihlášeného uživatele
-            var user = await userManager.FindByIdAsync(userId);
+            // Získáme detaily uživatele z databáze dle UserId aktualně přihlášeného uživatele
+            var user = await userManager.FindByIdAsync(UserId);
             if (user == null)
                 return Unauthorized();
 
@@ -661,7 +658,7 @@ public class DiscussionsController : ControllerZodpovedneBase
             var discussion = new Discussion
             {
                 CategoryId = model.CategoryId,
-                UserId = userId,
+                UserId = UserId,
                 Title = model.Title,
                 Content = model.Content,
                 CreatedAt = now,
@@ -705,11 +702,7 @@ public class DiscussionsController : ControllerZodpovedneBase
             if (discussion == null)
                 return NotFound();
 
-            // Kontrola oprávnění - může editovat pouze autor nebo admin
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
-            if (!isAdmin && discussion.UserId != userId)
+            if (!IsAdmin && discussion.UserId != UserId)
                 return Forbid();
 
             // Aktuální čas pro jednotné použití
@@ -721,12 +714,12 @@ public class DiscussionsController : ControllerZodpovedneBase
             discussion.UpdatedWhateverAt = now;
 
             // Typ diskuze - autor může měnit mezi Normal, ForFriends a Private, Hidden, admin může nastavit jakýkoliv typ
-            if (isAdmin)
+            if (IsAdmin)
             {
                 // Admin může nastavit jakýkoliv typ diskuze
                 discussion.Type = model.Type;
             }
-            else if (discussion.UserId == userId) // Kontrola, že je to autor diskuze
+            else if (discussion.UserId == UserId) // Kontrola, že je to autor diskuze
             {
                 // Autor může přepínat jen mezi těmito typy
                 if (model.Type == DiscussionType.Normal ||
@@ -800,10 +793,7 @@ public class DiscussionsController : ControllerZodpovedneBase
             if (discussion == null)
                 return NotFound();
 
-            // Kontrola oprávnění - může editovat pouze autor nebo admin
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-            if (!isAdmin && discussion.UserId != userId)
+            if (!IsAdmin && discussion.UserId != UserId)
                 return Forbid();
 
             // Přepnutí typu mezi Normal a Top je možné jen pro tyto dva stavy
@@ -841,10 +831,7 @@ public class DiscussionsController : ControllerZodpovedneBase
             if (discussion == null)
                 return NotFound();
 
-            // Kontrola oprávnění - může smazat jen admin nebo autor
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-            if (!isAdmin && discussion.UserId != userId)
+            if (!IsAdmin && discussion.UserId != UserId)
                 return Forbid();
 
             var now = DateTime.UtcNow;
@@ -975,11 +962,9 @@ public class DiscussionsController : ControllerZodpovedneBase
     private async Task<ActionResult<CommentDto>> CreateCommentOrReply(int discussionId, int? parentCommentId, CreateCommentDto model)
     {
         // Získáme detaily přihlášeného uživatele
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
+        if (string.IsNullOrEmpty(UserId))
             return Unauthorized();
-        var isAdmin = User.IsInRole("Admin");
-        var user = await userManager.FindByIdAsync(userId);
+        var user = await userManager.FindByIdAsync(UserId);
         if (user == null)
             return Unauthorized();
 
@@ -1018,7 +1003,7 @@ public class DiscussionsController : ControllerZodpovedneBase
         {
             DiscussionId = discussionId,
             ParentCommentId = parentCommentId,
-            UserId = userId,
+            UserId = UserId,
             Content = sanitizer.Sanitize(model.Content), //Pro zamezení XSS útoků
             CreatedAt = now,
             UpdatedAt = now,
@@ -1037,7 +1022,7 @@ public class DiscussionsController : ControllerZodpovedneBase
             .Include(c => c.User)
             .FirstAsync(c => c.Id == comment.Id);
 
-        return Ok(MapCommentToDto(comment, userId, isAdmin));
+        return Ok(MapCommentToDto(comment, UserId, IsAdmin));
     }
 
     /// <summary>
@@ -1049,16 +1034,11 @@ public class DiscussionsController : ControllerZodpovedneBase
     {
         try
         {
-            // Získáme ID přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
             {
                 logger.Log("Pokus o smazání komentáře neexistujícím uživatelem, který ale měl token...");
                 return Unauthorized();
             }
-
-            // Zjistíme, zda je uživatel admin
-            var isAdmin = User.IsInRole("Admin");
 
             // Načteme komentář včetně odpovědí
             var comment = await dbContext.Comments
@@ -1072,9 +1052,9 @@ public class DiscussionsController : ControllerZodpovedneBase
             }
 
             // Kontrola oprávnění - smazat může pouze admin nebo autor komentáře
-            if (!isAdmin && comment.UserId != userId)
+            if (!IsAdmin && comment.UserId != UserId)
             {
-                logger.Log($"Pokus o smazání komentáře s ID {commentId} uživatelem {userId}, který na to nemá právo.");
+                logger.Log($"Pokus o smazání komentáře s ID {commentId} uživatelem {UserId}, který na to nemá právo.");
                 return Forbid();
             }
             var now = DateTime.UtcNow;
@@ -1126,12 +1106,8 @@ public class DiscussionsController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele a ověření, zda je admin
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
             // Kontrola přihlášení uživatele
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Načtení diskuze včetně lajků
@@ -1139,7 +1115,7 @@ public class DiscussionsController : ControllerZodpovedneBase
                 .Include(d => d.Likes)
                 .FirstOrDefaultAsync(d => d.Id == id &&
                     d.Type != DiscussionType.Deleted &&
-                    (d.Type != DiscussionType.Hidden || isAdmin || d.UserId == userId));
+                    (d.Type != DiscussionType.Hidden || IsAdmin || d.UserId == UserId));
 
             // Kontrola existence diskuze
             if (discussion == null)
@@ -1149,20 +1125,20 @@ public class DiscussionsController : ControllerZodpovedneBase
             var now = DateTime.UtcNow;
 
             // Získání existujícího lajku od aktuálního uživatele (pokud existuje)
-            var existingLike = discussion.Likes.FirstOrDefault(l => l.UserId == userId);
+            var existingLike = discussion.Likes.FirstOrDefault(l => l.UserId == UserId);
 
             // Kontrola, zda uživatel nedává like své vlastní diskuzi (kromě adminů)
-            if (!isAdmin && discussion.UserId == userId)
+            if (!IsAdmin && discussion.UserId == UserId)
                 return BadRequest("Nelze dát like vlastní diskuzi.");
 
             // 1. Pro admina - vždy přidáváme nový lajk
-            if (isAdmin)
+            if (IsAdmin)
             {
                 // Přidáme nový like
                 var like = new DiscussionLike
                 {
                     DiscussionId = id,
-                    UserId = userId,
+                    UserId = UserId,
                     CreatedAt = now
                 };
 
@@ -1205,7 +1181,7 @@ public class DiscussionsController : ControllerZodpovedneBase
                     var like = new DiscussionLike
                     {
                         DiscussionId = id,
-                        UserId = userId,
+                        UserId = UserId,
                         CreatedAt = now
                     };
 
@@ -1250,12 +1226,8 @@ public class DiscussionsController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele a ověření, zda je admin
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
             // Kontrola přihlášení uživatele
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Načtení komentáře včetně lajků
@@ -1264,7 +1236,7 @@ public class DiscussionsController : ControllerZodpovedneBase
                 .FirstOrDefaultAsync(c => c.Id == commentId &&
                     c.DiscussionId == discussionId &&
                     c.Type != CommentType.Deleted &&
-                    (c.Type != CommentType.Hidden || isAdmin || c.UserId == userId));
+                    (c.Type != CommentType.Hidden || IsAdmin || c.UserId == UserId));
 
             // Kontrola existence komentáře
             if (comment == null)
@@ -1274,20 +1246,20 @@ public class DiscussionsController : ControllerZodpovedneBase
             var now = DateTime.UtcNow;
 
             // Získání existujícího lajku od aktuálního uživatele (pokud existuje)
-            var existingLike = comment.Likes.FirstOrDefault(l => l.UserId == userId);
+            var existingLike = comment.Likes.FirstOrDefault(l => l.UserId == UserId);
 
             // Kontrola, zda uživatel nedává like svému vlastnímu komentáři (kromě adminů)
-            if (!isAdmin && comment.UserId == userId)
+            if (!IsAdmin && comment.UserId == UserId)
                 return BadRequest("Nelze dát like vlastnímu komentáři.");
 
             // 1. Pro admina - vždy přidáváme nový lajk
-            if (isAdmin)
+            if (IsAdmin)
             {
                 // Přidáme nový like
                 var like = new CommentLike
                 {
                     CommentId = commentId,
-                    UserId = userId,
+                    UserId = UserId,
                     CreatedAt = now
                 };
 
@@ -1342,7 +1314,7 @@ public class DiscussionsController : ControllerZodpovedneBase
                     var like = new CommentLike
                     {
                         CommentId = commentId,
-                        UserId = userId,
+                        UserId = UserId,
                         CreatedAt = now
                     };
 
@@ -1604,10 +1576,6 @@ public class DiscussionsController : ControllerZodpovedneBase
             // Formátování dotazu pro tsquery - použití OR operátoru
             string formattedQuery = string.Join(" | ", searchTerms);
 
-            // Získání ID přihlášeného uživatele a informace, zda je admin
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
             // Seznam pro uložení výsledků prvního dotazu (ID a relevance)
             var relevantDiscussionsIds = new List<(int Id, float Score)>();
 
@@ -1626,9 +1594,9 @@ public class DiscussionsController : ControllerZodpovedneBase
                 FROM ""Discussions"" d
                 WHERE
                     d.""Type"" != @deletedType
-                    AND (d.""Type"" != @hiddenType OR @isAdmin = TRUE OR d.""UserId"" = @userId)
+                    AND (d.""Type"" != @hiddenType OR @IsAdmin = TRUE OR d.""UserId"" = @userId)
                     AND (d.""Type"" != @forfriendsType
-                         OR @isAdmin = TRUE
+                         OR @IsAdmin = TRUE
                          OR d.""UserId"" = @userId
                          OR EXISTS (
                              SELECT 1 FROM ""Friendships"" f
@@ -1638,7 +1606,7 @@ public class DiscussionsController : ControllerZodpovedneBase
                          )
                     )
                     AND (d.""Type"" != @privateType
-                         OR @isAdmin = TRUE
+                         OR @IsAdmin = TRUE
                          OR d.""UserId"" = @userId
                     )
                     AND d.""SearchVector"" @@ to_tsquery('czech', @query)
@@ -1662,13 +1630,13 @@ public class DiscussionsController : ControllerZodpovedneBase
                 command.Parameters.Add(hiddenParam);
 
                 var isAdminParam = command.CreateParameter();
-                isAdminParam.ParameterName = "@isAdmin";
-                isAdminParam.Value = isAdmin;
+                isAdminParam.ParameterName = "@IsAdmin";
+                isAdminParam.Value = IsAdmin;
                 command.Parameters.Add(isAdminParam);
 
                 var userIdParam = command.CreateParameter();
                 userIdParam.ParameterName = "@userId";
-                userIdParam.Value = userId ?? string.Empty;
+                userIdParam.Value = UserId ?? string.Empty;
                 command.Parameters.Add(userIdParam);
 
                 var limitParam = command.CreateParameter();
@@ -1800,16 +1768,14 @@ public class DiscussionsController : ControllerZodpovedneBase
             if (limit <= 0) limit = 20;
             if (limit > 100) limit = 100;
 
-            // Získání ID přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Nejprve získáme seznam ID přátel přihlášeného uživatele
             var friendIds = await dbContext.Friendships
-                .Where(f => (f.ApproverUserId == userId || f.RequesterUserId == userId) &&
+                .Where(f => (f.ApproverUserId == UserId || f.RequesterUserId == UserId) &&
                        f.FriendshipStatus == FriendshipStatus.Approved)
-                .Select(f => f.ApproverUserId == userId ? f.RequesterUserId : f.ApproverUserId)
+                .Select(f => f.ApproverUserId == UserId ? f.RequesterUserId : f.ApproverUserId)
                 .ToListAsync();
 
             // Příprava seznamu výsledků
@@ -1861,8 +1827,8 @@ public class DiscussionsController : ControllerZodpovedneBase
                 .Where(c => allDiscussionIds.Contains(c.DiscussionId))
                 .Where(c => c.Type != CommentType.Deleted &&     // Ignorujeme smazané
                     (c.Type != CommentType.Hidden ||            // Hidden komentáře počítáme pro:
-                        User.IsInRole("Admin") ||               // - adminy
-                        c.UserId == userId))                    // - autory komentářů
+                        IsAdmin ||               // - adminy
+                        c.UserId == UserId))                    // - autory komentářů
                 .GroupBy(c => c.DiscussionId)
                 .Select(g => new { DiscussionId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.DiscussionId, x => x.Count);
@@ -1889,9 +1855,9 @@ public class DiscussionsController : ControllerZodpovedneBase
                     Likes = new LikeInfoDto
                     {
                         LikeCount = d.Likes.Count,
-                        HasUserLiked = d.Likes.Any(l => l.UserId == userId),
-                        CanUserLike = User.IsInRole("Admin") ||
-                            (d.UserId != userId && !d.Likes.Any(l => l.UserId == userId))
+                        HasUserLiked = d.Likes.Any(l => l.UserId == UserId),
+                        CanUserLike = IsAdmin ||
+                            (d.UserId != UserId && !d.Likes.Any(l => l.UserId == UserId))
                     }
                 })
                 // Seřazení výsledku - nejprve TOP diskuze, pak ostatní podle data aktualizace
@@ -1921,8 +1887,7 @@ public class DiscussionsController : ControllerZodpovedneBase
         try
         {
             // Získání ID a role přihlášeného uživatele
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
+            var currentUserId = UserId;
 
             // Ověření, že uživatel existuje
             var user = await dbContext.Users
@@ -1966,10 +1931,10 @@ public class DiscussionsController : ControllerZodpovedneBase
                 .AsNoTracking()
                 .Where(d => likedDiscussionIds.Select(l => l.DiscussionId).Contains(d.Id))
                 .Where(d => d.Type != DiscussionType.Deleted) // Ignorovat smazané diskuze
-                .Where(d => d.Type != DiscussionType.Hidden || isAdmin || d.UserId == currentUserId) // Skryté diskuze vidí jen admin nebo autor
-                .Where(d => d.Type != DiscussionType.ForFriends || isAdmin || d.UserId == currentUserId ||
+                .Where(d => d.Type != DiscussionType.Hidden || IsAdmin || d.UserId == currentUserId) // Skryté diskuze vidí jen admin nebo autor
+                .Where(d => d.Type != DiscussionType.ForFriends || IsAdmin || d.UserId == currentUserId ||
                        friendIds.Contains(d.UserId))
-                .Where(d => d.Type != DiscussionType.Private || isAdmin || d.UserId == currentUserId) // Private diskuze vidí jen admin nebo autor
+                .Where(d => d.Type != DiscussionType.Private || IsAdmin || d.UserId == currentUserId) // Private diskuze vidí jen admin nebo autor
                 .Include(d => d.Category) // Include před Select
                 .Include(d => d.User)     // Include před Select
                 .ToListAsync();
@@ -2034,11 +1999,7 @@ public class DiscussionsController : ControllerZodpovedneBase
                 return NotFound("Diskuze nebyla nalezena.");
             }
 
-            // Kontrola oprávnění - pouze autor nebo admin může upravovat diskuzi
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
-            if (!isAdmin && discussion.UserId != userId)
+            if (!IsAdmin && discussion.UserId != UserId)
             {
                 return Forbid();
             }
