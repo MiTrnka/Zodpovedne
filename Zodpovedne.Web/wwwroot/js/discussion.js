@@ -530,12 +530,30 @@ function convertHtmlFromCKEditor(html) {
     );
 }
 
-/*
-Funkce toggleDiscussionEdit přepíná mezi režimem prohlížení a editace diskuze, přičemž při aktivaci editačního režimu skrývá zobrazovací elementy,
-inicializuje CKEditor s odpovídající konfigurací a načítá původní obsah; funguje jako přepínač uživatelského rozhraní,
-který dynamicky upravuje DOM a spravuje životní cyklus CKEditoru, čímž umožňuje plynulý přechod mezi čtením a úpravou obsahu.
-*/
-async function toggleDiscussionEdit(show) {
+
+
+
+
+
+
+/**
+ * Funkce pro přepínání mezi režimem prohlížení a editace diskuze.
+ *
+ * Tato funkce řídí celý životní cyklus editačního režimu diskuze:
+ * - Skrývá/zobrazuje příslušné UI elementy (nadpis, obsah, toolbar)
+ * - Inicializuje CKEditor s odpovídající konfigurací při aktivaci editace
+ * - Načítá původní obsah s konverzí z databázového formátu do CKEditor formátu
+ * - Spravuje viditelnost selectu pro typ diskuze podle oprávnění uživatele
+ * - Zajišťuje správné vyčištění CKEditor instance při zrušení editace
+ * - Implementuje validaci délky obsahu v reálném čase
+ *
+ * Funkce používá globální proměnnou window.discussionEditor pro uchování
+ * instance editoru a zajišťuje, že je vždy pouze jedna aktivní instance.
+ *
+ * @param {boolean} show - True pro aktivaci editačního režimu, false pro jeho ukončení
+ */
+function toggleDiscussionEdit(show) {
+    // Získání referencí na všechny potřebné DOM elementy
     const titleDisplay = document.getElementById('discussion-title-display');
     const titleEdit = document.getElementById('discussion-title-edit');
     const contentDisplay = document.getElementById('discussion-content-display');
@@ -544,19 +562,17 @@ async function toggleDiscussionEdit(show) {
     const editBtn = document.getElementById('edit-discussion-btn');
     const saveBtn = document.getElementById('save-discussion-btn');
     const cancelBtn = document.getElementById('cancel-discussion-btn');
-    // Získání informace, zda uživatel může nahrávat soubory
-    const canUploadFiles = document.getElementById("discussion-settings").dataset.canUpload === "true";
-
-    // reference na container se selectem pro typ diskuze
     const discussionTypeContainer = document.getElementById('discussion-type-select-container');
-
-    // Reference na select pro typ diskuze
     const discussionTypeSelect = document.getElementById('editDiscussionType');
-
-    // Získání aktuálního typu diskuze z hidden inputu
     const currentDiscussionType = document.getElementById('currentDiscussionType')?.value || "0";
 
+    // Získání informace o oprávněních uživatele pro upload souborů
+    const canUploadFiles = document.getElementById("discussion-settings").dataset.canUpload === "true";
+
     if (show) {
+        // === AKTIVACE EDITAČNÍHO REŽIMU ===
+
+        // Skrytí zobrazovacích elementů a zobrazení editačních
         titleDisplay.classList.add('d-none');
         titleEdit.classList.remove('d-none');
         contentDisplay.classList.add('d-none');
@@ -566,63 +582,92 @@ async function toggleDiscussionEdit(show) {
         saveBtn.classList.remove('d-none');
         cancelBtn.classList.remove('d-none');
 
-        // Zobrazíme select pro typ diskuze při editaci pouze pokud je uživatel admin
-        // nebo pokud diskuze není typu Hidden (2)
+        // Zobrazení selectu pro typ diskuze podle oprávnění
         if (discussionTypeContainer) {
             const isAdmin = discussionTypeContainer.dataset.isAdmin === "true";
             const discussionType = parseInt(discussionTypeContainer.dataset.discussionType);
 
-            // Pokud je uživatel admin nebo diskuze není typu Hidden, zobrazíme select
+            // Select se zobrazí pouze adminům nebo pokud diskuze není skrytá (typ 2)
             if (isAdmin || discussionType !== 2) {
                 discussionTypeContainer.classList.remove('d-none');
 
-                // Nastavíme aktuální hodnotu v selectu
-                const discussionTypeSelect = document.getElementById('editDiscussionType');
+                // Nastavení aktuální hodnoty v selectu
                 if (discussionTypeSelect) {
                     discussionTypeSelect.value = discussionType.toString();
                 }
             }
         }
 
-        // Nastavíme vybranou hodnotu v selectu podle aktuálního typu diskuze
+        // Nastavení hodnoty selectu podle aktuálního typu diskuze
         if (discussionTypeSelect && currentDiscussionType) {
             discussionTypeSelect.value = currentDiscussionType;
         }
 
-        // Inicializace editoru při prvním zobrazení
+        // Inicializace CKEditoru při prvním zobrazení editačního režimu
         if (!window.discussionEditor) {
-            // Konvertujeme HTML obsah pro editor
-            const originalContent = document.getElementById('discussion-content-display').innerHTML;
-            const convertedContent = convertHtmlForCKEditor(originalContent);
+            try {
+                // Získání původního HTML obsahu a jeho konverze pro CKEditor
+                const originalContent = contentDisplay.innerHTML;
+                const convertedContent = convertHtmlForCKEditor(originalContent);
 
-            // Příprava editoru
-            editorContainer.innerHTML = '';
+                // Vyčištění kontejneru editoru před inicializací
+                editorContainer.innerHTML = '';
 
-            ClassicEditor
-                .create(document.getElementById('editor-container'), createEditorConfig(canUploadFiles))
-                .then(editor => {
+                // Vytvoření nové instance CKEditoru s příslušnou konfigurací
+                ClassicEditor.create(
+                    editorContainer,
+                    createEditorConfig(canUploadFiles)
+                ).then(editor => {
+                    // Uložení reference na editor do globální proměnné
                     window.discussionEditor = editor;
 
-                    // Nastavení počáteční hodnoty editoru s konvertovaným obsahem
+                    // Načtení konvertovaného obsahu do editoru
                     editor.setData(convertedContent);
 
-                    // Přidání kontroly maximální délky
-                    const maxContentLength = 10000; // Odpovídá omezení v modelu
+                    // Implementace validace maximální délky obsahu v reálném čase
+                    const maxContentLength = 10000;
                     editor.model.document.on('change:data', () => {
                         const currentLength = editor.getData().length;
+
+                        // Zobrazení varování při překročení limitu
                         if (currentLength > maxContentLength) {
-                            // Zobrazení varování
                             document.getElementById("modalMessage").textContent =
                                 `Obsah diskuze nesmí být delší než ${maxContentLength} znaků. Aktuální délka: ${currentLength}`;
                             new bootstrap.Modal(document.getElementById("errorModal")).show();
                         }
                     });
-                })
-                .catch(error => {
+
+                }).catch(error => {
                     console.error('Chyba při inicializaci editoru:', error);
+                    // Zobrazení chybové hlášky uživateli
+                    alert('Nepodařilo se inicializovat editor. Zkuste to prosím znovu.');
+
+                    // Návrat do zobrazovacího režimu při chybě
+                    toggleDiscussionEdit(false);
+                    return;
                 });
+
+            } catch (error) {
+                console.error('Chyba při inicializaci editoru:', error);
+                // Zobrazení chybové hlášky uživateli
+                alert('Nepodařilo se inicializovat editor. Zkuste to prosím znovu.');
+
+                // Návrat do zobrazovacího režimu při chybě
+                toggleDiscussionEdit(false);
+                return;
+            }
         }
+
+        // Zobrazení tlačítka pro emoji v editačním režimu
+        const emojiBtn = document.getElementById("emoji-btn-discussion");
+        if (emojiBtn) {
+            emojiBtn.style.display = "inline-block";
+        }
+
     } else {
+        // === DEAKTIVACE EDITAČNÍHO REŽIMU ===
+
+        // Zobrazení zobrazovacích elementů a skrytí editačních
         titleDisplay?.classList.remove('d-none');
         titleEdit?.classList.add('d-none');
         contentDisplay?.classList.remove('d-none');
@@ -632,86 +677,138 @@ async function toggleDiscussionEdit(show) {
         saveBtn?.classList.add('d-none');
         cancelBtn?.classList.add('d-none');
 
+        // Skrytí selectu pro typ diskuze
         if (discussionTypeContainer) {
             discussionTypeContainer.classList.add('d-none');
         }
 
-        // Zrušení instance editoru při zrušení editace
+        // Skrytí tlačítka pro emoji
+        const emojiBtn = document.getElementById("emoji-btn-discussion");
+        if (emojiBtn) {
+            emojiBtn.style.display = "none";
+        }
+
+        // Bezpečné zrušení instance CKEditoru
         if (window.discussionEditor) {
             try {
-                // Pokud je instance editoru aktivní, zrušte ji
-                window.discussionEditor.destroy();
-                window.discussionEditor = null;
+                window.discussionEditor.destroy().then(() => {
+                    window.discussionEditor = null;
+                }).catch(error => {
+                    console.error('Chyba při rušení instance editoru:', error);
+                    // I při chybě nastavíme referenci na null
+                    window.discussionEditor = null;
+                });
             } catch (error) {
                 console.error('Chyba při rušení instance editoru:', error);
+                // I při chybě nastavíme referenci na null
+                window.discussionEditor = null;
             }
         }
     }
-    $("#emoji-btn-discussion").toggle();
 }
 
-/*
-Funkce saveDiscussionChanges se stará o zpracování a uložení změn provedených v editoru diskuze, kde nejprve validuje délku obsahu,
-poté pomocí processEditorContentBeforeSave zajišťuje správné formátování prvků, komunikuje s API pro uložení změn a nakonec
-aktualizuje zobrazení nebo přesměruje uživatele; je klíčovým spojovacím článkem mezi front-endovými úpravami a back-endovými daty.
-*/
+/**
+ * Uloží změny provedené v editoru diskuze na server.
+ *
+ * Funkce kompletně zpracovává proces ukládání upravené diskuze:
+ * - Validuje délku obsahu před odesláním
+ * - Získává a zpracovává obsah z CKEditoru pomocí processEditorContentBeforeSave
+ * - Čistí nepoužívané obrázky z úložiště
+ * - Odesílá PUT požadavek na API se všemi změnami (nadpis, obsah, typ)
+ * - Aktualizuje zobrazení při úspěchu nebo zobrazí chybové hlášky při neúspěchu
+ * - Spravuje přechod zpět do zobrazovacího režimu
+ * - Provádí refresh stránky pro zobrazení aktuálního stavu
+ *
+ * Funkce používá async/await pro asynchronní operace a implementuje
+ * robustní error handling pro různé typy chyb.
+ *
+ * @param {number} discussionId - ID diskuze, která se má uložit
+ * @param {number} discussionType - Původní typ diskuze (fallback hodnota)
+ * @param {Event} event - Event objekt pro možnost preventDefault
+ * @returns {Promise<boolean>} True při úspěchu, false při chybě
+ */
 async function saveDiscussionChanges(discussionId, discussionType, event) {
+    // Získání referencí na potřebné DOM elementy
     const titleEdit = document.getElementById('discussion-title-edit');
     const contentDisplay = document.getElementById('discussion-content-display');
     const apiBaseUrl = document.getElementById('apiBaseUrl').value;
+    const discussionTypeSelect = document.getElementById('editDiscussionType');
+
+    // Konstanta pro maximální délku obsahu
     const maxContentLength = 10000;
 
     try {
-        // Získáme obsah z editoru
-        let content = window.discussionEditor ? window.discussionEditor.getData() : '';
+        // === VALIDACE A PŘÍPRAVA DAT ===
 
+        // Získání obsahu z editoru s kontrolou existence instance
+        let content = '';
+        if (window.discussionEditor) {
+            content = window.discussionEditor.getData();
+        } else {
+            throw new Error('Editor není inicializován');
+        }
+
+        // Validace délky obsahu
         if (content.length > maxContentLength) {
             document.getElementById("modalMessage").textContent =
                 `Obsah diskuze nesmí být delší než ${maxContentLength} znaků. Aktuální délka: ${content.length}`;
             new bootstrap.Modal(document.getElementById("errorModal")).show();
+
             if (event) {
                 event.preventDefault();
             }
             return false;
         }
 
-        // Zpracování obsahu pro zachování zarovnání obrázků
+        // Zpracování obsahu pro zachování zarovnání obrázků a videí
         content = processEditorContentBeforeSave(content);
 
-        // Před uložením zkontrolujeme nepoužívané obrázky a smažeme je
-        await cleanupUnusedImages(content);
-
-        // Získání vybraného typu diskuze z selectu
-        const discussionTypeSelect = document.getElementById('editDiscussionType');
+        // Získání vybraného typu diskuze
         let selectedDiscussionType;
-
-        // Kontrola, zda je select viditelný a existuje
         if (discussionTypeSelect && !discussionTypeSelect.closest('.d-none')) {
             selectedDiscussionType = parseInt(discussionTypeSelect.value);
         } else {
-            // Pokud select neexistuje nebo není viditelný, použijeme původní typ diskuze
+            // Použití původního typu pokud select není dostupný
             selectedDiscussionType = discussionType;
         }
 
-        // Odeslání požadavku na server s aktualizovanými daty
+        // === CLEANUP NEPOUŽÍVANÝCH OBRÁZKŮ ===
+
+        cleanupUnusedImages(content).catch(cleanupError => {
+            console.warn('Nepodařilo se vyčistit nepoužívané obrázky:', cleanupError);
+            // Pokračujeme v ukládání i při chybě cleanup
+        });
+
+        // === ODESLÁNÍ NA SERVER ===
+
+        // Příprava dat pro PUT požadavek
+        const requestData = {
+            title: titleEdit.value.trim(),
+            content: content,
+            type: selectedDiscussionType,
+            voteType: 0 // Zachování současného stavu hlasování
+        };
+
+        // Odeslání PUT požadavku na API
         const response = await fetch(`${apiBaseUrl}/discussions/${discussionId}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                title: titleEdit.value,
-                content: content,
-                type: selectedDiscussionType,
-                voteType: 0 // Zachováme současný stav hlasování
-            })
+            body: JSON.stringify(requestData)
         });
 
+        // === ZPRACOVÁNÍ ODPOVĚDI ===
+
         if (response.ok) {
+            // Úspěšné uložení - aktualizace zobrazení
             contentDisplay.innerHTML = content;
+
+            // Deaktivace editačního režimu
             toggleDiscussionEdit(false);
 
+            // Aktualizace timestamp posledních úprav
             try {
                 const now = new Date();
                 const formatter = new Intl.DateTimeFormat('cs-CZ', {
@@ -722,75 +819,126 @@ async function saveDiscussionChanges(discussionId, discussionType, event) {
                     minute: '2-digit',
                     hour12: false
                 });
-                const formatted = formatter.format(now).replace(/\u00A0/g, '');
-                document.getElementById('discussionUpdatedAtValue').textContent = formatted;
+                const formatted = formatter.format(now).replace(/\u00A0/g, ' ');
+                const updateElement = document.getElementById('discussionUpdatedAtValue');
+                if (updateElement) {
+                    updateElement.textContent = formatted;
+                }
+            } catch (dateError) {
+                console.warn('Nepodařilo se aktualizovat datum úprav:', dateError);
+            }
 
-                // Způsobí kompletní znovunačtení stránky v prohlížeči
-                window.location.reload(true);
-                return;
-            }
-            catch (error) {
-                document.getElementById('discussionUpdatedAtValue').textContent = '';
-            }
+            // Reload stránky pro zobrazení aktuálního stavu
+            window.location.reload(true);
+            return true;
+
         } else {
+            // Zpracování chybové odpovědi ze serveru
             try {
                 const errorData = await response.json();
-                console.error("Chyba při ukládání:", errorData); // Pro diagnostiku
-                if (errorData && errorData.errors && errorData.errors.Content) {
+                console.error("Chyba při ukládání:", errorData);
+
+                // Zobrazení specifické chybové hlášky pokud je k dispozici
+                if (errorData?.errors?.Content?.length > 0) {
                     alert(errorData.errors.Content[0]);
+                } else if (errorData?.message) {
+                    alert(errorData.message);
                 } else {
                     alert('Nepodařilo se uložit změny.');
                 }
-            } catch (e) {
-                alert('Nepodařilo se uložit změny.');
+            } catch (parseError) {
+                // Pokud nelze parsovat JSON odpověď
+                console.error('Chyba při parsování odpovědi:', parseError);
+                alert('Nepodařilo se uložit změny. Zkuste to prosím znovu.');
             }
+            return false;
         }
-    }
-    catch (error) {
-        console.error('Chyba při ukládání:', error);
-        alert('Došlo k chybě při ukládání změn.');
+
+    } catch (error) {
+        // Zpracování obecných chyb
+        console.error('Chyba při ukládání diskuze:', error);
+
+        // Zobrazení obecné chybové hlášky
+        alert('Došlo k neočekávané chybě při ukládání změn. Zkuste to prosím znovu.');
+        return false;
     }
 }
 
-// Vlozeni smajliku do diskuse
-const emojiBtnDiskuse = document.getElementById("emoji-btn-discussion"); // btn smajlika
-const poleSmajlikuDiskuse = document.querySelectorAll("#emoji-list-discussion .emoji"); // pole vsech smajliku v nabidce
-const emojiListDiskuse = document.getElementById("emoji-list-discussion");
+/**
+ * Zpracovává zrušení editace diskuze s vyčištěním nepoužívaných obrázků.
+ *
+ * Funkce se stará o bezpečné ukončení editačního režimu při zrušení změn:
+ * - Získává původní obsah diskuze pro identifikaci použitých obrázků
+ * - Volá cleanup funkci pro smazání dočasně nahraných obrázků
+ * - Deaktivuje editační režim pomocí toggleDiscussionEdit
+ * - Implementuje error handling pro případ selhání cleanup operací
+ *
+ * Tato funkce je důležitá pro správu úložiště obrázků a prevenci
+ * accumulation nepoužívaných souborů.
+ *
+ * @returns {Promise<void>} Promise který se vyřeší po dokončení všech operací
+ */
+function handleCancelEditDiscussionClick() {
+    try {
+        // Získání původního obsahu pro cleanup nepoužívaných obrázků
+        const originalContent = document.getElementById('discussion-content-display').innerHTML;
 
-emojiBtnDiskuse.addEventListener("click", () => {
-    emojiListDiskuse.style.display = emojiListDiskuse.style.display === "block" ? "none" : "block";
-});
-// Vložení smajlíka do editoru při kliknutí
-poleSmajlikuDiskuse.forEach(smajlik => {
-    smajlik.addEventListener("click", () => {
-        // Kontrola, zda globální instance CKEditoru existuje
-        if (window.discussionEditor) {
-            const emoji = smajlik.textContent;
+        // Vyčištění nepoužívaných obrázků před ukončením editace
+        cleanupUnusedImages(originalContent).catch(cleanupError => {
+            console.warn('Nepodařilo se vyčistit nepoužívané obrázky při zrušení editace:', cleanupError);
+        });
 
-            // Použití API CKEditoru 5 pro vložení emoji
-            window.discussionEditor.model.change(writer => {
-                window.discussionEditor.model.insertContent(writer.createText(emoji));
-            });
+        // Deaktivace editačního režimu
+        toggleDiscussionEdit(false);
 
+    } catch (error) {
+        console.error('Chyba při zrušení editace diskuze:', error);
+
+        // Pokus o force ukončení editačního režimu i při chybě
+        try {
+            toggleDiscussionEdit(false);
+        } catch (forceError) {
+            console.error('Nepodařilo se force ukončit editační režim:', forceError);
+            // Reload stránky jako poslední možnost
+            window.location.reload();
         }
-    });
-});
+    }
+}
 
-// Upravená funkce pro kontrolu a mazání nepoužívaných obrázků, která bere v úvahu vložená YouTube videa
+/**
+ * Vyčišťuje nepoužívané obrázky z úložiště na základě aktuálního obsahu.
+ *
+ * Funkce analyzuje poskytnutý HTML obsah a identifikuje všechny obrázky,
+ * které jsou v něm skutečně použity. Poté pošle seznam na server,
+ * který smaže všechny ostatní obrázky z adresáře diskuze.
+ *
+ * Proces zahrnuje:
+ * - Extrakci všech img elementů z HTML obsahu pomocí regex
+ * - Filtrování pouze obrázků patřících k aktuální diskuzi
+ * - Odeslání seznamu používaných obrázků na server
+ * - Server response obsahuje informaci o úspěchu/neúspěchu operace
+ *
+ * Funkce je navržena tak, aby byla odolná vůči chybám - pokud
+ * cleanup selže, operace pokračuje bez přerušení workflow.
+ *
+ * @param {string} newContent - HTML obsah obsahující odkazy na obrázky
+ * @returns {Promise<boolean>} True při úspěchu, false při chybě
+ */
 async function cleanupUnusedImages(newContent) {
     try {
-        // Získání kódu diskuze z URL
+        // Získání kódu diskuze z URL pro identifikaci příslušných obrázků
         const discussionCode = window.location.pathname.split('/').pop();
 
-        // Optimalizovaná regex pro nalezení všech obrázků
+        // Regex pro nalezení všech img elementů v HTML obsahu
         const imagesRegex = /<img[^>]+src="([^"]+)"[^>]*>/g;
         let match;
         const currentImages = new Set();
 
-        // Extrahujeme URL všech obrázků z nového obsahu
+        // Extrakce URL všech obrázků z obsahu
         while ((match = imagesRegex.exec(newContent)) !== null) {
             const imageUrl = match[1];
-            // Zpracuj pouze obrázky patřící k této diskuzi
+
+            // Zpracování pouze obrázků patřících k této diskuzi
             if (imageUrl.includes(`/uploads/discussions/${discussionCode}/`)) {
                 const fileName = imageUrl.split('/').pop();
                 if (fileName) {
@@ -799,54 +947,41 @@ async function cleanupUnusedImages(newContent) {
             }
         }
 
-        // Převedeme Set na pole pro odeslání v těle požadavku
+        // Převod Set na pole pro odeslání v JSON
         const currentImagesArray = Array.from(currentImages);
 
-        // Pošleme seznam aktuálních obrázků na server k promazání ostatních
+        // Odeslání seznamu aktuálně používaných obrázků na server
         const response = await fetch(`/upload/delete-files?discussionCode=${discussionCode}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${sessionStorage.getItem('JWTToken')}`
             },
-            body: JSON.stringify(currentImagesArray) // Odesíláme přímo pole
+            body: JSON.stringify(currentImagesArray)
         });
 
+        // Zpracování odpovědi ze serveru
         if (response.ok) {
             const result = await response.json();
             if (result.success) {
                 return true;
             } else {
-                console.warn('Při mazání nepoužívaných obrázků došlo k chybě:', result.error);
-                return true; // Pokračujeme i když mazání selže
+                console.warn('Server reportoval chybu při mazání nepoužívaných obrázků:', result.error);
+                return false;
             }
         } else {
-            console.warn('Chyba při komunikaci se serverem pro mazání obrázků:', response.status);
-            return true; // Pokračujeme i když mazání selže
+            console.warn('HTTP chyba při komunikaci se serverem pro mazání obrázků:', response.status);
+            return false;
         }
 
     } catch (error) {
-        console.error('Chyba při kontrole a mazání nepoužívaných obrázků:', error);
-        return true; // Pokračujeme i když mazání selže
+        console.error('Chyba při cleanup nepoužívaných obrázků:', error);
+        return false;
     }
 }
 
-// Obsluha události při zrušení editace diskuze
-async function handleCancelEditDiscussionClick() {
-    const originalContent = document.getElementById('discussion-content-display').innerHTML;
 
-    // Skrytí select boxu pro typ diskuze
-    /*const discussionTypeContainer = document.getElementById('discussion-type-select-container');
-    if (discussionTypeContainer) {
-        discussionTypeContainer.classList.add('d-none');
-    }*/
 
-    // Volání standardní funkce pro ukončení editace
-    toggleDiscussionEdit(false);
-
-    // Vyčištění nepoužívaných obrázků
-    await cleanupUnusedImages(originalContent);
-}
 
 // Funkce pro změnu viditelnosti diskuze
 async function toggleDiscussionVisibility(discussionId) {
@@ -948,3 +1083,45 @@ function confirmCategoryChange() {
 
     return confirm(`Opravdu chcete přesunout diskuzi do kategorie "${selectedOption.text}"?`);
 }
+
+/**
+ * Inicializace emoji funkcionalita pro diskuze.
+ *
+ * Tento blok kódu se stará o funkcionalita vkládání emoji do editoru diskuze:
+ * - Nastavuje event listenery pro tlačítko zobrazení emoji
+ * - Přepíná viditelnost seznamu emoji
+ * - Vkládá vybrané emoji do aktivního CKEditoru
+ *
+ * Kód se spustí při načtení stránky a čeká na interakci uživatele.
+ * Emoji se vkládají přímo do CKEditoru pomocí jeho model API.
+ */
+
+// Získání referencí na emoji elementy pro diskuzi
+const emojiBtnDiskuse = document.getElementById("emoji-btn-discussion"); // Tlačítko pro zobrazení emoji
+const poleSmajlikuDiskuse = document.querySelectorAll("#emoji-list-discussion .emoji"); // Všechny emoji v nabídce
+const emojiListDiskuse = document.getElementById("emoji-list-discussion"); // Kontejner s emoji
+
+// Event listener pro zobrazení/skrytí seznamu emoji
+if (emojiBtnDiskuse && emojiListDiskuse) {
+    emojiBtnDiskuse.addEventListener("click", () => {
+        emojiListDiskuse.style.display = emojiListDiskuse.style.display === "block" ? "none" : "block";
+    });
+}
+
+// Event listenery pro vložení emoji do editoru při kliknutí
+poleSmajlikuDiskuse.forEach(smajlik => {
+    smajlik.addEventListener("click", () => {
+        // Kontrola, zda globální instance CKEditoru existuje a je připravena
+        if (window.discussionEditor) {
+            const emoji = smajlik.textContent;
+
+            // Použití CKEditor 5 model API pro vložení emoji na pozici kurzoru
+            window.discussionEditor.model.change(writer => {
+                window.discussionEditor.model.insertContent(writer.createText(emoji));
+            });
+
+            // Skrytí seznamu emoji po výběru pro lepší UX
+            emojiListDiskuse.style.display = "none";
+        }
+    });
+});
