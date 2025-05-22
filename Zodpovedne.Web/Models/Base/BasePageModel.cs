@@ -21,7 +21,7 @@ public abstract class BasePageModel : PageModel
 {
     protected readonly IHttpClientFactory _clientFactory;
     protected readonly IConfiguration _configuration;
-    protected readonly FileLogger _logger;
+    protected readonly FileLogger logger;
     public Translator Translator { get; }  // Translator pro překlady textů na stránkách
 
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
@@ -146,7 +146,7 @@ public abstract class BasePageModel : PageModel
         }
         catch (Exception e)
         {
-            _logger.Log("Nastala chyba při kontrole stavu autentizace.", e);
+            logger.Log("Nastala chyba při kontrole stavu autentizace.", e);
         }
 
         await next();
@@ -156,7 +156,7 @@ public abstract class BasePageModel : PageModel
     {
         _clientFactory = clientFactory ?? throw new ArgumentNullException(nameof(clientFactory));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _sanitizer = sanitizer;
         Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
@@ -178,7 +178,7 @@ public abstract class BasePageModel : PageModel
         }
         catch (Exception e)
         {
-            _logger.Log("Nastala chyba při odhlašování.", e);
+            logger.Log("Nastala chyba při odhlašování.", e);
             ErrorMessage = "Omlouváme se, nastala chyba při odhlašování.";
             return false;
         }

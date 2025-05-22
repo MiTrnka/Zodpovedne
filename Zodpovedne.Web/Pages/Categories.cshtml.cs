@@ -28,14 +28,14 @@ public class CategoriesModel : BasePageModel
         if (!response.IsSuccessStatusCode)
         {
             ErrorMessage = "Omlouváme se, ale seznam kategorií se nepodaøilo naèíst.";
-            _logger.Log("Nepodaøilo se naèíst seznam všech kategorií");
+            logger.Log("Nepodaøilo se naèíst seznam všech kategorií");
             return Page();
         }
         Categories = await response.Content.ReadFromJsonAsync<List<CategoryDto>>() ?? new();
         if (Categories == null)
         {
             ErrorMessage = "Omlouváme se, ale seznam kategorií se nepodaøilo naèíst.";
-            _logger.Log("Nepodaøilo se naèíst seznam všech kategorií z response");
+            logger.Log("Nepodaøilo se naèíst seznam všech kategorií z response");
             return Page();
         }
 

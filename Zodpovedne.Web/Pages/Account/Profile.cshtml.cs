@@ -79,7 +79,7 @@ public class ProfileModel : BasePageModel
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.Log("Nepodaøilo se naèíst data uživatele.");
+            logger.Log("Nepodaøilo se naèíst data uživatele.");
             ErrorMessage = "Omlouváme se, nepodaøilo se naèíst profil uživatele.";
             return Page();
         }
@@ -87,7 +87,7 @@ public class ProfileModel : BasePageModel
         UserProfile = await response.Content.ReadFromJsonAsync<UserProfileDto>();
         if (UserProfile == null)
         {
-            _logger.Log("Nepodaøilo se naèíst data uživatele z response.");
+            logger.Log("Nepodaøilo se naèíst data uživatele z response.");
             ErrorMessage = "Omlouváme se, nepodaøilo se naèíst profil uživatele.";
             return Page();
         }
@@ -107,7 +107,7 @@ public class ProfileModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
+            logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
             // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst diskuze
         }
 
@@ -130,7 +130,7 @@ public class ProfileModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Nepodaøilo se naèíst lajkované diskuze uživatele", ex);
+            logger.Log("Nepodaøilo se naèíst lajkované diskuze uživatele", ex);
         }
 
         // Zjištìní stavu pøátelství - pouze pokud je uživatel pøihlášen a není to jeho vlastní profil
@@ -160,7 +160,7 @@ public class ProfileModel : BasePageModel
             }
             catch (Exception ex)
             {
-                _logger.Log("Nepodaøilo se naèíst stav pøátelství", ex);
+                logger.Log("Nepodaøilo se naèíst stav pøátelství", ex);
                 // Nebudeme zobrazovat chybu, FriendshipStatus zùstane null
             }
         }
@@ -178,7 +178,7 @@ public class ProfileModel : BasePageModel
             }
             catch (Exception ex)
             {
-                _logger.Log("Nepodaøilo se naèíst seznam pøátel uživatele", ex);
+                logger.Log("Nepodaøilo se naèíst seznam pøátel uživatele", ex);
                 // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst pøátele
             }
         }
@@ -196,7 +196,7 @@ public class ProfileModel : BasePageModel
             }
             catch (Exception ex)
             {
-                _logger.Log("Nepodaøilo se naèíst historii pøihlášení uživatele", ex);
+                logger.Log("Nepodaøilo se naèíst historii pøihlášení uživatele", ex);
                 // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst historii
             }
         }
@@ -233,7 +233,7 @@ public class ProfileModel : BasePageModel
         catch (Exception ex)
         {
             // Logování chyby a zobrazení hlášky uživateli
-            _logger.Log("Chyba pøi odesílání žádosti o pøátelství", ex);
+            logger.Log("Chyba pøi odesílání žádosti o pøátelství", ex);
             ErrorMessage = "Pøi odesílání žádosti došlo k chybì. Zkuste to prosím pozdìji.";
         }
 

@@ -1,5 +1,6 @@
 ﻿using Ganss.Xss;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -17,23 +18,15 @@ namespace Zodpovedne.RESTAPI.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class VotingsController : ControllerBase
+public class VotingsController : ControllerZodpovedneBase
 {
-    private readonly ApplicationDbContext _dbContext;
-    private readonly FileLogger _logger;
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
     private readonly IHtmlSanitizer _sanitizer;
 
-    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
-
-
-    public VotingsController(ApplicationDbContext dbContext, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+    public VotingsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+        : base(dbContext, userManager, logger, translator)
     {
-        _dbContext = dbContext;
-        _logger = logger;
         _sanitizer = sanitizer;
-        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
-
     }
 
     /// <summary>
@@ -51,7 +44,7 @@ public class VotingsController : ControllerBase
             var isAdmin = User.IsInRole("Admin");
 
             // Ověření, zda diskuze existuje a má hlasování
-            var discussion = await _dbContext.Discussions
+            var discussion = await dbContext.Discussions
                 .AsNoTracking()
                 .Where(d => d.Id == discussionId && d.Type != DiscussionType.Deleted)
                 .FirstOrDefaultAsync();
@@ -68,7 +61,7 @@ public class VotingsController : ControllerBase
                 return NotFound("Diskuze nemá hlasování.");
 
             // Načtení hlasovacích otázek
-            var questions = await _dbContext.VotingQuestions
+            var questions = await dbContext.VotingQuestions
                 .AsNoTracking()
                 .Where(q => q.DiscussionId == discussionId)
                 .OrderBy(q => q.DisplayOrder)
@@ -100,7 +93,7 @@ public class VotingsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při získávání informací o hlasování", ex);
+            logger.Log("Chyba při získávání informací o hlasování", ex);
             return StatusCode(StatusCodes.Status500InternalServerError, "Při zpracování požadavku došlo k chybě.");
         }
     }
@@ -125,7 +118,7 @@ public class VotingsController : ControllerBase
                 return Unauthorized();
 
             // Ověření, zda diskuze existuje
-            var discussion = await _dbContext.Discussions
+            var discussion = await dbContext.Discussions
                 .Where(d => d.Id == model.DiscussionId && d.Type != DiscussionType.Deleted)
                 .FirstOrDefaultAsync();
 
@@ -146,14 +139,14 @@ public class VotingsController : ControllerBase
             // Pokud chceme odstranit hlasování, odstraníme všechny otázky a nastavíme VoteType na None
             if (model.VoteType == VoteType.None)
             {
-                await _dbContext.VotingQuestions
+                await dbContext.VotingQuestions
                     .Where(q => q.DiscussionId == model.DiscussionId)
                     .ExecuteDeleteAsync();
 
                 discussion.VoteType = VoteType.None;
                 discussion.UpdatedWhateverAt = now;
 
-                await _dbContext.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
 
                 return Ok(new VotingDto
                 {
@@ -168,11 +161,11 @@ public class VotingsController : ControllerBase
             discussion.UpdatedWhateverAt = now;
 
             // Použijeme transakci pro zajištění konzistence dat
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            using var transaction = await dbContext.Database.BeginTransactionAsync();
             try
             {
                 // Získáme aktuálně existující otázky pro tuto diskuzi
-                var existingQuestions = await _dbContext.VotingQuestions
+                var existingQuestions = await dbContext.VotingQuestions
                     .Where(q => q.DiscussionId == model.DiscussionId)
                     .ToListAsync();
 
@@ -194,13 +187,13 @@ public class VotingsController : ControllerBase
                     // Nejprve odstraníme hlasy pro tyto otázky
                     foreach (var idToRemove in idsToRemove)
                     {
-                        await _dbContext.Votes
+                        await dbContext.Votes
                             .Where(v => v.VotingQuestionId == idToRemove)
                             .ExecuteDeleteAsync();
                     }
 
                     // Poté odstraníme samotné otázky
-                    await _dbContext.VotingQuestions
+                    await dbContext.VotingQuestions
                         .Where(q => idsToRemove.Contains(q.Id))
                         .ExecuteDeleteAsync();
                 }
@@ -217,7 +210,7 @@ public class VotingsController : ControllerBase
                             existingQuestion.Text = questionDto.Text;
                             existingQuestion.DisplayOrder = questionDto.DisplayOrder;
                             existingQuestion.UpdatedAt = now;
-                            _dbContext.VotingQuestions.Update(existingQuestion);
+                            dbContext.VotingQuestions.Update(existingQuestion);
                         }
                     }
                     else
@@ -232,18 +225,18 @@ public class VotingsController : ControllerBase
                             UpdatedAt = now
                         };
 
-                        _dbContext.VotingQuestions.Add(newQuestion);
+                        dbContext.VotingQuestions.Add(newQuestion);
                     }
                 }
 
                 // Uložíme změny
-                await _dbContext.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
 
                 // Potvrdíme transakci
                 await transaction.CommitAsync();
 
                 // Načteme aktualizované hlasování pro vrácení
-                var updatedQuestions = await _dbContext.VotingQuestions
+                var updatedQuestions = await dbContext.VotingQuestions
                     .AsNoTracking()
                     .Where(q => q.DiscussionId == model.DiscussionId)
                     .OrderBy(q => q.DisplayOrder)
@@ -280,7 +273,7 @@ public class VotingsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při vytváření/aktualizaci hlasování", ex);
+            logger.Log("Chyba při vytváření/aktualizaci hlasování", ex);
             return StatusCode(StatusCodes.Status500InternalServerError, "Při zpracování požadavku došlo k chybě.");
         }
     }
@@ -304,7 +297,7 @@ public class VotingsController : ControllerBase
                 return Unauthorized();
 
             // Ověření, zda diskuze existuje a má hlasování
-            var discussion = await _dbContext.Discussions
+            var discussion = await dbContext.Discussions
                 .FirstOrDefaultAsync(d => d.Id == model.DiscussionId && d.Type != DiscussionType.Deleted);
 
             if (discussion == null)
@@ -315,7 +308,7 @@ public class VotingsController : ControllerBase
                 return BadRequest("V této diskuzi nelze momentálně hlasovat.");
 
             // Získání seznamu ID otázek v tomto hlasování
-            var questionIds = await _dbContext.VotingQuestions
+            var questionIds = await dbContext.VotingQuestions
                 .Where(q => q.DiscussionId == model.DiscussionId)
                 .Select(q => q.Id)
                 .ToListAsync();
@@ -331,11 +324,11 @@ public class VotingsController : ControllerBase
             var now = DateTime.UtcNow;
 
             // Použijeme transakci pro zajištění konzistence dat
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            using var transaction = await dbContext.Database.BeginTransactionAsync();
             try
             {
                 // Získáme všechny existující hlasy uživatele pro tuto diskuzi
-                var existingVotes = await _dbContext.Votes
+                var existingVotes = await dbContext.Votes
                     .Where(v => v.UserId == userId && v.VotingQuestion.DiscussionId == model.DiscussionId)
                     .ToListAsync();
 
@@ -343,7 +336,7 @@ public class VotingsController : ControllerBase
                 var existingVotesByQuestionId = existingVotes.ToDictionary(v => v.VotingQuestionId);
 
                 // Vytvoříme seznam všech dostupných otázek pro tuto diskuzi
-                var allQuestionsForDiscussion = await _dbContext.VotingQuestions
+                var allQuestionsForDiscussion = await dbContext.VotingQuestions
                     .Where(q => q.DiscussionId == model.DiscussionId)
                     .ToListAsync();
 
@@ -395,7 +388,7 @@ public class VotingsController : ControllerBase
                             UpdatedAt = now
                         };
 
-                        _dbContext.Votes.Add(newVote);
+                        dbContext.Votes.Add(newVote);
 
                         // Inkrementujeme příslušný počet hlasů u otázky
                         if (voteValue)
@@ -427,20 +420,20 @@ public class VotingsController : ControllerBase
                     question.UpdatedAt = now;
 
                     // Smažeme hlas
-                    _dbContext.Votes.Remove(voteToDelete);
+                    dbContext.Votes.Remove(voteToDelete);
                 }
 
                 // Aktualizace UpdatedWhateverAt v diskuzi
                 discussion.UpdatedWhateverAt = now;
 
                 // Uložíme změny
-                await _dbContext.SaveChangesAsync();
+                await dbContext.SaveChangesAsync();
 
                 // Potvrdíme transakci
                 await transaction.CommitAsync();
 
                 // Načteme aktualizované hlasování pro vrácení
-                var updatedQuestions = await _dbContext.VotingQuestions
+                var updatedQuestions = await dbContext.VotingQuestions
                     .AsNoTracking()
                     .Where(q => q.DiscussionId == model.DiscussionId)
                     .OrderBy(q => q.DisplayOrder)
@@ -477,7 +470,7 @@ public class VotingsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při odesílání hlasů", ex);
+            logger.Log("Chyba při odesílání hlasů", ex);
             return StatusCode(StatusCodes.Status500InternalServerError, "Při zpracování požadavku došlo k chybě.");
         }
     }
@@ -503,7 +496,7 @@ public class VotingsController : ControllerBase
                 return Unauthorized();
 
             // Ověření, zda diskuze existuje
-            var discussion = await _dbContext.Discussions
+            var discussion = await dbContext.Discussions
                 .FirstOrDefaultAsync(d => d.Id == discussionId && d.Type != DiscussionType.Deleted);
 
             if (discussion == null)
@@ -516,7 +509,7 @@ public class VotingsController : ControllerBase
             // Pokud chceme vypnout hlasování (None), zkontrolujeme, zda existují otázky
             if (voteType == VoteType.None)
             {
-                var hasQuestions = await _dbContext.VotingQuestions
+                var hasQuestions = await dbContext.VotingQuestions
                     .AnyAsync(q => q.DiscussionId == discussionId);
 
                 if (hasQuestions)
@@ -525,7 +518,7 @@ public class VotingsController : ControllerBase
             // Pokud zapínáme hlasování, zkontrolujeme, zda existují otázky
             else if (discussion.VoteType == VoteType.None)
             {
-                var hasQuestions = await _dbContext.VotingQuestions
+                var hasQuestions = await dbContext.VotingQuestions
                     .AnyAsync(q => q.DiscussionId == discussionId);
 
                 if (!hasQuestions)
@@ -538,13 +531,13 @@ public class VotingsController : ControllerBase
             // Aktualizace typu hlasování
             discussion.VoteType = voteType;
             discussion.UpdatedWhateverAt = now;
-            await _dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
 
             return Ok(new { Status = "success", VoteType = voteType });
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při změně stavu hlasování", ex);
+            logger.Log("Chyba při změně stavu hlasování", ex);
             return StatusCode(StatusCodes.Status500InternalServerError, "Při zpracování požadavku došlo k chybě.");
         }
     }

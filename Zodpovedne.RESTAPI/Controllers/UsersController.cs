@@ -16,33 +16,29 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Net;
 using Zodpovedne.RESTAPI.Services;
 using Zodpovedne.Logging.Services;
+using Zodpovedne.RESTAPI.Controllers;
+//using Microsoft.Extensions.Logging;
+//using Zodpovedne.Data.Migrations;
 
 namespace Zodpovedne.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController : ControllerBase
+public class UsersController : ControllerZodpovedneBase
 {
-    private readonly ApplicationDbContext dbContext;
-    private readonly UserManager<ApplicationUser> userManager;
     private readonly SignInManager<ApplicationUser> signInManager;
-    private readonly FileLogger _logger;
     private readonly IConfiguration configuration;
     private readonly IMemoryCache _cache;
     private readonly IEmailService _emailService;
 
-    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
 
-    public UsersController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, FileLogger logger, IMemoryCache memoryCache, IEmailService emailService, Translator translator)
+    public UsersController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, Translator translator, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, IMemoryCache memoryCache, IEmailService emailService)
+        : base(dbContext, userManager, logger, translator)
     {
-        this.userManager = userManager;
         this.signInManager = signInManager;
         this.configuration = configuration;
-        this.dbContext = dbContext;
-        _logger = logger;
         _cache = memoryCache;
         _emailService = emailService;
-        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>
@@ -87,7 +83,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetPagedUsers endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetPagedUsers endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -121,7 +117,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetAuthenticatedUser endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetAuthenticatedUser endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -159,7 +155,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetAuthenticatedUser endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetAuthenticatedUser endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -218,7 +214,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce CreateMemberUser endpointu.", e);
+            logger.Log("Chyba při vykonávání akce CreateMemberUser endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -268,7 +264,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce CreateAdminUser endpointu.", e);
+            logger.Log("Chyba při vykonávání akce CreateAdminUser endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -313,7 +309,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce UpdateNickname endpointu.", e);
+            logger.Log("Chyba při vykonávání akce UpdateNickname endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -349,7 +345,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce UpdateEmail endpointu.", e);
+            logger.Log("Chyba při vykonávání akce UpdateEmail endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -400,7 +396,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce UpdateAuthenticatedUserPassword endpointu.", e);
+            logger.Log("Chyba při vykonávání akce UpdateAuthenticatedUserPassword endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -426,7 +422,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce DeleteUser endpointu.", e);
+            logger.Log("Chyba při vykonávání akce DeleteUser endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -499,13 +495,13 @@ public class UsersController : ControllerBase
             catch (Exception e)
             {
                 await transaction.RollbackAsync();
-                _logger.Log("Chyba při vykonávání transakce v akci DeleteUserPermanently endpointu.", e);
+                logger.Log("Chyba při vykonávání transakce v akci DeleteUserPermanently endpointu.", e);
                 return BadRequest();
             }
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce DeleteUserPermanently endpointu.", e);
+            logger.Log("Chyba při vykonávání akce DeleteUserPermanently endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -531,7 +527,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce ToggleUserVisibility endpointu.", e);
+            logger.Log("Chyba při vykonávání akce ToggleUserVisibility endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -546,7 +542,7 @@ public class UsersController : ControllerBase
         {
             // Logování všech HTTP hlaviček pro kompletní diagnostiku
             string allHeaders = string.Join(", ", HttpContext.Request.Headers.Select(h => $"{h.Key}: {h.Value}"));
-            //_logger.Log($"DEBUG - All HTTP Headers: {allHeaders}");
+            //logger.Log($"DEBUG - All HTTP Headers: {allHeaders}");
 
             // Získání různých hodnot IP adres pro diagnostiku
             var remoteIpAddress = HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "null";
@@ -556,7 +552,7 @@ public class UsersController : ControllerBase
             var xDebugRemoteAddr = HttpContext.Request.Headers["X-Debug-Remote-Addr"].ToString();
 
             // Detailní log pro diagnostiku - VŽDY LOGUJEME PRO ANALÝZU PROBLÉMU
-            _logger.Log($"IP INFO - RemoteIpAddress: {remoteIpAddress}, " +
+            logger.Log($"IP INFO - RemoteIpAddress: {remoteIpAddress}, " +
                        $"X-Forwarded-For: {xForwardedFor}, " +
                        $"X-Real-IP: {xRealIp}, " +
                        $"X-Client-IP: {xClientIp}, " +
@@ -614,7 +610,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log($"Chyba při získávání IP adresy: {ex.Message}", ex);
+            logger.Log($"Chyba při získávání IP adresy: {ex.Message}", ex);
             return "error-ip";
         }
     }*/
@@ -633,13 +629,13 @@ public class UsersController : ControllerBase
             var user = await this.userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
-                _logger.Log($"Při pokusu o přihlášení nebyl uživatel s emailem {model.Email} nalezen.");
+                logger.Log($"Při pokusu o přihlášení nebyl uživatel s emailem {model.Email} nalezen.");
                 return Unauthorized();
             }
 
             if (user.Type == UserType.Deleted)
             {
-                _logger.Log($"Při pokusu o přihlášení byl uživatel s emailem {model.Email} identifikován se stavem smazaný.");
+                logger.Log($"Při pokusu o přihlášení byl uživatel s emailem {model.Email} identifikován se stavem smazaný.");
                 return Unauthorized();
             }
 
@@ -647,12 +643,12 @@ public class UsersController : ControllerBase
             var result = await this.signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: true);
             if (result.IsLockedOut)
             {
-                _logger.Log($"Při pokusu o přihlášení uživatele s emailem {model.Email} bylo identifikováno, že uživatel je dočasně uzamknut pro přihlášení.");
+                logger.Log($"Při pokusu o přihlášení uživatele s emailem {model.Email} bylo identifikováno, že uživatel je dočasně uzamknut pro přihlášení.");
                 return Unauthorized(new { message = "Účet je uzamčen" });
             }
             if (!result.Succeeded)
             {
-                _logger.Log($"Při pokusu o přihlášení uživatele s emailem {model.Email} bylo identifikováno špatně zadané heslo.");
+                logger.Log($"Při pokusu o přihlášení uživatele s emailem {model.Email} bylo identifikováno špatně zadané heslo.");
                 return Unauthorized();
             }
             // Uložení předchozího posledního přihlášení
@@ -693,7 +689,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce CreateToken endpointu.", e);
+            logger.Log("Chyba při vykonávání akce CreateToken endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -741,7 +737,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při získávání historie přihlášení uživatele", e);
+            logger.Log("Chyba při získávání historie přihlášení uživatele", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -759,7 +755,7 @@ public class UsersController : ControllerBase
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                _logger.Log("Při odhlašování nebyl nalezen userId aktuálního uživatel");
+                logger.Log("Při odhlašování nebyl nalezen userId aktuálního uživatel");
                 return Unauthorized("Při odhlašování nebyl nalezen userId aktuálního uživatel");
             }
 
@@ -767,7 +763,7 @@ public class UsersController : ControllerBase
             var user = await userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                _logger.Log("Při odhlašování nebyl nalezen aktuální uživatel v databázi");
+                logger.Log("Při odhlašování nebyl nalezen aktuální uživatel v databázi");
                 return NotFound("Při odhlašování nebyl nalezen aktuální uživatel v databázi");
             }
 
@@ -777,7 +773,7 @@ public class UsersController : ControllerBase
 
             if (!result.Succeeded)
             {
-                _logger.Log($"Při odhlašování uživatele {user.Id} se nepodařilo aktualizovat je lastLogin");
+                logger.Log($"Při odhlašování uživatele {user.Id} se nepodařilo aktualizovat je lastLogin");
                 return BadRequest($"Při odhlašování uživatele {user.Id} se nepodařilo aktualizovat je lastLogin");
             }
 
@@ -785,7 +781,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce Logout endpointu.", e);
+            logger.Log("Chyba při vykonávání akce Logout endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -972,20 +968,20 @@ public class UsersController : ControllerBase
                 // Potvrzení transakce
                 await transaction.CommitAsync();
 
-                _logger.Log($"Administrátor {User.FindFirstValue(ClaimTypes.NameIdentifier)} provedl vyčištění databáze");
+                logger.Log($"Administrátor {User.FindFirstValue(ClaimTypes.NameIdentifier)} provedl vyčištění databáze");
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.Log("Chyba při čištění databáze", ex);
+                logger.Log("Chyba při čištění databáze", ex);
                 return StatusCode(StatusCodes.Status500InternalServerError, "Nastala chyba při čištění databáze.");
             }
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce CleanupDeletedData endpointu.", e);
+            logger.Log("Chyba při vykonávání akce CleanupDeletedData endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1190,7 +1186,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetDiscussionsWithNewActivities endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetDiscussionsWithNewActivities endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1226,7 +1222,7 @@ public class UsersController : ControllerBase
             // Odeslání e-mailu s odkazem
             if (user.Email == null)
             {
-                _logger.Log("Byl proveden pokus o odeslání emailu pro obnovu hesla, ale email byl null.");
+                logger.Log("Byl proveden pokus o odeslání emailu pro obnovu hesla, ale email byl null.");
                 return BadRequest();
             }
             await _emailService.SendPasswordResetEmailAsync(user.Email, user.Nickname, resetLink);
@@ -1235,7 +1231,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce ForgotPassword.", e);
+            logger.Log("Chyba při vykonávání akce ForgotPassword.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1271,7 +1267,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce ResetPassword.", e);
+            logger.Log("Chyba při vykonávání akce ResetPassword.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1373,7 +1369,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při zjišťování stavu přátelství", e);
+            logger.Log("Chyba při zjišťování stavu přátelství", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1431,7 +1427,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vytváření žádosti o přátelství", e);
+            logger.Log("Chyba při vytváření žádosti o přátelství", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1493,7 +1489,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při načítání přátelství", e);
+            logger.Log("Chyba při načítání přátelství", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1535,7 +1531,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při schvalování žádosti o přátelství", e);
+            logger.Log("Chyba při schvalování žádosti o přátelství", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1577,7 +1573,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při zamítání žádosti o přátelství", e);
+            logger.Log("Chyba při zamítání žádosti o přátelství", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1615,7 +1611,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při odstraňování přátelství", e);
+            logger.Log("Chyba při odstraňování přátelství", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1648,7 +1644,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při zjišťování počtu žádostí o přátelství", e);
+            logger.Log("Chyba při zjišťování počtu žádostí o přátelství", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1725,7 +1721,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při načítání přátel uživatele", e);
+            logger.Log("Chyba při načítání přátel uživatele", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1790,7 +1786,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce UserCount endpointu.", e);
+            logger.Log("Chyba při vykonávání akce UserCount endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1826,7 +1822,7 @@ public class UsersController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při zaznamenávání historie přihlášení", e);
+            logger.Log("Chyba při zaznamenávání historie přihlášení", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

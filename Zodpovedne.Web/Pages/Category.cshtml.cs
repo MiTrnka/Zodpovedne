@@ -70,7 +70,7 @@ public class CategoryModel : BasePageModel
         var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/Categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
         {
-            _logger.Log($"Nenalezena kategorie {CategoryCode}");
+            logger.Log($"Nenalezena kategorie {CategoryCode}");
             ErrorMessage = "Omlouváme se, ale požadovanou kategorii diskuze se nepodaøilo naèíst.";
             return Page();
         }
@@ -78,7 +78,7 @@ public class CategoryModel : BasePageModel
         var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>();
         if (category == null)
         {
-            _logger.Log($"Kategorie {CategoryCode} nejde naèíst");
+            logger.Log($"Kategorie {CategoryCode} nejde naèíst");
             ErrorMessage = "Omlouváme se, ale požadovanou kategorii diskuze se nepodaøilo naèíst.";
             return Page();
         }
@@ -95,7 +95,7 @@ public class CategoryModel : BasePageModel
 
         if (!discussionsResponse.IsSuccessStatusCode)
         {
-            _logger.Log($"Pro kategorii Code: {CategoryCode}, Id: {CategoryId} nejde naèíst její seznam diskuzí.");
+            logger.Log($"Pro kategorii Code: {CategoryCode}, Id: {CategoryId} nejde naèíst její seznam diskuzí.");
             ErrorMessage = "Omlouváme se, ale požadovanou kategorii diskuze se nepodaøilo naèíst.";
             return Page();
         }
@@ -103,7 +103,7 @@ public class CategoryModel : BasePageModel
         var result = await discussionsResponse.Content.ReadFromJsonAsync<PagedResultDto<DiscussionListDto>>();
         if (result == null)
         {
-            _logger.Log($"Pro kategorii Code: {CategoryCode}, Id: {CategoryId} nejde naèíst její seznam diskuzí z response.");
+            logger.Log($"Pro kategorii Code: {CategoryCode}, Id: {CategoryId} nejde naèíst její seznam diskuzí z response.");
             ErrorMessage = "Omlouváme se, ale požadovanou kategorii diskuze se nepodaøilo naèíst.";
             return Page();
         }
@@ -134,14 +134,14 @@ public class CategoryModel : BasePageModel
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.Log($"Nepodaøilo se naèíst další stránku diskuzí. StatusCode: {response.StatusCode}");
+                logger.Log($"Nepodaøilo se naèíst další stránku diskuzí. StatusCode: {response.StatusCode}");
                 return BadRequest("Nepodaøilo se naèíst další diskuze.");
             }
 
             var result = await response.Content.ReadFromJsonAsync<PagedResultDto<DiscussionListDto>>();
             if (result == null)
             {
-                _logger.Log("Nepodaøilo se deserializovat odpovìï z API");
+                logger.Log("Nepodaøilo se deserializovat odpovìï z API");
                 return BadRequest("Nepodaøilo se naèíst další diskuze.");
             }
 
@@ -156,7 +156,7 @@ public class CategoryModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba pøi naèítání další stránky diskuzí", ex);
+            logger.Log("Chyba pøi naèítání další stránky diskuzí", ex);
             return BadRequest("Došlo k chybì pøi naèítání diskuzí.");
         }
     }

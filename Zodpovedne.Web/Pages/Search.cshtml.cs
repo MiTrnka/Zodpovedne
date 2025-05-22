@@ -64,14 +64,14 @@ public class SearchModel : BasePageModel
             else
             {
                 // Logování chyby pøi neúspìšném volání API
-                _logger.Log($"Chyba pøi vyhledávání: {response.StatusCode}");
+                logger.Log($"Chyba pøi vyhledávání: {response.StatusCode}");
                 ErrorMessage = "Pøi vyhledávání došlo k chybì.";
             }
         }
         catch (Exception ex)
         {
             // Logování a zobrazení chyby pøi výjimce
-            _logger.Log("Chyba pøi vyhledávání", ex);
+            logger.Log("Chyba pøi vyhledávání", ex);
             ErrorMessage = "Pøi vyhledávání došlo k chybì.";
         }
     }

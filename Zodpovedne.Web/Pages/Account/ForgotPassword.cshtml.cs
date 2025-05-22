@@ -50,7 +50,7 @@ namespace Zodpovedne.Web.Pages.Account
             }
             catch (Exception ex)
             {
-                _logger.Log("Chyba pøi odesílání žádosti o obnovení hesla", ex);
+                logger.Log("Chyba pøi odesílání žádosti o obnovení hesla", ex);
                 ErrorMessage = "Došlo k chybì pøi zpracování žádosti. Zkuste to prosím pozdìji.";
                 return Page();
             }

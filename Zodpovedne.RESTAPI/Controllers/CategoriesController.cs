@@ -4,22 +4,18 @@ using Zodpovedne.Data.Data;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Logging;
 using Zodpovedne.Logging.Services;
+using Microsoft.AspNetCore.Identity;
+using Zodpovedne.Data.Models;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CategoriesController : ControllerBase
+public class CategoriesController : ControllerZodpovedneBase
 {
-    private readonly ApplicationDbContext dbContext;
-    private readonly FileLogger _logger;
-    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
-
-    public CategoriesController(ApplicationDbContext dbContext, FileLogger logger, Translator translator)
+    public CategoriesController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, Translator translator)
+        : base(dbContext, userManager, logger, translator)
     {
-        this.dbContext = dbContext;
-        _logger = logger;
-        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>
@@ -51,7 +47,7 @@ public class CategoriesController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetCategories endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetCategories endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -87,7 +83,7 @@ public class CategoriesController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetCategoryByCode endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetCategoryByCode endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

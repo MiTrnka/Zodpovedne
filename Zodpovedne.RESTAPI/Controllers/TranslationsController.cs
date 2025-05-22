@@ -5,20 +5,18 @@ using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Logging;
 using Zodpovedne.Data.Models;
 using Zodpovedne.Logging.Services;
+//using Zodpovedne.Data.Migrations;
+using Microsoft.AspNetCore.Identity;
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TranslationsController : ControllerBase
+public class TranslationsController : ControllerZodpovedneBase
 {
-    private readonly ApplicationDbContext dbContext;
-    private readonly FileLogger _logger;
-
-    public TranslationsController(ApplicationDbContext dbContext, FileLogger logger)
+    public TranslationsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, Translator translator)
+        : base(dbContext, userManager, logger, translator)
     {
-        this.dbContext = dbContext;
-        _logger = logger;
     }
 
     /// <summary>
@@ -44,7 +42,7 @@ public class TranslationsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetDictionaryForSiteInstance endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetDictionaryForSiteInstance endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

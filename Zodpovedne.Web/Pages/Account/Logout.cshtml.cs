@@ -36,7 +36,7 @@ public class LogoutModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba pøi odhlašování", ex);
+            logger.Log("Chyba pøi odhlašování", ex);
             ErrorMessage = "Pøi odhlašování nastala chyba.";
             return Page();
         }

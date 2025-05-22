@@ -1,5 +1,6 @@
 ﻿using Ganss.Xss;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -19,26 +20,20 @@ namespace Zodpovedne.RESTAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize] // Všechny endpointy vyžadují přihlášeného uživatele
-public class MessagesController : ControllerBase
+public class MessagesController : ControllerZodpovedneBase
 {
-    private readonly ApplicationDbContext _dbContext;
-    private readonly FileLogger _logger;
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
     private readonly IHtmlSanitizer _sanitizer;
-
-    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
 
     /// <summary>
     /// Konstruktor controlleru zpráv
     /// </summary>
     /// <param name="dbContext">Databázový kontext pro přístup k datům</param>
     /// <param name="logger">Logger pro zaznamenávání chyb a událostí</param>
-    public MessagesController(ApplicationDbContext dbContext, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+    public MessagesController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+        : base(dbContext, userManager, logger, translator)
     {
-        _dbContext = dbContext;
-        _logger = logger;
         _sanitizer = sanitizer;
-        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>
@@ -70,7 +65,7 @@ public class MessagesController : ControllerBase
                 return Forbid("Uživatelé nejsou přátelé"); // Uživatelé nejsou přátelé, nemají přístup ke konverzaci
 
             // 2. KROK: Ověření, že druhý uživatel existuje a není smazaný
-            var otherUser = await _dbContext.Users
+            var otherUser = await dbContext.Users
                 .Where(u => u.Id == otherUserId && u.Type == UserType.Normal)
                 .Select(u => new { u.Id, u.Nickname })
                 .FirstOrDefaultAsync();
@@ -79,7 +74,7 @@ public class MessagesController : ControllerBase
                 return NotFound(); // Uživatel neexistuje nebo je skrytý/smazaný
 
             // 3. KROK: Získání celkového počtu zpráv v konverzaci pro stránkování
-            var totalCount = await _dbContext.Messages
+            var totalCount = await dbContext.Messages
                 .Where(m =>
                     (m.SenderUserId == currentUserId && m.RecipientUserId == otherUserId) ||
                     (m.SenderUserId == otherUserId && m.RecipientUserId == currentUserId)
@@ -88,7 +83,7 @@ public class MessagesController : ControllerBase
 
             // 4. KROK: Získání zpráv pro aktuální stránku
             // Řazení: od nejnovějších (nahoře) po nejstarší (dole) - ale v UI se zobrazí obráceně
-            var messages = await _dbContext.Messages
+            var messages = await dbContext.Messages
                 .Where(m =>
                     (m.SenderUserId == currentUserId && m.RecipientUserId == otherUserId) ||
                     (m.SenderUserId == otherUserId && m.RecipientUserId == currentUserId)
@@ -112,7 +107,7 @@ public class MessagesController : ControllerBase
                 .ToListAsync();
 
             // 5. KROK: Označit přijaté zprávy jako přečtené
-            var unreadMessageIds = await _dbContext.Messages
+            var unreadMessageIds = await dbContext.Messages
                 .Where(m =>
                     m.SenderUserId == otherUserId &&
                     m.RecipientUserId == currentUserId &&
@@ -124,7 +119,7 @@ public class MessagesController : ControllerBase
             if (unreadMessageIds.Any())
             {
                 var now = DateTime.UtcNow;
-                await _dbContext.Messages
+                await dbContext.Messages
                     .Where(m => unreadMessageIds.Contains(m.Id))
                     .ExecuteUpdateAsync(s => s.SetProperty(m => m.ReadAt, now));
             }
@@ -139,7 +134,7 @@ public class MessagesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při získávání zpráv konverzace", ex);
+            logger.Log("Chyba při získávání zpráv konverzace", ex);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -164,7 +159,7 @@ public class MessagesController : ControllerBase
             model.Content = _sanitizer.Sanitize(model.Content);
 
             // 1. KROK: Ověření, že příjemce existuje a není smazaný
-            var recipient = await _dbContext.Users
+            var recipient = await dbContext.Users
                 .Where(u => u.Id == model.RecipientUserId && u.Type == UserType.Normal)
                 .Select(u => new { u.Id, u.Nickname })
                 .FirstOrDefaultAsync();
@@ -178,7 +173,7 @@ public class MessagesController : ControllerBase
                 return BadRequest("Zprávy lze odesílat pouze přátelům.");
 
             // 3. KROK: Získání informací o odesílateli (aktuálním uživateli)
-            var sender = await _dbContext.Users
+            var sender = await dbContext.Users
                 .Where(u => u.Id == currentUserId)
                 .Select(u => new { u.Id, u.Nickname })
                 .FirstOrDefaultAsync();
@@ -200,8 +195,8 @@ public class MessagesController : ControllerBase
                 MessageType = MessageType.Normal
             };
 
-            _dbContext.Messages.Add(message);
-            await _dbContext.SaveChangesAsync();
+            dbContext.Messages.Add(message);
+            await dbContext.SaveChangesAsync();
 
             // 6. KROK: Vrácení detailů odeslané zprávy
             return new MessageDto
@@ -219,7 +214,7 @@ public class MessagesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při odesílání zprávy", ex);
+            logger.Log("Chyba při odesílání zprávy", ex);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -240,7 +235,7 @@ public class MessagesController : ControllerBase
                 return Unauthorized();
 
             // 1. KROK: Získání seznamu ID přátel pro filtrování
-            var friendIds = await _dbContext.Friendships
+            var friendIds = await dbContext.Friendships
                 .Include(f => f.ApproverUser)
                 .Where(f => f.ApproverUser.Type == UserType.Normal)
                 .Where(f => (f.ApproverUserId == currentUserId || f.RequesterUserId == currentUserId) &&
@@ -249,7 +244,7 @@ public class MessagesController : ControllerBase
                 .ToListAsync();
 
             // 2. KROK: Získání počtu nepřečtených zpráv od přátel
-            var unreadCount = await _dbContext.Messages
+            var unreadCount = await dbContext.Messages
                 .Where(m =>
                     m.RecipientUserId == currentUserId && // Uživatel je příjemcem
                     m.ReadAt == null &&                   // Zpráva ještě nebyla přečtena
@@ -261,7 +256,7 @@ public class MessagesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při získávání počtu nepřečtených zpráv", ex);
+            logger.Log("Chyba při získávání počtu nepřečtených zpráv", ex);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -281,14 +276,14 @@ public class MessagesController : ControllerBase
                 return Unauthorized();
 
             // 1. KROK: Získání seznamu ID přátel pro filtrování
-            var friendIds = await _dbContext.Friendships
+            var friendIds = await dbContext.Friendships
                 .Where(f => (f.ApproverUserId == currentUserId || f.RequesterUserId == currentUserId) &&
                       f.FriendshipStatus == FriendshipStatus.Approved)
                 .Select(f => f.ApproverUserId == currentUserId ? f.RequesterUserId : f.ApproverUserId)
                 .ToListAsync();
 
             // 2. KROK: Získání počtu nepřečtených zpráv od každého přítele
-            var unreadCounts = await _dbContext.Messages
+            var unreadCounts = await dbContext.Messages
                 .Where(m =>
                     m.RecipientUserId == currentUserId && // Uživatel je příjemcem
                     m.ReadAt == null &&                   // Zpráva ještě nebyla přečtena
@@ -306,7 +301,7 @@ public class MessagesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při získávání počtu nepřečtených zpráv podle uživatelů", ex);
+            logger.Log("Chyba při získávání počtu nepřečtených zpráv podle uživatelů", ex);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -319,7 +314,7 @@ public class MessagesController : ControllerBase
     /// <returns></returns>
     protected async Task<bool> AreFriends(string firstUserId, string secondUserId)
     {
-        return await _dbContext.Friendships
+        return await dbContext.Friendships
             .AnyAsync(f =>(
                 (f.ApproverUserId == firstUserId && f.RequesterUserId == secondUserId) ||
                 (f.ApproverUserId == secondUserId && f.RequesterUserId == firstUserId))

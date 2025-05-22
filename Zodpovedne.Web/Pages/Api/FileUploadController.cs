@@ -18,13 +18,13 @@ namespace Zodpovedne.Web.Pages.Api;
 [ApiController]
 public class FileUploadController : ControllerBase
 {
-    private readonly FileLogger _logger;
+    private readonly FileLogger logger;
     private readonly IHtmlSanitizer _sanitizer;
     private readonly IWebHostEnvironment _environment;
 
     public FileUploadController(FileLogger logger, IHtmlSanitizer sanitizer, IWebHostEnvironment environment)
     {
-        _logger = logger;
+        logger = logger;
         _sanitizer = sanitizer;
         _environment = environment;
     }
@@ -65,7 +65,7 @@ public class FileUploadController : ControllerBase
             // Validace kódu diskuze - pro bezpečnost, abychom zabránili přístupu k nežádoucím adresářům
             if (!IsValidDiscussionCode(discussionCode))
             {
-                _logger.Log($"Neplatný kód diskuze při nahrávání souboru: {discussionCode}");
+                logger.Log($"Neplatný kód diskuze při nahrávání souboru: {discussionCode}");
                 return BadRequest(new
                 {
                     uploaded = 0,
@@ -117,7 +117,7 @@ public class FileUploadController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při nahrávání souboru", ex);
+            logger.Log("Chyba při nahrávání souboru", ex);
             return StatusCode(500, new
             {
                 uploaded = 0,
@@ -160,7 +160,7 @@ public class FileUploadController : ControllerBase
             // Validace kódu diskuze - pro bezpečnost
             if (!IsValidDiscussionCode(discussionCode))
             {
-                _logger.Log($"Neplatný kód diskuze při promazávání souborů: {discussionCode}");
+                logger.Log($"Neplatný kód diskuze při promazávání souborů: {discussionCode}");
                 return BadRequest(new { error = "Neplatný kód diskuze" });
             }
 
@@ -186,7 +186,7 @@ public class FileUploadController : ControllerBase
                     }
                     catch (Exception ex)
                     {
-                        _logger.Log($"Chyba při mazání souboru {fileName} v diskuzi {discussionCode}: {ex.Message}");
+                        logger.Log($"Chyba při mazání souboru {fileName} v diskuzi {discussionCode}: {ex.Message}");
                         // Nepřerušujeme proces mazání, ale logujeme chybu
                     }
                 }
@@ -201,7 +201,7 @@ public class FileUploadController : ControllerBase
                 }
                 catch (Exception ex)
                 {
-                    _logger.Log($"Chyba při mazání prázdného adresáře diskuze {discussionCode}: {ex.Message}");
+                    logger.Log($"Chyba při mazání prázdného adresáře diskuze {discussionCode}: {ex.Message}");
                 }
             }
 
@@ -209,7 +209,7 @@ public class FileUploadController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při promazávání nepoužívaných obrázků", ex);
+            logger.Log("Chyba při promazávání nepoužívaných obrázků", ex);
             return StatusCode(500, new { error = "Chyba při promazávání nepoužívaných obrázků" });
         }
     }
@@ -225,7 +225,7 @@ public class FileUploadController : ControllerBase
             // Validace kódu diskuze - pro bezpečnost
             if (string.IsNullOrEmpty(discussionCode) || !IsValidDiscussionCode(discussionCode))
             {
-                _logger.Log($"Neplatný kód diskuze při výpisu souborů: {discussionCode}");
+                logger.Log($"Neplatný kód diskuze při výpisu souborů: {discussionCode}");
                 return BadRequest(new { error = "Neplatný kód diskuze" });
             }
 
@@ -254,7 +254,7 @@ public class FileUploadController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při výpisu souborů", ex);
+            logger.Log("Chyba při výpisu souborů", ex);
             return StatusCode(500, new { error = "Chyba při výpisu souborů" });
         }
     }
@@ -315,7 +315,7 @@ public class FileUploadController : ControllerBase
             // Validace kódů diskuzí
             if (!IsValidDiscussionCode(model.OldCode) || !IsValidDiscussionCode(model.NewCode))
             {
-                _logger.Log($"Neplatný kód diskuze při přejmenování adresáře: {model.OldCode} -> {model.NewCode}");
+                logger.Log($"Neplatný kód diskuze při přejmenování adresáře: {model.OldCode} -> {model.NewCode}");
                 return BadRequest(new { error = "Neplatný kód diskuze" });
             }
 
@@ -346,7 +346,7 @@ public class FileUploadController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při přejmenování adresáře", ex);
+            logger.Log("Chyba při přejmenování adresáře", ex);
             return StatusCode(500, new { error = "Chyba při přejmenování adresáře" });
         }
     }
@@ -384,7 +384,7 @@ public class FileUploadController : ControllerBase
             // Validace kódu diskuze
             if (!IsValidDiscussionCode(model.Code))
             {
-                _logger.Log($"Neplatný kód diskuze při mazání adresáře: {model.Code}");
+                logger.Log($"Neplatný kód diskuze při mazání adresáře: {model.Code}");
                 return BadRequest(new { error = "Neplatný kód diskuze" });
             }
 
@@ -403,7 +403,7 @@ public class FileUploadController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při mazání adresáře", ex);
+            logger.Log("Chyba při mazání adresáře", ex);
             return StatusCode(500, new { error = "Chyba při mazání adresáře" });
         }
     }
@@ -441,7 +441,7 @@ public class FileUploadController : ControllerBase
             // Validace kódu diskuze a názvu souboru
             if (!IsValidDiscussionCode(model.DiscussionCode) || !IsValidFileName(model.FileName))
             {
-                _logger.Log($"Neplatný kód diskuze nebo název souboru při mazání: {model.DiscussionCode}/{model.FileName}");
+                logger.Log($"Neplatný kód diskuze nebo název souboru při mazání: {model.DiscussionCode}/{model.FileName}");
                 return BadRequest(new { error = "Neplatný kód diskuze nebo název souboru" });
             }
 
@@ -460,7 +460,7 @@ public class FileUploadController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba při mazání souboru", ex);
+            logger.Log("Chyba při mazání souboru", ex);
             return StatusCode(500, new { error = "Chyba při mazání souboru" });
         }
     }

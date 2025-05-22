@@ -25,7 +25,7 @@ public class RegisterModel : BasePageModel
         if (!ModelState.IsValid)
         {
             ErrorMessage = "Omlouváme se, nastala chyba";
-            _logger.Log("Chyba pøi registraci nového uživatele");
+            logger.Log("Chyba pøi registraci nového uživatele");
             return Page();
         }
 
@@ -46,7 +46,7 @@ public class RegisterModel : BasePageModel
         if (!loginResponse.IsSuccessStatusCode)
         {
             ErrorMessage = "Registrace probìhla úspìšnì, ale nepodaøilo se pøihlásit";
-            _logger.Log($"Registrace probìhla úspìšnì, ale nepodaøilo se pøihlásit pro {Input.Email}");
+            logger.Log($"Registrace probìhla úspìšnì, ale nepodaøilo se pøihlásit pro {Input.Email}");
             return Page();
         }
 
@@ -54,7 +54,7 @@ public class RegisterModel : BasePageModel
         if (result == null)
         {
             ErrorMessage = "Registrace probìhla úspìšnì, ale nepodaøilo se pøihlásit";
-            _logger.Log($"Registrace probìhla úspìšnì, ale nepodaøilo se pøihlásit pro {Input.Email}, chyba se získáním response");
+            logger.Log($"Registrace probìhla úspìšnì, ale nepodaøilo se pøihlásit pro {Input.Email}, chyba se získáním response");
             return Page();
         }
 

@@ -78,7 +78,7 @@ namespace Zodpovedne.Web.Pages.Account
             }
             catch (Exception ex)
             {
-                _logger.Log("Chyba pøi obnovení hesla", ex);
+                logger.Log("Chyba pøi obnovení hesla", ex);
                 ErrorMessage = "Došlo k chybì pøi obnovení hesla. Zkuste to prosím pozdìji.";
                 return Page();
             }

@@ -102,7 +102,7 @@ public class MessagesModel : BasePageModel
             }
             else
             {
-                _logger.Log($"Nepodaøilo se naèíst seznam pøátel, status: {friendshipsResponse.StatusCode}");
+                logger.Log($"Nepodaøilo se naèíst seznam pøátel, status: {friendshipsResponse.StatusCode}");
                 // Nezobrazujeme chybu pøi naèítání pøátel, aby uživatel mohl alespoò pracovat s existujícími konverzacemi
             }
 
@@ -110,7 +110,7 @@ public class MessagesModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba pøi naèítání stránky se zprávami", ex);
+            logger.Log("Chyba pøi naèítání stránky se zprávami", ex);
             ErrorMessage = "Pøi naèítání zpráv došlo k chybì. Zkuste to prosím pozdìji.";
             return Page();
         }

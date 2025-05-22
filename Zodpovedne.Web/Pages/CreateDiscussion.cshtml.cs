@@ -51,7 +51,7 @@ public class CreateDiscussionModel : BasePageModel
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.Log($"Kategorie {CategoryCode} nenalezena");
+            logger.Log($"Kategorie {CategoryCode} nenalezena");
             ErrorMessage = "Omlouváme se, ale diskuzi nejde momentálnì založit.";
             return Page();
         }
@@ -59,7 +59,7 @@ public class CreateDiscussionModel : BasePageModel
         var category = await response.Content.ReadFromJsonAsync<CategoryDto>();
         if (category == null)
         {
-            _logger.Log($"Kategorie {CategoryCode} nelze naèíst");
+            logger.Log($"Kategorie {CategoryCode} nelze naèíst");
             ErrorMessage = "Omlouváme se, ale diskuzi nejde momentálnì založit.";
             return Page();
         }
@@ -128,7 +128,7 @@ public class CreateDiscussionModel : BasePageModel
             {
                 if (state.Value.Errors.Any())
                 {
-                    _logger.Log($"Validaèní chyba pro {state.Key}: {string.Join(", ", state.Value.Errors.Select(e => e.ErrorMessage))}");
+                    logger.Log($"Validaèní chyba pro {state.Key}: {string.Join(", ", state.Value.Errors.Select(e => e.ErrorMessage))}");
                 }
             }
 
@@ -261,13 +261,13 @@ public class CreateDiscussionModel : BasePageModel
 
                                     if (!votingResponse.IsSuccessStatusCode)
                                     {
-                                        _logger.Log($"Nepodaøilo se vytvoøit hlasování pro diskuzi ID {discussionId}. Stavový kód: {votingResponse.StatusCode}");
+                                        logger.Log($"Nepodaøilo se vytvoøit hlasování pro diskuzi ID {discussionId}. Stavový kód: {votingResponse.StatusCode}");
                                     }
                                 }
                             }
                             catch (Exception ex)
                             {
-                                _logger.Log($"Chyba pøi vytváøení hlasování pro diskuzi ID {discussionId}", ex);
+                                logger.Log($"Chyba pøi vytváøení hlasování pro diskuzi ID {discussionId}", ex);
                                 // Pokraèujeme i pøi chybì vytváøení hlasování (diskuze byla úspìšnì vytvoøena)
                             }
                         }
@@ -281,7 +281,7 @@ public class CreateDiscussionModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Došlo k chybì pøi vytváøení diskuze", ex);
+            logger.Log("Došlo k chybì pøi vytváøení diskuze", ex);
             ErrorMessage = "Omlouváme se, ale došlo k chybì pøi vytváøení diskuze.";
             return Page();
         }

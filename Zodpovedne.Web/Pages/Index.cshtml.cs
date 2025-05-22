@@ -41,12 +41,12 @@ namespace Zodpovedne.Web.Pages
                 }
                 else
                 {
-                    _logger.Log($"Nepodaøilo se naèíst kombinovaný feed: {response.StatusCode}");
+                    logger.Log($"Nepodaøilo se naèíst kombinovaný feed: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.Log("Chyba pøi naèítání kombinovaného feedu", ex);
+                logger.Log("Chyba pøi naèítání kombinovaného feedu", ex);
                 // Zde nechceme zobrazovat chybu uživateli, staèí logování
             }
 

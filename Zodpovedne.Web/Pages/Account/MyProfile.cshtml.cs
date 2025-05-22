@@ -100,7 +100,7 @@ public class MyProfileModel : BasePageModel
 
         if (UserProfile == null)
         {
-            _logger.Log("Nepodaøilo se naèíst data pøihlášeného uživatele z response.");
+            logger.Log("Nepodaøilo se naèíst data pøihlášeného uživatele z response.");
             ErrorMessage = "Omlouváme se, nepodaøilo se naèíst Váš profil.";
         }
 
@@ -136,7 +136,7 @@ public class MyProfileModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba pøi vyhledávání uživatele", ex);
+            logger.Log("Chyba pøi vyhledávání uživatele", ex);
             return RedirectToPage(new { searchErrorMessage = "Pøi vyhledávání uživatele došlo k chybì" });
         }
     }
@@ -166,13 +166,13 @@ public class MyProfileModel : BasePageModel
             else
             {
                 ErrorMessage = "Pøi èištìní databáze došlo k chybì.";
-                _logger.Log($"Chyba pøi volání API pro èištìní databáze. Status: {response.StatusCode}");
+                logger.Log($"Chyba pøi volání API pro èištìní databáze. Status: {response.StatusCode}");
             }
         }
         catch (Exception ex)
         {
             ErrorMessage = "Pøi èištìní databáze došlo k chybì.";
-            _logger.Log("Chyba pøi èištìní databáze", ex);
+            logger.Log("Chyba pøi èištìní databáze", ex);
         }
 
         //return RedirectToPage(); // Zpùsobí znovunaètení stránky (znovu se novì naplní model)
@@ -191,7 +191,7 @@ public class MyProfileModel : BasePageModel
         var client = _clientFactory.CreateBearerClient(HttpContext);
         if (client == null)
         {
-            _logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
+            logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
             ErrorMessage = "Omlouváme se, nìco se pokazilo.";
             await LoadUserDataAsync();
             return Page();
@@ -232,7 +232,7 @@ public class MyProfileModel : BasePageModel
         var client = _clientFactory.CreateBearerClient(HttpContext);
         if (client == null)
         {
-            _logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
+            logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
             ErrorMessage = "Omlouváme se, nìco se pokazilo.";
             await LoadUserDataAsync();
             return Page();
@@ -272,7 +272,7 @@ public class MyProfileModel : BasePageModel
         var client = _clientFactory.CreateBearerClient(HttpContext);
         if (client == null)
         {
-            _logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
+            logger.Log("Nepodaøilo se vytvoøit HTTP klienta");
             ErrorMessage = "Omlouváme se, nìco se pokazilo.";
             await LoadUserDataAsync();
             return Page();
@@ -319,7 +319,7 @@ public class MyProfileModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba pøi schvalování žádosti o pøátelství", ex);
+            logger.Log("Chyba pøi schvalování žádosti o pøátelství", ex);
             ErrorMessage = "Pøi schvalování žádosti došlo k chybì.";
         }
 
@@ -348,7 +348,7 @@ public class MyProfileModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba pøi zamítání žádosti o pøátelství", ex);
+            logger.Log("Chyba pøi zamítání žádosti o pøátelství", ex);
             ErrorMessage = "Pøi zamítání žádosti došlo k chybì.";
         }
 
@@ -377,7 +377,7 @@ public class MyProfileModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba pøi odebírání pøátelství", ex);
+            logger.Log("Chyba pøi odebírání pøátelství", ex);
             ErrorMessage = "Pøi odebírání pøátelství došlo k chybì.";
         }
 
@@ -416,7 +416,7 @@ public class MyProfileModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
+            logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
         }
 
         // Naètení seznamu diskuzí s novými aktivitami pro pøihlášeného uživatele (nové odpovìdi nebo komentáøe)
@@ -431,7 +431,7 @@ public class MyProfileModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Nepodaøilo se naèíst notifikace o nových aktivitách", ex);
+            logger.Log("Nepodaøilo se naèíst notifikace o nových aktivitách", ex);
         }
 
         // Naètení pøátelství
@@ -445,7 +445,7 @@ public class MyProfileModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Nepodaøilo se naèíst seznam pøátel", ex);
+            logger.Log("Nepodaøilo se naèíst seznam pøátel", ex);
         }
     }
 }

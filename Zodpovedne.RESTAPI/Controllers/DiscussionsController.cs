@@ -12,6 +12,8 @@ using Ganss.Xss;
 using Zodpovedne.Logging;
 using Zodpovedne.Logging.Services;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
+
 
 namespace Zodpovedne.RESTAPI.Controllers;
 
@@ -20,24 +22,15 @@ namespace Zodpovedne.RESTAPI.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class DiscussionsController : ControllerBase
+public class DiscussionsController : ControllerZodpovedneBase
 {
-    private readonly ApplicationDbContext dbContext;
-    private readonly UserManager<ApplicationUser> userManager;
-    private readonly FileLogger _logger;
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
-    private readonly IHtmlSanitizer _sanitizer;
+    protected readonly IHtmlSanitizer _sanitizer;
 
-    public Translator Translator { get; }  // Translator pro překlady textů na stránkách
-
-
-    public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+    public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, Translator translator, IHtmlSanitizer sanitizer)
+        : base(dbContext, userManager, logger, translator)
     {
-        _logger = logger;
-        this.dbContext = dbContext;
-        this.userManager = userManager;
         _sanitizer = sanitizer;
-        Translator = translator ?? throw new ArgumentNullException(nameof(translator));
     }
 
     /// <summary>
@@ -214,7 +207,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetDiscussions endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetDiscussions endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -324,7 +317,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetUserDiscussions endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetUserDiscussions endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -502,7 +495,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetDiscussion endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetDiscussion endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -531,7 +524,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetDiscussionByCode endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetDiscussionByCode endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -583,7 +576,7 @@ public class DiscussionsController : ControllerBase
 
             if (discussion == null)
             {
-                _logger.Log($"Diskuze s ID {discussionId} nebyla nalezena.");
+                logger.Log($"Diskuze s ID {discussionId} nebyla nalezena.");
                 return NotFound();
             }
 
@@ -591,7 +584,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetBasicDiscussionInfo endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetBasicDiscussionInfo endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -615,7 +608,7 @@ public class DiscussionsController : ControllerBase
 
             if (discussionId == 0)  // ID 0 znamená, že diskuze nebyla nalezena
             {
-                _logger.Log($"Diskuze s kódem {code} nebyla nalezena.");
+                logger.Log($"Diskuze s kódem {code} nebyla nalezena.");
                 return NotFound("Diskuze s daným kódem nebyla nalezena.");
             }
 
@@ -624,7 +617,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetBasicDiscussionInfoByCode endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetBasicDiscussionInfoByCode endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -686,7 +679,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce CreateDiscussion endpointu.", e);
+            logger.Log("Chyba při vykonávání akce CreateDiscussion endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -751,7 +744,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce UpdateDiscussion endpointu.", e);
+            logger.Log("Chyba při vykonávání akce UpdateDiscussion endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -789,7 +782,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce ToggleDiscussionTop endpointu.", e);
+            logger.Log("Chyba při vykonávání akce ToggleDiscussionTop endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -830,7 +823,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce ToggleDiscussionForFriends endpointu.", e);
+            logger.Log("Chyba při vykonávání akce ToggleDiscussionForFriends endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -877,7 +870,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce DeleteDiscussion endpointu.", e);
+            logger.Log("Chyba při vykonávání akce DeleteDiscussion endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -896,7 +889,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce CreateComment endpointu.", e);
+            logger.Log("Chyba při vykonávání akce CreateComment endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -915,7 +908,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce CreateReply endpointu.", e);
+            logger.Log("Chyba při vykonávání akce CreateReply endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -933,7 +926,7 @@ public class DiscussionsController : ControllerBase
             var discussion = await dbContext.Discussions.FindAsync(discussionId);
             if (discussion == null)
             {
-                _logger.Log($"Při pokusu o přesunutí diskuze {discussionId} do kategorie {newCategoryId} nebyla daná diskuze nalezena.");
+                logger.Log($"Při pokusu o přesunutí diskuze {discussionId} do kategorie {newCategoryId} nebyla daná diskuze nalezena.");
                 return NotFound("Diskuze nebyla nalezena.");
             }
 
@@ -941,7 +934,7 @@ public class DiscussionsController : ControllerBase
             var newCategory = await dbContext.Categories.FindAsync(newCategoryId);
             if (newCategory == null)
             {
-                _logger.Log($"Pokus o přesunutí diskuze {discussionId} do neexistující kategorie {newCategoryId}.");
+                logger.Log($"Pokus o přesunutí diskuze {discussionId} do neexistující kategorie {newCategoryId}.");
                 return NotFound("Cílová kategorie nebyla nalezena.");
             }
 
@@ -966,7 +959,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception)
         {
-            _logger.Log($"Chyba při přesunu diskuze {discussionId} do kategorie {newCategoryId}.");
+            logger.Log($"Chyba při přesunu diskuze {discussionId} do kategorie {newCategoryId}.");
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1060,7 +1053,7 @@ public class DiscussionsController : ControllerBase
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                _logger.Log("Pokus o smazání komentáře neexistujícím uživatelem, který ale měl token...");
+                logger.Log("Pokus o smazání komentáře neexistujícím uživatelem, který ale měl token...");
                 return Unauthorized();
             }
 
@@ -1074,14 +1067,14 @@ public class DiscussionsController : ControllerBase
 
             if (comment == null)
             {
-                _logger.Log($"Pokus o smazání neexistujícího komentáře s ID {commentId}.");
+                logger.Log($"Pokus o smazání neexistujícího komentáře s ID {commentId}.");
                 return NotFound();
             }
 
             // Kontrola oprávnění - smazat může pouze admin nebo autor komentáře
             if (!isAdmin && comment.UserId != userId)
             {
-                _logger.Log($"Pokus o smazání komentáře s ID {commentId} uživatelem {userId}, který na to nemá právo.");
+                logger.Log($"Pokus o smazání komentáře s ID {commentId} uživatelem {userId}, který na to nemá právo.");
                 return Forbid();
             }
             var now = DateTime.UtcNow;
@@ -1110,7 +1103,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce DeleteComment endpointu.", e);
+            logger.Log("Chyba při vykonávání akce DeleteComment endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1233,7 +1226,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce AddDiscussionLike endpointu.", e);
+            logger.Log("Chyba při vykonávání akce AddDiscussionLike endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1376,7 +1369,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce AddCommentLike endpointu.", e);
+            logger.Log("Chyba při vykonávání akce AddCommentLike endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1486,7 +1479,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce ToggleDiscussionVisibility endpointu.", e);
+            logger.Log("Chyba při vykonávání akce ToggleDiscussionVisibility endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1519,7 +1512,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce ToggleCommentVisibility endpointu.", e);
+            logger.Log("Chyba při vykonávání akce ToggleCommentVisibility endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1556,7 +1549,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce IncrementViewCount endpointu.", e);
+            logger.Log("Chyba při vykonávání akce IncrementViewCount endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -1784,7 +1777,7 @@ public class DiscussionsController : ControllerBase
         catch (Exception e)
         {
             // Logování chyby
-            _logger.Log("Chyba při vyhledávání diskuzí", e);
+            logger.Log("Chyba při vyhledávání diskuzí", e);
 
             // Vrácení chybové odpovědi
             return StatusCode(StatusCodes.Status500InternalServerError);
@@ -1911,7 +1904,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetCombinedFeed2 endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetCombinedFeed2 endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -2017,7 +2010,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při získávání lajkovaných diskuzí uživatele", e);
+            logger.Log("Chyba při získávání lajkovaných diskuzí uživatele", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -2072,7 +2065,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při aktualizaci cest k obrázkům", e);
+            logger.Log("Chyba při aktualizaci cest k obrázkům", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
@@ -2105,7 +2098,7 @@ public class DiscussionsController : ControllerBase
         }
         catch (Exception e)
         {
-            _logger.Log("Chyba při vykonávání akce GetDiscussionCodes endpointu.", e);
+            logger.Log("Chyba při vykonávání akce GetDiscussionCodes endpointu.", e);
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }

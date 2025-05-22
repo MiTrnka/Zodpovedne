@@ -16,13 +16,13 @@ public interface IEmailService
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;  // Pro přístup ke konfiguračním hodnotám z appsettings.json
-    private readonly ILogger<EmailService> _logger;  // Pro logování chyb a informací
+    private readonly ILogger<EmailService> logger;  // Pro logování chyb a informací
 
     // Konstruktor s injektovanými závislostmi
     public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _configuration = configuration;
-        _logger = logger;
+        logger = logger;
     }
 
     // Implementace metody pro odeslání e-mailu s odkazem pro obnovení hesla
@@ -120,7 +120,7 @@ public class EmailService : IEmailService
         catch (Exception ex)
         {
             // Logování případné chyby při odesílání e-mailu
-            _logger.LogError(ex, "Chyba při odesílání e-mailu pro obnovení hesla na {Email}", email);
+            logger.LogError(ex, "Chyba při odesílání e-mailu pro obnovení hesla na {Email}", email);
 
             // Propagace výjimky dál, aby ji mohla obsloužit volající metoda
             throw;

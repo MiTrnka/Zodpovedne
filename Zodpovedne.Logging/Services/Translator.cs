@@ -7,7 +7,7 @@ public class Translator
 {
     private Dictionary<string, string> _translations = new Dictionary<string, string>();
     public string SiteInstance { get; }
-    private readonly FileLogger _logger;
+    private readonly FileLogger logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _apiBaseUrl;
     private bool _isInitialized = false;
@@ -15,7 +15,7 @@ public class Translator
 
     public Translator(IConfiguration configuration, FileLogger logger, IHttpClientFactory httpClientFactory)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
         if (configuration == null)
@@ -66,14 +66,14 @@ public class Translator
             }
             else
             {
-                _logger.Log($"Chyba při načítání překladů: {response.StatusCode}");
+                logger.Log($"Chyba při načítání překladů: {response.StatusCode}");
                 // Inicializujeme prázdný slovník, abychom předešli dalším chybám
                 _translations = new Dictionary<string, string>();
             }
         }
         catch (Exception ex)
         {
-            _logger.Log($"Výjimka při načítání překladů: {ex.Message}", ex);
+            logger.Log($"Výjimka při načítání překladů: {ex.Message}", ex);
             // Inicializujeme prázdný slovník, abychom předešli dalším chybám
             _translations = new Dictionary<string, string>();
         }

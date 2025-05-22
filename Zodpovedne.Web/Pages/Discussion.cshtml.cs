@@ -142,14 +142,14 @@ public class DiscussionModel : BasePageModel
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.Log($"Detail diskuze nenalezen: {DiscussionCode}");
+            logger.Log($"Detail diskuze nenalezen: {DiscussionCode}");
             ErrorMessage = "Omlouváme se, ale požadovanou diskuzi se nepodaøilo naèíst.";
             return Page();
         }
         var d = await response.Content.ReadFromJsonAsync<DiscussionDetailDto>();
         if (d == null)
         {
-            _logger.Log($"Detail diskuze nenalezen: {DiscussionCode}");
+            logger.Log($"Detail diskuze nenalezen: {DiscussionCode}");
             ErrorMessage = "Omlouváme se, ale požadovanou diskuzi se nepodaøilo naèíst.";
             return Page();
         }
@@ -178,7 +178,7 @@ public class DiscussionModel : BasePageModel
         var categoryResponse = await client.GetAsync($"{ApiBaseUrl}/Categories/{CategoryCode}");
         if (!categoryResponse.IsSuccessStatusCode)
         {
-            _logger.Log($"Nenalezena kategorie {CategoryCode}");
+            logger.Log($"Nenalezena kategorie {CategoryCode}");
             CategoryName = "Kategorie diskuze";
         }
         else
@@ -186,7 +186,7 @@ public class DiscussionModel : BasePageModel
             var category = await categoryResponse.Content.ReadFromJsonAsync<CategoryDto>();
             if (category == null)
             {
-                _logger.Log("Nenalezena kategorie");
+                logger.Log("Nenalezena kategorie");
                 CategoryName = "Kategorie diskuze";
             }
             else
@@ -217,7 +217,7 @@ public class DiscussionModel : BasePageModel
     {
         if (!ModelState.IsValid)
         {
-            _logger.Log("Nepodaøilo se vložit komentáø, pøekroèila se maximální velikost");
+            logger.Log("Nepodaøilo se vložit komentáø, pøekroèila se maximální velikost");
             ErrorMessage = "Omlouváme se, ale komentáø se nepodaøilo vložit, pøekroèili jste maximální velikost 500 znakù.";
             return Page();
         }
@@ -253,7 +253,7 @@ public class DiscussionModel : BasePageModel
         // V pøípadì úspìchu se provede refresh
         if (!response.IsSuccessStatusCode)
         {
-            _logger.Log($"Nepodaøilo se odeslat požadavek na pøidávání komentáøe do diskuze {DiscussionCode}");
+            logger.Log($"Nepodaøilo se odeslat požadavek na pøidávání komentáøe do diskuze {DiscussionCode}");
             ErrorMessage = "Omlouváme se, ale komentáø se nepodaøilo vložit.";
             return Page();
         }
@@ -291,7 +291,7 @@ public class DiscussionModel : BasePageModel
         // Kontrola oprávnìní na smazání diskuze
         if (!(IsAdmin || basicDiscussionInfoDto.AuthorId == CurrentUserId))
         {
-            _logger.Log($"Uživatel {CurrentUserId} nemá oprávnìní na smazání diskuze {basicDiscussionInfoDto.Id}: {basicDiscussionInfoDto.Title}");
+            logger.Log($"Uživatel {CurrentUserId} nemá oprávnìní na smazání diskuze {basicDiscussionInfoDto.Id}: {basicDiscussionInfoDto.Title}");
             ErrorMessage = "Nemáte oprávnìní na smazání této diskuze.";
             return Page();
         }
@@ -302,7 +302,7 @@ public class DiscussionModel : BasePageModel
         if (!response.IsSuccessStatusCode)
         {
             // V pøípadì chyby pøidáme chybovou zprávu
-            _logger.Log($"Nepodaøilo se odeslat požadavek na smazání diskuze dle Id {basicDiscussionInfoDto.Id}");
+            logger.Log($"Nepodaøilo se odeslat požadavek na smazání diskuze dle Id {basicDiscussionInfoDto.Id}");
             ErrorMessage = "Omlouváme se, ale nepodaøilo se smazat diskuzi.";
             return Page();
         }
@@ -349,7 +349,7 @@ public class DiscussionModel : BasePageModel
         }
         catch (Exception ex)
         {
-            _logger.Log("Chyba pøi naèítání dalších komentáøù", ex);
+            logger.Log("Chyba pøi naèítání dalších komentáøù", ex);
             return BadRequest("Došlo k chybì pøi naèítání komentáøù.");
         }
     }

@@ -74,7 +74,7 @@ public class LoginModel : BasePageModel
         if (result == null)
         {
             ErrorMessage = "Omlouváme se, momentálnì se nelze pøihlásit.";
-            _logger.Log($"Nepodaøilo se naèíst pro {Input.Email} token z API");
+            logger.Log($"Nepodaøilo se naèíst pro {Input.Email} token z API");
             return Page();
         }
 
@@ -111,7 +111,7 @@ public class LoginModel : BasePageModel
             catch (Exception ex)
             {
                 // Logování chyby, ale pokraèujeme, i když se nepodaøí zaznamenat pøihlášení
-                _logger.Log("Chyba pøi zaznamenávání pøihlášení", ex);
+                logger.Log("Chyba pøi zaznamenávání pøihlášení", ex);
             }
         }
 
