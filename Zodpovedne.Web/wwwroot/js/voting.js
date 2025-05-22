@@ -334,6 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
     // ========================================================================
     // ČÁST 2: Funkce pro stránku Discussion - zobrazení hlasování a hlasování
     // ========================================================================
@@ -341,24 +342,29 @@ document.addEventListener('DOMContentLoaded', function () {
     // Zjištění, zda je na stránce sekce hlasování pro stránku Discussion
     const discussionVotingSection = document.getElementById('voting-section');
     if (discussionVotingSection) {
-        // Základní elementy pro stránku Discussion
-        const loadingElement = document.getElementById('voting-loading');
-        const discussionQuestionsContainer = document.getElementById('voting-questions-container');
-        const submitButton = document.getElementById('submit-votes-btn');
+        // Kontrola, zda nejsme na stránce CreateDiscussion
+        const isCreateDiscussionPage = window.location.pathname.includes('/discussion/create/');
 
-        // Získání ID diskuze z URL nebo z JavaScriptu
-        const discussionId = getDiscussionIdFromPage();
+        if (!isCreateDiscussionPage) {
+            // Základní elementy pro stránku Discussion
+            const loadingElement = document.getElementById('voting-loading');
+            const discussionQuestionsContainer = document.getElementById('voting-questions-container');
+            const submitButton = document.getElementById('submit-votes-btn');
 
-        // Načtení hlasování při načtení stránky, pokud máme ID diskuze
-        if (discussionId) {
-            loadVoting(discussionId);
-        }
+            // Získání ID diskuze z URL nebo z JavaScriptu
+            const discussionId = getDiscussionIdFromPage();
 
-        // Event listener pro odeslání hlasů
-        if (submitButton) {
-            submitButton.addEventListener('click', function () {
-                submitVotes(discussionId);
-            });
+            // Načtení hlasování při načtení stránky, pokud máme ID diskuze
+            if (discussionId) {
+                loadVoting(discussionId);
+            }
+
+            // Event listener pro odeslání hlasů
+            if (submitButton) {
+                submitButton.addEventListener('click', function () {
+                    submitVotes(discussionId);
+                });
+            }
         }
     }
 
