@@ -49,9 +49,7 @@ public class MessagesController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(currentUserId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Validace parametrů stránkování
@@ -60,7 +58,7 @@ public class MessagesController : ControllerZodpovedneBase
             if (pageSize > 50) pageSize = 50; // Omezení maximální velikosti stránky
 
             // 1. KROK: Ověření, že uživatel má přístup ke konverzaci (jsou přátelé)
-            bool areFriends = await AreFriends(currentUserId, otherUserId);
+            bool areFriends = await AreFriends(UserId, otherUserId);
             if (!areFriends)
                 return Forbid("Uživatelé nejsou přátelé"); // Uživatelé nejsou přátelé, nemají přístup ke konverzaci
 
@@ -76,8 +74,8 @@ public class MessagesController : ControllerZodpovedneBase
             // 3. KROK: Získání celkového počtu zpráv v konverzaci pro stránkování
             var totalCount = await dbContext.Messages
                 .Where(m =>
-                    (m.SenderUserId == currentUserId && m.RecipientUserId == otherUserId) ||
-                    (m.SenderUserId == otherUserId && m.RecipientUserId == currentUserId)
+                    (m.SenderUserId == UserId && m.RecipientUserId == otherUserId) ||
+                    (m.SenderUserId == otherUserId && m.RecipientUserId == UserId)
                 )
                 .CountAsync();
 
@@ -85,8 +83,8 @@ public class MessagesController : ControllerZodpovedneBase
             // Řazení: od nejnovějších (nahoře) po nejstarší (dole) - ale v UI se zobrazí obráceně
             var messages = await dbContext.Messages
                 .Where(m =>
-                    (m.SenderUserId == currentUserId && m.RecipientUserId == otherUserId) ||
-                    (m.SenderUserId == otherUserId && m.RecipientUserId == currentUserId)
+                    (m.SenderUserId == UserId && m.RecipientUserId == otherUserId) ||
+                    (m.SenderUserId == otherUserId && m.RecipientUserId == UserId)
                 )
                 .Where(m => m.MessageType != MessageType.Deleted) // Odstraním smazané zprávy
                 .OrderByDescending(m => m.SentAt) // Nejnovější první
@@ -110,7 +108,7 @@ public class MessagesController : ControllerZodpovedneBase
             var unreadMessageIds = await dbContext.Messages
                 .Where(m =>
                     m.SenderUserId == otherUserId &&
-                    m.RecipientUserId == currentUserId &&
+                    m.RecipientUserId == UserId &&
                     m.ReadAt == null
                 )
                 .Select(m => m.Id)
@@ -150,9 +148,7 @@ public class MessagesController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(currentUserId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Sanitizace obsahu zprávy před uložením
@@ -168,13 +164,13 @@ public class MessagesController : ControllerZodpovedneBase
                 return NotFound("Příjemce neexistuje nebo je skrytý/smazaný.");
 
             // 2. KROK: Ověření, že uživatelé jsou přátelé
-            bool areFriends = await AreFriends(currentUserId, model.RecipientUserId);
+            bool areFriends = await AreFriends(UserId, model.RecipientUserId);
             if (!areFriends)
                 return BadRequest("Zprávy lze odesílat pouze přátelům.");
 
             // 3. KROK: Získání informací o odesílateli (aktuálním uživateli)
             var sender = await dbContext.Users
-                .Where(u => u.Id == currentUserId)
+                .Where(u => u.Id == UserId)
                 .Select(u => new { u.Id, u.Nickname })
                 .FirstOrDefaultAsync();
 
@@ -188,7 +184,7 @@ public class MessagesController : ControllerZodpovedneBase
             // 5. KROK: Vytvoření a uložení nové zprávy
             var message = new Message
             {
-                SenderUserId = currentUserId,
+                SenderUserId = UserId,
                 RecipientUserId = model.RecipientUserId,
                 Content = model.Content,
                 SentAt = DateTime.UtcNow,
@@ -229,24 +225,22 @@ public class MessagesController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(currentUserId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // 1. KROK: Získání seznamu ID přátel pro filtrování
             var friendIds = await dbContext.Friendships
                 .Include(f => f.ApproverUser)
                 .Where(f => f.ApproverUser.Type == UserType.Normal)
-                .Where(f => (f.ApproverUserId == currentUserId || f.RequesterUserId == currentUserId) &&
+                .Where(f => (f.ApproverUserId == UserId || f.RequesterUserId == UserId) &&
                        f.FriendshipStatus == FriendshipStatus.Approved)
-                .Select(f => f.ApproverUserId == currentUserId ? f.RequesterUserId : f.ApproverUserId)
+                .Select(f => f.ApproverUserId == UserId ? f.RequesterUserId : f.ApproverUserId)
                 .ToListAsync();
 
             // 2. KROK: Získání počtu nepřečtených zpráv od přátel
             var unreadCount = await dbContext.Messages
                 .Where(m =>
-                    m.RecipientUserId == currentUserId && // Uživatel je příjemcem
+                    m.RecipientUserId == UserId && // Uživatel je příjemcem
                     m.ReadAt == null &&                   // Zpráva ještě nebyla přečtena
                     friendIds.Contains(m.SenderUserId)    // Odesílatel je přítel
                 )
@@ -270,22 +264,20 @@ public class MessagesController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(currentUserId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // 1. KROK: Získání seznamu ID přátel pro filtrování
             var friendIds = await dbContext.Friendships
-                .Where(f => (f.ApproverUserId == currentUserId || f.RequesterUserId == currentUserId) &&
+                .Where(f => (f.ApproverUserId == UserId || f.RequesterUserId == UserId) &&
                       f.FriendshipStatus == FriendshipStatus.Approved)
-                .Select(f => f.ApproverUserId == currentUserId ? f.RequesterUserId : f.ApproverUserId)
+                .Select(f => f.ApproverUserId == UserId ? f.RequesterUserId : f.ApproverUserId)
                 .ToListAsync();
 
             // 2. KROK: Získání počtu nepřečtených zpráv od každého přítele
             var unreadCounts = await dbContext.Messages
                 .Where(m =>
-                    m.RecipientUserId == currentUserId && // Uživatel je příjemcem
+                    m.RecipientUserId == UserId && // Uživatel je příjemcem
                     m.ReadAt == null &&                   // Zpráva ještě nebyla přečtena
                     friendIds.Contains(m.SenderUserId)    // Odesílatel je přítel
                 )

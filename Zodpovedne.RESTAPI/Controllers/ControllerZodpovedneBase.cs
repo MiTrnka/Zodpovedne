@@ -23,6 +23,23 @@ public abstract class ControllerZodpovedneBase : ControllerBase
 
     public Translator Translator { get; }  // Translator pro překlady textů na stránkách
 
+    protected string? _userId = null;
+    protected string? UserId
+    {
+        get
+        {
+            if (_userId != null)
+                return _userId;
+            else
+            {
+                _userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                return _userId;
+            }
+        }
+    }
+
+    protected bool IsAdmin => User?.IsInRole("Admin") ?? false;
+
     protected ControllerZodpovedneBase(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, Translator translator)
     {
         this.logger = logger;

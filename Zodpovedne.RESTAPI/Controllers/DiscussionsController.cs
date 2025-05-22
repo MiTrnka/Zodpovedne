@@ -28,23 +28,6 @@ public class DiscussionsController : ControllerZodpovedneBase
     // HtmlSanitizer pro bezpečné čištění HTML vstupu
     protected readonly IHtmlSanitizer sanitizer;
 
-    private string? _userId = null;
-    private string? UserId
-    {
-        get
-        {
-            if (_userId != null)
-                return _userId;
-            else
-            {
-                _userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                return _userId;
-            }
-        }
-    }
-
-    private bool IsAdmin => User?.IsInRole("Admin") ?? false;
-
     public DiscussionsController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, Translator translator, IHtmlSanitizer sanitizer)
         : base(dbContext, userManager, logger, translator)
     {

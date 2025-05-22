@@ -39,10 +39,6 @@ public class VotingsController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání aktuálně přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
             // Ověření, zda diskuze existuje a má hlasování
             var discussion = await dbContext.Discussions
                 .AsNoTracking()
@@ -57,7 +53,7 @@ public class VotingsController : ControllerZodpovedneBase
                 return NotFound("Diskuze nemá hlasování.");
 
             // Skryté hlasování vidí pouze autor nebo admin
-            if (discussion.VoteType == VoteType.Hidden && !isAdmin && discussion.UserId != userId)
+            if (discussion.VoteType == VoteType.Hidden && !IsAdmin && discussion.UserId != UserId)
                 return NotFound("Diskuze nemá hlasování.");
 
             // Načtení hlasovacích otázek
@@ -73,8 +69,8 @@ public class VotingsController : ControllerZodpovedneBase
                     YesVotes = q.YesVotes,
                     NoVotes = q.NoVotes,
                     // Pokud je přihlášený uživatel, zjistíme jeho hlas
-                    CurrentUserVote = userId != null
-                        ? q.Votes.Where(v => v.UserId == userId)
+                    CurrentUserVote = UserId != null
+                        ? q.Votes.Where(v => v.UserId == UserId)
                             .Select(v => (bool?)v.VoteValue)
                             .FirstOrDefault()
                         : null
@@ -110,11 +106,7 @@ public class VotingsController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání aktuálně přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Ověření, zda diskuze existuje
@@ -126,7 +118,7 @@ public class VotingsController : ControllerZodpovedneBase
                 return NotFound("Diskuze nebyla nalezena.");
 
             // Ověření oprávnění - pouze autor diskuze nebo admin může upravovat hlasování
-            if (!isAdmin && discussion.UserId != userId)
+            if (!IsAdmin && discussion.UserId != UserId)
                 return Forbid();
 
             // Ověření, zda jsou zadány otázky, pokud má být hlasování aktivní
@@ -248,7 +240,7 @@ public class VotingsController : ControllerZodpovedneBase
                         YesVotes = q.YesVotes,
                         NoVotes = q.NoVotes,
                         CurrentUserVote = q.Votes
-                            .Where(v => v.UserId == userId)
+                            .Where(v => v.UserId == UserId)
                             .Select(v => (bool?)v.VoteValue)
                             .FirstOrDefault()
                     })
@@ -289,11 +281,7 @@ public class VotingsController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání aktuálně přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Ověření, zda diskuze existuje a má hlasování
@@ -329,7 +317,7 @@ public class VotingsController : ControllerZodpovedneBase
             {
                 // Získáme všechny existující hlasy uživatele pro tuto diskuzi
                 var existingVotes = await dbContext.Votes
-                    .Where(v => v.UserId == userId && v.VotingQuestion.DiscussionId == model.DiscussionId)
+                    .Where(v => v.UserId == UserId && v.VotingQuestion.DiscussionId == model.DiscussionId)
                     .ToListAsync();
 
                 // Vytvoříme slovník existujících hlasů podle ID otázky
@@ -382,7 +370,7 @@ public class VotingsController : ControllerZodpovedneBase
                         var newVote = new Vote
                         {
                             VotingQuestionId = questionId,
-                            UserId = userId,
+                            UserId = UserId,
                             VoteValue = voteValue,
                             CreatedAt = now,
                             UpdatedAt = now
@@ -445,7 +433,7 @@ public class VotingsController : ControllerZodpovedneBase
                         YesVotes = q.YesVotes,
                         NoVotes = q.NoVotes,
                         CurrentUserVote = q.Votes
-                            .Where(v => v.UserId == userId)
+                            .Where(v => v.UserId == UserId)
                             .Select(v => (bool?)v.VoteValue)
                             .FirstOrDefault()
                     })
@@ -488,11 +476,7 @@ public class VotingsController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání aktuálně přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Ověření, zda diskuze existuje
@@ -503,7 +487,7 @@ public class VotingsController : ControllerZodpovedneBase
                 return NotFound("Diskuze nebyla nalezena.");
 
             // Ověření oprávnění - pouze autor diskuze nebo admin může změnit stav hlasování
-            if (!isAdmin && discussion.UserId != userId)
+            if (!IsAdmin && discussion.UserId != UserId)
                 return Forbid();
 
             // Pokud chceme vypnout hlasování (None), zkontrolujeme, zda existují otázky

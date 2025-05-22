@@ -31,7 +31,6 @@ public class UsersController : ControllerZodpovedneBase
     private readonly IMemoryCache _cache;
     private readonly IEmailService _emailService;
 
-
     public UsersController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, FileLogger logger, Translator translator, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, IMemoryCache memoryCache, IEmailService emailService)
         : base(dbContext, userManager, logger, translator)
     {
@@ -438,9 +437,7 @@ public class UsersController : ControllerZodpovedneBase
         try
         {
             // Kontrola oprávnění - může mazat jen admin nebo samotný uživatel
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-            if (!isAdmin && currentUserId != userId)
+            if (!IsAdmin && UserId != userId)
                 return Forbid();
 
             // Najdeme uživatele
@@ -706,12 +703,8 @@ public class UsersController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isAdmin = User.IsInRole("Admin");
-
             // Kontrola oprávnění - historii vidí pouze admin nebo samotný uživatel
-            if (!isAdmin && currentUserId != userId)
+            if (!IsAdmin && UserId != userId)
                 return Forbid();
 
             // Ověření existence uživatele
@@ -751,16 +744,14 @@ public class UsersController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
             {
                 logger.Log("Při odhlašování nebyl nalezen userId aktuálního uživatel");
                 return Unauthorized("Při odhlašování nebyl nalezen userId aktuálního uživatel");
             }
 
             // Vyhledání uživatele
-            var user = await userManager.FindByIdAsync(userId);
+            var user = await userManager.FindByIdAsync(UserId);
             if (user == null)
             {
                 logger.Log("Při odhlašování nebyl nalezen aktuální uživatel v databázi");
@@ -968,7 +959,7 @@ public class UsersController : ControllerZodpovedneBase
                 // Potvrzení transakce
                 await transaction.CommitAsync();
 
-                logger.Log($"Administrátor {User.FindFirstValue(ClaimTypes.NameIdentifier)} provedl vyčištění databáze");
+                logger.Log($"Administrátor {UserId} provedl vyčištění databáze");
 
                 return Ok(result);
             }
@@ -1001,13 +992,11 @@ public class UsersController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele z JWT tokenu
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Vyhledání uživatele v databázi pro získání času předchozího přihlášení
-            var user = await userManager.FindByIdAsync(userId);
+            var user = await userManager.FindByIdAsync(UserId);
             if (user == null || user.PreviousLastLogin == null)
                 return Ok(new List<DiscussionWithNewActivitiesDto>()); // Pokud nemáme předchozí přihlášení, nemůžeme zjistit nové aktivity
 
@@ -1015,7 +1004,7 @@ public class UsersController : ControllerZodpovedneBase
             // Vytvoření klíče pro keš, který obsahuje:
             // - ID uživatele (každý uživatel má vlastní keš)
             // - Časové razítko posledního přihlášení (invaliduje keš při novém přihlášení)
-            var cacheKey = $"NewActivities_{userId}_{user.LastLogin?.Ticks}";
+            var cacheKey = $"NewActivities_{UserId}_{user.LastLogin?.Ticks}";
 
             // Pokus o získání dat z keše
             if (_cache.TryGetValue(cacheKey, out List<DiscussionWithNewActivitiesDto>? cachedResult))
@@ -1036,10 +1025,10 @@ public class UsersController : ControllerZodpovedneBase
             // 1.1 KROK: Efektivně najít ID root komentářů uživatele, které mají nové odpovědi.
             var rootCommentsWithNewReplies = await dbContext.Comments
                 .AsNoTracking() // Pro lepší výkon - nesledujeme změny entit
-                .Where(c => c.UserId == userId && c.ParentCommentId == null) // Jen rootové komentáře uživatele
+                .Where(c => c.UserId == UserId && c.ParentCommentId == null) // Jen rootové komentáře uživatele
                 .Where(c => c.Replies.Any(r =>
                     r.CreatedAt > fromTime && // Odpověď je novější než předchozí přihlášení
-                    r.UserId != userId &&     // Odpověď není od samotného uživatele
+                    r.UserId != UserId &&     // Odpověď není od samotného uživatele
                     r.Type != CommentType.Deleted)) // Odpověď není smazaná
                 .Select(c => new
                 {
@@ -1047,7 +1036,7 @@ public class UsersController : ControllerZodpovedneBase
                     DiscussionId = c.DiscussionId,
                     // Pro každý komentář najdeme nejnovější odpověď a pouze čas této odpovědi
                     LatestReplyTime = c.Replies
-                        .Where(r => r.CreatedAt > fromTime && r.UserId != userId && r.Type != CommentType.Deleted)
+                        .Where(r => r.CreatedAt > fromTime && r.UserId != UserId && r.Type != CommentType.Deleted)
                         .OrderByDescending(r => r.CreatedAt)
                         .Select(r => r.CreatedAt)
                         .FirstOrDefault()
@@ -1111,10 +1100,10 @@ public class UsersController : ControllerZodpovedneBase
             // 2.1 KROK: Najít diskuze založené uživatelem, kde existují nové komentáře
             var discussionsWithNewComments = await dbContext.Discussions
                 .AsNoTracking()
-                .Where(d => d.UserId == userId) // Diskuze založené přihlášeným uživatelem
+                .Where(d => d.UserId == UserId) // Diskuze založené přihlášeným uživatelem
                 .Where(d => d.Comments.Any(c =>
                     c.CreatedAt > fromTime && // Komentář je novější než předchozí přihlášení
-                    c.UserId != userId &&     // Komentář není od samotného uživatele
+                    c.UserId != UserId &&     // Komentář není od samotného uživatele
                     c.Type != CommentType.Deleted)) // Komentář není smazaný
                 .Select(d => new
                 {
@@ -1124,12 +1113,12 @@ public class UsersController : ControllerZodpovedneBase
                     d.Category.Name,
                     CategoryCode = d.Category.Code,
                     LatestCommentTime = d.Comments
-                        .Where(c => c.CreatedAt > fromTime && c.UserId != userId && c.Type != CommentType.Deleted)
+                        .Where(c => c.CreatedAt > fromTime && c.UserId != UserId && c.Type != CommentType.Deleted)
                         .OrderByDescending(c => c.CreatedAt)
                         .Select(c => c.CreatedAt)
                         .FirstOrDefault(),
                     NewCommentsCount = d.Comments
-                        .Count(c => c.CreatedAt > fromTime && c.UserId != userId && c.Type != CommentType.Deleted)
+                        .Count(c => c.CreatedAt > fromTime && c.UserId != UserId && c.Type != CommentType.Deleted)
                 })
                 .ToListAsync();
 
@@ -1345,7 +1334,7 @@ public class UsersController : ControllerZodpovedneBase
         try
         {
             // Získání ID přihlášeného uživatele (žadatele)
-            var requesterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var requesterId = UserId;
             if (string.IsNullOrEmpty(requesterId))
                 return Unauthorized();
 
@@ -1387,7 +1376,7 @@ public class UsersController : ControllerZodpovedneBase
         try
         {
             // Získání ID přihlášeného uživatele (žadatele)
-            var requesterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var requesterId = UserId;
             if (string.IsNullOrEmpty(requesterId))
                 return Unauthorized();
 
@@ -1443,9 +1432,7 @@ public class UsersController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Vyhledání všech přátelství, kde uživatel figuruje
@@ -1455,9 +1442,9 @@ public class UsersController : ControllerZodpovedneBase
                 .Include(f => f.RequesterUser)   // Načtení souvisejících uživatelů pro přístup k jejich datům
                 .Where(f =>
                     // Buď je přihlášený uživatel approver a requester je normal
-                    (f.ApproverUserId == userId && f.RequesterUser.Type == UserType.Normal) ||
+                    (f.ApproverUserId == UserId && f.RequesterUser.Type == UserType.Normal) ||
                     // Nebo je přihlášený uživatel requester a approver je normal
-                    (f.RequesterUserId == userId && f.ApproverUser.Type == UserType.Normal))
+                    (f.RequesterUserId == UserId && f.ApproverUser.Type == UserType.Normal))
                 .OrderBy(f => f.Id)
                 .ToListAsync();
 
@@ -1465,10 +1452,10 @@ public class UsersController : ControllerZodpovedneBase
             var result = friendships.Select(f =>
             {
                 // Zjištění, kdo je druhý uživatel (ten, který NENÍ přihlášený)
-                var otherUser = f.ApproverUserId == userId ? f.RequesterUser : f.ApproverUser;
+                var otherUser = f.ApproverUserId == UserId ? f.RequesterUser : f.ApproverUser;
 
                 // Zjištění role přihlášeného uživatele
-                var isRequester = f.RequesterUserId == userId;
+                var isRequester = f.RequesterUserId == UserId;
 
                 return new
                 {
@@ -1505,9 +1492,7 @@ public class UsersController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Vyhledání záznamu přátelství
@@ -1516,7 +1501,7 @@ public class UsersController : ControllerZodpovedneBase
                 return NotFound("Žádost o přátelství nebyla nalezena.");
 
             // Kontrola, zda přihlášený uživatel je schvalovatel
-            if (friendship.ApproverUserId != userId)
+            if (friendship.ApproverUserId != UserId)
                 return Forbid();
 
             // Kontrola, zda je žádost ve stavu Requested
@@ -1547,9 +1532,7 @@ public class UsersController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Vyhledání záznamu přátelství
@@ -1558,7 +1541,7 @@ public class UsersController : ControllerZodpovedneBase
                 return NotFound("Žádost o přátelství nebyla nalezena.");
 
             // Kontrola, zda přihlášený uživatel je schvalovatel
-            if (friendship.ApproverUserId != userId)
+            if (friendship.ApproverUserId != UserId)
                 return Forbid();
 
             // Kontrola, zda je žádost ve stavu Requested
@@ -1589,9 +1572,7 @@ public class UsersController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Vyhledání záznamu přátelství
@@ -1600,7 +1581,7 @@ public class UsersController : ControllerZodpovedneBase
                 return NotFound("Přátelství nebylo nalezeno.");
 
             // Kontrola, zda je přihlášený uživatel jednou ze stran přátelství
-            if (friendship.ApproverUserId != userId && friendship.RequesterUserId != userId)
+            if (friendship.ApproverUserId != UserId && friendship.RequesterUserId != UserId)
                 return Forbid();
 
             // Odstranění přátelství z databáze
@@ -1627,15 +1608,13 @@ public class UsersController : ControllerZodpovedneBase
     {
         try
         {
-            // Získání ID přihlášeného uživatele
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(UserId))
                 return Unauthorized();
 
             // Zjištění počtu žádostí o přátelství, které čekají na schválení
             // Ignorujeme žádosti od skrytých nebo smazaných uživatelů
             var requestsCount = await dbContext.Friendships
-                .Where(f => f.ApproverUserId == userId &&
+                .Where(f => f.ApproverUserId == UserId &&
                        f.FriendshipStatus == FriendshipStatus.Requested &&
                        f.RequesterUser.Type == UserType.Normal) // Pouze normální uživatelé
                 .CountAsync();
@@ -1662,11 +1641,9 @@ public class UsersController : ControllerZodpovedneBase
         try
         {
             // Získání ID přihlášeného uživatele
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = UserId;
             if (string.IsNullOrEmpty(currentUserId))
                 return Unauthorized();
-
-            var isAdmin = User.IsInRole("Admin");
 
             // Kontrola oprávnění - může vidět přátele jen vlastník profilu nebo jeho přátelé
             bool canViewFriends = (currentUserId == userId); // Je to vlastní profil
@@ -1680,7 +1657,7 @@ public class UsersController : ControllerZodpovedneBase
                         (f.ApproverUserId == userId && f.RequesterUserId == currentUserId))
                         && f.FriendshipStatus == FriendshipStatus.Approved);
 
-                if ((!areFriends) && (!isAdmin))
+                if ((!areFriends) && (!IsAdmin))
                     return Forbid("Nejste přátelé s tímto uživatelem");
             }
 
@@ -1802,8 +1779,7 @@ public class UsersController : ControllerZodpovedneBase
         try
         {
             // Ověření, že uživatel může zapisovat pouze svůj vlastní login
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(currentUserId) || currentUserId != model.UserId)
+            if (string.IsNullOrEmpty(UserId) || UserId != model.UserId)
                 return Forbid();
 
             // Vytvoření záznamu o přihlášení
