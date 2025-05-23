@@ -1533,13 +1533,15 @@ public class DiscussionsController : ControllerZodpovedneBase
     */
 
     /// <summary>
-    /// Vyhledává diskuze podle zadaných klíčových slov s podporou českého fulltextového vyhledávání
+    /// Vyhledává diskuze podle zadaných klíčových slov s podporou českého fulltextového vyhledávání.
+    /// Umožňuje volitelné filtrování podle kódu kategorie pro omezení vyhledávání pouze na diskuze v konkrétní kategorii.
     /// </summary>
     /// <param name="query">Vyhledávací dotaz (jednotlivá slova oddělená mezerami)</param>
+    /// <param name="categoryCode">Volitelný kód kategorie pro omezení vyhledávání pouze na diskuze v této kategorii</param>
     /// <param name="limit">Maximální počet vrácených výsledků</param>
     /// <returns>Seznam diskuzí seřazených podle relevance</returns>
     [HttpGet("search")]
-    public async Task<ActionResult<List<BasicDiscussionInfoDto>>> SearchDiscussions(string query, int limit = 10)
+    public async Task<ActionResult<List<BasicDiscussionInfoDto>>> SearchDiscussions(string query, string? categoryCode = null, int limit = 10)
     {
         try
         {
@@ -1562,6 +1564,20 @@ public class DiscussionsController : ControllerZodpovedneBase
             // Seznam pro uložení výsledků prvního dotazu (ID a relevance)
             var relevantDiscussionsIds = new List<(int Id, float Score)>();
 
+            // Pokud je zadán categoryCode, ověříme jeho existenci
+            int? categoryId = null;
+            if (!string.IsNullOrWhiteSpace(categoryCode))
+            {
+                var category = await dbContext.Categories
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Code == categoryCode);
+
+                if (category == null)
+                    return BadRequest($"Kategorie s kódem '{categoryCode}' nebyla nalezena");
+
+                categoryId = category.Id;
+            }
+
             // Krok 1: Nejprve získáme ID diskuzí s jejich skóre relevance ve správném pořadí
             // Použijeme přímý ADO.NET přístup k databázi
             var connection = dbContext.Database.GetDbConnection();
@@ -1570,31 +1586,36 @@ public class DiscussionsController : ControllerZodpovedneBase
                 await connection.OpenAsync();
 
                 using var command = connection.CreateCommand();
-                command.CommandText = @"
-                SELECT 
-                    d.""Id"",
-                    ts_rank(d.""SearchVector"", to_tsquery('czech', @query), 32) as relevance_score
-                FROM ""Discussions"" d
-                WHERE
-                    d.""Type"" != @deletedType
-                    AND (d.""Type"" != @hiddenType OR @IsAdmin = TRUE OR d.""UserId"" = @userId)
-                    AND (d.""Type"" != @forfriendsType
-                         OR @IsAdmin = TRUE
-                         OR d.""UserId"" = @userId
-                         OR EXISTS (
-                             SELECT 1 FROM ""Friendships"" f
-                             WHERE ((f.""ApproverUserId"" = @userId AND f.""RequesterUserId"" = d.""UserId"")
-                                    OR (f.""ApproverUserId"" = d.""UserId"" AND f.""RequesterUserId"" = @userId))
-                                 AND f.""FriendshipStatus"" = @approvedStatus
-                         )
-                    )
-                    AND (d.""Type"" != @privateType
-                         OR @IsAdmin = TRUE
-                         OR d.""UserId"" = @userId
-                    )
-                    AND d.""SearchVector"" @@ to_tsquery('czech', @query)
-                ORDER BY relevance_score DESC
-                LIMIT @limit";
+
+                // Sestavení SQL dotazu s volitelným filtrem podle kategorie
+                string categoryFilter = categoryId.HasValue ? "AND d.\"CategoryId\" = @categoryId" : "";
+
+                command.CommandText = $@"
+            SELECT 
+                d.""Id"",
+                ts_rank(d.""SearchVector"", to_tsquery('czech', @query), 32) as relevance_score
+            FROM ""Discussions"" d
+            WHERE
+                d.""Type"" != @deletedType
+                AND (d.""Type"" != @hiddenType OR @IsAdmin = TRUE OR d.""UserId"" = @userId)
+                AND (d.""Type"" != @forfriendsType
+                     OR @IsAdmin = TRUE
+                     OR d.""UserId"" = @userId
+                     OR EXISTS (
+                         SELECT 1 FROM ""Friendships"" f
+                         WHERE ((f.""ApproverUserId"" = @userId AND f.""RequesterUserId"" = d.""UserId"")
+                                OR (f.""ApproverUserId"" = d.""UserId"" AND f.""RequesterUserId"" = @userId))
+                             AND f.""FriendshipStatus"" = @approvedStatus
+                     )
+                )
+                AND (d.""Type"" != @privateType
+                     OR @IsAdmin = TRUE
+                     OR d.""UserId"" = @userId
+                )
+                AND d.""SearchVector"" @@ to_tsquery('czech', @query)
+                {categoryFilter}
+            ORDER BY relevance_score DESC
+            LIMIT @limit";
 
                 // Přidání parametrů pro zabezpečení proti SQL injection
                 var queryParam = command.CreateParameter();
@@ -1641,6 +1662,15 @@ public class DiscussionsController : ControllerZodpovedneBase
                 privateTypeParam.ParameterName = "@privateType";
                 privateTypeParam.Value = (int)DiscussionType.Private;
                 command.Parameters.Add(privateTypeParam);
+
+                // Přidání parametru pro kategori, pokud je zadána
+                if (categoryId.HasValue)
+                {
+                    var categoryIdParam = command.CreateParameter();
+                    categoryIdParam.ParameterName = "@categoryId";
+                    categoryIdParam.Value = categoryId.Value;
+                    command.Parameters.Add(categoryIdParam);
+                }
 
                 // Spuštění dotazu a zpracování výsledků
                 using var reader = await command.ExecuteReaderAsync();
