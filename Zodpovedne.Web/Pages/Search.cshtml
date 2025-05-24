@@ -21,20 +21,10 @@
 }
 
 <div class="container">
-    <h1>Vyhledávání diskuzí</h1>
-
-    <form method="get" class="mb-4">
-        <div class="flex fulltext-search-wrapper">
-            <input type="text" class="form-control fulltextFormInput" name="query" value="@Model.Query"
-                   placeholder="Zadejte hledaná slova..." required>
-            <button type="submit" class="btn btn-primary fulltextFormBtn">Vyhledat</button>
-        </div>
-    </form>
+    <h2>Výsledky vyhledávání pro: @Model.Query</h2>
 
     @if (!string.IsNullOrEmpty(Model.Query))
     {
-        <h2>Výsledky vyhledávání pro: @Model.Query</h2>
-
         @if (Model.SearchResults.Any())
         {
             <div class="list-group">
