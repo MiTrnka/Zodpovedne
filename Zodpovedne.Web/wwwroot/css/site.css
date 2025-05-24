@@ -341,7 +341,9 @@ a {
 }
 .top-star {
     align-items: center;
-    margin-top: 4px;
+}
+.top-star-detail {
+    margin-top: 6px;
 }
 
 .pocetZobrazeni {
