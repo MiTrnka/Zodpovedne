@@ -321,6 +321,7 @@ function updateHeartIcon(button, isFilled) {
             icon.classList.remove('bi-heart');
             icon.classList.add('bi-heart-fill');
             icon.setAttribute('title', 'Kliknutím odeberete srdce');
+            icon.classList.add('mine-like');
         } else {
             // Změna na nevyplněné srdce
             icon.classList.remove('bi-heart-fill');
@@ -374,6 +375,7 @@ async function likeDiscussion(discussionId) {
                     icon.classList.remove('bi-heart');
                     icon.classList.add('bi-heart-fill');
                     icon.setAttribute('title', 'Kliknutím odeberete srdce');
+                    icon.classList.add('mine-like');
                 }
             } else {
                 // Uživatel odebral lajk - nastavíme nevyplněné srdce

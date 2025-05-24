@@ -37,7 +37,7 @@
                         onclick="likeComment(@Model.DiscussionId, @Model.Id)">
                     @if (Model.Likes.HasUserLiked)
                     {
-                        <i class="bi bi-heart-fill" title="Kliknutím odeberete srdce"></i>
+                        <i class="bi bi-heart-fill mine-like" title="Kliknutím odeberete srdce"></i>
                     }
                     else
                     {
@@ -107,7 +107,7 @@
                                 onclick="likeComment(@Model.DiscussionId, @reply.Id)">
                             @if (reply.Likes.HasUserLiked)
                             {
-                                <i class="bi bi-heart-fill" title="Kliknutím odeberete srdce"></i>
+                                <i class="bi bi-heart-fill mine-like" title="Kliknutím odeberete srdce"></i>
                             }
                             else
                             {

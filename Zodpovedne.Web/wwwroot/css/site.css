@@ -311,6 +311,9 @@ a {
     border: none;
     background-color: transparent;
 }
+.mine-like::before{
+    cursor: pointer !important;
+}
 .btn:active, .btn:focus, .btn:focus-visible, .btn:active:focus {
     border: none !important;
     outline: none !important;
