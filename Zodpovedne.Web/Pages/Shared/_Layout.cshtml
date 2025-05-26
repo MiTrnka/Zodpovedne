@@ -30,7 +30,36 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Discussion</title>
+
+    <!-- SEO meta tagy -->
+    <meta name="description" content="@ViewData["Description"] ?? " Discussion.cz - česká diskuzní sociální síť. Sdílejte názory, diskutujte s přáteli a objevujte nová témata v bezpečném prostředí bez reklam."" />
+    <meta name="keywords" content="@ViewData["Keywords"] ?? " diskuze, česká sociální síť, diskuzní fórum, bez reklam, přátelé, komunita, nekomerční"" />
+    <meta name="robots" content="@ViewData["Robots"] ?? " index, follow"" />
+    <meta name="author" content="Discussion.cz" />
+    <meta name="language" content="cs" />
+    <meta name="geo.region" content="CZ" />
+    <meta name="geo.country" content="Czech Republic" />
+
+    <!-- Open Graph meta tagy pro sociální sítě -->
+    <meta property="og:title" content="@ViewData["OGTitle"] ?? @ViewData["Title"] - Discussion.cz" />
+    <meta property="og:description" content="@ViewData["OGDescription"] ?? @ViewData["Description"] ?? " Česká diskuzní sociální síť bez reklam"" />
+    <meta property="og:image" content="@Configuration["BaseUrl"]/images/og-discussion.jpg" />
+    <meta property="og:url" content="@Configuration["BaseUrl"]@Context.Request.Path" />
+    <meta property="og:type" content="@ViewData["OGType"] ?? " website"" />
+    <meta property="og:site_name" content="Discussion.cz" />
+    <meta property="og:locale" content="cs_CZ" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@ViewData["OGTitle"] ?? @ViewData["Title"] - Discussion.cz" />
+    <meta name="twitter:description" content="@ViewData["OGDescription"] ?? @ViewData["Description"] ?? " Česká diskuzní sociální síť bez reklam"" />
+    <meta name="twitter:image" content="@Configuration["BaseUrl"]/images/og-discussion.jpg" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="@Configuration["BaseUrl"]@Context.Request.Path@Context.Request.QueryString" />
+
+
+    <title>@ViewData["Title"]@(string.IsNullOrEmpty(ViewData["Title"]?.ToString()) ? "Discussion.cz - Česká diskuzní sociální síť" : " | Discussion.cz")</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -47,6 +76,40 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
+
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "WebSite",
+          "name": "Discussion.cz",
+          "url": "@Configuration["BaseUrl"]",
+          "description": "Česká diskuzní sociální síť bez reklam",
+          "inLanguage": "cs-CZ",
+          "potentialAction": {
+            "@@type": "SearchAction",
+            "target": "@Configuration["BaseUrl"]/Search?query={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }
+    </script>
+
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "Organization",
+          "name": "Discussion.cz",
+          "url": "@Configuration["BaseUrl"]",
+          "logo": "@Configuration["BaseUrl"]/images/discussion-logo.svg",
+          "description": "Česká diskuzní sociální síť zaměřená na kvalitní diskuze bez reklam",
+          "foundingDate": "2025",
+          "founder": {
+            "@@type": "Person",
+            "name": "Discussion.cz"
+          },
+          "knowsAbout": ["diskuze", "sociální síť", "komunita", "česká síť"],
+          "serviceType": "Sociální síť"
+        }
+    </script>
 </head>
 <body>
     <!-- Místo pro připadné modální upozornění/chybovou hlášku -->
@@ -144,7 +207,7 @@
                                         <span class="visually-hidden">nepřečtených zpráv</span>
                                     </span>
                                 </div>
-                              
+
                             </a>
                         </li>
                         <!-- Notifikační zvoneček s dropdown menu -->
@@ -173,7 +236,7 @@
                         </li>
                         <!-- Účet přihlášeného uživatele s notifikací pro nové žádosti o přátelství -->
                         <li class="position-relative menu-icon-wrapper nav-item account-icon-text @(IsMenuItemActive("/Account/MyAccount") ? "active" : "")" style="cursor: pointer;">
-                           
+
                         <!-- Můj profil -->
                             <a class="user-name nav-link"
                                asp-page="/Account/MyAccount">
@@ -183,7 +246,7 @@
                                         <span id="friendship-count">0</span>
                                         <span class="visually-hidden">žádostí o přátelství</span>
                                     </span>
-                                </div> 
+                                </div>
                             </a>
                         </li>
                         <!-- Odhlásit -->

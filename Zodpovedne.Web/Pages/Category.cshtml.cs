@@ -64,6 +64,14 @@ public class CategoryModel : BasePageModel
     /// </summary>
     public async Task<IActionResult> OnGetAsync()
     {
+        // Po naètení kategorie nastavit SEO data
+        ViewData["Title"] = $"{CategoryName} - Diskuze";
+        ViewData["Description"] = $"Diskuze v kategorii {CategoryName} na Discussion.cz. {(!string.IsNullOrEmpty(CategoryDescription) ? CategoryDescription : "Pøipojte se k diskuzím v této kategorii.")}";
+        ViewData["Keywords"] = $"{CategoryName.ToLower()}, diskuze, èeská komunita, {CategoryCode}";
+        ViewData["OGTitle"] = $"Kategorie {CategoryName} - Discussion.cz";
+        ViewData["OGDescription"] = CategoryDescription ?? $"Diskutujte o {CategoryName.ToLower()} s èeskou komunitou na Discussion.cz";
+        ViewData["OGType"] = "website";
+
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
         // Získání detailu kategorie

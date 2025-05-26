@@ -31,6 +31,13 @@ namespace Zodpovedne.Web.Pages
 
             try
             {
+                // SEO meta data
+                ViewData["Title"] = "Nové diskuze od pøátel";
+                ViewData["Description"] = "Sledujte nejnovìjší diskuze od vašich pøátel na Discussion.cz - èeské diskuzní sociální síti bez reklam";
+                ViewData["Keywords"] = "nové diskuze, pøátelé, feed, èeská sociální sí, discussion";
+                ViewData["OGTitle"] = "Nové diskuze od pøátel - Discussion.cz";
+                ViewData["OGDescription"] = "Objevte nejnovìjší diskuze od vašich pøátel na Discussion.cz";
+
                 // Naètení kombinovaného seznamu diskuzí
                 var client = _clientFactory.CreateBearerClient(HttpContext);
                 var response = await client.GetAsync($"{ApiBaseUrl}/discussions/combined-feed");

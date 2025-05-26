@@ -22,6 +22,13 @@ public class CategoriesModel : BasePageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
+        // SEO meta data
+        ViewData["Title"] = "Kategorie diskuzí";
+        ViewData["Description"] = "Prozkoumejte všechny kategorie diskuzí na Discussion.cz - od aktuálních témat po hobby a zájmy. Najdìte svou komunitu!";
+        ViewData["Keywords"] = "kategorie, diskuzní témata, fóra, èeská komunita, discussion témata";
+        ViewData["OGTitle"] = "Kategorie diskuzí - Discussion.cz";
+        ViewData["OGDescription"] = "Objevte rozmanité kategorie diskuzí na Discussion.cz";
+
         var client = _clientFactory.CreateClient();
         var response = await client.GetAsync($"{ApiBaseUrl}/Categories");
 

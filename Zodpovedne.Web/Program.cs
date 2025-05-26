@@ -235,7 +235,7 @@ public class Program
         app.UseForwardedHeaders();
 
         // seznam rout, pro které se ihned vrátí 404 a nepokraèuje se v pipeline
-        app.MapShortCircuit(404, "wp-admin", "wp-login", "sitemap.xml", "robots.txt", "/Categories/sitemap.xml", "/Categories/robots.txt");
+        app.MapShortCircuit(404, "wp-admin", "wp-login");
 
         // Konfigurace HTTP request pipeline pro produkci.
         if (!app.Environment.IsDevelopment())

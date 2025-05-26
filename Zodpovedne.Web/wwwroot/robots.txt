@@ -1,0 +1,17 @@
+﻿User-agent: *
+Allow: /
+Disallow: /Account/
+Disallow: /Admin/
+Disallow: /api/
+Disallow: /Messages
+Disallow: /discussion/create/
+Disallow: /Search?*
+
+# Crawl-delay pro větší boty
+User-agent: Bingbot
+Crawl-delay: 5
+
+User-agent: Slurp
+Crawl-delay: 5
+
+Sitemap: https://discussion.cz/sitemap.xml

@@ -157,6 +157,30 @@ public class DiscussionModel : BasePageModel
 
         // Pøedáváme ID diskuze do JavaScriptu pro použití v hlasovacím skriptu
         ViewData["DiscussionId"] = Discussion.Id;
+        
+        // Po naètení diskuze nastavit SEO data
+        if (Discussion != null)
+        {
+            ViewData["Title"] = Discussion.Title;
+
+            // Vytvoøíme description z prvních 160 znakù obsahu (bez HTML tagù)
+            var plainTextContent = System.Text.RegularExpressions.Regex.Replace(Discussion.Content ?? "", "<.*?>", string.Empty);
+            var description = plainTextContent.Length > 160
+                ? plainTextContent.Substring(0, 157) + "..."
+                : plainTextContent;
+
+            ViewData["Description"] = $"{description} | Diskuze od {Discussion.AuthorNickname} v kategorii {CategoryName} na Discussion.cz";
+            ViewData["Keywords"] = $"{Discussion.Title}, {CategoryName}, {Discussion.AuthorNickname}, diskuze, komentáøe";
+
+            ViewData["OGTitle"] = Discussion.Title;
+            ViewData["OGDescription"] = description;
+            ViewData["OGType"] = "article";
+
+            // Pro diskuze pøidáme další meta tagy
+            ViewData["ArticleAuthor"] = Discussion.AuthorNickname;
+            ViewData["ArticlePublishedTime"] = Discussion.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            ViewData["ArticleModifiedTime"] = Discussion.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        }
 
         // Zjištìní typu pøihlášeného uživatele a nastavení oprávnìní pro nahrávání souborù
         if (IsUserLoggedIn)
@@ -204,7 +228,7 @@ public class DiscussionModel : BasePageModel
         }
 
         // Inkrementujeme poèítadlo zhlédnutí dané diskuze
-        await client.PostAsync($"{ApiBaseUrl}/discussions/{Discussion.Id}/increment-view-count", null);
+        await client.PostAsync($"{ApiBaseUrl}/discussions/{Discussion!.Id}/increment-view-count", null);
 
         return Page();
     }

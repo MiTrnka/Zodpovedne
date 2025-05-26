@@ -882,6 +882,44 @@
 @* Skrytá proměnná pro sledování aktuálního typu diskuze *@
 <input type="hidden" id="currentDiscussionType" value="@((int)Model.Discussion!.Type)" />
 
+@* === STRUKTUROVANÁ DATA O DISKUZI PRO GOOGLE === *@
+@if (Model.Discussion != null)
+{
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "DiscussionForumPosting",
+      "headline": "@Html.Raw(Json.Serialize(Model.Discussion.Title))",
+      "text": "@Html.Raw(Json.Serialize(System.Text.RegularExpressions.Regex.Replace(Model.Discussion.Content ?? "", "<.*?>", string.Empty)))",
+      "author": {
+        "@@type": "Person",
+        "name": "@Model.Discussion.AuthorNickname"
+      },
+      "datePublished": "@Model.Discussion.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")",
+      "dateModified": "@Model.Discussion.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")",
+      "url": "@@Configuration["BaseUrl"]/Categories/@Model.CategoryCode/@Model.DiscussionCode",
+      "discussionUrl": "@@Configuration["BaseUrl"]/Categories/@Model.CategoryCode/@Model.DiscussionCode",
+      "interactionStatistic": [
+        {
+          "@@type": "InteractionCounter",
+          "interactionType": "https://schema.org/LikeAction",
+          "userInteractionCount": @Model.Discussion.Likes.LikeCount
+        },
+        {
+          "@@type": "InteractionCounter",
+          "interactionType": "https://schema.org/CommentAction",
+          "userInteractionCount": @Model.Discussion.Comments.Count
+        },
+        {
+          "@@type": "InteractionCounter",
+          "interactionType": "https://schema.org/ViewAction",
+          "userInteractionCount": @Model.Discussion.ViewCount
+        }
+      ]
+    }
+    </script>
+}
+
 @section Scripts {
     <!-- Import CKEditoru s podporou nahrávání obrázků -->
     <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
