@@ -58,7 +58,7 @@ public class ProfileModel : BasePageModel
     /// <summary>
     /// Historie pøihlášení uživatele - dostupná pouze pro adminy
     /// </summary>
-    public List<LoginHistoryDto> LoginHistory { get; private set; } = new();
+    public List<TimeRecordLoginDto> LoginHistory { get; private set; } = new();
 
     /// <summary>
     /// Indikuje, zda již byla odeslána žádost o pøátelství, na kterou èekáme odpovìï.
@@ -191,7 +191,7 @@ public class ProfileModel : BasePageModel
                 var loginHistoryResponse = await client.GetAsync($"{ApiBaseUrl}/users/login-history/{UserProfile.Id}?limit=20");
                 if (loginHistoryResponse.IsSuccessStatusCode)
                 {
-                    LoginHistory = await loginHistoryResponse.Content.ReadFromJsonAsync<List<LoginHistoryDto>>() ?? new();
+                    LoginHistory = await loginHistoryResponse.Content.ReadFromJsonAsync<List<TimeRecordLoginDto>>() ?? new();
                 }
             }
             catch (Exception ex)

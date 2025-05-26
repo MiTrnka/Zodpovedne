@@ -1,6 +1,6 @@
 ﻿namespace Zodpovedne.Contracts.DTO;
 
-public class LoginHistoryDto
+public class TimeRecordLoginDto
 {
     public int Id { get; set; }
     public DateTime LoginTime { get; set; }
