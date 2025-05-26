@@ -1436,7 +1436,7 @@ tr.toggle-row td {
     .account-icon-text:not(.active):hover::after {
         bottom: -5px;
     }
-    .nav-link[href="/Account/MyProfile"]:hover::after {
+    .nav-link[href="/Account/MyAccount"]:hover::after {
         display: none !important;
     }
 

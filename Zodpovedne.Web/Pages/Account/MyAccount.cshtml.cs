@@ -13,7 +13,7 @@ using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages.Account;
 
-public class MyProfileModel : BasePageModel
+public class MyAccountModel : BasePageModel
 {
     /// <summary>
     /// Tøída reprezentující pøátelství s jiným uživatelem
@@ -76,7 +76,7 @@ public class MyProfileModel : BasePageModel
     // Výsledek èištìní databáze
     public CleanupResultDto? CleanupResult { get; set; }
 
-    public MyProfileModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
+    public MyAccountModel(IHttpClientFactory clientFactory, IConfiguration configuration, FileLogger logger, IHtmlSanitizer sanitizer, Translator translator)
         : base(clientFactory, configuration, logger, sanitizer, translator)
     {
     }

@@ -172,11 +172,11 @@
                             </div>
                         </li>
                         <!-- Účet přihlášeného uživatele s notifikací pro nové žádosti o přátelství -->
-                        <li class="position-relative menu-icon-wrapper nav-item account-icon-text @(IsMenuItemActive("/Account/MyProfile") ? "active" : "")" style="cursor: pointer;">
+                        <li class="position-relative menu-icon-wrapper nav-item account-icon-text @(IsMenuItemActive("/Account/MyAccount") ? "active" : "")" style="cursor: pointer;">
                            
                         <!-- Můj profil -->
                             <a class="user-name nav-link"
-                               asp-page="/Account/MyProfile">
+                               asp-page="/Account/MyAccount">
                                 <div class="menu-icon-wrapper">
                                     <i id="user-icon" class="bi bi-person"></i>@Context.Session.GetString("UserNickname")
                                     <span id="friendship-badge" class="position-absolute badge rounded-pill bg-danger d-none">

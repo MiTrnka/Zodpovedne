@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Přidáme event listener pro kliknutí na ikonu přátelství
     friendshipIcon.addEventListener('click', function () {
         // Přesměrování na stránku s profilem
-        window.location.href = '/Account/MyProfile';
+        window.location.href = '/Account/MyAccount';
     });
     // Načteme počet žádostí o přátelství
     loadFriendshipRequests();

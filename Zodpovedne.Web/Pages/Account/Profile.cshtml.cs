@@ -6,7 +6,7 @@ using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Logging;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Logging.Services;
-using static Zodpovedne.Web.Pages.Account.MyProfileModel;
+using static Zodpovedne.Web.Pages.Account.MyAccountModel;
 using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages.Account;
