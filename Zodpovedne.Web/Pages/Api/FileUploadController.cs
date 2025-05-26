@@ -51,14 +51,14 @@ public class FileUploadController : ControllerBase
                 return BadRequest(new { error = "Chybí soubor nebo kód diskuze" });
             }
 
-            // Kontrola velikosti souboru (omezení na 5MB)
-            const int maxFileSize = 5 * 1024 * 1024; // 5MB
+            // Kontrola velikosti souboru (omezení na 10MB)
+            const int maxFileSize = 10 * 1024 * 1024; // 10MB
             if (upload.Length > maxFileSize)
             {
                 return BadRequest(new
                 {
                     uploaded = 0,
-                    error = new { message = "Soubor je příliš velký. Maximální velikost je 5MB." }
+                    error = new { message = "Soubor je příliš velký. Maximální velikost je 10MB." }
                 });
             }
 

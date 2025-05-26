@@ -138,7 +138,7 @@ public class CommentDto
 public class CreateCommentDto
 {
     [Required(ErrorMessage = "Obsah komentáře je povinný")]
-    [MaxLength(500, ErrorMessage = "Obsah komentáře nesmí být delší než 500 znaků.")]
+    [MaxLength(1000, ErrorMessage = "Obsah komentáře nesmí být delší než 1000 znaků.")]
     public string Content { get; set; } = "";
     public CommentType Type { get; set; } = CommentType.Normal;
 }
@@ -147,7 +147,7 @@ public class CreateCommentDto
 public class UpdateCommentDto
 {
     [Required(ErrorMessage = "Obsah komentáře je povinný")]
-    [MaxLength(500, ErrorMessage = "Obsah komentáře nesmí být delší než 500 znaků.")]
+    [MaxLength(1000, ErrorMessage = "Obsah komentáře nesmí být delší než 1000 znaků.")]
     public string Content { get; set; } = "";
     public CommentType Type { get; set; } = CommentType.Normal;
 }
