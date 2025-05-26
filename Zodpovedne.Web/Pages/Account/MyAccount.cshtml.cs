@@ -252,7 +252,7 @@ public class MyAccountModel : BasePageModel
 
         if (response.IsSuccessStatusCode)
         {
-            return RedirectToPage("MyProfile", new { statusMessage = "Pøezdívka byla úspìšnì zmìnìna. Zmìna se všude projeví po novém pøihlášení." });
+            return RedirectToPage("MyAccount", new { statusMessage = "Pøezdívka byla úspìšnì zmìnìna. Zmìna se všude projeví po novém pøihlášení." });
         }
 
         NicknameErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì pøezdívky.");
@@ -289,7 +289,7 @@ public class MyAccountModel : BasePageModel
 
         if (response.IsSuccessStatusCode)
         {
-            return RedirectToPage("MyProfile", new { statusMessage = "Heslo bylo úspìšnì zmìnìno." });
+            return RedirectToPage("MyAccount", new { statusMessage = "Heslo bylo úspìšnì zmìnìno." });
         }
 
         PasswordErrorMessage = await GetErrorFromHttpResponseMessage(response, "Nastala chyba pøi zmìnì hesla.");
