@@ -12,7 +12,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using Zodpovedne.Logging.Services;
 
-namespace Zodpovedne.Web.Models.Base;
+namespace Zodpovedne.Web.Pages.Models;
 
 /// <summary>
 /// Předek pro všechny PageModely, obsahuje společné vlastnosti a metody
@@ -194,7 +194,7 @@ public abstract class BasePageModel : PageModel
     {
         string errorMessage = "";
         string errorContent = "";
-        if ((response == null) || (response.Content == null))
+        if (response == null || response.Content == null)
             return defaultMessage;
         try
         {

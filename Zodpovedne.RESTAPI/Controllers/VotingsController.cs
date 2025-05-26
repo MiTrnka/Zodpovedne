@@ -167,7 +167,7 @@ public class VotingsController : ControllerZodpovedneBase
                 // Získáme ID otázek z modelu (pro aktualizaci)
                 var modelIds = model.Questions
                     .Where(q => q.Id.HasValue)
-                    .Select(q => q.Id.Value)
+                    .Select(q => q.Id!.Value)
                     .ToHashSet();
 
                 // Zjistíme, které otázky odstranit (ty, které nejsou v modelu)

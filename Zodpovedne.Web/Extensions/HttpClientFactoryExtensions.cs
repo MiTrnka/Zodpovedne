@@ -31,13 +31,13 @@ public static class HttpClientFactoryExtensions
     public static string GetClientIpAddress(HttpContext httpContext)
     {
         // Funkce pro normalizaci IP adresy
-        string NormalizeIpAddress(string ip)
+        string NormalizeIpAddress(string? ip)
         {
             if (ip != null && ip.StartsWith("::ffff:"))
             {
                 return ip.Substring(7);
             }
-            return ip;
+            return ip ?? "unknown";
         }
 
         // Důkladnější získání reálné IP klienta

@@ -5,11 +5,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Zodpovedne.Contracts.DTO;
-using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Ganss.Xss;
 using Zodpovedne.Logging.Services;
 using Zodpovedne.Web.Extensions;
+using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages.Account;
 
@@ -35,7 +35,7 @@ public class LoginModel : BasePageModel
     /// Model obsahující pøihlašovací údaje z formuláøe
     /// </summary>
     [BindProperty]
-    public Models.LoginModel Input { get; set; } = new();
+    public LoginModelDto Input { get; set; } = new ();
 
     public string? ErrorMessageWrongUser { get; set; } = null;
 

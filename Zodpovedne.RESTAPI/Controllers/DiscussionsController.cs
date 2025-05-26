@@ -2048,8 +2048,8 @@ public class DiscussionsController : ControllerZodpovedneBase
     public class UpdateImagePathsModel
     {
         public int DiscussionId { get; set; }
-        public string OldPrefix { get; set; }
-        public string NewPrefix { get; set; }
+        public string OldPrefix { get; set; } = string.Empty;
+        public string NewPrefix { get; set; } = string.Empty;
     }
 
     /// <summary>

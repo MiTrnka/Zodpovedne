@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
-using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Logging;
 using Ganss.Xss;
 using Zodpovedne.Logging.Services;
+using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages
 {

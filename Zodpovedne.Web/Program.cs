@@ -262,7 +262,7 @@ public class Program
         // Smaže všechny doèasné adresáøe (zaèínající "temp_") v adresáøi uploads/discussions
         Zodpovedne.Web.Services.PictureCleaner.CleanTempDirectories(uploadsRoot);
         // Volání metody pro smazání neplatných adresáøù diskuzí
-        Zodpovedne.Web.Services.PictureCleaner.CleanupInvalidDiscussionDirectories(uploadsRoot, builder.Configuration["ApiBaseUrl"]);
+        Zodpovedne.Web.Services.PictureCleaner.CleanupInvalidDiscussionDirectories(uploadsRoot, builder.Configuration["ApiBaseUrl"] ?? throw new ArgumentNullException());
 
         app.Run();
     }

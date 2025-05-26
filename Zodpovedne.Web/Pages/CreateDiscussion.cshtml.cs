@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Extensions;
 using Zodpovedne.Web.Filters;
-using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Ganss.Xss;
 using Zodpovedne.Logging.Services;
 using Zodpovedne.Contracts.Enums;
 using System.Text.Json;
+using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages;
 

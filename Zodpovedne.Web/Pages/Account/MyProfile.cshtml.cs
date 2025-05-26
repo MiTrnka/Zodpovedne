@@ -4,12 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Extensions;
-using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using System.Text.Json;
 using Zodpovedne.Contracts.Enums;
 using Ganss.Xss;
 using Zodpovedne.Logging.Services;
+using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages.Account;
 

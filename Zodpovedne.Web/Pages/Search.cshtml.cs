@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Web.Extensions;
-using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Ganss.Xss;
 using Zodpovedne.Logging.Services;
+using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages;
 

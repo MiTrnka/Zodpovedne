@@ -322,6 +322,15 @@ public class FileUploadController : ControllerBase
             string sourcePath = Path.Combine(_environment.WebRootPath, "uploads", "discussions", model.OldCode);
             string destinationPath = Path.Combine(_environment.WebRootPath, "uploads", "discussions", model.NewCode);
 
+            if (string.IsNullOrEmpty(sourcePath) || string.IsNullOrEmpty(destinationPath))
+                return BadRequest(new { error = "Chybí zdrojová nebo cílová cesta" });
+
+            if (string.Equals(sourcePath, destinationPath, StringComparison.OrdinalIgnoreCase))
+            {
+                // Pokud jsou cesty stejné, není co přejmenovávat - vratíme úspěch
+                return Ok(new { success = true, message = "Cílový a zdrojový adresář jsou stejné, není co přejmenovávat." });
+            }
+
             // Kontrola, zda zdrojový adresář existuje
             if (!Directory.Exists(sourcePath))
             {
@@ -337,7 +346,7 @@ public class FileUploadController : ControllerBase
             }
 
             // Vytvoříme adresářovou strukturu pro cíl
-            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath) ?? throw new ArgumentNullException("Prazdna cesta pro vytvoreni adresare"));
 
             // Přejmenování adresáře
             Directory.Move(sourcePath, destinationPath);
@@ -354,8 +363,8 @@ public class FileUploadController : ControllerBase
     // Třída pro model přejmenování adresáře
     public class RenameDirectoryModel
     {
-        public string OldCode { get; set; }
-        public string NewCode { get; set; }
+        public string OldCode { get; set; } = string.Empty;
+        public string NewCode { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -411,7 +420,7 @@ public class FileUploadController : ControllerBase
     // Třída pro model mazání adresáře
     public class DeleteDirectoryModel
     {
-        public string Code { get; set; }
+        public string Code { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -468,8 +477,8 @@ public class FileUploadController : ControllerBase
     // Třída pro model mazání souboru
     public class DeleteFileModel
     {
-        public string DiscussionCode { get; set; }
-        public string FileName { get; set; }
+        public string DiscussionCode { get; set; } = string.Empty;
+        public string FileName { get; set; } = string.Empty;
     }
 
 }

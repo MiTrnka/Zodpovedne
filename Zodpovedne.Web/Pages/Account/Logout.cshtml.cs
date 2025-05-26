@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
-using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Zodpovedne.Web.Extensions;
 using Ganss.Xss;
 using Zodpovedne.Logging.Services;
+using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages.Account;
 

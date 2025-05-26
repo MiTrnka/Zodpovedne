@@ -5,9 +5,9 @@ using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Logging;
 using Zodpovedne.Web.Extensions;
-using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging.Services;
 using static Zodpovedne.Web.Pages.Account.MyProfileModel;
+using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages.Account;
 

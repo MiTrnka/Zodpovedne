@@ -15,11 +15,11 @@ using System.Security.Claims;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Contracts.Enums;
 using Zodpovedne.Web.Extensions;
-using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Ganss.Xss;
 using Zodpovedne.Logging.Services;
+using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages;
 

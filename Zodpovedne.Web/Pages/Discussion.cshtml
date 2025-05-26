@@ -880,7 +880,7 @@
 <input type="hidden" id="current-page" value="@Model.CurrentPage" />
 <input type="hidden" id="is-user-logged-in" value="@Model.IsUserLoggedIn.ToString().ToLower()" />
 @* Skrytá proměnná pro sledování aktuálního typu diskuze *@
-<input type="hidden" id="currentDiscussionType" value="@((int)Model.Discussion.Type)" />
+<input type="hidden" id="currentDiscussionType" value="@((int)Model.Discussion!.Type)" />
 
 @section Scripts {
     <!-- Import CKEditoru s podporou nahrávání obrázků -->
@@ -911,6 +911,8 @@
 
     <!-- Import javascriptu -->
     <script src="~/js/discussion.js" asp-append-version="true"></script>
-    <script>window.discussionId = @(ViewData["DiscussionId"] ?? 0);</script>
+    <script>
+        window.discussionId = @Html.Raw( ViewData["DiscussionId"] ?? 0 );
+    </script>
     <script src="~/js/voting.js" asp-append-version="true"></script>
 }

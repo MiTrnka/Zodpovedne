@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Logging;
-using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging.Services;
+using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages.Account
 {

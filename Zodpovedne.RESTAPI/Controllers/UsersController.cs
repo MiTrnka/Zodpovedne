@@ -613,7 +613,7 @@ public class UsersController : ControllerZodpovedneBase
     }*/
 
     /// <summary>
-    /// Vytvoří JWT token pro přihlášení uživatele ze zadaného emailu a hesla (LoginModel) (zkontroluje zadaný email a heslo a vytvoří JWT token)
+    /// Vytvoří JWT token pro přihlášení uživatele ze zadaného emailu a hesla (LoginModelDto) (zkontroluje zadaný email a heslo a vytvoří JWT token)
     /// </summary>
     /// <param name="model"></param>
     /// <returns></returns>

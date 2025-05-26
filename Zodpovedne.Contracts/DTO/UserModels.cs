@@ -31,17 +31,6 @@ public class UserProfileDto
     public UserType UserType { get; set; }
 }
 
-public class LoginModelDto
-{
-    [EmailAddress]
-    [Required(ErrorMessage = "Email je povinný")]
-    public string Email { get; set; } = "";
-
-    [Required(ErrorMessage = "Heslo je povinné")]
-    [StringLength(100, MinimumLength = 1, ErrorMessage = "Heslo může mít maximálně 100 znaků")]
-    public string Password { get; set; } = "";
-}
-
 public class UpdateNicknameDto
 {
     [Required(ErrorMessage = "Přezdívka je povinná")]

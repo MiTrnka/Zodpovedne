@@ -2,8 +2,8 @@ using Ganss.Xss;
 using Microsoft.AspNetCore.Mvc;
 using Zodpovedne.Contracts.DTO;
 using Zodpovedne.Logging;
-using Zodpovedne.Web.Models.Base;
 using Zodpovedne.Logging.Services;
+using Zodpovedne.Web.Pages.Models;
 
 namespace Zodpovedne.Web.Pages.Account
 {
