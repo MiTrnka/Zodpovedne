@@ -201,6 +201,21 @@ public class ProfileModel : BasePageModel
             }
         }
 
+        // Po naËtenÌ profilu nastavit SEO data
+        if (UserProfile != null)
+        {
+            ViewData["Title"] = $"Profil {UserProfile.Nickname}";
+            ViewData["Description"] = $"Profil uûivatele {UserProfile.Nickname} na Discussion.cz - ËeskÈ diskuznÌ soci·lnÌ sÌti bez reklam. Zobrazit diskuze a aktivitu uûivatele.";
+            ViewData["Keywords"] = $"profil, uûivatel, uzivatel, {UserProfile.Nickname}, diskuze, diskuzi, komunita, discussion.cz, Ëesk· sÌù, ceska sit";
+
+            // Pro Open Graph (bez diakritiky)
+            ViewData["OGTitle"] = $"Profil {UserProfile.Nickname} - Discussion.cz";
+            ViewData["OGDescription"] = $"Prohlednete si profil a diskuze uzivatele {UserProfile.Nickname} na Discussion.cz - ceske diskuzni socialni siti.";
+
+            // SoukromÈ profily neindexovat
+            ViewData["Robots"] = CanViewFriendInfo ? "index, follow" : "noindex, nofollow";
+        }
+
         return Page();
     }
 

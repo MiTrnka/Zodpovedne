@@ -64,14 +64,6 @@ public class CategoryModel : BasePageModel
     /// </summary>
     public async Task<IActionResult> OnGetAsync()
     {
-        // Po naËtenÌ kategorie nastavit SEO data
-        ViewData["Title"] = $"{CategoryName} - Diskuze";
-        ViewData["Description"] = $"Diskuze v kategorii {CategoryName} na Discussion.cz. {(!string.IsNullOrEmpty(CategoryDescription) ? CategoryDescription : "P¯ipojte se k diskuzÌm v tÈto kategorii.")}";
-        ViewData["Keywords"] = $"{CategoryName.ToLower()}, diskuze, Ëesk· komunita, {CategoryCode}";
-        ViewData["OGTitle"] = $"Kategorie {CategoryName} - Discussion.cz";
-        ViewData["OGDescription"] = CategoryDescription ?? $"Diskutujte o {CategoryName.ToLower()} s Ëeskou komunitou na Discussion.cz";
-        ViewData["OGType"] = "website";
-
         var client = _clientFactory.CreateBearerClient(HttpContext);
 
         // ZÌsk·nÌ detailu kategorie
@@ -96,6 +88,16 @@ public class CategoryModel : BasePageModel
         CategoryCode = category.Code;
         CategoryDescription = category.Description;
         CategoryId = category.Id;
+
+        // Po naËtenÌ kategorie nastavit SEO data
+        ViewData["Title"] = $"{CategoryName} - Diskuze";
+        ViewData["Description"] = $"Diskuze v kategorii {CategoryName} na Discussion.cz. {(!string.IsNullOrEmpty(CategoryDescription) ? CategoryDescription : "P¯ipojte se k diskuzÌm v tÈto kategorii.")} »esk· diskuznÌ komunita bez reklam.";
+        ViewData["Keywords"] = $"{CategoryName.ToLower()}, diskuze {CategoryName.ToLower()}, diskuzi {CategoryName.ToLower()}, {CategoryCode}, Ëesk· komunita, ceska komunita, discussion, fÛrum, forum";
+
+        // Pro Open Graph (bez diakritiky)
+        ViewData["OGTitle"] = $"Kategorie {CategoryName} - Discussion.cz";
+        ViewData["OGDescription"] = $"Diskuze v kategorii {CategoryName} na Discussion.cz. {(!string.IsNullOrEmpty(CategoryDescription) ? CategoryDescription?.Replace("¯", "r").Replace("ö", "s").Replace("Ë", "c").Replace("û", "z").Replace("˝", "y").Replace("·", "a").Replace("Ì", "i").Replace("È", "e").Replace("˘", "u").Replace("˙", "u").Replace("ù", "t").Replace("Ô", "d").Replace("Ú", "n") : "Pripojte se k diskuzim v teto kategorii.")}";
+
 
         // NaËtenÌ prvnÌ str·nky diskuzÌ
         var discussionsResponse = await client.GetAsync(

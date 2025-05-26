@@ -157,30 +157,6 @@ public class DiscussionModel : BasePageModel
 
         // P¯ed·v·me ID diskuze do JavaScriptu pro pouûitÌ v hlasovacÌm skriptu
         ViewData["DiscussionId"] = Discussion.Id;
-        
-        // Po naËtenÌ diskuze nastavit SEO data
-        if (Discussion != null)
-        {
-            ViewData["Title"] = Discussion.Title;
-
-            // Vytvo¯Ìme description z prvnÌch 160 znak˘ obsahu (bez HTML tag˘)
-            var plainTextContent = System.Text.RegularExpressions.Regex.Replace(Discussion.Content ?? "", "<.*?>", string.Empty);
-            var description = plainTextContent.Length > 160
-                ? plainTextContent.Substring(0, 157) + "..."
-                : plainTextContent;
-
-            ViewData["Description"] = $"{description} | Diskuze od {Discussion.AuthorNickname} v kategorii {CategoryName} na Discussion.cz";
-            ViewData["Keywords"] = $"{Discussion.Title}, {CategoryName}, {Discussion.AuthorNickname}, diskuze, koment·¯e";
-
-            ViewData["OGTitle"] = Discussion.Title;
-            ViewData["OGDescription"] = description;
-            ViewData["OGType"] = "article";
-
-            // Pro diskuze p¯id·me dalöÌ meta tagy
-            ViewData["ArticleAuthor"] = Discussion.AuthorNickname;
-            ViewData["ArticlePublishedTime"] = Discussion.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            ViewData["ArticleModifiedTime"] = Discussion.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ");
-        }
 
         // ZjiötÏnÌ typu p¯ihl·öenÈho uûivatele a nastavenÌ opr·vnÏnÌ pro nahr·v·nÌ soubor˘
         if (IsUserLoggedIn)
@@ -215,6 +191,45 @@ public class DiscussionModel : BasePageModel
             }
             else
                 CategoryName = category.Name;
+        }
+
+        // Po naËtenÌ diskuze nastavit SEO data
+        if (Discussion != null)
+        {
+            ViewData["Title"] = Discussion.Title;
+
+            // Vytvo¯Ìme description z prvnÌch 160 znak˘ obsahu (bez HTML tag˘)
+            var plainTextContent = System.Text.RegularExpressions.Regex.Replace(Discussion.Content ?? "", "<.*?>", string.Empty);
+            var description = plainTextContent.Length > 120
+                ? plainTextContent.Substring(0, 117) + "..."
+                : plainTextContent;
+
+            ViewData["Description"] = $"{description} | Diskuze od {Discussion.AuthorNickname} v kategorii {CategoryName} na Discussion.cz - ËeskÈ diskuznÌ sÌti bez reklam.";
+            ViewData["Keywords"] = $"{Discussion.Title}, {CategoryName}, {Discussion.AuthorNickname}, diskuze, diskuzi, koment·¯e, komentare, Ëesk· komunita, ceska komunita, discussion";
+
+            // Pro Open Graph (bez diakritiky)
+            var titleWithoutDiacritics = Discussion.Title
+                .Replace("¯", "r").Replace("ö", "s").Replace("Ë", "c").Replace("û", "z").Replace("˝", "y")
+                .Replace("·", "a").Replace("Ì", "i").Replace("È", "e").Replace("˘", "u").Replace("˙", "u")
+                .Replace("ù", "t").Replace("Ô", "d").Replace("Ú", "n").Replace("ÿ", "R").Replace("ä", "S")
+                .Replace("»", "C").Replace("é", "Z").Replace("›", "Y").Replace("¡", "A").Replace("Õ", "I")
+                .Replace("…", "E").Replace("Ÿ", "U").Replace("⁄", "U").Replace("ç", "T").Replace("œ", "D").Replace("“", "N");
+
+            var descriptionWithoutDiacritics = description
+                .Replace("¯", "r").Replace("ö", "s").Replace("Ë", "c").Replace("û", "z").Replace("˝", "y")
+                .Replace("·", "a").Replace("Ì", "i").Replace("È", "e").Replace("˘", "u").Replace("˙", "u")
+                .Replace("ù", "t").Replace("Ô", "d").Replace("Ú", "n").Replace("ÿ", "R").Replace("ä", "S")
+                .Replace("»", "C").Replace("é", "Z").Replace("›", "Y").Replace("¡", "A").Replace("Õ", "I")
+                .Replace("…", "E").Replace("Ÿ", "U").Replace("⁄", "U").Replace("ç", "T").Replace("œ", "D").Replace("“", "N");
+
+            ViewData["OGTitle"] = titleWithoutDiacritics;
+            ViewData["OGDescription"] = $"{descriptionWithoutDiacritics} | Diskuze od {Discussion.AuthorNickname} na Discussion.cz";
+            ViewData["OGType"] = "article";
+
+            // Pro diskuze p¯id·me dalöÌ meta tagy
+            ViewData["ArticleAuthor"] = Discussion.AuthorNickname;
+            ViewData["ArticlePublishedTime"] = Discussion.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            ViewData["ArticleModifiedTime"] = Discussion.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ");
         }
 
         // Pokud je uûivatel admin, naËteme seznam vöech kategoriÌ, aby mohl admin mezi nimi p¯esouvat diskuze

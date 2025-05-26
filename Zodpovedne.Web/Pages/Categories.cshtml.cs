@@ -24,10 +24,12 @@ public class CategoriesModel : BasePageModel
     {
         // SEO meta data
         ViewData["Title"] = "Kategorie diskuzí";
-        ViewData["Description"] = "Prozkoumejte všechny kategorie diskuzí na Discussion.cz - od aktuálních témat po hobby a zájmy. Najdìte svou komunitu!";
-        ViewData["Keywords"] = "kategorie, diskuzní témata, fóra, èeská komunita, discussion témata";
-        ViewData["OGTitle"] = "Kategorie diskuzí - Discussion.cz";
-        ViewData["OGDescription"] = "Objevte rozmanité kategorie diskuzí na Discussion.cz";
+        ViewData["Description"] = "Prozkoumejte všechny kategorie diskuzí na Discussion.cz - od aktuálních témat po hobby a zájmy. Najdìte svou komunitu v èeské diskuzní síti bez reklam.";
+        ViewData["Keywords"] = "kategorie diskuzí, kategorie diskuzi, diskuzní témata, diskuzni temata, fóra, fora, èeská komunita, ceska komunita, témata diskuzí, temata diskuzi, discussion kategorie, bez reklamy, bez reklam, zdarma, sí, sit, sociální sí, socialni sit, diskuzni socialni sit, diskuzní sociální sí";
+
+        // Pro Open Graph (bez diakritiky)
+        ViewData["OGTitle"] = "Diskuze pod kategoriemi - Discussion.cz";
+        ViewData["OGDescription"] = "Prozkoumejte vsechny kategorie diskuzi na Discussion.cz - od aktualnich temat po hobby a zajmy. Najdete svou komunitu!";
 
         var client = _clientFactory.CreateClient();
         var response = await client.GetAsync($"{ApiBaseUrl}/Categories");

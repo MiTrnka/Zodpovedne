@@ -31,12 +31,14 @@ namespace Zodpovedne.Web.Pages
 
             try
             {
-                // SEO meta data
+                // SEO meta data pro pøihlášené uivatele
                 ViewData["Title"] = "Nové diskuze od pøátel";
-                ViewData["Description"] = "Sledujte nejnovìjší diskuze od vašich pøátel na Discussion.cz - èeské diskuzní sociální síti bez reklam";
-                ViewData["Keywords"] = "nové diskuze, pøátelé, feed, èeská sociální sí, discussion";
-                ViewData["OGTitle"] = "Nové diskuze od pøátel - Discussion.cz";
-                ViewData["OGDescription"] = "Objevte nejnovìjší diskuze od vašich pøátel na Discussion.cz";
+                ViewData["Description"] = "Sledujte nejnovìjší diskuze od vašich pøátel na Discussion.cz - èeské diskuzní sociální síti bez reklam. Zùstaòte v kontaktu s komunitou.";
+                ViewData["Keywords"] = "nové diskuze, nove diskuze, pøátelé, pratele, feed, aktuality, èeská sociální sí, ceska socialni sit, discussion, komunita, bez reklam";
+
+                // Pro Open Graph (bez diakritiky)
+                ViewData["OGTitle"] = "Nove diskuze od pratel - Discussion.cz";
+                ViewData["OGDescription"] = "Sledujte nejnovejsi diskuze od vasich pratel na Discussion.cz - ceske diskuzni socialni siti bez reklam.";
 
                 // Naètení kombinovaného seznamu diskuzí
                 var client = _clientFactory.CreateBearerClient(HttpContext);

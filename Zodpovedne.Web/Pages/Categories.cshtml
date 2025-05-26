@@ -2,9 +2,7 @@
 @model CategoriesModel
 @inject Zodpovedne.Logging.Services.Translator Translator
 @{
-    ViewData["Title"] = "Témata diskuzí";
     /* Seznam kategorii */
-
     //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
     if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {

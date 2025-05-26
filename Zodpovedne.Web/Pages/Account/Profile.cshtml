@@ -2,8 +2,6 @@
 @using Zodpovedne.Contracts.Enums
 @model ProfileModel
 @{
-    ViewData["Title"] = "Profil";
-
     //Pokud je jakýkoliv text v ErrorMessage, tak se zobrazí a zbytek stránky se nevykreslí
     if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {

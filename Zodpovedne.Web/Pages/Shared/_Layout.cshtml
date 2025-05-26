@@ -31,40 +31,54 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- SEO meta tagy -->
-    <meta name="description" content="@ViewData["Description"] ?? " Discussion.cz - česká diskuzní sociální síť. Sdílejte názory, diskutujte s přáteli a objevujte nová témata v bezpečném prostředí bez reklam."" />
-    <meta name="keywords" content="@ViewData["Keywords"] ?? " diskuze, česká sociální síť, diskuzní fórum, bez reklam, přátelé, komunita, nekomerční"" />
-    <meta name="robots" content="@ViewData["Robots"] ?? " index, follow"" />
+    <!-- SEO meta tagy (s diakritikou pro Google) -->
+    <meta name="description" content="@(ViewData["Description"] ?? "Discussion.cz - česká diskuzní sociální síť bez reklam. Připojte se ke komunitě, diskutujte s přáteli a sdílejte názory v bezpečném prostředí.")" />
+    <meta name="keywords" content="@(ViewData["Keywords"] ?? "diskuze, diskuzi, česká sociální síť, ceska socialni sit, komunita, bez reklam, fórum, forum, discussion, bez reklamy, bez reklam, zdarma, síť, sit, sociální síť, socialni sit, diskuzni socialni sit, diskuzní sociální síť")" />
+    <meta name="robots" content="@(ViewData["Robots"] ?? "index, follow")" />
     <meta name="author" content="Discussion.cz" />
     <meta name="language" content="cs" />
     <meta name="geo.region" content="CZ" />
     <meta name="geo.country" content="Czech Republic" />
 
-    <!-- Open Graph meta tagy pro sociální sítě -->
-    <meta property="og:title" content="@ViewData["OGTitle"] ?? @ViewData["Title"] - Discussion.cz" />
-    <meta property="og:description" content="@ViewData["OGDescription"] ?? @ViewData["Description"] ?? " Česká diskuzní sociální síť bez reklam"" />
-    <meta property="og:image" content="@Configuration["BaseUrl"]/images/og-discussion.jpg" />
+    <!-- Open Graph meta tagy pro sociální sítě (bez diakritiky) -->
+    <meta property="og:title" content="@(ViewData["OGTitle"] ?? ViewData["Title"] ?? "Discussion.cz - Ceska diskuzni socialni sit")" />
+    <meta property="og:description" content="@(ViewData["OGDescription"] ?? ViewData["Description"] ?? "Ceska diskuzni socialni sit bez reklam. Pripojte se ke komunite a diskutujte s prateli.")" />
+    <meta property="og:image" content="@Configuration["BaseUrl"]/images/discussion-logo.png" />
     <meta property="og:url" content="@Configuration["BaseUrl"]@Context.Request.Path" />
-    <meta property="og:type" content="@ViewData["OGType"] ?? " website"" />
+    <meta property="og:type" content="@(ViewData["OGType"] ?? "website")" />
     <meta property="og:site_name" content="Discussion.cz" />
     <meta property="og:locale" content="cs_CZ" />
 
-    <!-- Twitter Card -->
+    <!-- Twitter Card (také bez diakritiky) -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="@ViewData["OGTitle"] ?? @ViewData["Title"] - Discussion.cz" />
-    <meta name="twitter:description" content="@ViewData["OGDescription"] ?? @ViewData["Description"] ?? " Česká diskuzní sociální síť bez reklam"" />
-    <meta name="twitter:image" content="@Configuration["BaseUrl"]/images/og-discussion.jpg" />
+    <meta name="twitter:title" content="@(ViewData["OGTitle"] ?? ViewData["Title"] ?? "Discussion.cz - Ceska diskuzni socialni sit")" />
+    <meta name="twitter:description" content="@(ViewData["OGDescription"] ?? ViewData["Description"] ?? "Ceska diskuzni socialni sit bez reklam")" />
+    <meta name="twitter:image" content="@Configuration["BaseUrl"]/images/discussion-logo.png" />
+
+    <!-- Dodatečné meta tagy pro články (jen pokud jsou nastaveny) -->
+    @if (!string.IsNullOrEmpty(ViewData["ArticleAuthor"]?.ToString()))
+    {
+        <meta property="article:author" content="@ViewData["ArticleAuthor"]" />
+        <meta property="article:published_time" content="@ViewData["ArticlePublishedTime"]" />
+        <meta property="article:modified_time" content="@ViewData["ArticleModifiedTime"]" />
+    }
 
     <!-- Canonical URL -->
-    <link rel="canonical" href="@Configuration["BaseUrl"]@Context.Request.Path@Context.Request.QueryString" />
+    <link rel="canonical" href="@Configuration["BaseUrl"]@Context.Request.Path" />
 
+    <!-- Alternate pro jiné jazyky -->
+    <link rel="alternate" hreflang="cs" href="@Configuration["BaseUrl"]@Context.Request.Path" />
+    <link rel="alternate" hreflang="x-default" href="@Configuration["BaseUrl"]@Context.Request.Path" />
 
-    <title>@ViewData["Title"]@(string.IsNullOrEmpty(ViewData["Title"]?.ToString()) ? "Discussion.cz - Česká diskuzní sociální síť" : " | Discussion.cz")</title>
+    <!-- Title tag -->
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " | Discussion.cz" : "Discussion.cz - Česká diskuzní sociální síť")</title>
+
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/catalogs.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/ckeditor-content.css" asp-append-version="true" />
+    <!-- Favicon -->
     @if ((Configuration["SiteInstance"] != null) && (Configuration["SiteInstance"] == "discussion.cz"))
     {
         <link rel="icon" type="image/png" href="~/images/favicondiscussion.png" sizes="32x32">
