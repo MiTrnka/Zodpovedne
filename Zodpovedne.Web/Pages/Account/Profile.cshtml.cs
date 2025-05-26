@@ -41,7 +41,7 @@ public class ProfileModel : BasePageModel
     /// (buï je sám tímto uživatelem, nebo je jeho pøítelem)
     /// </summary>
     public bool CanViewFriendInfo =>
-        (IsUserLoggedIn && UserProfile?.Id == CurrentUserId) || // Je to jeho vlastní profil
+        (IsUserLoggedIn && UserProfile?.Id == UserId) || // Je to jeho vlastní profil
         (FriendshipStatus == Zodpovedne.Contracts.Enums.FriendshipStatus.Approved) ||   // Nebo jsou pøátelé
         (IsAdmin); // Nebo je admin
 
@@ -51,7 +51,7 @@ public class ProfileModel : BasePageModel
     public bool CanRequestFriendship =>
         // Mùže požádat pokud:
         IsUserLoggedIn &&                               // Je pøihlášený
-        UserProfile?.Id != CurrentUserId &&             // Není to jeho vlastní profil
+        UserProfile?.Id != UserId &&             // Není to jeho vlastní profil
         FriendshipStatus == null;                       // A žádný vztah zatím neexistuje
 
     // Pøidejte tuto vlastnost do tøídy ProfileModel
@@ -134,7 +134,7 @@ public class ProfileModel : BasePageModel
         }
 
         // Zjištìní stavu pøátelství - pouze pokud je uživatel pøihlášen a není to jeho vlastní profil
-        if (IsUserLoggedIn && UserProfile?.Id != CurrentUserId)
+        if (IsUserLoggedIn && UserProfile?.Id != UserId)
         {
             try
             {

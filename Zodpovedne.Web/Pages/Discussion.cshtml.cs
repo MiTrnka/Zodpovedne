@@ -92,7 +92,7 @@ public class DiscussionModel : BasePageModel
     /// </summary>
     public bool CanEditDiscussion =>
         Discussion != null && IsUserLoggedIn &&
-        (IsAdmin || Discussion.AuthorId == CurrentUserId);
+        (IsAdmin || Discussion.AuthorId == UserId);
 
     /// <summary>
     /// Urèuje, zda je komentáø root (není reakcí na jiný komentáø)
@@ -105,7 +105,7 @@ public class DiscussionModel : BasePageModel
     /// </summary>
     public bool CanLikeDiscussion =>
         Discussion != null && IsUserLoggedIn &&
-        Discussion.AuthorId != CurrentUserId; // Uživatel nemùže lajkovat své vlastní diskuze
+        Discussion.AuthorId != UserId; // Uživatel nemùže lajkovat své vlastní diskuze
 
     /// <summary>
     /// Urèuje, zda mùže aktuální uživatel dát nebo odebrat like komentáøi
@@ -289,9 +289,9 @@ public class DiscussionModel : BasePageModel
         }
 
         // Kontrola oprávnìní na smazání diskuze
-        if (!(IsAdmin || basicDiscussionInfoDto.AuthorId == CurrentUserId))
+        if (!(IsAdmin || basicDiscussionInfoDto.AuthorId == UserId))
         {
-            logger.Log($"Uživatel {CurrentUserId} nemá oprávnìní na smazání diskuze {basicDiscussionInfoDto.Id}: {basicDiscussionInfoDto.Title}");
+            logger.Log($"Uživatel {UserId} nemá oprávnìní na smazání diskuze {basicDiscussionInfoDto.Id}: {basicDiscussionInfoDto.Title}");
             ErrorMessage = "Nemáte oprávnìní na smazání této diskuze.";
             return Page();
         }

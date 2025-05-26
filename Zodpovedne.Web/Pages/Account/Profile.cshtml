@@ -45,7 +45,7 @@
         </div>
 
         <!-- Tlačítko s žádostí o přátelství -->
-        @if (Model.IsUserLoggedIn && Model.UserProfile?.Id != Model.CurrentUserId)
+        @if (Model.IsUserLoggedIn && Model.UserProfile?.Id != Model.UserId)
         {
             <div class="mt-3">
                 @if (Model.CanRequestFriendship)

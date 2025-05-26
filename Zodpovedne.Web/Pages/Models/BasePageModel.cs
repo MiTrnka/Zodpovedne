@@ -65,7 +65,7 @@ public abstract class BasePageModel : PageModel
     /// <summary>
     /// ID přihlášeného uživatele
     /// </summary>
-    public string? CurrentUserId => IsUserLoggedIn ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
+    public string? UserId => IsUserLoggedIn ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
 
     /// <summary>
     /// Indikuje, zda je uživatel přihlášen
