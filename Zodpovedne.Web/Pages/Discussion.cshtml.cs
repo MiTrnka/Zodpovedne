@@ -205,7 +205,7 @@ public class DiscussionModel : BasePageModel
                 : plainTextContent;
 
             ViewData["Description"] = $"{description} | Diskuze od {Discussion.AuthorNickname} v kategorii {CategoryName} na Discussion.cz - èeské diskuzní síti bez reklam.";
-            ViewData["Keywords"] = $"{Discussion.Title}, {CategoryName}, {Discussion.AuthorNickname}, diskuze, diskuzi, komentáøe, komentare, èeská komunita, ceska komunita, discussion";
+            ViewData["Keywords"] = $"{Discussion.Title}, {CategoryName}, {Discussion.AuthorNickname}, diskuze, diskuzi, komentáøe, komentare, èeská komunita, ceska komunita, discussion, discussion kategorie, bez reklamy, bez reklam, zdarma, sí, sit, sociální sí, socialni sit, diskuzni socialni sit, diskuzní sociální sí";
 
             // Pro Open Graph (bez diakritiky)
             var titleWithoutDiacritics = Discussion.Title

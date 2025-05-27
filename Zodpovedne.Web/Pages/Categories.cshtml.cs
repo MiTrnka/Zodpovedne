@@ -25,7 +25,7 @@ public class CategoriesModel : BasePageModel
         // SEO meta data
         ViewData["Title"] = "Kategorie diskuzí";
         ViewData["Description"] = "Prozkoumejte všechny kategorie diskuzí na Discussion.cz - od aktuálních témat po hobby a zájmy. Najdìte svou komunitu v èeské diskuzní síti bez reklam.";
-        ViewData["Keywords"] = "kategorie diskuzí, kategorie diskuzi, diskuzní témata, diskuzni temata, fóra, fora, èeská komunita, ceska komunita, témata diskuzí, temata diskuzi, discussion kategorie, bez reklamy, bez reklam, zdarma, sí, sit, sociální sí, socialni sit, diskuzni socialni sit, diskuzní sociální sí";
+        ViewData["Keywords"] = "kategorie diskuzí, kategorie diskuzi, diskuzní témata, diskuzni temata, fóra, fora, èeská komunita, ceska komunita, témata diskuzí, temata diskuzi, discussion, discussion kategorie, bez reklamy, bez reklam, zdarma, sí, sit, sociální sí, socialni sit, diskuzni socialni sit, diskuzní sociální sí";
 
         // Pro Open Graph (bez diakritiky)
         ViewData["OGTitle"] = "Diskuze pod kategoriemi - Discussion.cz";

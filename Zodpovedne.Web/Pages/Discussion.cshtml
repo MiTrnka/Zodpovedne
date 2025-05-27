@@ -572,18 +572,11 @@
 
                                 <!-- Kontejner pro správu otázek (zobrazen pouze pokud je vybráno jiné než "Žádné hlasování") -->
                                 <div id="voting-questions-modal-container">
-                                    <!-- Tlačítko pro přidání nové otázky -->
-                                    <div class="mb-3">
-                                        <button type="button" class="btn btn-sm btn-success" id="add-question-btn-modal">
-                                            <i class="bi bi-plus-circle"></i> Přidat novou otázku
-                                        </button>
-                                    </div>
-
                                     <!-- Seznam otázek hlasování -->
                                     <div id="voting-questions-modal-list">
                                         <!-- Sem se dynamicky přidají otázky -->
                                         <div class="text-muted text-center py-3" id="no-questions-message-modal">
-                                            Zatím nejsou přidány žádné otázky.
+                                            Otázky na Ano / Ne / Nehlasuji.
                                         </div>
                                     </div>
 
@@ -615,6 +608,13 @@
                                             </div>
                                         </div>
                                     </template>
+                                    <!-- Tlačítko pro přidání nové otázky -->
+                                    <div class="mb-3">
+                                        <button type="button" class="btn btn-sm btn-success" id="add-question-btn-modal">
+                                            <i class="bi bi-plus-circle"></i> Přidat novou otázku
+                                        </button>
+                                    </div>
+
                                 </div>
                             </div>
                             <div class="modal-footer">

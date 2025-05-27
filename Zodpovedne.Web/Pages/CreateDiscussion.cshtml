@@ -81,10 +81,10 @@
                                         <option value="@((int)DiscussionType.Top)">Top</option>
                                     }
                                 </select>
-                           
+
                         </div>
 
-            
+
                     </div>
                     <div class="col-md-6">
                         <!-- Přidáme checkbox pro vytvoření hlasování -->
@@ -109,21 +109,13 @@
                         <div class="form-text">Určuje, zda a jak bude hlasování zobrazeno uživatelům.</div>
                     </div>
 
-                    <!-- Tlačítko pro přidání nové otázky -->
-                    <div class="mb-3">
-                        <button type="button" class="btn btn-sm btn-success" id="add-question-btn">
-                            <i class="bi bi-plus-circle"></i> Přidat novou otázku
-                        </button>
-                    </div>
-
                     <!-- Seznam otázek hlasování -->
                     <div id="voting-questions-container">
                         <!-- Zde budou dynamicky přidávány otázky -->
                         <div class="text-muted text-center py-3" id="no-questions-message">
-                            Zatím nejsou přidány žádné otázky.
+                            Otázky na Ano / Ne / Nehlasuji.
                         </div>
                     </div>
-
                     <!-- Šablona pro novou otázku (skrytá) -->
                     <template id="question-template">
                         <div class="voting-question card mb-3">
@@ -152,6 +144,12 @@
                             </div>
                         </div>
                     </template>
+                    <!-- Tlačítko pro přidání nové otázky -->
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-sm btn-success" id="add-question-btn">
+                            <i class="bi bi-plus-circle"></i> Přidat novou otázku
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Tlačítka pro ovládání formuláře -->
