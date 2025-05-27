@@ -280,7 +280,7 @@ public class DiscussionsController : ControllerZodpovedneBase
                 .Where(d => d.Type != DiscussionType.ForFriends || isMyAccount || IsAdmin || friendIds.Contains(d.UserId)) // ForFriends diskuze vidí autor, admin nebo přátelé autora
                 .Where(d => d.Type != DiscussionType.Private || isMyAccount || IsAdmin) // Private diskuze vidí jen autor nebo admin
                 .Include(d => d.Category) // Načteme i kategorii pro zobrazení
-                .OrderByDescending(d => d.UpdatedAt) // Řazení od nejnovějších
+                .OrderByDescending(d => d.UpdatedWhateverAt) // Řazení od nejaktuálnějších
                 .Select(d => new BasicDiscussionInfoDto
                 {
                     Id = d.Id,
