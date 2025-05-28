@@ -45,8 +45,16 @@ public class LoginModel : BasePageModel
             this.StatusMessage = statusMessage;
     }
 
-    /// <summary>
-    /// Zpracování POST požadavku pøi odeslání pøihlašovacího formuláøe
+    /// Zpracovává POST požadavek s pøihlašovacími údaji z formuláøe.
+    /// Provádí kompletní proces pøihlášení vèetnì:
+    /// - Validace vstupních dat (email, heslo)
+    /// - Komunikace s REST API pro ovìøení pøihlašovacích údajù
+    /// - Získání JWT tokenu z API odpovìdi
+    /// - Vytvoøení autentizaèních cookies pro Razor Pages
+    /// - Uložení JWT tokenu do session pro další API volání
+    /// - Zaznamenání pøihlášení do historie (IP adresa, èas)
+    /// - Pøesmìrování na pùvodní stránku nebo výchozí umístìní
+    /// Implementuje hybridní autentizaèní systém kombinující JWT pro API a cookies pro web.
     /// </summary>
     public async Task<IActionResult> OnPostAsync()
     {

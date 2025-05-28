@@ -83,14 +83,18 @@ public abstract class BasePageModel : PageModel
     public bool HasNextPage { get; protected set; }
 
     /// <summary>
-    /// Provede session přihlášení uživatele pomocí JWT tokenu a přezdívky
+    /// Provádí hybridní přihlášení uživatele kombinující JWT tokeny a autentizační cookies.
+    /// Proces zahrnuje:
+    /// - Uložení JWT tokenu do session storage pro budoucí API volání
+    /// - Uložení uživatelského nicknamu do session pro rychlý přístup
+    /// - Extrakci claims z JWT tokenu a vytvoření ClaimsIdentity
+    /// - Nastavení trvalých autentizačních cookies pro Razor Pages
+    /// - Konfiguraci autentizačních vlastností (doba platnosti, persistence)
+    /// Tento přístup umožňuje bezproblémovou komunikaci mezi webovými stránkami (cookies) 
+    /// a REST API endpointy (JWT Bearer tokens) v rámci jedné aplikace.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="nickname"></param>
-    /// <returns></returns>
     public async Task Login(string token, string nickname)
     {
-
         // Uložení JWT do session pro pozdější API volání
         HttpContext.Session.SetString("JWTToken", token);
         HttpContext.Session.SetString("UserNickname", nickname);
@@ -109,11 +113,14 @@ public abstract class BasePageModel : PageModel
             CookieAuthenticationDefaults.AuthenticationScheme
         );
 
-        // Nastavení vlastností cookie
+        var expirationHours = Convert.ToDouble(_configuration["ExpirationInHours"] ?? "1000");
+
+        // Nastavení vlastností cookie - TRVALÉ S DLOUHOU DOBOU PLATNOSTI
         var authProperties = new AuthenticationProperties
         {
             IsPersistent = true, // Cookie přežije zavření prohlížeče
-            ExpiresUtc = DateTime.UtcNow.AddHours(12) // Stejná doba jako u JWT
+            ExpiresUtc = DateTime.UtcNow.AddHours(expirationHours), // Shodná doba jako globální konfigurace
+            AllowRefresh = true, // Povolí obnovení cookie před vypršením
         };
 
         // Přihlášení uživatele pomocí cookie
@@ -126,23 +133,41 @@ public abstract class BasePageModel : PageModel
     }
 
     /// <summary>
-    /// Handler se volá těsně před zpracováním požadavku na stránku (třeba OnGet, OnPost...) a umožňuje provést akce před zpracováním požadavku
+    /// Handler vykonávaný před každým page handlerem pro kontrolu autentizačního stavu s podporou trvalých cookies.
+    ///
+    /// S implementací trvalých cookies je normální situace, kdy uživatel má platné autentizační cookie,
+    /// ale nemá JWT token v session (např. po zavření a znovuotevření prohlížeče). Tato metoda:
+    ///
+    /// 1. NEODHLAŠUJE uživatele, který má cookie ale ne JWT token (nové chování s trvalými cookies)
+    /// 2. Kontroluje pouze skutečně nekonzistentní stavy (JWT bez cookie)
+    /// 3. Umožňuje uživateli zůstat "přihlášen" na webových stránkách prostřednictvím cookie
+    /// 4. JWT token se automaticky obnoví při prvním API volání, které vyžaduje autentizaci
+    ///
+    /// Možné stavy uživatele:
+    /// - Nepřihlášen: žádné cookie, žádný JWT → normální stav
+    /// - Plně přihlášen: cookie + JWT → normální stav po přihlášení
+    /// - Po restartu prohlížeče: cookie bez JWT → TOLEROVANÝ stav s trvalými cookies
+    /// - Nekonzistentní: JWT bez cookie → CHYBNÝ stav, provede odhlášení
+    ///
+    /// Tento přístup zajišťuje lepší uživatelskou zkušenost s trvalými cookies, zatímco
+    /// zachovává bezpečnost API komunikace prostřednictvím JWT tokenů.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="next"></param>
-    /// <returns></returns>
     public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
     {
         try
         {
-            // Kontrola nekonzistentního stavu autentizace (má autentizační cookie, ale ne token, například když se naposledy neodhlásil a autentizační cookie ještě platí)
-            if (!IsUserLoggedIn && User?.Identity?.IsAuthenticated == true)
+            // Pouze kontrola opravdu nekonzistentních stavů
+            // Situace "cookie bez JWT" je nyní normální s trvalými cookies
+
+            // Kontrola pouze zjevně chybných stavů
+            if (IsUserLoggedIn && User?.Identity?.IsAuthenticated == false)
             {
-                // Smazání JWT ze session pro jistotu
+                // JWT token bez cookie - nekonzistentní stav
+                logger.Log("Nekonzistentní stav: JWT token bez cookie autentizace");
                 HttpContext.Session.Clear();
-                // Uživatel má cookie ale ne token - odhlásíme ho
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             }
+
+            // Situaci "cookie bez JWT" necháváme být - je to normální s trvalými cookies
         }
         catch (Exception e)
         {

@@ -14,7 +14,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        int expirationInHours = 6;
+        int expirationInHours = 1000;
         try
         {
             expirationInHours = builder.Configuration.GetValue<int>("ExpirationInHours");
@@ -53,48 +53,51 @@ public class Program
                 .PersistKeysToFileSystem(new DirectoryInfo("/var/www/discussion/keys"));
         }
 
-        // Nastavení autentizace pro pouívání cookie autentizace jako vıchozího schématu. Toto se muselo pøidat k tokenùm (autentizace/autorizace pro volání RESTAPI) kvùli tomu, aby fungovala autentizace i pro razor pages.
+        /// <summary>
+        /// Konfigurace cookie autentizace s trvalımi cookies a automatickım obnovováním.
+        /// Zajišuje, e uivatelé zùstanou pøihlášeni i po zavøení prohlíeèe.
+        /// </summary>
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-           // Konfigurace cookie autentizace
-           .AddCookie(options =>
-           {
-               // Cesta kam pøesmìrovat, kdy uivatel není pøihlášen
-               options.LoginPath = "/Account/Login";
+        .AddCookie(options =>
+        {
+            // Základní cesty
+            options.LoginPath = "/Account/Login";
+            options.LogoutPath = "/Account/Logout";
 
-               // Cesta kam pøesmìrovat pøi odhlášení
-               options.LogoutPath = "/Account/Logout";
+            // KLÍÈOVÉ NASTAVENÍ PRO TRVALÉ COOKIES - pouze ExpireTimeSpan!
+            options.ExpireTimeSpan = TimeSpan.FromHours(expirationInHours);
+            options.SlidingExpiration = true; // Automatické obnovování cookie
 
-               // Doba platnosti cookie
-               options.ExpireTimeSpan = TimeSpan.FromHours(expirationInHours);
+            // KONFIGURACE COOKIE - BEZ Cookie.Expiration!
+            options.Cookie.Name = "DiscussionAuth"; // Vlastní název
+            options.Cookie.IsEssential = true;      // Cookie je nutné pro fungování
+            options.Cookie.HttpOnly = true;         // Bezpeènost - nedostupné pro JavaScript
 
-               // Událost která se spustí pøi pøihlášení uivatele
-               // Protoe nìkteré claimy z JWT tokenù se nenamapují automaticky, je potøeba je pøidat ruènì
-               // Napøíklad ClaimType.Role se automaticky mapuje na Role claim, ale NameIdentifier ne
-               options.Events.OnSigningIn = context =>
-               {
-                   // Získání identity uivatele z kontextu
-                   var identity = context.Principal?.Identity as ClaimsIdentity;
+            // BEZPEÈNOSTNÍ NASTAVENÍ
+            options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+                ? CookieSecurePolicy.SameAsRequest
+                : CookieSecurePolicy.Always;
+            options.Cookie.SameSite = SameSiteMode.Lax;
 
-                   // Kontrola jestli u existuje NameIdentifier claim
-                   var userId = identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                   // Pokud NameIdentifier neexistuje
-                   if (userId == null)
-                   {
-                       // Hledání ID uivatele v jinıch standardních claimech (sub nebo nameid)
-                       var userIdClaim = identity?.FindFirst("sub") ??
-                                        identity?.FindFirst("nameid");
+            // Events pro claims mapping
+            options.Events.OnSigningIn = context =>
+            {
+                var identity = context.Principal?.Identity as ClaimsIdentity;
+                var userId = identity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                       // Pokud byl nalezen claim s ID uivatele, pøidá se jako NameIdentifier
-                       if (userIdClaim != null)
-                       {
-                           identity?.AddClaim(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
-                       }
-                   }
+                if (userId == null)
+                {
+                    var userIdClaim = identity?.FindFirst("sub") ?? identity?.FindFirst("nameid");
+                    if (userIdClaim != null)
+                    {
+                        identity?.AddClaim(new Claim(ClaimTypes.NameIdentifier, userIdClaim.Value));
+                    }
+                }
 
-                   return Task.CompletedTask; //Protoe se jedná o událost, je potøeba vrátit Task (pøípadnì událost deklarovat s async, pokud bych v ní mìl nìjakı await)
-               };
-           });
+                return Task.CompletedTask;
+            };
+        });
         // Add services to the container.
         builder.Services.AddRazorPages();
 

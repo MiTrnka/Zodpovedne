@@ -613,10 +613,17 @@ public class UsersController : ControllerZodpovedneBase
     }*/
 
     /// <summary>
-    /// Vytvoří JWT token pro přihlášení uživatele ze zadaného emailu a hesla (LoginModelDto) (zkontroluje zadaný email a heslo a vytvoří JWT token)
+    /// Vytváří JWT autentizační token na základě emailu a hesla uživatele.
+    /// Provádí kompletní proces ověření přihlašovacích údajů včetně:
+    /// - Vyhledání uživatele v databázi podle emailu
+    /// - Kontroly stavu uživatelského účtu (není smazaný)
+    /// - Ověření hesla pomocí ASP.NET Core Identity
+    /// - Zpracování uzamčených účtů (lockout protection)
+    /// - Aktualizace statistik přihlášení (počet, poslední přihlášení)
+    /// - Generování JWT tokenu s příslušnými claims a rolemi
+    /// - Vrácení tokenu spolu s metadaty (expirace, uživatelské údaje)
+    /// Implementuje bezpečnostní opatření proti brute-force útokům prostřednictvím lockout mechanismu.
     /// </summary>
-    /// <param name="model"></param>
-    /// <returns></returns>
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     [HttpPost("login")]
     public async Task<IActionResult> CreateToken(LoginModelDto model)
@@ -656,23 +663,6 @@ public class UsersController : ControllerZodpovedneBase
             // Aktualizace posledního přihlášení a rovnou uložení do databáze (SaveChanges)
             user.LastLogin = DateTime.UtcNow;
             await this.userManager.UpdateAsync(user);
-
-            /*
-            // Získání IP adresy uživatele
-            string ipAddress = GetClientIpAddress();
-
-            // Vytvoření záznamu o přihlášení
-            var loginHistory = new LoginHistory
-            {
-                UserId = user.Id,
-                LoginTime = DateTime.UtcNow,
-                IpAddress = ipAddress
-            };
-
-            // Přidání záznamu do databáze
-            dbContext.LoginHistory.Add(loginHistory);
-            await dbContext.SaveChangesAsync();
-            */
 
             var token = await GenerateJwtToken(user);
 
@@ -1262,10 +1252,16 @@ public class UsersController : ControllerZodpovedneBase
     }
 
     /// <summary>
-    /// Generuje JWT token pro uživatele
+    /// Generuje JWT (JSON Web Token) pro autentizovaného uživatele.
+    /// Token obsahuje standardní claims včetně emailu, uživatelského ID a všech přidělených rolí.
+    /// Konfigurace tokenu zahrnuje:
+    /// - Symetrické šifrování pomocí klíče ze konfigurace
+    /// - Nastavení vydavatele (issuer) a příjemce (audience)
+    /// - Definování doby platnosti tokenu
+    /// - Přidání bezpečnostního identifikátoru (JTI) pro možné budoucí sledování
+    /// - Zahrnutí všech uživatelských rolí pro autorizační účely
+    /// Token je podepsán pomocí HMAC SHA256 algoritmu pro zajištění integrity.
     /// </summary>
-    /// <param name="user"></param>
-    /// <returns></returns>
     private async Task<string> GenerateJwtToken(ApplicationUser user)
     {
         if ((user == null) || (String.IsNullOrEmpty(user.Email)))

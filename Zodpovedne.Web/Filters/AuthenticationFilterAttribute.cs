@@ -21,9 +21,14 @@ public class AuthenticationFilterAttribute : PageModelAttribute, IPageFilter
     }
 
     /// <summary>
-    /// Hlavní metoda pro ověření přihlášení. Volá se před zpracováním handleru stránky (před OnGet, OnPost atd.).
-    /// Je volána před zpracováním handleru stránky (před OnGet, OnPost atd.).
-    /// Kontroluje přítomnost JWT tokenu v session a případně přesměruje na přihlašovací stránku.
+    /// Autentizační filtr pro Razor Pages, který zajišťuje, že pouze přihlášení uživatelé
+    /// mohou přistupovat k chráněným stránkám. Filtr kontroluje:
+    /// - Existenci JWT tokenu v session storage
+    /// - Platnost tokenu (kontrola expirace)
+    /// - Integritu tokenu (správnost formátu)
+    /// Pokud některá z kontrol selže, uživatel je automaticky přesměrován na přihlašovací stránku.
+    /// Filtr se aplikuje na page model třídy pomocí atributu a je vykonán před každým handlerem stránky.
+    /// Implementuje IPageFilter rozhraní pro integraci s Razor Pages pipeline.
     /// </summary>
     public void OnPageHandlerExecuting(PageHandlerExecutingContext context)
     {
