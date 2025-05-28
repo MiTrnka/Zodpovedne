@@ -48,6 +48,7 @@ public class CategoriesModel : BasePageModel
             return Page();
         }
 
+        ViewData["CanonicalUrl"] = $"{_configuration["BaseUrl"]}/Categories";
         return Page();
     }
 }

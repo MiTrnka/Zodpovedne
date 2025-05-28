@@ -122,6 +122,37 @@ public class CategoryModel : BasePageModel
         Discussions = result.Items;
         HasNextPage = result.HasNextPage;
 
+
+        // SEO pro stránkování
+        ViewData["IsFirstPage"] = CurrentPage == 1;
+
+        if (CurrentPage > 1)
+        {
+            ViewData["PrevPageUrl"] = CurrentPage == 2
+                ? $"{_configuration["BaseUrl"]}/Categories/{CategoryCode}"
+                : $"{_configuration["BaseUrl"]}/Categories/{CategoryCode}?page={CurrentPage - 1}";
+
+            // Pro stránky 2+ - neindexovat
+            ViewData["Robots"] = "noindex, follow";
+            ViewData["Title"] = $"{CategoryName} - Diskuze (stránka {CurrentPage})";
+        }
+
+        if (result.HasNextPage)
+        {
+            ViewData["NextPageUrl"] = $"{_configuration["BaseUrl"]}/Categories/{CategoryCode}?page={CurrentPage + 1}";
+        }
+
+        // Kanonická URL - pouze pro první stránku
+        if (CurrentPage == 1)
+        {
+            ViewData["CanonicalUrl"] = $"{_configuration["BaseUrl"]}/Categories/{CategoryCode}";
+        }
+        else
+        {
+            ViewData["CanonicalUrl"] = $"{_configuration["BaseUrl"]}/Categories/{CategoryCode}?page={CurrentPage}";
+        }
+
+
         return Page();
     }
 

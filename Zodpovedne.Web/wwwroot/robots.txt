@@ -1,11 +1,25 @@
 ﻿User-agent: *
 Allow: /
-Disallow: /Account/
+Allow: /Categories
+Allow: /Categories/*
+Allow: /Account/Profile/*
+
+# Blokování soukromých sekcí
+Disallow: /Account/Login
+Disallow: /Account/Register
+Disallow: /Account/MyAccount
+Disallow: /Account/Logout
+Disallow: /Account/ForgotPassword
+Disallow: /Account/ResetPassword
 Disallow: /Admin/
 Disallow: /api/
 Disallow: /Messages
 Disallow: /discussion/create/
+
+# Blokování parametrických URL (duplicity)
 Disallow: /Search?*
+Disallow: /*?page=*
+Disallow: /*?currentPage=*
 
 # Crawl-delay pro větší boty
 User-agent: Bingbot
@@ -14,4 +28,5 @@ Crawl-delay: 5
 User-agent: Slurp
 Crawl-delay: 5
 
+# Sitemap
 Sitemap: https://discussion.cz/sitemap.xml

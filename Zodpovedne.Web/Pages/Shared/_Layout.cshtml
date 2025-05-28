@@ -73,7 +73,7 @@
     }
 
     <!-- Canonical URL -->
-    <link rel="canonical" href="@Configuration["BaseUrl"]@Context.Request.Path" />
+    <link rel="canonical" href="@(ViewData["CanonicalUrl"]?.ToString() ?? (Configuration["BaseUrl"] ?? "") + Context.Request.Path.ToString())" />
 
     <!-- Alternate pro jiné jazyky -->
     <link rel="alternate" hreflang="cs" href="@Configuration["BaseUrl"]@Context.Request.Path" />
@@ -133,6 +133,22 @@
           "serviceType": "Sociální síť"
         }
     </script>
+
+    @* Prev/Next pro stránkování *@
+    @if (!string.IsNullOrEmpty(ViewData["PrevPageUrl"]?.ToString()))
+    {
+        <link rel="prev" href="@ViewData["PrevPageUrl"]" />
+    }
+    @if (!string.IsNullOrEmpty(ViewData["NextPageUrl"]?.ToString()))
+    {
+        <link rel="next" href="@ViewData["NextPageUrl"]" />
+    }
+
+    @* Robots meta tag pro stránkování *@
+    @if (ViewData["IsFirstPage"]?.ToString() == "False")
+    {
+        <meta name="robots" content="noindex, follow" />
+    }
 </head>
 <body>
     <!-- Místo pro připadné modální upozornění/chybovou hlášku -->

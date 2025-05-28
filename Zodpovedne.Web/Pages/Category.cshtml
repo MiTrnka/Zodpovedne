@@ -1,7 +1,7 @@
 ﻿@page "/Categories/{categoryCode}"
 @model CategoryModel
 @{
-    /* Detail Kategorie */ 
+    /* Detail Kategorie */
 
     // Kontrola chybových stavů
     if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -26,7 +26,7 @@
             <div class="detail-category-title">
                 <h1 class="long-word-break title-detail-category mb-0">@Model.CategoryName</h1>
             </div>
-           
+
             @if (!string.IsNullOrEmpty(Model.CategoryDescription))
             {
                 <p class="lead">@Model.CategoryDescription</p>

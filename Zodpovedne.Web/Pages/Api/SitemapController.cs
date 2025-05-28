@@ -28,8 +28,6 @@ public class SitemapController : ControllerBase
         // Statické stránky
         urls.Add(new SitemapUrl { Loc = $"{baseUrl}/", ChangeFreq = "daily", Priority = 1.0 });
         urls.Add(new SitemapUrl { Loc = $"{baseUrl}/Categories", ChangeFreq = "daily", Priority = 0.9 });
-        urls.Add(new SitemapUrl { Loc = $"{baseUrl}/Account/Register", ChangeFreq = "monthly", Priority = 0.6 });
-        urls.Add(new SitemapUrl { Loc = $"{baseUrl}/Account/Login", ChangeFreq = "monthly", Priority = 0.5 });
 
         try
         {
@@ -51,19 +49,24 @@ public class SitemapController : ControllerBase
                 }
             }
 
-            // Veřejné diskuze - používám endpoint, který už máte
-            var discussionsResponse = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/discussions?pageSize=1000");
+            // POUZE veřejné diskuze (Normal + Top), limit na 5000 nejnovějších
+            var discussionsResponse = await client.GetAsync($"{_configuration["ApiBaseUrl"]}/discussions?pageSize=100");
             if (discussionsResponse.IsSuccessStatusCode)
             {
                 var result = await discussionsResponse.Content.ReadFromJsonAsync<PagedResultDto<DiscussionListDto>>();
-                foreach (var discussion in result?.Items ?? new())
+                var publicDiscussions = result?.Items?.Where(d =>
+                    d.Type == Zodpovedne.Contracts.Enums.DiscussionType.Normal ||
+                    d.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top)
+                    .Take(5000); // Limit pro velkých sitemapů
+
+                foreach (var discussion in publicDiscussions ?? new List<DiscussionListDto>())
                 {
                     urls.Add(new SitemapUrl
                     {
                         Loc = $"{baseUrl}/Categories/{discussion.CategoryCode}/{discussion.Code}",
                         LastMod = discussion.UpdatedAt,
                         ChangeFreq = "weekly",
-                        Priority = 0.7
+                        Priority = discussion.Type == Zodpovedne.Contracts.Enums.DiscussionType.Top ? 0.9 : 0.7
                     });
                 }
             }

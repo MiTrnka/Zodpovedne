@@ -245,6 +245,8 @@ public class DiscussionModel : BasePageModel
         // Inkrementujeme poèítadlo zhlédnutí dané diskuze
         await client.PostAsync($"{ApiBaseUrl}/discussions/{Discussion!.Id}/increment-view-count", null);
 
+        ViewData["CanonicalUrl"] = $"{_configuration["BaseUrl"]}/Categories/{CategoryCode}/{DiscussionCode}";
+
         return Page();
     }
 

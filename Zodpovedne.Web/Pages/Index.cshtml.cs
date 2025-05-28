@@ -59,6 +59,7 @@ namespace Zodpovedne.Web.Pages
                 // Zde nechceme zobrazovat chybu uživateli, staèí logování
             }
 
+            ViewData["CanonicalUrl"] = $"{_configuration["BaseUrl"]}/";
             return Page();
         }
     }
