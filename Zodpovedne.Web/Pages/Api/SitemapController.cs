@@ -92,7 +92,7 @@ public class SitemapController : ControllerBase
                 sb.AppendLine($"    <lastmod>{url.LastMod.Value:yyyy-MM-dd}</lastmod>");
             }
             sb.AppendLine($"    <changefreq>{url.ChangeFreq}</changefreq>");
-            sb.AppendLine($"    <priority>{url.Priority:F1}</priority>");
+            sb.AppendLine($"    <priority>{url.Priority.ToString("F1", CultureInfo.InvariantCulture)}</priority>");
             sb.AppendLine("  </url>");
         }
 
