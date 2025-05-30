@@ -887,16 +887,16 @@
     {
       "@@context": "https://schema.org",
       "@@type": "DiscussionForumPosting",
-      "headline": "@Html.Raw(Json.Serialize(Model.Discussion.Title))",
-      "text": "@Html.Raw(Json.Serialize(System.Text.RegularExpressions.Regex.Replace(Model.Discussion.Content ?? "", "<.*?>", string.Empty)))",
+      "headline": @Html.Raw(Json.Serialize(Model.Discussion.Title)),
+      "text": @Html.Raw(Json.Serialize(System.Text.RegularExpressions.Regex.Replace(Model.Discussion.Content ?? "", "<.*?>", string.Empty))),
       "author": {
         "@@type": "Person",
-        "name": "@Model.Discussion.AuthorNickname"
+        "name": @Html.Raw(Json.Serialize(Model.Discussion.AuthorNickname))
       },
-      "datePublished": "@Model.Discussion.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")",
-      "dateModified": "@Model.Discussion.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ")",
-      "url": "@@Configuration["BaseUrl"]/Categories/@Model.CategoryCode/@Model.DiscussionCode",
-      "discussionUrl": "@@Configuration["BaseUrl"]/Categories/@Model.CategoryCode/@Model.DiscussionCode",
+      "datePublished": @Html.Raw(Json.Serialize(Model.Discussion.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"))),
+      "dateModified": @Html.Raw(Json.Serialize(Model.Discussion.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"))),
+      "url": "@(ViewData["CanonicalUrl"])",
+      "discussionUrl": "@(ViewData["CanonicalUrl"])",
       "interactionStatistic": [
         {
           "@@type": "InteractionCounter",
@@ -948,7 +948,7 @@
     <!-- Import javascriptu -->
     <script src="~/js/discussion.js" asp-append-version="true"></script>
     <script>
-        window.discussionId = @Html.Raw( ViewData["DiscussionId"] ?? 0 );
+        window.discussionId = @Html.Raw( ViewData["DiscussionId"] ?? 0 )
     </script>
     <script src="~/js/voting.js" asp-append-version="true"></script>
 }

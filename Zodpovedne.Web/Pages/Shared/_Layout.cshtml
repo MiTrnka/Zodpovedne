@@ -110,7 +110,7 @@
           "inLanguage": "cs-CZ",
           "potentialAction": {
             "@@type": "SearchAction",
-            "target": "@Configuration["BaseUrl"]/Search?query={search_term_string}",
+            "target": "@(Configuration["BaseUrl"])/Search?query={search_term_string}",
             "query-input": "required name=search_term_string"
           }
         }
@@ -122,7 +122,7 @@
           "@@type": "Organization",
           "name": "Discussion.cz",
           "url": "@Configuration["BaseUrl"]",
-          "logo": "@Configuration["BaseUrl"]/images/discussion-logo.svg",
+          "logo": "@(Configuration["BaseUrl"])/images/discussion-logo.svg",
           "description": "Česká diskuzní sociální síť zaměřená na kvalitní diskuze bez reklam",
           "foundingDate": "2025",
           "founder": {
