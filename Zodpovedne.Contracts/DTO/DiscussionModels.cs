@@ -1,5 +1,4 @@
-﻿// NuGet Microsoft.AspNetCore.Http.Features pro IFormFile
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Zodpovedne.Contracts.Enums;
 
 namespace Zodpovedne.Contracts.DTO;
