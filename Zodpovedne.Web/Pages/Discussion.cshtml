@@ -892,7 +892,7 @@
       "author": {
         "@@type": "Person",
         "name": @Html.Raw(Json.Serialize(Model.Discussion.AuthorNickname)),
-        "url": "@Html.Raw(Json.Serialize(Model.PublicApiBaseUrl.TrimEnd('/') + "/Account/Profile/" + Model.Discussion.AuthorNickname))"
+        "url": "@(Model.BaseUrl.TrimEnd('/'))/Account/Profile/@Uri.EscapeDataString(Model.Discussion.AuthorNickname)"
       },
       "datePublished": @Html.Raw(Json.Serialize(Model.Discussion.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"))),
       "dateModified": @Html.Raw(Json.Serialize(Model.Discussion.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"))),

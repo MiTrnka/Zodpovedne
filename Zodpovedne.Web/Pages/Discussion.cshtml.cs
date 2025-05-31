@@ -157,7 +157,6 @@ public class DiscussionModel : BasePageModel
 
         // Pøedáváme ID diskuze do JavaScriptu pro použití v hlasovacím skriptu
         ViewData["DiscussionId"] = Discussion.Id;
-        ViewData["BaseUrl"] = _configuration["BaseUrl"]; // Pøedáváme base URL pro AJAX požadavky
 
         // Zjištìní typu pøihlášeného uživatele a nastavení oprávnìní pro nahrávání souborù
         if (IsUserLoggedIn)
