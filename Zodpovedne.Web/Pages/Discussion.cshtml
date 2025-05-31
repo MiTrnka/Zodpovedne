@@ -891,7 +891,8 @@
       "text": @Html.Raw(Json.Serialize(System.Text.RegularExpressions.Regex.Replace(Model.Discussion.Content ?? "", "<.*?>", string.Empty))),
       "author": {
         "@@type": "Person",
-        "name": @Html.Raw(Json.Serialize(Model.Discussion.AuthorNickname))
+        "name": @Html.Raw(Json.Serialize(Model.Discussion.AuthorNickname)),
+        "url": "@Html.Raw(Json.Serialize(Model.PublicApiBaseUrl.TrimEnd('/') + "/Account/Profile/" + Model.Discussion.AuthorNickname))"
       },
       "datePublished": @Html.Raw(Json.Serialize(Model.Discussion.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"))),
       "dateModified": @Html.Raw(Json.Serialize(Model.Discussion.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"))),
