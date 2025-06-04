@@ -248,7 +248,7 @@ public class Program
             //app.UseHttpsRedirection();
         }
 
-        app.MapStaticAssets();
+        app.UseStaticFiles();
 
         app.UseRouting();
 
@@ -257,7 +257,7 @@ public class Program
         app.UseAuthorization();
         app.UseSession();
         app.MapControllers();
-        app.MapRazorPages().WithStaticAssets();
+        app.MapRazorPages();
 
 
         var env = app.Services.GetRequiredService<IWebHostEnvironment>();
