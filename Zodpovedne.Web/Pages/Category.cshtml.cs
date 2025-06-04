@@ -92,7 +92,7 @@ public class CategoryModel : BasePageModel
         // Po naètení kategorie nastavit SEO data
         ViewData["Title"] = $"{CategoryName} - Diskuze";
         ViewData["Description"] = $"Diskuze v kategorii {CategoryName} na Discussion.cz. {(!string.IsNullOrEmpty(CategoryDescription) ? CategoryDescription : "Pøipojte se k diskuzím v této kategorii.")} Èeská diskuzní komunita bez reklam.";
-        ViewData["Keywords"] = $"{CategoryName.ToLower()}, diskuze {CategoryName.ToLower()}, diskuzi {CategoryName.ToLower()}, {CategoryCode}, informace o {CategoryName.ToLower()},informace, rada, poradit, jak na, pokec, èeská komunita, ceska komunita, discussion, fórum, forum";
+        ViewData["Keywords"] = $"{CategoryName.ToLower()}, diskuze {CategoryName.ToLower()}, diskuzi {CategoryName.ToLower()}, {CategoryCode}, informace o {CategoryName.ToLower()}, informace, rada, poradit, jak na, pokec, èeská komunita, ceska komunita, discussion, fórum, forum";
 
         // Pro Open Graph (bez diakritiky)
         ViewData["OGTitle"] = $"Kategorie {CategoryName} - Discussion.cz";
