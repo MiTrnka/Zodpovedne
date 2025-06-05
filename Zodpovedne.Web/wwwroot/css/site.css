@@ -36,7 +36,6 @@ html {
 }
 
 body {
-    margin-bottom: 100px; /* Větší margin pro patičku na mobilu */
     background-color: var(--light-primary-color-ultra-light);
 }
 
@@ -928,8 +927,6 @@ h1 {
 
 /* Patička - mobilní verze */
 .footer {
-    position: absolute;
-    bottom: 0;
     width: 100%;
     text-align: center;
     padding: 1rem 0;
