@@ -33,6 +33,12 @@
             }
         </div>
     </div>
+    @if (!Model.IsUserLoggedIn)
+    {
+        <p class="text-center text-muted small">
+            Zaregistruj se zde zdarma a pak vytvářej diskuze (články) buď pro všechny, nebo jen pro tebou vybrané osoby.
+        </p>
+    }
 
     @* Seznam diskuzí *@
     <div id="discussions-container">

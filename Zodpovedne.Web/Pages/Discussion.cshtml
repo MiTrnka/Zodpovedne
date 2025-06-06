@@ -30,6 +30,13 @@
                     <a href="/Categories/@Model.CategoryCode" class="text-decoration-none">@Model.CategoryName</a>
                 </h1>
             </div>
+            @if (!Model.IsUserLoggedIn)
+            {
+                <p class="text-center text-muted small">
+                    Zaregistruj se zde zdarma a pak vytvářej diskuze (články) buď pro všechny, nebo jen pro tebou vybrané osoby.
+                </p>
+            }
+
             @if (Model.Discussion != null)
             {
                 <div class="card mt-2 shadow text-editor-wrapper">

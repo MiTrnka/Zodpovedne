@@ -24,6 +24,12 @@
     <div class="row">
         <h1 class="mb-4 text-center" style="color: var(--text-gray);">Kategorie diskuzí</h1>
     </div>
+    @if (!Model.IsUserLoggedIn)
+    {
+        <p class="text-center text-muted small">
+            Zaregistruj se zde zdarma a pak vytvářej diskuze (články) buď pro všechny, nebo jen pro tebou vybrané osoby.
+        </p>
+    }
 
     @if (Model.Categories.Any())
     {
