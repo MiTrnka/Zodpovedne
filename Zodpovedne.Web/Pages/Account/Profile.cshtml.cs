@@ -92,47 +92,6 @@ public class ProfileModel : BasePageModel
             return Page();
         }
 
-        // Naètení diskuzí uživatele
-        try
-        {
-            var discussionsResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/user-discussions/{nickname}");
-            if (discussionsResponse.IsSuccessStatusCode)
-            {
-                var userDiscussions = await discussionsResponse.Content.ReadFromJsonAsync<List<BasicDiscussionInfoDto>>();
-                if (userDiscussions != null)
-                {
-                    UserDiscussions = userDiscussions;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
-            // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst diskuze
-        }
-
-        // Naètení lajkovaných diskuzí uživatele
-        try
-        {
-            if (UserProfile != null)
-            {
-                var likedDiscussionsResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/user-liked/{UserProfile.Id}?limit=3");
-                if (likedDiscussionsResponse.IsSuccessStatusCode)
-                {
-                    var likedDiscussions = await likedDiscussionsResponse.Content
-                        .ReadFromJsonAsync<List<BasicDiscussionInfoDto>>();
-                    if (likedDiscussions != null)
-                    {
-                        LikedDiscussions = likedDiscussions;
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.Log("Nepodaøilo se naèíst lajkované diskuze uživatele", ex);
-        }
-
         // Zjištìní stavu pøátelství - pouze pokud je uživatel pøihlášen a není to jeho vlastní profil
         if (IsUserLoggedIn && UserProfile?.Id != UserId)
         {
@@ -164,6 +123,51 @@ public class ProfileModel : BasePageModel
                 // Nebudeme zobrazovat chybu, FriendshipStatus zùstane null
             }
         }
+
+        // Naètení diskuzí uživatele
+        try
+        {
+            if (CanViewFriendInfo)
+            {
+                var discussionsResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/user-discussions/{nickname}");
+                if (discussionsResponse.IsSuccessStatusCode)
+                {
+                    var userDiscussions = await discussionsResponse.Content.ReadFromJsonAsync<List<BasicDiscussionInfoDto>>();
+                    if (userDiscussions != null)
+                    {
+                        UserDiscussions = userDiscussions;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.Log("Nepodaøilo se naèíst diskuze uživatele", ex);
+            // Nebudeme zobrazovat chybu, pokud se nepodaøí naèíst diskuze
+        }
+
+        // Naètení lajkovaných diskuzí uživatele
+        try
+        {
+            if (UserProfile != null)
+            {
+                var likedDiscussionsResponse = await client.GetAsync($"{ApiBaseUrl}/discussions/user-liked/{UserProfile.Id}?limit=3");
+                if (likedDiscussionsResponse.IsSuccessStatusCode)
+                {
+                    var likedDiscussions = await likedDiscussionsResponse.Content
+                        .ReadFromJsonAsync<List<BasicDiscussionInfoDto>>();
+                    if (likedDiscussions != null)
+                    {
+                        LikedDiscussions = likedDiscussions;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.Log("Nepodaøilo se naèíst lajkované diskuze uživatele", ex);
+        }
+
 
         // Naètení pøátel uživatele - pouze pokud jsou pøátelé nebo je to vlastní profil
         if (CanViewFriendInfo)
