@@ -31,12 +31,15 @@
 html {
     font-size: 14px;
     position: relative;
-    min-height: 100%;
     font-family: 'Bookman Old Style';
+    height: 100%;
 }
 
 body {
     background-color: var(--light-primary-color-ultra-light);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 .alert-info {
@@ -932,6 +935,7 @@ h1 {
     padding: 1rem 0;
     line-height: 1.5;
     background-color: #f8f9fa;
+    margin-top: auto;
 }
 /* Zalomení nazvu kategorie v seznamu kategorii a obsahu i pro extra dlouha slova
  * Zalomeni nazvu diskuse v seznamu diskusi a obsahu i pro extra dlouha slova
