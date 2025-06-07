@@ -32,14 +32,15 @@ html {
     font-size: 14px;
     position: relative;
     font-family: 'Bookman Old Style';
-    height: 100%;
+    min-height: 100vh;
 }
 
 body {
     background-color: var(--light-primary-color-ultra-light);
-    display: flex;
-    flex-direction: column;
     min-height: 100vh;
+    display:flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .alert-info {
@@ -1496,8 +1497,6 @@ tr.toggle-row td {
     }
 
     .navbar-expand-xl {
-        margin: auto;
-        max-width: 2200px !important;
         justify-content: center;
     }
     .navbar-expand-xl > .container{
