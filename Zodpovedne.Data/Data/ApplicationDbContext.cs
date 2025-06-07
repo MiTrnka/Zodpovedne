@@ -5,11 +5,12 @@
 // NuGet Microsoft.Extensions.Configuration.Json
 // NuGet Microsoft.EntityFrameworkCore.Design
 
-using Zodpovedne.Data.Models;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.Reflection.Emit;
+using Zodpovedne.Data.Models;
 
 namespace Zodpovedne.Data.Data;
 
@@ -33,6 +34,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<VotingQuestion> VotingQuestions { get; set; }
     public DbSet<Vote> Votes { get; set; }
     public DbSet<LoginHistory> LoginHistory { get; set; }
+    public DbSet<ParametrNumber> ParametrNumbers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -306,6 +308,30 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // Index pro rychlejší vyhledávání podle času přihlášení
             entity.HasIndex(lh => lh.LoginTime);
+        });
+
+        // Konfigurace pro ParametrNumber
+        builder.Entity<ParametrNumber>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.ParametrName)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.HasIndex(e => e.ParametrName)
+                .IsUnique();
+
+            entity.Property(e => e.ParametrValue)
+                .HasDefaultValue(0);
+
+            // Seed data - vložení počátečního záznamu
+            entity.HasData(new ParametrNumber
+            {
+                Id = 1,
+                ParametrName = "AccessCount",
+                ParametrValue = 0
+            });
         });
 
     }

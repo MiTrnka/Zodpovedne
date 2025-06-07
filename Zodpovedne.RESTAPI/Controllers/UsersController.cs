@@ -1798,4 +1798,43 @@ public class UsersController : ControllerZodpovedneBase
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+
+    // Přidat do UsersController.cs
+
+    /// <summary>
+    /// Inkrementuje číselný parametr o 1
+    /// </summary>
+    /// <param name="parameterName">Název parametru k inkrementaci</param>
+    [HttpPost("increment-parameter/{parameterName}")]
+    public async Task<IActionResult> IncrementParameter(string parameterName)
+    {
+        try
+        {
+            // Najdeme parametr podle názvu
+            var parameter = await dbContext.ParametrNumbers
+                .FirstOrDefaultAsync(p => p.ParametrName == parameterName);
+
+            if (parameter == null)
+            {
+                return NotFound($"Parametr '{parameterName}' nebyl nalezen.");
+            }
+
+            // Inkrementujeme hodnotu
+            parameter.ParametrValue++;
+
+            // Uložíme změny
+            await dbContext.SaveChangesAsync();
+
+            return Ok(new
+            {
+                ParametrName = parameter.ParametrName,
+                NewValue = parameter.ParametrValue
+            });
+        }
+        catch (Exception)
+        {
+            logger.Log($"Chyba při inkrementaci parametru {parameterName}");
+            return StatusCode(500, "Nastala chyba při aktualizaci parametru.");
+        }
+    }
 }

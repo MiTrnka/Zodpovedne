@@ -23,6 +23,27 @@ namespace Zodpovedne.Web.Pages
 
         public async Task<IActionResult> OnGetAsync()
         {
+            //Inkrementace poètu pøístupù na Index stránku
+            try
+            {
+                var client = _clientFactory.CreateBearerClient(HttpContext);
+
+                // Zavolání API endpointu pro inkrementaci
+                var response = await client.PostAsync($"{ApiBaseUrl}/users/increment-parameter/AccessCount", null);
+
+                // Logování pouze v pøípadì chyby (neblokuje naètení stránky)
+                if (!response.IsSuccessStatusCode)
+                {
+                    logger.Log($"Nepodaøilo se inkrementovat AccessCount. Status: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Chyba pøi poèítání pøístupù nesmí zablokovat naètení stránky
+                logger.Log("Chyba pøi inkrementaci AccessCount", ex);
+            }
+
+
             // Nepøihlášený uživatel je pøesmìrován na šeznam kategorií
             if (!IsUserLoggedIn)
             {
