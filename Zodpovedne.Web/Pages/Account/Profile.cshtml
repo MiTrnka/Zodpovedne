@@ -153,53 +153,55 @@
         }
 
         <!-- Sekce s diskuzemi uživatele -->
-        <div class="card mb-4" style="border:none;">
-            <button class="d-flex justify-content-between w-100 account-toggle-wrapper" type="button" id="toggle-discussions">
-                <span>Vytvořené diskuse</span>
-                <i class="bi bi-chevron-down" id="discussions-chevron"></i>
+        @if (Model.CanViewFriendInfo)
+        {
+            <div class="card mb-4" style="border:none;">
+                <button class="d-flex justify-content-between w-100 account-toggle-wrapper" type="button" id="toggle-discussions">
+                    <span>Vytvořené diskuse</span>
+                    <i class="bi bi-chevron-down" id="discussions-chevron"></i>
 
-            </button>
-            <div class="card-body scrollbar" id="user-discussions">
-                @if (Model.UserDiscussions.Any())
-                {
-                    @foreach (var discussion in Model.UserDiscussions)
+                </button>
+                <div class="card-body scrollbar" id="user-discussions">
+                    @if (Model.UserDiscussions.Any())
                     {
-                        <div class="table-responsive">
+                        @foreach (var discussion in Model.UserDiscussions)
+                        {
+                            <div class="table-responsive">
 
-                            <table class="table table-hover">
-                                <tbody>
-                                    <tr class="toggle-row">
-                                        <td class="toggle-content-row d-flex justify-content-between p-1">
-                                            <a href="/Categories/@discussion.CategoryCode/@discussion.DiscussionCode" class="list-group-item list-group-item-action">
-                                                <div class="d-flex w-100 justify-content-between">
-                                                    <p class="mb-1 fw-bold" style="font-size: 12px;">
-                                                        @discussion.Title
-                                                    </p>
-                                                </div>
-                                                <p class="mb-1" style="font-size: 12px;">Kategorie: @discussion.CategoryName</p>
-                                                <small style="font-size: 12px;">
-                                                    <i class="bi bi-eye"></i> @discussion.ViewCount
-                                                    <span>&nbsp;</span>
-                                                    <i class="bi bi-calendar-plus"></i> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
-                                                    <span style="font-size: 12px;">&nbsp;<i class="bi bi-pencil"></i> @discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                                <table class="table table-hover">
+                                    <tbody>
+                                        <tr class="toggle-row">
+                                            <td class="toggle-content-row d-flex justify-content-between p-1">
+                                                <a href="/Categories/@discussion.CategoryCode/@discussion.DiscussionCode" class="list-group-item list-group-item-action">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <p class="mb-1 fw-bold" style="font-size: 12px;">
+                                                            @discussion.Title
+                                                        </p>
+                                                    </div>
+                                                    <p class="mb-1" style="font-size: 12px;">Kategorie: @discussion.CategoryName</p>
+                                                    <small style="font-size: 12px;">
+                                                        <i class="bi bi-eye"></i> @discussion.ViewCount
+                                                        <span>&nbsp;</span>
+                                                        <i class="bi bi-calendar-plus"></i> @discussion.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                                        <span style="font-size: 12px;">&nbsp;<i class="bi bi-pencil"></i> @discussion.UpdatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
 
-                                                </small>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                                                    </small>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+
                     }
-
-                }
-                else
-                {
-                    <p class="text-muted">Uživatel zatím nevytvořil žádné diskuze.</p>
-                }
+                    else
+                    {
+                        <p class="text-muted">Uživatel zatím nevytvořil žádné diskuze.</p>
+                    }
+                </div>
             </div>
-        </div>
-
+        }
         <!-- Sekce s historií přihlášení - viditelná pouze pro adminy -->
         @if (Model.IsAdmin && Model.UserProfile != null)
         {
