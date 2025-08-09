@@ -34,7 +34,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<VotingQuestion> VotingQuestions { get; set; }
     public DbSet<Vote> Votes { get; set; }
     public DbSet<LoginHistory> LoginHistory { get; set; }
-    public DbSet<ParametrNumber> ParametrNumbers { get; set; }
+    public DbSet<ParametrNumber> ParametrNumbers { get; set; }    
+    public DbSet<FreeMessage> FreeMessages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
