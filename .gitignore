@@ -387,3 +387,6 @@ FodyWeavers.xsd
 
 
 /Zodpovedne.Web/wwwroot/images/category
+/Zodpovedne.GraphQL/appsettings.json
+/Zodpovedne.GraphQL/appsettings.Development.json
+/Zodpovedne.GraphQL/appsettings.Production.json
