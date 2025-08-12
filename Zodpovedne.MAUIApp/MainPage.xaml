@@ -1,33 +1,34 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Zodpovedne.MAUIApp.MainPage">
+             xmlns:viewmodels="clr-namespace:Zodpovedne.MAUIApp.ViewModels"
+             xmlns:models="clr-namespace:Zodpovedne.MAUIApp.Models"
+             x:Class="Zodpovedne.MAUIApp.MainPage"
+             x:DataType="viewmodels:ChatViewModel"
+             Title="Jednoduchý Chat">
 
-    <ScrollView>
-        <VerticalStackLayout
-            Padding="30,0"
-            Spacing="25">
+    <Grid RowDefinitions="Auto, *">
+        <VerticalStackLayout Grid.Row="0" Padding="10" Spacing="5">
+            <Label Text="Vaše přezdívka:" />
+            <Entry Placeholder="Zadejte přezdívku" Text="{Binding Nickname}" />
 
-            <Label
-                Text="Test volání GraphQL API"
-                FontSize="32"
-                HorizontalOptions="Center" />
+            <Label Text="Zpráva:" Margin="0,10,0,0" />
+            <Entry Placeholder="Napište zprávu..." Text="{Binding MessageText}" />
 
-            <Button
-                x:Name="CallApiButton"
-                Text="Zavolej API a načti zprávy"
-                Clicked="OnCallApiButtonClicked"
-                HorizontalOptions="Center" />
-
-            <Label
-                x:Name="ResultLabel"
-                Text="Čekám na data z API..."
-                FontSize="18"
-                HorizontalOptions="Center"
-                VerticalOptions="Center"
-                />
-
+            <Button Text="Odeslat zprávu" Command="{Binding SendMessageCommand}" Margin="0,10,0,0"/>
         </VerticalStackLayout>
-    </ScrollView>
 
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Messages}" Margin="10,0">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:FreeMessage">
+                    <Frame Padding="10" Margin="0,5" CornerRadius="8" BorderColor="LightGray">
+                        <VerticalStackLayout>
+                            <Label Text="{Binding Nickname}" FontAttributes="Bold" />
+                            <Label Text="{Binding Text}" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
 </ContentPage>

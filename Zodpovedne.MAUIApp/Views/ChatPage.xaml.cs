@@ -1,4 +1,5 @@
 namespace Zodpovedne.MAUIApp;
+using Zodpovedne.MAUIApp.ViewModels;
 
 public partial class ChatPage : ContentPage
 {
