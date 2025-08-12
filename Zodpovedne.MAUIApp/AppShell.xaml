@@ -5,13 +5,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Zodpovedne.MAUIApp"
 
-    xmlns:views="clr-namespace:Zodpovedne.MAUIApp.Views"
-
     Title="Zodpovedne.MAUIApp">
 
     <ShellContent
         Title="Chat"
-        ContentTemplate="{DataTemplate views:ChatPage}"
+        ContentTemplate="{DataTemplate local:MainPage}"
         Route="ChatPage" />
 
 </Shell>

@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:models="clr-namespace:Zodpovedne.MAUIApp.GraphQL.Models"
-             xmlns:viewmodels="clr-namespace:Zodpovedne.MAUIApp.ViewModels"
-             x:DataType="viewmodels:ChatViewModel"
-             x:Class="Zodpovedne.MAUIApp.Views.ChatPage"
+             xmlns:local="clr-namespace:Zodpovedne.MAUIApp"
+             x:DataType="local:ChatViewModel"
+             x:Class="Zodpovedne.MAUIApp.ChatPage"
              Title="Chat místnost">
 
     <Grid RowDefinitions="Auto, *, Auto"
@@ -13,66 +12,5 @@
           RowSpacing="10"
           BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
 
-        <Border Grid.Row="0"
-                StrokeThickness="1"
-                Stroke="{AppThemeBinding Light=LightGray, Dark=DarkGray}"
-                Padding="8"
-                StrokeShape="RoundRectangle 8">
-            <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
-                <Label Text="Přezdívka:"
-                       VerticalOptions="Center"
-                       FontAttributes="Bold" />
-                <Entry Text="{Binding Nickname}"
-                       Placeholder="Zadejte svoji přezdívku"
-                       VerticalOptions="Center"
-                       HorizontalOptions="FillAndExpand" />
-            </HorizontalStackLayout>
-        </Border>
-
-        <CollectionView Grid.Row="1"
-                        ItemsSource="{Binding Messages}"
-                        SelectionMode="None">
-
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:FreeMessage">
-                    <Border StrokeShape="RoundRectangle 10"
-                            StrokeThickness="0"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray950}}"
-                            Padding="10"
-                            Margin="0,5">
-                        <Grid RowDefinitions="Auto, Auto" RowSpacing="5">
-                            <HorizontalStackLayout Grid.Row="0">
-                                <Label Text="{Binding Nickname}"
-                                       FontAttributes="Bold"
-                                       TextColor="{StaticResource Primary}" />
-                                <Label Text="{Binding CreatedUtc, StringFormat='{0:HH:mm dd.MM.yy}'}"
-                                       TextColor="Gray"
-                                       FontSize="10"
-                                       Margin="10,0,0,0"
-                                       VerticalOptions="Center" />
-                            </HorizontalStackLayout>
-
-                            <Label Grid.Row="1"
-                                   Text="{Binding Text}"
-                                   LineBreakMode="WordWrap" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-
-        <Grid Grid.Row="2" ColumnDefinitions="*, Auto" ColumnSpacing="10">
-            <Editor Grid.Column="0"
-                    Text="{Binding NewMessageText}"
-                    Placeholder="Napište zprávu..."
-                    AutoSize="TextChanges"
-                    VerticalOptions="End" />
-
-            <Button Grid.Column="1"
-                    Text="Odeslat"
-                    Command="{Binding SendMessageCommand}"
-                    VerticalOptions="End"
-                    WidthRequest="100" />
-        </Grid>
     </Grid>
 </ContentPage>
