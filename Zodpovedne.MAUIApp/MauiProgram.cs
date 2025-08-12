@@ -1,4 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
+using Zodpovedne.MAUIApp.Services;
+using Zodpovedne.MAUIApp.ViewModels;
+using Zodpovedne.MAUIApp.Views;
 
 namespace Zodpovedne.MAUIApp
 {
@@ -15,8 +18,12 @@ namespace Zodpovedne.MAUIApp
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            builder.Services.AddSingleton<GraphQLService>();
+            builder.Services.AddSingleton<ChatViewModel>();
+            builder.Services.AddSingleton<ChatPage>();
+
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();

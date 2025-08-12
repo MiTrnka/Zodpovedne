@@ -69,7 +69,7 @@ public class Program
             .AddQueryType<Query>()
             // Definuje tøídu, která obsahuje všechny operace pro zápis dat (mutace).
             .AddMutationType<Mutation>()
-            // Zapne podporu pro "projekce". Umožní klientovi specifikovat v dotazu,
+            // Zapne podporu pro optimalizace dotazù, "projekce". Umožní klientovi specifikovat v dotazu,
             // která pole chce vrátit, a EF Core se postará o efektivní SQL dotaz.
             .AddProjections()
             // Zapne podporu pro filtrování, která se pøeloží na SQL WHERE.
