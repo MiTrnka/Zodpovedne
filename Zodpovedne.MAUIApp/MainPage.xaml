@@ -21,14 +21,22 @@
         <CollectionView Grid.Row="1" ItemsSource="{Binding Messages}" Margin="10,0">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:FreeMessage">
-                    <Frame Padding="10" Margin="0,5" CornerRadius="8" BorderColor="LightGray">
+                    <Border Padding="10" 
+                            Margin="0,5"
+                            Stroke="LightGray"
+                            StrokeThickness="1">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
+
                         <VerticalStackLayout>
                             <Label Text="{Binding Nickname}" FontAttributes="Bold" />
                             <Label Text="{Binding Text}" />
                         </VerticalStackLayout>
-                    </Frame>
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
     </Grid>
+
 </ContentPage>
