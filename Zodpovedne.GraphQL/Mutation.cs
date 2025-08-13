@@ -68,6 +68,55 @@ public class Mutation
         // objekt může obsahovat serverem vygenerovaná data (jako je ID nebo čas vytvoření).
         return newMessage;
     }
+
+    /// <summary>
+    /// GraphQL mutace pro zaregistrování nebo aktualizaci FCM tokenu zařízení.
+    /// Klient (MAUI aplikace) zavolá tuto mutaci, aby serveru sdělil svou "adresu" pro push notifikace.
+    /// </summary>
+    /// <param name="token">Samotný FCM registrační token získaný ze zařízení.</param>
+    /// <param name="context">Instance DbContextu, kterou nám automaticky poskytne Hot Chocolate.</param>
+    /// <returns>Jednoduchý boolean, který potvrdí, zda operace proběhla úspěšně.</returns>
+    public async Task<bool> RegisterFcmTokenAsync(string token)
+    {
+        // Vstupní validace - zajistíme, že nám klient neposlal prázdný token.
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            // V reálné aplikaci bychom zde mohli vyhodit specifickou GraphQL výjimku,
+            // ale pro náš účel stačí vrátit 'false'.
+            return false;
+        }
+
+        // Vytvoříme si novou instanci DbContextu z naší továrny.
+        // 'await using' zajistí, že se po dokončení operace správně uvolní všechny prostředky.
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        // Zkusíme najít, zda už tento token v databázi náhodou nemáme.
+        // Tím zabráníme duplicitám a zbytečným zápisům.
+        var existingToken = await context.FcmRegistrationTokens
+                                         .FirstOrDefaultAsync(t => t.Token == token);
+
+        // Pokud token v databázi ještě neexistuje...
+        if (existingToken == null)
+        {
+            // ...vytvoříme novou entitu.
+            var newToken = new FcmRegistrationToken
+            {
+                Token = token,
+                CreatedUtc = DateTime.UtcNow // Uložíme si čas vytvoření.
+            };
+
+            // Přidáme novou entitu do DbContextu. Entity Framework ji nyní sleduje jako "přidanou".
+            context.FcmRegistrationTokens.Add(newToken);
+
+            // Uložíme změny do databáze. EF Core vygeneruje a spustí SQL příkaz INSERT.
+            await context.SaveChangesAsync();
+        }
+        // Pokud token již existuje, nemusíme dělat nic. Mohli bychom zde například
+        // aktualizovat časové razítko, ale pro náš jednoduchý případ to není nutné.
+
+        // Vrátíme 'true' na znamení, že operace proběhla úspěšně.
+        return true;
+    }
 }
 
 

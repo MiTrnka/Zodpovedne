@@ -34,8 +34,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<VotingQuestion> VotingQuestions { get; set; }
     public DbSet<Vote> Votes { get; set; }
     public DbSet<LoginHistory> LoginHistory { get; set; }
-    public DbSet<ParametrNumber> ParametrNumbers { get; set; }    
+    public DbSet<ParametrNumber> ParametrNumbers { get; set; }
     public DbSet<FreeMessage> FreeMessages { get; set; }
+    /// <summary>
+    /// Kolekce všech uložených FCM registračních tokenů pro zasílání push notifikací.
+    /// </summary>
+    public DbSet<FcmRegistrationToken> FcmRegistrationTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -333,6 +337,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 ParametrName = "AccessCount",
                 ParametrValue = 0
             });
+        });
+
+        // Konfigurace pro FcmRegistrationToken
+        builder.Entity<FcmRegistrationToken>(entity =>
+        {
+            // Zajistíme, aby každý token v databázi byl unikátní.
+            // Tím předejdeme zbytečnému ukládání stejného tokenu vícekrát.
+            entity.HasIndex(e => e.Token)
+                .IsUnique();
         });
 
     }
