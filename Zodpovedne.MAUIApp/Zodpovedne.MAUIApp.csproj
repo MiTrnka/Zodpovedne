@@ -60,15 +60,30 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.90" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />
+	  <AndroidResource Remove="Models\**" />
+	  <AndroidResource Remove="Services\**" />
+	  <AndroidResource Remove="ViewModels\**" />
+	  <Compile Remove="Models\**" />
+	  <Compile Remove="Services\**" />
+	  <Compile Remove="ViewModels\**" />
+	  <EmbeddedResource Remove="Models\**" />
+	  <EmbeddedResource Remove="Services\**" />
+	  <EmbeddedResource Remove="ViewModels\**" />
+	  <MauiCss Remove="Models\**" />
+	  <MauiCss Remove="Services\**" />
+	  <MauiCss Remove="ViewModels\**" />
+	  <MauiXaml Remove="Models\**" />
+	  <MauiXaml Remove="Services\**" />
+	  <MauiXaml Remove="ViewModels\**" />
+	  <None Remove="Models\**" />
+	  <None Remove="Services\**" />
+	  <None Remove="ViewModels\**" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Models\" />
-	  <Folder Include="Services\" />
-	  <Folder Include="ViewModels\" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.90" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />
 	</ItemGroup>
 
 </Project>
