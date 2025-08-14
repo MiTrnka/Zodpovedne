@@ -18,13 +18,14 @@ public class Query
     [UseProjection] // Umožní klientovi optimalizovat dotazy a získat jen potřebná data
     [UseFiltering] // Umožní klientovi filtrovat výsledky podle zadaných podmínek
     [UseSorting] // Umožní klientovi seřadit výsledky podle zadaných sloupců
-    public IQueryable<FreeMessage> GetFreeMessages()
+    public async Task<IEnumerable<FreeMessage>> GetFreeMessages()
     {
-        // Explicitně vytvoříme DbContext z továrny
-        // DŮLEŽITÉ: DbContext se zde vrací jako IQueryable, Hot Chocolate se postará
-        // o jeho "disposal" (uklizení) po dokončení dotazu.
-        // Pro čtení (IQueryable) není `using` blok nutný, pro zápis (mutace) ano.
-        ApplicationDbContext context = _contextFactory.CreateDbContext();
-        return context.FreeMessages;
+        // Použijeme stejný bezpečný vzor jako v mutacích.
+        await using var context = await _contextFactory.CreateDbContextAsync();
+
+        // Zde dotaz rovnou vykonáme a načteme všechny zprávy do paměti.
+        // DbContext se hned poté bezpečně uklidí.
+        return await context.FreeMessages.ToListAsync();
     }
+    public string Ping() => "Pong";
 }

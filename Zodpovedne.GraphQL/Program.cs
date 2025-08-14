@@ -75,7 +75,8 @@ public class Program
             // Zapne podporu pro filtrování, která se pøeloží na SQL WHERE.
             .AddFiltering()
             // Zapne podporu pro øazení, která se pøeloží na SQL ORDER BY.
-            .AddSorting();
+            .AddSorting()
+            .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true); // Zapne detailní chybové hlášky pro vývojové prostøedí.
 
 
         // === 2. Fáze: Sestavení aplikace ===
