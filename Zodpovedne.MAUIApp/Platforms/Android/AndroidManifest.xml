@@ -8,5 +8,9 @@
                  android:icon="@mipmap/appicon"
                  android:roundIcon="@mipmap/appicon_round"
                  android:supportsRtl="true">
+      <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+
   </application>
 </manifest>

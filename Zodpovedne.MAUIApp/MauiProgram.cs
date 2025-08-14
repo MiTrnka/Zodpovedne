@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Plugin.Firebase.CloudMessaging; // Jediný Firebase 'using', který potřebujeme zde
 using Zodpovedne.MAUIApp.ViewModels;
 
 namespace Zodpovedne.MAUIApp;
@@ -16,8 +17,11 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // Zaregistrujeme naši stránku a ViewModel
-        // 'AddSingleton' znamená, že se vytvoří jen jedna instance po celou dobu běhu aplikace.
+        // JEDINÁ VĚC, KTEROU PRO FIREBASE POTŘEBUJEME:
+        // Zaregistrujeme si službu, aby ji ViewModel mohl použít.
+        builder.Services.AddSingleton(CrossFirebaseCloudMessaging.Current);
+
+        // Registrace našich vlastních tříd
         builder.Services.AddSingleton<ChatViewModel>();
         builder.Services.AddSingleton<MainPage>();
 
