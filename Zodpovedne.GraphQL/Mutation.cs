@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Zodpovedne.Data.Data;
 using Zodpovedne.Data.Models;
+using Zodpovedne.GraphQL.Services;
 
 
 namespace Zodpovedne.GraphQL;
@@ -14,15 +15,14 @@ public class Mutation
     // Klíčové slovo 'readonly' zajišťuje, že továrnu lze nastavit pouze jednou, a to v konstruktoru.
     private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-    /// <summary>
-    /// Konstruktor třídy, který se volá při jejím vytváření.
-    /// Systém Dependency Injection sem automaticky "vstříkne" dříve registrovanou továrnu.
-    /// </summary>
-    /// <param name="contextFactory">Továrna pro vytváření instancí ApplicationDbContext.</param>
-    public Mutation(IDbContextFactory<ApplicationDbContext> contextFactory)
+    private readonly FirebaseNotificationService _notificationService;
+
+    public Mutation(
+        IDbContextFactory<ApplicationDbContext> contextFactory,
+        FirebaseNotificationService notificationService)
     {
-        // Uložíme si předanou továrnu do soukromého pole pro pozdější použití v metodách této třídy.
         _contextFactory = contextFactory;
+        _notificationService = notificationService;
     }
 
     /// <summary>
@@ -116,6 +116,14 @@ public class Mutation
 
         // Vrátíme 'true' na znamení, že operace proběhla úspěšně.
         return true;
+    }
+
+    /// <summary>
+    /// GraphQL mutace, která spustí odeslání globální notifikace.
+    /// </summary>
+    public async Task<string> SendGlobalNotificationAsync(string title, string body)
+    {
+        return await _notificationService.SendGlobalNotificationAsync(title, body);
     }
 }
 

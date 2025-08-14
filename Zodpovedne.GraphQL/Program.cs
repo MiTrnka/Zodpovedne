@@ -17,12 +17,13 @@
  * * =================================================================================
 */
 
-// Definice jmenného prostoru, do kterého tato hlavní tøída aplikace patøí.
-namespace Zodpovedne.GraphQL;
-
 // Import potøebných balíèkù a knihoven pro bìh aplikace.
 using Microsoft.EntityFrameworkCore;
 using Zodpovedne.Data.Data;
+using Zodpovedne.GraphQL.Services;
+
+// Definice jmenného prostoru, do kterého tato hlavní tøída aplikace patøí.
+namespace Zodpovedne.GraphQL;
 
 /// <summary>
 /// Hlavní tøída aplikace, která obsahuje vstupní bod 'Main'.
@@ -55,6 +56,8 @@ public class Program
 
         // Naèteme connection string z konfiguraèního souboru (appsettings.json).
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+        builder.Services.AddSingleton<FirebaseNotificationService>();
 
         // Zaregistrujeme "továrnu" na výrobu DbContextu. Továrna zajistí,
         // že každý paralelní úkol v rámci jednoho GraphQL dotazu dostane vlastní,
