@@ -390,3 +390,4 @@ FodyWeavers.xsd
 /Zodpovedne.GraphQL/appsettings.json
 /Zodpovedne.GraphQL/appsettings.Development.json
 /Zodpovedne.GraphQL/appsettings.Production.json
+/Zodpovedne.GraphQL/firebase-credentials.json
