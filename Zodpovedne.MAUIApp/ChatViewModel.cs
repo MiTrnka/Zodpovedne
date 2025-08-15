@@ -57,10 +57,9 @@ public partial class ChatViewModel : ObservableObject
     public ChatViewModel(IFirebaseCloudMessaging firebaseCloudMessaging)
     {
         _firebaseCloudMessaging = firebaseCloudMessaging;
-        Task.Run(InitializeAsync);
     }
 
-    private async Task InitializeAsync()
+    public async Task InitializeAsync()
     {
         await LoadMessagesCommand.ExecuteAsync(null);
         await RegisterForNotificationsCommand.ExecuteAsync(null);
