@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.ApplicationModel;
+// Potřebujeme přístup k Preferences
+using Microsoft.Maui.Storage;
 using Plugin.Firebase.CloudMessaging;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -10,12 +12,36 @@ using Zodpovedne.MAUIApp.Models;
 
 namespace Zodpovedne.MAUIApp.ViewModels;
 
+/// <summary>
+/// Hlavní ViewModel pro chatovací stránku aplikace.
+/// Tato třída spravuje veškerou logiku související s chatem: načítání a odesílání zpráv,
+/// zpracování uživatelského vstupu a registraci zařízení pro příjem push notifikací.
+/// </summary>
 public partial class ChatViewModel : ObservableObject
 {
+    /// <summary>
+    /// Statická instance HttpClient pro efektivní a opakované síťové požadavky.
+    /// </summary>
     private static readonly HttpClient client = new();
+
+    /// <summary>
+    /// Konstantní adresa produkčního GraphQL API serveru.
+    /// </summary>
     private const string ApiUrl = "https://api.discussion.cz/graphql";
+
+    /// <summary>
+    /// Služba pro interakci s Firebase Cloud Messaging, získaná přes dependency injection.
+    /// </summary>
     private readonly IFirebaseCloudMessaging _firebaseCloudMessaging;
 
+    /// <summary>
+    /// Konstanta pro API klíč pro autentizaci požadavků (požadavek na odeslání push notifikace všem)
+    /// </summary>
+    private const string ApiKey = "primitivnizabezpeceniprotispamerum";
+
+    /// <summary>
+    /// GraphQL dotaz pro načtení všech zpráv z diskuze.
+    /// </summary>
     private const string GetAllMessagesQuery = @"
         query NactiVsechnyZpravy {
             freeMessages {
@@ -26,45 +52,105 @@ public partial class ChatViewModel : ObservableObject
             }
         }";
 
+    /// <summary>
+    /// Šablona pro GraphQL mutaci, která vytváří novou zprávu.
+    /// Používá formátovací zástupné symboly {0} pro přezdívku a {1} pro text.
+    /// </summary>
+    // Najděte a nahraďte původní šablonu touto:
     private const string CreateMessageMutationTemplate = @"
-        mutation CreateMessage {{
-            addFreeMessage(input: {{ nickname: ""{0}"", text: ""{1}"" }}) {{
-                id
-            }}
-        }}";
+    mutation CreateMessage($msgInput: AddFreeMessageInput!, $apiKey: String!) {
+        addFreeMessage(input: $msgInput, apiKey: $apiKey) {
+            id
+        }
+    }";
 
+    /// <summary>
+    /// Šablona pro GraphQL mutaci, která registruje FCM token zařízení na serveru.
+    /// Zástupný symbol {0} je určen pro samotný token.
+    /// </summary>SendGlobalNotificationAsync
     private const string RegisterFcmTokenMutationTemplate = @"
         mutation RegisterFcmToken {{
             registerFcmToken(token: ""{0}"")
         }}";
 
+    /// <summary>
+    /// GraphQL mutace pro odeslání globální push notifikace na všechna registrovaná zařízení.
+    /// </summary>
     private const string SendNotificationMutation = @"
-        mutation Notifikace {
-            sendGlobalNotification(title: ""Nová zpráva"", body: ""Právě přišla nová zpráva do chatu!"")
+        mutation Notifikace($apiKey: String!) {
+            sendGlobalNotification(title: ""Nová zpráva"", body: ""Právě přišla nová zpráva do chatu!"", apiKey: $apiKey)
         }";
 
+    /// <summary>
+    /// Příznak indikující, zda právě probíhá asynchronní operace (např. načítání dat).
+    /// Je propojen s UI, aby bylo možné zakázat ovládací prvky a zabránit duplicitním voláním.
+    /// </summary>
     [ObservableProperty]
     private bool isBusy;
 
+    /// <summary>
+    /// Přezdívka uživatele, vázaná na vstupní pole v uživatelském rozhraní.
+    /// </summary>
     [ObservableProperty]
     private string nickname;
 
+    /// <summary>
+    /// Text nové zprávy, vázaný na vstupní pole v uživatelském rozhraní.
+    /// </summary>
     [ObservableProperty]
     private string messageText;
 
+    /// <summary>
+    /// Kolekce zpráv zobrazených v UI. Použití ObservableCollection zajišťuje,
+    /// že se uživatelské rozhraní automaticky aktualizuje při přidání nebo odebrání položek.
+    /// </summary>
     public ObservableCollection<FreeMessage> Messages { get; } = new();
 
+    /// <summary>
+    /// Konstruktor ViewModelu. Přijímá službu IFirebaseCloudMessaging
+    /// prostřednictvím dependency injection a načítá uloženou přezdívku.
+    /// </summary>
     public ChatViewModel(IFirebaseCloudMessaging firebaseCloudMessaging)
     {
         _firebaseCloudMessaging = firebaseCloudMessaging;
+        // NOVINKA: Načtení přezdívky při startu ViewModelu
+        LoadNickname();
     }
 
+    /// <summary>
+    /// Metoda, kterou automaticky vygeneruje CommunityToolkit.Mvvm a zavolá se
+    /// pokaždé, když se změní hodnota vlastnosti 'Nickname'.
+    /// </summary>
+    /// <param name="value">Nová hodnota přezdívky.</param>
+    partial void OnNicknameChanged(string value)
+    {
+        // Uložíme novou hodnotu do trvalého úložiště zařízení pod klíčem 'user_nickname'.
+        Preferences.Set("user_nickname", value);
+    }
+
+    /// <summary>
+    /// Načte dříve uloženou přezdívku z úložiště zařízení.
+    /// Pokud žádná uložena není, vrátí prázdný řetězec.
+    /// </summary>
+    private void LoadNickname()
+    {
+        Nickname = Preferences.Get("user_nickname", string.Empty);
+    }
+
+    /// <summary>
+    /// Inicializační metoda, která se volá při zobrazení stránky.
+    /// Spouští počáteční načtení zpráv a registraci pro notifikace.
+    /// </summary>
     public async Task InitializeAsync()
     {
         await LoadMessagesCommand.ExecuteAsync(null);
         await RegisterForNotificationsCommand.ExecuteAsync(null);
     }
 
+    /// <summary>
+    /// Příkaz pro načtení zpráv ze serveru. Zabraňuje vícenásobnému spuštění
+    /// pomocí příznaku IsBusy a v případě chyby zobrazí upozornění.
+    /// </summary>
     [RelayCommand]
     private async Task LoadMessagesAsync()
     {
@@ -84,6 +170,10 @@ public partial class ChatViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Příkaz pro odeslání nové zprávy. Provede validaci vstupu, sestaví a odešle
+    /// GraphQL mutaci. Po úspěšném odeslání vymaže textové pole a znovu načte zprávy.
+    /// </summary>
     [RelayCommand]
     private async Task SendMessageAsync()
     {
@@ -97,22 +187,39 @@ public partial class ChatViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var escapedNickname = Nickname.Replace("\"", "\\\"");
-            var escapedText = MessageText.Replace("\"", "\\\"");
-            var query = string.Format(CreateMessageMutationTemplate, escapedNickname, escapedText);
+            // Sestavíme dotaz, kde 'msgInput' je nyní celý objekt
+            var request = new
+            {
+                query = CreateMessageMutationTemplate,
+                variables = new
+                {
+                    // Vytvoříme vnořený objekt, který přesně odpovídá
+                    // typu AddFreeMessageInput na serveru
+                    msgInput = new { nickname = Nickname, text = MessageText },
+                    apiKey = ApiKey
+                }
+            };
 
-            var request = new { query };
             var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
             var response = await client.PostAsync(ApiUrl, content);
 
             if (response.IsSuccessStatusCode)
             {
-                MessageText = string.Empty;
-                await FetchAndDisplayMessagesAsync();
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                if (jsonResponse.Contains("errors"))
+                {
+                    await Shell.Current.DisplayAlert("Chyba od GraphQL", jsonResponse, "OK");
+                }
+                else
+                {
+                    MessageText = string.Empty;
+                    await FetchAndDisplayMessagesAsync();
+                }
             }
             else
             {
-                await Shell.Current.DisplayAlert("Chyba API", await response.Content.ReadAsStringAsync(), "OK");
+                var errorContent = await response.Content.ReadAsStringAsync();
+                await Shell.Current.DisplayAlert("Chyba API", $"Chyba: {response.StatusCode}\n{errorContent}", "OK");
             }
         }
         catch (Exception ex)
@@ -125,14 +232,17 @@ public partial class ChatViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Příkaz, který se postará o kompletní proces registrace zařízení pro příjem notifikací.
+    /// Na Androidu 13+ nejprve požádá o systémové oprávnění, poté získá FCM token
+    /// a odešle ho na server k uložení.
+    /// </summary>
     [RelayCommand]
     private async Task RegisterForNotificationsAsync()
     {
         try
         {
-            // Začátek bloku pouze pro Android
 #if ANDROID
-            // O oprávnění žádáme pouze na Androidu 13 (API 33) a vyšším.
             if (DeviceInfo.Platform == DevicePlatform.Android && DeviceInfo.Version.Major >= 13)
             {
                 var status = await Microsoft.Maui.ApplicationModel.Permissions.RequestAsync<Permissions.PostNotificationsPermission>();
@@ -144,9 +254,6 @@ public partial class ChatViewModel : ObservableObject
                 }
             }
 #endif
-            // Konec bloku pouze pro Android
-
-            // Zbytek kódu je opět sdílený a běží na všech platformách.
             await _firebaseCloudMessaging.CheckIfValidAsync();
             var token = await _firebaseCloudMessaging.GetTokenAsync();
 
@@ -173,6 +280,10 @@ public partial class ChatViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Příkaz, který "odpálí" odeslání globální notifikace všem uživatelům.
+    /// Odešle na server GraphQL mutaci a informuje uživatele o odeslání příkazu.
+    /// </summary>
     [RelayCommand]
     private async Task SendGlobalNotificationAsync()
     {
@@ -180,10 +291,14 @@ public partial class ChatViewModel : ObservableObject
         IsBusy = true;
         try
         {
-            var request = new { query = SendNotificationMutation };
+            var request = new
+            {
+                query = SendNotificationMutation,
+                variables = new { apiKey = ApiKey }
+            };
+
             var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
             await client.PostAsync(ApiUrl, content);
-            // Na odpověď nečekáme, jen chceme notifikaci "odpálit".
             await Shell.Current.DisplayAlert("Odesláno", "Příkaz k odeslání notifikace byl odeslán na server.", "OK");
         }
         catch (Exception ex)
@@ -196,6 +311,10 @@ public partial class ChatViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Pomocná metoda pro načtení, deserializaci a zobrazení zpráv.
+    /// Zajišťuje, že aktualizace kolekce Messages proběhne bezpečně na hlavním UI vlákně.
+    /// </summary>
     private async Task FetchAndDisplayMessagesAsync()
     {
         var request = new { query = GetAllMessagesQuery };
@@ -207,16 +326,15 @@ public partial class ChatViewModel : ObservableObject
             var jsonResponse = await response.Content.ReadAsStringAsync();
             var messagesResponse = JsonSerializer.Deserialize<GraphQLMessagesResponse>(jsonResponse);
 
-            // Změny v kolekci "posíláme" na hlavní vlákno, aby nedošlo ke konfliktu
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                Messages.Clear(); // Teď je to bezpečné
+                Messages.Clear();
                 if (messagesResponse?.Data?.FreeMessages != null)
                 {
                     var sortedMessages = messagesResponse.Data.FreeMessages.OrderByDescending(m => m.CreatedUtc);
                     foreach (var message in sortedMessages)
                     {
-                        Messages.Add(message); // A toto také
+                        Messages.Add(message);
                     }
                 }
             });

@@ -14,15 +14,18 @@ public class Mutation
     // Deklarace soukromého pole pro uložení továrny na DbContext.
     // Klíčové slovo 'readonly' zajišťuje, že továrnu lze nastavit pouze jednou, a to v konstruktoru.
     private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
-
     private readonly FirebaseNotificationService _notificationService;
+    private readonly IConfiguration _configuration;
 
     public Mutation(
         IDbContextFactory<ApplicationDbContext> contextFactory,
-        FirebaseNotificationService notificationService)
+        FirebaseNotificationService notificationService,
+        // Nechte si vstříknout IConfiguration
+        IConfiguration configuration)
     {
         _contextFactory = contextFactory;
         _notificationService = notificationService;
+        _configuration = configuration;
     }
 
     /// <summary>
@@ -37,8 +40,18 @@ public class Mutation
     /// </summary>
     /// <param name="input">Vstupní objekt obsahující data pro novou zprávu.</param>
     /// <returns>Kompletní objekt právě vytvořené zprávy.</returns>
-    public async Task<FreeMessage> AddFreeMessageAsync(AddFreeMessageInput input)
+    public async Task<FreeMessage> AddFreeMessageAsync(AddFreeMessageInput input, string apiKey)
     {
+        // Načteme klíč, který máme uložený na serveru v appsettings.Production.json
+        var serverApiKey = _configuration["ApiKey"];
+
+        // Zkontrolujeme, zda se klíč od klienta shoduje s naším
+        if (string.IsNullOrEmpty(serverApiKey) || serverApiKey != apiKey)
+        {
+            // Pokud cokoliv selže, vrátíme obecnou chybu.
+            throw new GraphQLException("Neplatný nebo chybějící API klíč.");
+        }
+
         // Blok 'await using' vytvoří novou instanci DbContext a zaručí, že se po dokončení
         // operací bezpečně a automaticky "uklidí" (zavolá se metoda DisposeAsync).
         // To je naprosto klíčové pro správu prostředků a zabránění únikům paměti.
@@ -120,62 +133,21 @@ public class Mutation
 
     /// <summary>
     /// GraphQL mutace, která spustí odeslání globální notifikace.
+    /// VYŽADUJE API KLÍČ PRO AUTORIZACI.
     /// </summary>
-    public async Task<string> SendGlobalNotificationAsync(string title, string body)
+    public async Task<string> SendGlobalNotificationAsync(string title, string body, string apiKey)
     {
+        // Načteme klíč, který máme uložený na serveru
+        var serverApiKey = _configuration["ApiKey"];
+
+        // Zkontrolujeme, zda se klíč od klienta shoduje s naším
+        if (string.IsNullOrEmpty(serverApiKey) || serverApiKey != apiKey)
+        {
+            // Pokud cokoliv selže, vrátíme obecnou chybu.
+            throw new GraphQLException("Neplatný nebo chybějící API klíč.");
+        }
+
+        // Pokud je klíč v pořádku, pokračujeme v původní logice
         return await _notificationService.SendGlobalNotificationAsync(title, body);
     }
 }
-
-
-
-
-// Níže je využití hotchocolate atributů, pro použítí DBContextu z Factory.
-/*
-using HotChocolate.Data;
-using HotChocolate.Types;
-using Zodpovedne.Data;
-using Zodpovedne.Data.Data;
-using Zodpovedne.Data.Models;
-
-namespace Zodpovedne.GraphQL;
-
-public class Mutation
-{
-    // 'record' je moderní, zjednodušená forma třídy, ideální pro přenos dat.
-    // Použití specializovaného vstupního typu (Input Type) je best practice:
-    // 1. Zvyšuje bezpečnost - klient nemůže poslat víc dat, než povolíme.
-    // 2. Zlepšuje čitelnost schématu - je jasné, co metoda očekává.
-    public record AddFreeMessageInput(string Nickname, string Text);
-
-    // Atribut [UseDbContext] zde funguje stejně jako v Query - stará se o DbContext.
-    [UseDbContext(typeof(ApplicationDbContext))]
-
-    // Asynchronní metoda pro přidání nové zprávy. Bude v GraphQL schématu
-    // dostupná jako pole 'addFreeMessage'.
-    public async Task<FreeMessage> AddFreeMessageAsync(
-        // Vstupní argumenty metody, které klient posílá v dotazu.
-        AddFreeMessageInput input,
-        [Service] ApplicationDbContext context)
-    {
-        // Vytvoříme novou instanci naší C# entity.
-        var newMessage = new FreeMessage
-        {
-            Nickname = input.Nickname,
-            Text = input.Text,
-            CreatedUtc = DateTime.UtcNow // Čas je nejlepší nastavovat na serveru.
-        };
-
-        // Řekneme Entity Frameworku, aby začal sledovat tuto novou entitu
-        // a připravil si ji pro vložení do databáze.
-        context.FreeMessages.Add(newMessage);
-
-        // Asynchronně uložíme všechny sledované změny (v našem případě jednu novou
-        // zprávu) do databáze. Zde se provede reálný SQL INSERT.
-        await context.SaveChangesAsync();
-
-        // Podle GraphQL konvence je dobré vrátit data, která byla právě změněna.
-        return newMessage;
-    }
-}
-*/
