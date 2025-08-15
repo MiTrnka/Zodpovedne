@@ -25,6 +25,17 @@ public static class MauiProgram
         builder.Services.AddSingleton<ChatViewModel>();
         builder.Services.AddSingleton<MainPage>();
 
+        // Přihlásíme se k události, která se spustí při přijetí notifikace,
+        // POKUD JE APLIKACE OTEVŘENÁ (V POPŘEDÍ).
+        CrossFirebaseCloudMessaging.Current.NotificationReceived += (sender, e) =>
+        {
+            // Pro jednoduchost zobrazíme obsah notifikace v systémovém alertu.
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                Shell.Current.DisplayAlert(e.Notification.Title, e.Notification.Body, "OK");
+            });
+        };
+
         return builder.Build();
     }
 }

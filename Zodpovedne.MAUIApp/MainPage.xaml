@@ -9,6 +9,11 @@
 
     <Grid RowDefinitions="Auto, *">
         <VerticalStackLayout Grid.Row="0" Padding="10" Spacing="5">
+            <Button Text="Odeslat globální notifikaci" 
+            Command="{Binding SendGlobalNotificationCommand}" 
+            Margin="0,20,0,0"
+            BackgroundColor="MediumVioletRed"/>
+            
             <Label Text="Vaše přezdívka:" />
             <Entry Placeholder="Zadejte přezdívku" Text="{Binding Nickname}" />
 

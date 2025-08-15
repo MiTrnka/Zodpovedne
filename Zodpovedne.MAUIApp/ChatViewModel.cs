@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.ApplicationModel;
 using Plugin.Firebase.CloudMessaging;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -36,6 +37,11 @@ public partial class ChatViewModel : ObservableObject
         mutation RegisterFcmToken {{
             registerFcmToken(token: ""{0}"")
         }}";
+
+    private const string SendNotificationMutation = @"
+        mutation Notifikace {
+            sendGlobalNotification(title: ""Nová zpráva"", body: ""Právě přišla nová zpráva do chatu!"")
+        }";
 
     [ObservableProperty]
     private bool isBusy;
@@ -125,6 +131,23 @@ public partial class ChatViewModel : ObservableObject
     {
         try
         {
+            // Začátek bloku pouze pro Android
+#if ANDROID
+            // O oprávnění žádáme pouze na Androidu 13 (API 33) a vyšším.
+            if (DeviceInfo.Platform == DevicePlatform.Android && DeviceInfo.Version.Major >= 13)
+            {
+                var status = await Microsoft.Maui.ApplicationModel.Permissions.RequestAsync<Permissions.PostNotificationsPermission>();
+
+                if (status != Microsoft.Maui.ApplicationModel.PermissionStatus.Granted)
+                {
+                    await Shell.Current.DisplayAlert("Oprávnění zamítnuto", "Bez udělení oprávnění nemůžete přijímat notifikace.", "OK");
+                    return;
+                }
+            }
+#endif
+            // Konec bloku pouze pro Android
+
+            // Zbytek kódu je opět sdílený a běží na všech platformách.
             await _firebaseCloudMessaging.CheckIfValidAsync();
             var token = await _firebaseCloudMessaging.GetTokenAsync();
 
@@ -148,6 +171,29 @@ public partial class ChatViewModel : ObservableObject
         catch (Exception ex)
         {
             await Shell.Current.DisplayAlert("Výjimka při registraci", ex.Message, "OK");
+        }
+    }
+
+    [RelayCommand]
+    private async Task SendGlobalNotificationAsync()
+    {
+        if (IsBusy) return;
+        IsBusy = true;
+        try
+        {
+            var request = new { query = SendNotificationMutation };
+            var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+            await client.PostAsync(ApiUrl, content);
+            // Na odpověď nečekáme, jen chceme notifikaci "odpálit".
+            await Shell.Current.DisplayAlert("Odesláno", "Příkaz k odeslání notifikace byl odeslán na server.", "OK");
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlert("Chyba", ex.Message, "OK");
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 
