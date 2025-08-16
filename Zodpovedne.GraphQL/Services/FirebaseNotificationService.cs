@@ -74,8 +74,22 @@ public class FirebaseNotificationService
                 Title = title,
                 Body = body,
             },
+            /*
+            // Zde můžeme definovat data, která nejsou pro uživatele viditelná,
+            // ale aplikace si je může po kliknutí na push notifikaci přečíst a nějak s nimi pracovat
+            Data = new Dictionary<string, string>()
+            {
+                // Klíč "page" a hodnota "ChatPage" říkají aplikaci,
+                // kam má po kliknutí na notifikaci navigovat.
+                { "page", "ChatPage" }
+
+                // Zde můžete v budoucnu přidat další data, např.:
+                // { "itemId", "12345" }
+            }
+            */
         };
 
+        // V response.Responses a v jejich Exception jsou informace jako například, že aplikace na tom zařízení byla odinstalována
         var response = await FirebaseMessaging.DefaultInstance.SendEachForMulticastAsync(message);
         return $"Successfully sent message to {response.SuccessCount} devices. Failed for {response.FailureCount} devices.";
     }

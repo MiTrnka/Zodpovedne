@@ -10,7 +10,7 @@ public partial class MainPage : ContentPage
         BindingContext = viewModel;
     }
 
-    // TUTO METODU PŘIDEJ
+    
     protected override async void OnAppearing()
     {
         base.OnAppearing();

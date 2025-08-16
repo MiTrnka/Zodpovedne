@@ -23,10 +23,11 @@ public static class MauiProgram
         builder.Services.AddSingleton<ChatViewModel>();
         builder.Services.AddSingleton<MainPage>();
 
+        // Zpracování notifikace, KDYŽ JE APLIKACE V POPŘEDÍ
         // Přihlásíme se k události, která se spustí při přijetí notifikace,
-        // POKUD JE APLIKACE OTEVŘENÁ (V POPŘEDÍ).
         CrossFirebaseCloudMessaging.Current.NotificationReceived += (sender, e) =>
         {
+            // Zajistíme, aby se kód vykonal na hlavním vlákně
             // Pro jednoduchost zobrazíme obsah notifikace v systémovém alertu.
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -34,66 +35,81 @@ public static class MauiProgram
             });
         };
 
+
+        /* ZPRACOVÁNÍ KLIKNUTÍ NA NOTIFIKACI (KDYŽ APLIKACE NEBĚŽÍ NEBO JE NA POZADÍ)
+        CrossFirebaseCloudMessaging.Current.NotificationTapped += (sender, e) =>
+        {
+            // Zajistíme, aby se kód vykonal na hlavním vlákně
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                // Zkontrolujeme, zda notifikace obsahuje námi definovaná data zaregistrovaná v serverové části v FirebaseNotificationService
+                if (e.Notification.Data.TryGetValue("page", out var targetPage))
+                {
+                    // Pokud ano, použijeme Shell navigaci pro přesměrování
+                    // na konkrétní stránku definovanou v datech.
+                    // Dvojité lomítko (//) zajišťuje absolutní navigaci od kořene.
+                    await Shell.Current.GoToAsync($"//{targetPage}");
+                }
+            });
+        };*/
+
         return builder.Build();
     }
 }
 
 /*
- Cesta push notifikace: Detailní průvodce implementací
-Cílem našeho snažení bylo vytvořit systém, kde náš server (Zodpovedne.GraphQL) dokáže poslat zprávu, která se v reálném čase objeví jako systémová notifikace na telefonech uživatelů s nainstalovanou aplikací (Zodpovedne.MAUIApp). Abychom toho dosáhli, potřebovali jsme spolehlivého prostředníka, který zprávy doručí. Tímto prostředníkem se stala služba Firebase od Googlu.
+## Scénář 1: První spuštění aplikace
+Při úplně prvním spuštění aplikace na novém zařízení (nebo po smazání jejích dat) proběhne klíčový registrační proces, který se při dalších spuštěních již neopakuje.
 
-Celou architekturu si můžeme představit jako moderní poštovní službu 📮:
+Fáze 1: Aplikace se představuje (v Zodpovedne.MAUIApp)
+    1. Zobrazení stránky: Uživateli se zobrazí hlavní stránka MainPage. Tím se v jejím code-behind souboru (MainPage.xaml.cs) automaticky spustí metoda OnAppearing.
 
-Firebase Konzole: Centrální pošta, kde všechno zakládáme a spravujeme.
+    2. Inicializace logiky: Metoda OnAppearing zavolá metodu InitializeAsync v našem hlavním viewmodelu, třídě ChatViewModel.
 
-MAUI Aplikace: Zákazník, který si na poště zaregistruje svou doručovací adresu.
+    3. Spuštění registrace: InitializeAsync následně spustí příkaz RegisterForNotificationsCommand, který vykoná metodu RegisterForNotificationsAsync ve třídě ChatViewModel.
 
-GraphQL Server: Odesílatel, který na poštu přinese dopis a seznam adres, kam ho chce doručit.
+    4. Žádost o oprávnění: Protože se jedná o první spuštění na moderním Androidu, metoda RegisterForNotificationsAsync nejprve požádá systém o povolení zobrazovat notifikace. Využije k tomu naši pomocnou třídu PostNotificationsPermission, která reprezentuje toto systémové oprávnění.
 
-## 1. Základní kámen: Nastavení ve Firebase Konzoli
-Vše začalo v online prostředí Firebase. Založili jsme si zde nový projekt, který slouží jako centrální uzel pro veškerou komunikaci. V rámci tohoto projektu jsme museli provést dva klíčové kroky pro propojení s našimi aplikacemi.
+    5. Získání adresy: Po udělení souhlasu aplikace kontaktuje servery Google/Firebase a vyžádá si svou unikátní "doručovací adresu" – FCM Registrační Token.
 
-Registrace mobilní aplikace a soubor google-services.json
-Nejprve jsme museli naši MAUI aplikaci ve Firebase "zaregistrovat". Během tohoto procesu jsme Firebase sdělili unikátní identifikátor naší aplikace (v našem případě cz.discussion.app), který je definován v jejím projektovém souboru.
+    6. Odeslání adresy na server: Aplikace vezme tento token a pomocí GraphQL mutace ho odešle na náš server, aby si ho uložil do svého "adresáře".
 
-Po dokončení registrace nám Firebase vygeneroval konfigurační soubor google-services.json. Tento soubor si můžeme představit jako občanský průkaz mobilní aplikace. Obsahuje unikátní klíče a ID, pomocí kterých se naše MAUI aplikace při spuštění prokazuje serverům Googlu. Tím jim říká: "Ahoj, jsem aplikace 'Discussion' patřící k tomuto Firebase projektu, prosím o přístup ke službám." Tento soubor jsme stáhli a vložili do kořenového adresáře projektu Zodpovedne.MAUIApp a nastavili mu speciální "build akci", aby ho systém Android správně zpracoval při sestavování aplikace.
+Fáze 2: Server si ukládá adresu (v Zodpovedne.GraphQL)
+    1. Přijetí tokenu: Náš GraphQL server přijme požadavek z MAUI aplikace a spustí metodu RegisterFcmTokenAsync ve třídě Mutation.
 
-Vytvoření servisního účtu a soubor firebase-credentials.json
-Dále jsme potřebovali způsob, jak se k Firebase mohl připojit náš server. Na rozdíl od mobilní aplikace, která je jen klientem, náš server potřebuje administrátorská práva – musí mít oprávnění posílat notifikace jménem celého projektu.
+    2. Uložení do databáze: Tato metoda vezme přijatý FCM token a uloží ho jako nový záznam do databázové tabulky FcmRegistrationTokens.
 
-K tomu slouží tzv. "servisní účet". Ve Firebase jsme vytvořili tento speciální účet a vygenerovali pro něj privátní klíč ve formě souboru firebase-credentials.json. Tento soubor je mnohem citlivější než ten předchozí – jsou to v podstatě klíče od království 🔑. Umožňuje jakémukoliv serveru, který ho vlastní, plně ovládat služby našeho Firebase projektu. Tento soubor jsme proto nahráli přímo na náš produkční server k projektu Zodpovedne.GraphQL a zajistili, aby se nikdy nedostal do veřejného repozitáře.
+Výsledek: Po tomto jednorázovém procesu je zařízení oficiálně zaregistrováno v naší databázi a je připraveno přijímat notifikace. Při každém dalším spuštění aplikace se metoda RegisterForNotificationsAsync sice spustí, ale protože uživatel již oprávnění udělil a token je obvykle stále platný, neděje se nic viditelného.
 
-## 2. Příjemce: Logika v mobilní aplikaci (Zodpovedne.MAUIApp)
-S připravenou infrastrukturou ve Firebase jsme se přesunuli k mobilní aplikaci, kterou jsme museli naučit, jak se stát příjemcem notifikací.
+## Scénář 2: Odeslání globální push notifikace
+Tento proces se spustí, když uživatel klikne na tlačítko "Odeslat globální notifikaci".
 
-Registrační proces
-Hlavní úkol aplikace je získat svou unikátní "doručovací adresu" a sdělit ji našemu serveru. Tento proces probíhá automaticky při startu aplikace:
+Fáze 1: Příkaz z aplikace (v Zodpovedne.MAUIApp)
+    1. Kliknutí na tlačítko: Stisknutí tlačítka na stránce MainPage aktivuje příkaz SendGlobalNotificationCommand ve třídě ChatViewModel.
 
-Žádost o oprávnění: Protože moderní Android vyžaduje souhlas uživatele se zobrazováním notifikací, aplikace nejprve zobrazila systémový dialog, kde uživatele požádala o povolení. K tomu jsme využili naši pomocnou třídu PostNotificationsPermission, která tuto systémovou žádost zapouzdřila pro použití v .NET MAUI.
+    2. Spuštění metody: Příkaz vykoná metodu SendGlobalNotificationAsync.
 
-Získání FCM Tokenu: Po udělení souhlasu aplikace komunikovala s Firebase (pomocí google-services.json) a vyžádala si unikátní FCM Registrační Token. Tento dlouhý řetězec je onou unikátní adresou pro konkrétní instalaci aplikace na konkrétním zařízení.
+    3. Sestavení požadavku: Tato metoda sestaví GraphQL mutaci pro odeslání notifikace. Klíčové je, že do tohoto požadavku přibalí i tajný API klíč, aby se prokázala serveru.
 
-Odeslání tokenu na server: Aplikace následně zavolala naši GraphQL mutaci a předala serveru svůj nově získaný FCM token, aby si ho server mohl uložit do své databáze – do svého "adresáře".
+    4. Odeslání na server: Aplikace odešle kompletní požadavek na náš GraphQL server.
 
-Ukládání přezdívky
-Aby byla aplikace uživatelsky přívětivější, implementovali jsme ukládání zadané přezdívky do trvalého úložiště telefonu (Preferences). Kdykoliv uživatel změní svou přezdívku v textovém poli, automaticky se uloží. Při příštím spuštění aplikace se přezdívka z tohoto úložiště opět načte, takže ji nemusí vyplňovat znovu.
+Fáze 2: Server zpracovává a odesílá (v Zodpovedne.GraphQL)
+    1. Přijetí požadavku: Server přijme požadavek a spustí metodu SendGlobalNotificationAsync ve třídě Mutation.
 
-## 3. Odesílatel: Logika na serveru (Zodpovedne.GraphQL)
-Náš server měl dva hlavní úkoly: sbírat adresy od klientů a následně na ně odesílat zprávy.
+    2. Bezpečnostní kontrola: Metoda nejprve zkontroluje, zda se API klíč z aplikace shoduje s klíčem uloženým v konfiguraci serveru. Pokud ne, okamžitě požadavek odmítne s chybou.
 
-Inicializace a sběr adres
-Při svém startu si server jednorázově načetl citlivý soubor firebase-credentials.json a pomocí něj se autorizoval u Firebase jako administrátor. Dále jsme na serveru vytvořili databázovou tabulku, která sloužila jako náš adresář. Kdykoliv mobilní aplikace zavolala mutaci pro registraci tokenu, server tento token vzal a uložil do této tabulky.
+    3. Předání specializované službě: Pokud je klíč v pořádku, metoda předá úkol (odeslání notifikace) naší specializované třídě FirebaseNotificationService zavoláním její metody SendGlobalNotificationAsync.
 
-Proces odeslání globální notifikace
-Když jsme chtěli odeslat notifikaci (ať už z testovacího prostředí, nebo tlačítkem v aplikaci), spustil se na serveru následující proces:
+    4. Načtení všech adres: FirebaseNotificationService se připojí k databázi a načte všechny FCM tokeny všech zařízení, která se kdy zaregistrovala.
 
-Ověření API klíčem: Nejprve server zkontroloval, zda požadavek na odeslání obsahuje správný tajný API klíč. Tím jsme zajistili, že notifikaci může "odpálit" pouze naše aplikace, a ne nějaký robot z internetu.
+    5. Příprava hromadné zprávy: Sestaví tzv. MulticastMessage – zprávu určenou pro hromadné rozeslání, která obsahuje titulek, text a seznam všech načtených tokenů.
 
-Načtení adres: Server se podíval do své databáze a načetl všechny uložené FCM tokeny.
+    6. Odeslání do Firebase: Metoda nakonec předá tento balíček zpráv a adres přímo službě Firebase.
 
-Sestavení zprávy: Vytvořil obsah notifikace – titulek a text.
+Fáze 3: Firebase doručuje zprávu (infrastruktura Firebase)
+    1. Převzetí a doručení: Od tohoto momentu přebírá veškerou práci masivní infrastruktura Googlu. Firebase vezme naši zprávu a rozešle ji na všechna zařízení, jejichž tokeny byly na seznamu.
 
-Předání poště: Nakonec server předal Firebase Admin SDK celý balík: obsah zprávy a kompletní seznam adres (tokenů), na které se má doručit.
+    2. Probuzení zařízení: Systém Android na cílových telefonech přijme signál od Firebase, "probudí se" a zobrazí uživateli systémovou push notifikaci s naším titulkem a textem.
 
-Od tohoto momentu převzal veškerou těžkou práci Firebase. Jeho globální infrastruktura zajistila, že se zpráva spolehlivě a téměř okamžitě doručila na všechna zařízení v našem seznamu, ať už byla kdekoliv na světě.
+    3. Zpětná vazba: Firebase pošle zpět našemu serveru stručný report o tom, na kolik zařízení se podařilo notifikaci úspěšně doručit.
 */

@@ -1,7 +1,7 @@
 // Zodpovedne.GraphQL/Program.cs
 
 /*
- * Tento soubor je vstupním bodem vaší aplikace. Jeho jediným úkolem je nastartovat a spustit webový server, který bude naslouchat požadavkùm. Konkrétní nastavení serveru a služeb deleguje na tøídu Startup
+ * Tento soubor je vstupním bodem vaší aplikace. Jeho jediným úkolem je nastartovat a spustit webový server, který bude naslouchat požadavkùm.
  * =================================================================================
  * NEŽ ZAÈNETE, UJISTÌTE SE, ŽE MÁTE NAINSTALOVANÉ TYTO NUGET BALÍÈKY:
  * =================================================================================
@@ -11,9 +11,8 @@
  * - Propojuje Hot Chocolate s Entity Framework Core. Umožòuje kouzla jako
  * automatické filtrování a øazení pøímo v GraphQL dotazech. Poskytuje
  * také atribut [UseDbContext].
- * * 3. Npgsql.EntityFrameworkCore.PostgreSQL
- * - Ovladaè (provider), který umožòuje Entity Framework Core komunikovat
- * s vaší PostgreSQL databází.
+ * * 3. FirebaseAdmin
+ * - Ovladaè pro Firebase Admin SDK, který umožòuje posílat push notifikace
  * * =================================================================================
 */
 

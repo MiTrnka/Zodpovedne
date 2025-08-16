@@ -242,40 +242,64 @@ public partial class ChatViewModel : ObservableObject
     {
         try
         {
+            // Následující blok kódu se zkompiluje a spustí pouze při sestavování aplikace pro platformu Android.
 #if ANDROID
+            // Zkontrolujeme, zda aplikace běží na Androidu verze 13 (API 33) nebo vyšší.
+            // Pouze tyto verze vyžadují explicitní žádost o oprávnění k zasílání notifikací.
             if (DeviceInfo.Platform == DevicePlatform.Android && DeviceInfo.Version.Major >= 13)
             {
+                // Asynchronně požádáme uživatele o udělení oprávnění k zasílání notifikací.
+                // Používáme k tomu naši vlastní třídu PostNotificationsPermission, která toto oprávnění reprezentuje.
                 var status = await Microsoft.Maui.ApplicationModel.Permissions.RequestAsync<Permissions.PostNotificationsPermission>();
 
+                // Pokud uživatel oprávnění neudělil...
                 if (status != Microsoft.Maui.ApplicationModel.PermissionStatus.Granted)
                 {
+                    // ...zobrazíme mu upozornění a ukončíme metodu. Bez oprávnění nemá smysl pokračovat.
                     await Shell.Current.DisplayAlert("Oprávnění zamítnuto", "Bez udělení oprávnění nemůžete přijímat notifikace.", "OK");
                     return;
                 }
             }
 #endif
+            // Ověříme, zda jsou na zařízení dostupné potřebné služby Google Play pro fungování Firebase.
             await _firebaseCloudMessaging.CheckIfValidAsync();
+
+            // Požádáme Firebase o unikátní registrační token pro tuto konkrétní instalaci aplikace.
+            // Tento token slouží jako unikátní adresa pro doručování notifikací.
             var token = await _firebaseCloudMessaging.GetTokenAsync();
 
+            // Pokud se z nějakého důvodu nepodařilo token získat (např. problém s připojením)...
             if (string.IsNullOrEmpty(token))
             {
+                // ...zobrazíme uživateli chybu a ukončíme metodu.
                 await Shell.Current.DisplayAlert("Chyba Firebase", "Nepodařilo se získat FCM token.", "OK");
                 return;
             }
 
+            // Sestavíme text GraphQL mutace pro registraci tokenu na našem serveru.
             var query = string.Format(RegisterFcmTokenMutationTemplate, token);
+
+            // Vytvoříme anonymní objekt, který bude převeden na JSON tělo požadavku.
             var request = new { query };
+
+            // Převedeme (serializujeme) C# objekt na JSON řetězec a připravíme ho pro odeslání.
             var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+
+            // Odešleme HTTP POST požadavek na náš GraphQL server.
             var response = await client.PostAsync(ApiUrl, content);
 
+            // Pokud odpověď ze serveru neobsahuje úspěšný stavový kód (např. 404, 500)...
             if (!response.IsSuccessStatusCode)
             {
+                // ...přečteme chybovou zprávu z těla odpovědi a zobrazíme ji uživateli.
                 var error = await response.Content.ReadAsStringAsync();
                 await Shell.Current.DisplayAlert("Chyba registrace tokenu", error, "OK");
             }
         }
         catch (Exception ex)
         {
+            // Pokud během celého procesu dojde k jakékoliv jiné výjimce (např. problém se sítí),
+            // odchytíme ji a zobrazíme její zprávu uživateli.
             await Shell.Current.DisplayAlert("Výjimka při registraci", ex.Message, "OK");
         }
     }
@@ -287,26 +311,64 @@ public partial class ChatViewModel : ObservableObject
     [RelayCommand]
     private async Task SendGlobalNotificationAsync()
     {
+        // Pokud již probíhá jiná operace, metodu okamžitě ukončíme, abychom zabránili duplicitním voláním.
         if (IsBusy) return;
+
+        // Nastavíme příznak "zaneprázdněno" na true, což může v UI například zakázat tlačítko.
         IsBusy = true;
+
+        // Celou logiku obalíme do try-catch-finally bloku pro robustní ošetření chyb a správu stavu.
         try
         {
+            // Připravíme C# objekt, který reprezentuje tělo našeho GraphQL požadavku.
+            // Obsahuje samotný text mutace a objekt s proměnnými (zde náš tajný API klíč).
             var request = new
             {
                 query = SendNotificationMutation,
                 variables = new { apiKey = ApiKey }
             };
 
+            // Převedeme (serializujeme) C# objekt na JSON řetězec a připravíme ho pro odeslání přes HTTP.
             var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
-            await client.PostAsync(ApiUrl, content);
-            await Shell.Current.DisplayAlert("Odesláno", "Příkaz k odeslání notifikace byl odeslán na server.", "OK");
+
+            // Asynchronně odešleme HTTP POST požadavek na náš GraphQL server a uložíme si odpověď.
+            var response = await client.PostAsync(ApiUrl, content);
+
+            // Zkontrolujeme, zda byl samotný HTTP přenos úspěšný (např. status 200 OK).
+            if (response.IsSuccessStatusCode)
+            {
+                // Přečteme textovou odpověď (JSON) z těla HTTP odpovědi.
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                // Zkontrolujeme, zda JSON odpověď neobsahuje klíčové slovo "errors".
+                // GraphQL server totiž může vrátit HTTP 200 OK, i když samotná operace selhala.
+                if (jsonResponse.Contains("errors"))
+                {
+                    // Pokud ano, zobrazíme uživateli celou chybovou zprávu od GraphQL.
+                    await Shell.Current.DisplayAlert("Chyba od GraphQL", jsonResponse, "OK");
+                }
+                else
+                {
+                    // Pokud je vše v pořádku, zobrazíme uživateli potvrzení o úspěchu.
+                    await Shell.Current.DisplayAlert("Odesláno", "Příkaz byl úspěšně zpracován serverem.", "OK");
+                }
+            }
+            else
+            {
+                // Pokud HTTP přenos selhal (např. chyba 404, 500), zobrazíme stavový kód a obsah chyby.
+                var errorContent = await response.Content.ReadAsStringAsync();
+                await Shell.Current.DisplayAlert("Chyba serveru", $"Chyba: {response.StatusCode}\n{errorContent}", "OK");
+            }
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlert("Chyba", ex.Message, "OK");
+            // Pokud dojde k jakékoliv jiné výjimce (např. zařízení je offline), odchytíme ji zde.
+            await Shell.Current.DisplayAlert("Chyba aplikace", ex.Message, "OK");
         }
         finally
         {
+            // Blok "finally" se provede vždy, ať už operace proběhla úspěšně, nebo selhala.
+            // Zajišťuje, že příznak "zaneprázdněno" se vždy vrátí na false a UI se odblokuje.
             IsBusy = false;
         }
     }
